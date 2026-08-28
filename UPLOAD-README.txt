@@ -1,1 +1,1 @@
-فایل‌های این پوشه را در ریشه afzalpour/afzalpour.github.io آپلود و Replace کنید. سپس Commit changes را بزنید. آدرس سایت همان https://afzalpour.github.io/ است.
+محتویات این پوشه را در Repository افضالپور آپلود کنید تا GitHub Pages با V8 به‌روزرسانی شود.
