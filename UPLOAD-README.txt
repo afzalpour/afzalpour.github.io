@@ -1,1 +1,1 @@
-محتویات این پوشه را در Repository افضالپور آپلود کنید تا GitHub Pages با V8 به‌روزرسانی شود.
+محتویات این پوشه را در ریشه Repository afzalpour.github.io جایگزین کنید و Commit بزنید.
