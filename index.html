@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>حساب‌یار V22 — تجربه مالی آرام و حرفه‌ای</title>
+<title>حساب‌یار V22.1 — تجربه مالی آرام با منوی کامل</title>
 <style>
 @font-face{font-family:IRAN;src:local('IRAN'),local('Iran'),local('IRANSans');font-display:swap}
 :root{
@@ -1318,7 +1318,14 @@ body{transition:background .25s,color .25s} .card,.topbar,aside,.ghost,.primary{
 @media(max-width:760px){.v18-report-hero{display:block;padding:20px}.v18-report-actions{margin-top:12px}.v18-report-toolbar{grid-template-columns:1fr 1fr}.v18-kpi-grid{grid-template-columns:1fr 1fr}.v18-module-grid{grid-template-columns:1fr}.v18-drill-row{grid-template-columns:80px 1fr}.v18-drill-row>:last-child{grid-column:2}.theme-swatches{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:390px){.v18-report-toolbar,.v18-kpi-grid{grid-template-columns:1fr}.v18-report-actions{display:grid;grid-template-columns:1fr 1fr}.v18-kpi strong{font-size:17px}}
 
-</style></head><body><div class="box"><h1>فاکتور رسمی ${inv.type==='sale'?'فروش':'خرید'}</h1><div>${esc(owner)}</div><div class="meta"><div>شماره فاکتور: <b>${esc(inv.number)}</b></div><div>تاریخ: <b>${isoToJalali(inv.date)}</b></div><div>طرف حساب: <b>${esc(partyObj.name||'—')}</b></div><div>سررسید: <b>${isoToJalali(inv.dueDate)}</b></div><div>تلفن: <b>${esc(partyObj.phone||'—')}</b></div><div>شناسه: <b>${esc(partyObj.nationalId||'—')}</b></div></div><table><thead><tr><th>#</th><th>شرح کالا</th><th>سریال/بارکد</th><th>تعداد</th><th>فی</th><th>تخفیف</th><th>مالیات</th><th>جمع</th></tr></thead><tbody>${rows}</tbody></table><div class="totals"><div><span>جمع ناخالص</span><b>${nf(inv.gross||0)}</b></div><div><span>جمع تخفیف</span><b>${nf(inv.discountTotal||0)}</b></div><div><span>جمع مشمول</span><b>${nf(inv.subtotal||0)}</b></div><div><span>ارزش افزوده</span><b>${nf(inv.vat||0)}</b></div><div class="grand"><span>جمع نهایی</span><b>${nf(inv.total||0)}</b></div></div><p style="font-size:11px;line-height:2;color:#556176;margin-top:18px">${esc(inv.note||'')}</p></div><script>window.onload=()=>window.print()<\/script></body></html>`); w.document.close(); }
+</style><style>/* ===== V22.1 — Restored complete grouped sidebar ===== */
+.v221-nav{display:grid;gap:14px;padding-bottom:14px}
+.v221-group{display:grid;gap:4px}.v221-group-head{display:flex;align-items:center;justify-content:space-between;padding:7px 10px 5px;color:#7f8796;font-size:10.5px;font-weight:800}.v221-group-head span{display:flex;align-items:center;gap:7px}.v221-group-head svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}.v221-group-count{font-variant-numeric:tabular-nums;color:#5f6673;font-size:10px}.v221-items{display:grid;gap:2px}
+.nav-btn.v221-item{min-height:39px!important;padding:7px 10px 7px 12px!important;border-radius:9px!important;color:#aeb5c2!important;gap:9px!important;font-size:12px!important;font-weight:650!important;justify-content:flex-start!important;width:100%;text-align:right;position:relative}.nav-btn.v221-item .v22-icon{width:18px;height:18px;flex-basis:18px}.nav-btn.v221-item svg{width:17px;height:17px}.nav-btn.v221-item:hover{background:rgba(255,255,255,.055)!important;color:#fff!important}.nav-btn.v221-item.active{background:rgba(114,87,245,.16)!important;color:#fff!important;box-shadow:inset -2px 0 #7257F5!important}.v221-group.is-active .v221-group-head{color:#c7cbd3}.v221-smart-group{padding-top:10px;border-top:1px solid rgba(255,255,255,.07)}.v221-smart-group .nav-btn.v221-item{color:#c4b9ff!important}.v221-smart-group .nav-btn.v221-item.active{color:#fff!important}.v221-search{margin-top:4px!important}
+.app.v22-collapsed .v221-group-head{display:none}.app.v22-collapsed .v221-nav{gap:4px}.app.v22-collapsed .v221-group{gap:2px}.app.v22-collapsed .v221-smart-group{padding-top:4px}.app.v22-collapsed .nav-btn.v221-item{justify-content:center!important;padding-inline:8px!important}.app.v22-collapsed .v221-label{display:none}
+@media(max-width:760px){.v221-nav{padding-bottom:90px}.nav-btn.v221-item{min-height:44px!important;font-size:13px!important}.v221-group-head{font-size:11px;padding-top:11px}}
+</style>
+</head><body><div class="box"><h1>فاکتور رسمی ${inv.type==='sale'?'فروش':'خرید'}</h1><div>${esc(owner)}</div><div class="meta"><div>شماره فاکتور: <b>${esc(inv.number)}</b></div><div>تاریخ: <b>${isoToJalali(inv.date)}</b></div><div>طرف حساب: <b>${esc(partyObj.name||'—')}</b></div><div>سررسید: <b>${isoToJalali(inv.dueDate)}</b></div><div>تلفن: <b>${esc(partyObj.phone||'—')}</b></div><div>شناسه: <b>${esc(partyObj.nationalId||'—')}</b></div></div><table><thead><tr><th>#</th><th>شرح کالا</th><th>سریال/بارکد</th><th>تعداد</th><th>فی</th><th>تخفیف</th><th>مالیات</th><th>جمع</th></tr></thead><tbody>${rows}</tbody></table><div class="totals"><div><span>جمع ناخالص</span><b>${nf(inv.gross||0)}</b></div><div><span>جمع تخفیف</span><b>${nf(inv.discountTotal||0)}</b></div><div><span>جمع مشمول</span><b>${nf(inv.subtotal||0)}</b></div><div><span>ارزش افزوده</span><b>${nf(inv.vat||0)}</b></div><div class="grand"><span>جمع نهایی</span><b>${nf(inv.total||0)}</b></div></div><p style="font-size:11px;line-height:2;color:#556176;margin-top:18px">${esc(inv.note||'')}</p></div><script>window.onload=()=>window.print()<\/script></body></html>`); w.document.close(); }
 window.printOfficialInvoice=printOfficialInvoice;
 function openLastInvoicePrint(){let last=(state.invoices||[]).slice(-1)[0]; if(!last){toast('هنوز فاکتوری ندارید');return} printOfficialInvoice(last.id)} window.openLastInvoicePrint=openLastInvoicePrint;
 function openInvoiceReturn(id){state=ensureV8(state); let inv=state.invoices.find(x=>x.id===id); if(!inv){toast('فاکتور پیدا نشد');return} let body=`<div class="hint" style="line-height:1.9;margin-bottom:12px">فاکتور ${esc(inv.number)} — ${esc(party(inv.partyId)?.name||'')}<br>${inv.type==='sale'?'برگشت از فروش موجب افزایش موجودی و برگشت درآمد می‌شود.':'برگشت از خرید موجب کاهش موجودی و برگشت خرید می‌شود.'}</div>`; body+= (inv.items||[]).map((it,idx)=>{let p=product(it.productId)||{}; return `<div class="invoice-draft-row"><div><b>${esc(p.name||'—')}</b><div class="hint">حداکثر ${toFaDigits(it.qty)}</div></div><span>${nf(it.unitPrice)}</span><span>${toFaDigits(it.discountPct||0)}٪</span><span>${toFaDigits(it.taxRate||0)}٪</span><input id="retQty${idx}" type="number" min="0" max="${Number(it.qty||0)}" step="0.001" value="${Number(it.qty||0)}"><span>${esc(it.serial||it.barcode||'—')}</span></div>`}).join(''); body += `<div class="field" style="margin-top:12px"><label>توضیح برگشت</label><input id="returnNote" value="برگشت بابت ${esc(inv.number)}"></div>`; $('returnDialogBody').innerHTML=body; $('returnDialog').dataset.invoiceId=inv.id; $('returnDialog').showModal()} window.openInvoiceReturn=openInvoiceReturn;
@@ -1866,6 +1873,45 @@ initV19();
 initV20();
 initV21();
 initV22();
+</script>
+<script>// ===== V22.1 — complete grouped sidebar restoration =====
+const V221_PAGE_ICONS={dashboard:'home',attention:'shield',calendar:'clock',budgets:'reports',transactions:'transactions',reconciliation:'accounts',automation:'smart',ocr:'scan',accounts:'accounts',coa:'accounting',obligations:'clock',invoices:'invoices',parties:'accounts',ledger:'accounting',inventory:'box',governance:'shield',company:'settings',reports:'reports',settings:'settings',mobileHub:'mobile',assistant:'brain',explain:'search',commitments:'clock',scenarios:'reports',gate:'shield',aiControl:'brain',smartWorkflows:'smart'};
+const V221_GROUP_ICONS={dashboard:'home',transactions:'transactions',accounts:'accounts',obligations:'clock',invoices:'invoices',accounting:'accounting',reports:'reports',settings:'settings',smart:'smart'};
+function groupsV221(){
+ if(isCompanyV22()) return [
+  ['dashboard','داشبورد',['dashboard','attention','calendar','budgets']],
+  ['transactions','تراکنش‌ها',['transactions','reconciliation','automation','ocr']],
+  ['invoices','فاکتورها',['invoices','parties','obligations']],
+  ['accounting','حسابداری',['accounts','coa','ledger','inventory','governance','company']],
+  ['reports','گزارش‌ها',['reports']],
+  ['settings','تنظیمات',['settings','mobileHub']],
+  ['smart','ابزارهای هوشمند',V22_SMART]
+ ];
+ return [
+  ['dashboard','داشبورد',['dashboard','attention','calendar','budgets']],
+  ['transactions','تراکنش‌ها',['transactions','reconciliation','automation','ocr']],
+  ['accounts','حساب‌ها',['accounts','coa']],
+  ['obligations','تعهدات',['obligations']],
+  ['reports','گزارش‌ها',['reports']],
+  ['settings','تنظیمات',['settings','mobileHub']],
+  ['smart','ابزارهای هوشمند',V22_SMART]
+ ];
+}
+function renderNavigationV221(){
+ state=ensureV22(state);let nav=$('primaryNavV22');if(!nav)return;
+ let groups=groupsV221();nav.className='v22-primary-nav v221-nav';
+ nav.innerHTML=groups.map(function(tuple){
+   let group=tuple[0],label=tuple[1],ids=tuple[2],rows=ids.filter(canAccessV22),active=rows.includes(v22CurrentPage);
+   let items=rows.map(function(id){return '<button class="nav-btn v221-item '+(id===v22CurrentPage?'active':'')+'" data-page="'+id+'" onclick="goPage(\''+id+'\')"><span class="v22-icon">'+iconV22(V221_PAGE_ICONS[id]||'box')+'</span><span class="v221-label">'+(V22_META[id]?.title||id)+'</span></button>'}).join('');
+   return '<section class="v221-group '+(group==='smart'?'v221-smart-group ':'')+(active?'is-active':'')+'" data-v221-group="'+group+'"><div class="v221-group-head"><span>'+iconV22(V221_GROUP_ICONS[group]||'box')+'<b>'+label+'</b></span><small class="v221-group-count">'+toFaDigits(rows.length)+'</small></div><div class="v221-items">'+items+'</div></section>';
+ }).join('');
+ let foot=$('v22SidebarFooter');if(foot)foot.innerHTML='<button class="v22-smart-entry v221-search" onclick="openCommandV22()"><span class="v22-icon">'+iconV22('search')+'</span><span>جستجو و فرمان <kbd style="margin-inline-start:auto">Ctrl K</kbd></span></button>';
+ renderSubnavV22(v22CurrentPage);renderMobileNavV22();
+}
+renderNavigationV22=renderNavigationV221;window.renderNavigationV22=renderNavigationV221;
+const _markActiveV221Base=markActiveV22;markActiveV22=function(page){_markActiveV221Base(page);document.querySelectorAll('.v221-item').forEach(b=>b.classList.toggle('active',b.dataset.page===page));document.querySelectorAll('.v221-group').forEach(g=>g.classList.toggle('is-active',!!g.querySelector('.v221-item.active')))};window.markActiveV22=markActiveV22;
+function initV221(){document.title='حساب‌یار V22.1 — تجربه مالی آرام با منوی کامل';renderNavigationV221();markActiveV22(v22CurrentPage)}
+initV221();
 </script>
 </body>
 </html>
