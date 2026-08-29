@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "metrics": {
+    "available_cash": {
+      "label": "نقد قابل استفاده",
+      "formula": "bank + cash balances"
+    },
+    "committed_cash_30": {
+      "label": "تعهد نقدی ۳۰ روز",
+      "formula": "obligations + payables + commitments"
+    },
+    "receivables": {
+      "label": "مطالبات باز",
+      "formula": "open sales invoice balances"
+    },
+    "payables": {
+      "label": "بدهی تجاری",
+      "formula": "open purchase invoice balances"
+    },
+    "inventory_value": {
+      "label": "ارزش موجودی",
+      "formula": "qty × weighted_average_cost"
+    },
+    "tax_exposure": {
+      "label": "Tax Exposure",
+      "formula": "estimated direct tax + net VAT"
+    },
+    "runway_days": {
+      "label": "Runway نقدی",
+      "formula": "available cash / avg daily net burn"
+    }
+  }
+}
