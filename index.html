@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>حساب‌یار V23 — طراحی مالی آرام و حرفه‌ای</title>
+<title>حساب‌یار V23.1 — رابط پایدار موبایل و آیکون‌ها</title>
 <style>
 @font-face{font-family:IRAN;src:local('IRAN'),local('Iran'),local('IRANSans');font-display:swap}
 :root{
@@ -462,7 +462,51 @@ html[data-v22-appearance="dark"] .topbar{background:rgba(17,19,25,.88)!important
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
 
 </style>
-</head>
+<style>
+/* ===== V23.1 — stable icon system + repaired mobile shell ===== */
+:root{--v231-icon-size:19px}
+.v231-icon{width:var(--v231-icon-size)!important;height:var(--v231-icon-size)!important;display:block!important;flex:none!important;color:inherit!important;overflow:visible!important}
+.v231-icon *{vector-effect:non-scaling-stroke}
+.v221-item .v22-icon,.v221-search .v22-icon{width:22px!important;height:22px!important;display:grid!important;place-items:center!important;flex:0 0 22px!important;color:var(--v23-faint)!important}
+.v221-item.active .v22-icon{color:var(--v23-brand-ink)!important}
+.v221-item:hover .v22-icon{color:var(--v23-ink)!important}
+.v221-group-head>span>.v231-icon{width:15px!important;height:15px!important;color:var(--v23-faint)!important;flex:none!important}
+.mobile-bottom-nav .v231-icon{width:23px!important;height:23px!important}
+.v23-quick-card .v231-icon{width:21px!important;height:21px!important;margin-bottom:4px!important;color:var(--v23-brand-ink)!important}
+.v23-kpi-icon .v231-icon{width:20px!important;height:20px!important}
+#searchBtnV19 .v231-icon{width:18px!important;height:18px!important}
+.app.v22-collapsed .v221-item{position:relative!important}
+.app.v22-collapsed .v221-item:hover:after{content:attr(aria-label);position:fixed;right:82px;z-index:1000;background:var(--v23-ink);color:#fff;border-radius:7px;padding:6px 9px;font-size:11px;white-space:nowrap;box-shadow:var(--v23-shadow2);pointer-events:none}
+
+/* Repair V23 dashboard participation in the SPA page system. */
+#dashboard.v23-dashboard{visibility:visible!important;opacity:1!important}
+#dashboard.page:not(.active){display:none!important}
+#dashboard.page.active{display:block!important}
+
+@media(max-width:980px){
+ html,body{min-height:100%;width:100%;overflow-x:hidden!important;background:var(--v23-bg)!important}
+ body{min-height:100dvh!important;padding-bottom:calc(78px + env(safe-area-inset-bottom))!important}
+ .app,.app.v22-collapsed{display:block!important;width:100%!important;min-height:100dvh!important;grid-template-columns:none!important;grid-template-areas:none!important;direction:rtl!important;visibility:visible!important;opacity:1!important;overflow:visible!important}
+ .app>main,.app.v22-collapsed>main{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;min-height:calc(100dvh - 76px)!important;position:relative!important;z-index:1!important;visibility:visible!important;opacity:1!important;transform:none!important;overflow:visible!important;grid-area:auto!important;direction:rtl!important}
+ main>.topbar,main>#v22Contextbar,main>.financial-pulse,main>.content{visibility:visible!important;opacity:1!important}
+ main>.content{display:block!important;width:100%!important;max-width:none!important;min-height:300px!important;position:relative!important;z-index:1!important;padding:14px 12px calc(104px + env(safe-area-inset-bottom))!important;overflow:visible!important}
+ main>.content>.page{width:100%!important;max-width:100%!important}
+ main>.content>.page.active{display:block!important;visibility:visible!important;opacity:1!important;transform:none!important}
+ #dashboard.v23-dashboard.page.active{display:block!important;visibility:visible!important;opacity:1!important}
+ #sidebar,.app>aside#sidebar{display:block!important;position:fixed!important;top:0!important;right:0!important;left:auto!important;bottom:0!important;width:min(86vw,310px)!important;height:100dvh!important;max-height:100dvh!important;z-index:120!important;transform:translateX(110%)!important;visibility:hidden!important;pointer-events:none!important;opacity:1!important;transition:transform var(--v23-dur) var(--v23-ease),visibility 0s linear var(--v23-dur)!important;box-shadow:-16px 0 40px rgba(15,15,25,.18)!important}
+ #sidebar.open,.app.menu-open>aside#sidebar{transform:translateX(0)!important;visibility:visible!important;pointer-events:auto!important;transition:transform var(--v23-dur) var(--v23-ease)!important}
+ .mobile-menu{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:42px!important;min-height:42px!important}
+ .financial-pulse{position:relative!important;top:auto!important;z-index:2!important;margin:0!important}
+ .mobile-bottom-nav{display:grid!important;z-index:150!important}
+}
+@media(max-width:600px){
+ .topbar{min-height:64px!important}
+ .financial-pulse{grid-template-columns:repeat(4,164px)!important}
+ .v23-dash-head{display:flex!important;flex-direction:column!important;gap:12px!important}
+ .v23-dashboard{display:block!important;width:100%!important}
+ .v23-dashboard-grid,.v23-col,.v23-panel{min-width:0!important;width:100%!important}
+}
+</style></head>
 <body>
 
 <div class="auth-screen" id="authScreen">
@@ -2027,7 +2071,7 @@ function renderNavigationV221(){
 }
 renderNavigationV22=renderNavigationV221;window.renderNavigationV22=renderNavigationV221;
 const _markActiveV221Base=markActiveV22;markActiveV22=function(page){_markActiveV221Base(page);document.querySelectorAll('.v221-item').forEach(b=>b.classList.toggle('active',b.dataset.page===page));document.querySelectorAll('.v221-group').forEach(g=>g.classList.toggle('is-active',!!g.querySelector('.v221-item.active')))};window.markActiveV22=markActiveV22;
-function initV221(){document.title='حساب‌یار V23 — طراحی مالی آرام و حرفه‌ای';renderNavigationV221();markActiveV22(v22CurrentPage)}
+function initV221(){document.title='حساب‌یار V23.1 — رابط پایدار موبایل و آیکون‌ها';renderNavigationV221();markActiveV22(v22CurrentPage)}
 initV221();
 </script>
 <script>
@@ -2078,7 +2122,7 @@ function renderDashboardV23(){
   const dash=$('dashboard');if(!dash)return;state=ensureV22(state);dash.classList.add('v22-dashboard-ready');
   let root=$('v22Dashboard');if(!root){dash.insertAdjacentHTML('afterbegin','<div id="v22Dashboard"></div>');root=$('v22Dashboard')}
   const name=state.profile?.displayName||'کاربر حساب‌یار',kpis=dashboardKpisV22(),series=v23ExpenseSeries(),budget=v23Budget();
-  root.className='v23-dashboard';
+  root.classList.add('page','v23-dashboard');
   root.innerHTML=`<div class="v23-dash-head"><div><h2>${isCompanyV22()?'نمای مدیریتی':'سلام، '+esc(name)}</h2><p>${isCompanyV22()?'یک نمای آرام از مهم‌ترین شاخص‌های کسب‌وکار':'یک نگاه کافی است تا بدانی امروز پولت کجاست و چه چیزی نیاز به توجه دارد.'}</p></div><div class="v23-head-actions"><button class="ghost" onclick="openDashboardConfigV22()">شخصی‌سازی</button><button class="primary" onclick="openQuickAddV22()">＋ ثبت سریع</button></div></div>
   <div class="v23-kpis">${kpis.slice(0,isCompanyV22()?6:4).map((k,i)=>`<div class="v23-kpi" data-status="${k.status||''}"><div class="v23-kpi-top"><span class="v23-kpi-label">${k.label}</span><i class="v23-kpi-icon">${iconV22(k.icon||'box')}</i></div><strong>${k.value}</strong><small>${k.note}</small></div>`).join('')}</div>
   <div class="v23-dashboard-grid"><div class="v23-col">
@@ -2092,12 +2136,77 @@ function renderDashboardV23(){
 renderDashboardV22=renderDashboardV23;window.renderDashboardV22=renderDashboardV23;
 
 function initV23(){
- document.title='حساب‌یار V23 — طراحی مالی آرام و حرفه‌ای';
+ document.title='حساب‌یار V23.1 — رابط پایدار موبایل و آیکون‌ها';
  setupV23SearchPill();setupV23SidebarGroups();renderDashboardV23();
  const app=document.querySelector('.app'); if(app)app.dataset.v23='1';
 }
 setTimeout(initV23,0);
 
+</script>
+
+<script>
+// ===== V23.1 — stable inline SVG registry and mobile shell guard =====
+const V231_ICON_PATHS={
+ home:'<path d="M3 11.2 12 4l9 7.2"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-5.5h5V20"/>',
+ transactions:'<path d="M4 7h13"/><path d="m14 4 3 3-3 3"/><path d="M20 17H7"/><path d="m10 14-3 3 3 3"/>',
+ accounts:'<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/>',
+ obligations:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+ reports:'<path d="M4 19V9"/><path d="M10 19V5"/><path d="M16 19v-7"/><path d="M22 19H2"/>',
+ settings:'<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.12-1.3l2-1.55-2-3.46-2.48 1a7 7 0 0 0-2.25-1.3L13.8 3h-4l-.35 2.39A7 7 0 0 0 7.2 6.7l-2.48-1-2 3.46 2 1.55A7 7 0 0 0 4.6 12c0 .44.04.87.12 1.3l-2 1.55 2 3.46 2.48-1a7 7 0 0 0 2.25 1.3L9.8 21h4l.35-2.39a7 7 0 0 0 2.25-1.3l2.48 1 2-3.46-2-1.55c.08-.43.12-.86.12-1.3Z"/>',
+ invoices:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+ accounting:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8M8 12h3M13 12h3M8 16h3M13 16h3"/>',
+ smart:'<path d="M12 3 9.8 8.1 4 9l4.2 4.1-1 5.8L12 16.2l4.8 2.7-1-5.8L20 9l-5.8-.9L12 3Z"/>',
+ search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',
+ chevron:'<path d="m9 18 6-6-6-6"/>',
+ calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
+ wallet:'<path d="M4 6h14a2 2 0 0 1 2 2v10H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"/><path d="M16 11h6v4h-6a2 2 0 0 1 0-4Z"/>',
+ trend:'<path d="m4 16 5-5 4 4 7-8"/><path d="M15 7h5v5"/>',
+ expense:'<path d="M12 3v18M17 8c0-2-2-3-5-3s-5 1-5 3 2 3 5 3 5 1 5 3-2 4-5 4-5-2-5-4"/>',
+ clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/>',
+ eye:'<path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6S2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.5"/>',
+ menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
+ box:'<path d="M4 7 12 3l8 4v10l-8 4-8-4V7Z"/><path d="m4 7 8 4 8-4M12 11v10"/>',
+ shield:'<path d="M12 3 20 6v6c0 5-3.4 8-8 9-4.6-1-8-4-8-9V6l8-3Z"/><path d="m9 12 2 2 4-4"/>',
+ users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+ scan:'<path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><path d="M8 12h8"/>',
+ brain:'<path d="M9 4a3 3 0 0 0-3 3v1a3 3 0 0 0-2 5 3 3 0 0 0 2 5h3M15 4a3 3 0 0 1 3 3v1a3 3 0 0 1 2 5 3 3 0 0 1-2 5h-3M9 4v16M15 4v16"/>',
+ more:'<circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none"/>',
+ mobile:'<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M10 5h4M11 18.5h2"/>',
+ star:'<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/>',
+ bank:'<path d="M3 10h18M5 10v8M9 10v8M15 10v8M19 10v8M3 18h18M12 3l9 5H3l9-5Z"/>',
+ inventory:'<path d="M4 7 12 3l8 4v10l-8 4-8-4V7Z"/><path d="m4 7 8 4 8-4M12 11v10M8 5l8 4"/>'
+};
+function iconV231(name,cls=''){
+ const body=V231_ICON_PATHS[name]||V231_ICON_PATHS.box;
+ return `<svg xmlns="http://www.w3.org/2000/svg" class="v231-icon ${cls}" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${body}</svg>`;
+}
+iconV22=iconV231;window.iconV22=iconV231;
+if(typeof V221_PAGE_ICONS==='object'){
+ V221_PAGE_ICONS.mobileHub='mobile';V221_PAGE_ICONS.assistant='brain';V221_PAGE_ICONS.smartWorkflows='smart';V221_PAGE_ICONS.inventory='inventory';V221_PAGE_ICONS.reconciliation='bank';
+}
+function repairMobileShellV231(){
+ const app=document.querySelector('.app'), main=app?.querySelector('main'), content=main?.querySelector('.content'), dash=document.getElementById('dashboard'), side=document.getElementById('sidebar'), menu=document.getElementById('mobileMenu');
+ if(dash){dash.classList.add('page','v23-dashboard');if(v22CurrentPage==='dashboard'||!document.querySelector('.page.active'))dash.classList.add('active');}
+ if(app){app.classList.remove('menu-open');app.dataset.v231='1';}
+ if(main){main.style.removeProperty('display');main.removeAttribute('hidden');}
+ if(content){content.style.removeProperty('display');content.removeAttribute('hidden');}
+ if(menu&&side){menu.onclick=()=>{side.classList.toggle('open');app?.classList.toggle('menu-open',side.classList.contains('open'));};}
+ document.querySelectorAll('.v221-item').forEach(b=>b.setAttribute('aria-label',(b.querySelector('.v221-label')?.textContent||'').trim()));
+}
+const _renderNavV231=renderNavigationV22;
+renderNavigationV22=function(){_renderNavV231();repairMobileShellV231();};window.renderNavigationV22=renderNavigationV22;
+const _renderDashV231=renderDashboardV23;
+renderDashboardV23=function(){const root=document.getElementById('dashboard');const wasActive=root?.classList.contains('active')||v22CurrentPage==='dashboard';_renderDashV231();root?.classList.add('page','v23-dashboard');root?.classList.toggle('active',wasActive);repairMobileShellV231();};
+renderDashboardV22=renderDashboardV23;window.renderDashboardV22=renderDashboardV23;
+const _goV231=goPage;
+goPage=function(id){_goV231(id);repairMobileShellV231();};window.goPage=goPage;
+function initV231(){
+ document.title='حساب‌یار V23.1 — رابط پایدار موبایل و آیکون‌ها';
+ try{renderNavigationV22();renderDashboardV23();setupV23SearchPill();setupV23SidebarGroups();repairMobileShellV231();renderMobileNavV22();}catch(e){console.error('V23.1 init',e);repairMobileShellV231();}
+}
+window.addEventListener('resize',repairMobileShellV231,{passive:true});
+setTimeout(initV231,0);
 </script>
 </body>
 </html>
