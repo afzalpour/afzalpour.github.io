@@ -1,1 +1,19 @@
-{"name":"حساب‌یار","short_name":"حساب‌یار","description":"مدیریت مالی و حسابداری شخصی و شرکتی","lang":"fa","dir":"rtl","start_url":"./index.html","scope":"./","display":"standalone","background_color":"#F3F4F7","theme_color":"#3D3B8C","icons":[{"src":"app-icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}
+{
+  "name": "حساب‌یار",
+  "short_name": "حساب‌یار",
+  "lang": "fa",
+  "dir": "rtl",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F3F4F7",
+  "theme_color": "#3D3B8C",
+  "icons": [
+    {
+      "src": "app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
