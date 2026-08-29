@@ -1,1 +1,1 @@
-حساب‌یار v13: فایل‌های داخل این پوشه را در ریشه repository afzalpour.github.io جایگزین و Commit کنید.
+فایل‌های داخل این پوشه را در ریشه Repository afzalpour.github.io جایگزین کنید.
