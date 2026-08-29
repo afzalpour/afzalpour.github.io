@@ -1,1 +1,1 @@
-محتویات این پوشه را در ریشه Repository afzalpour.github.io جایگزین کنید و Commit بزنید.
+فایل‌های این پوشه را در ریشه Repository afzalpour.github.io جایگزین کنید.
