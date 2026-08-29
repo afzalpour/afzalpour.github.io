@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "20.0",
   "metrics": {
     "available_cash": {
       "label": "نقد قابل استفاده",
@@ -19,7 +19,7 @@
     },
     "inventory_value": {
       "label": "ارزش موجودی",
-      "formula": "qty × weighted_average_cost"
+      "formula": "qty × weighted average cost"
     },
     "tax_exposure": {
       "label": "Tax Exposure",
