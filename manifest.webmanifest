@@ -1,13 +1,20 @@
 {
-  "name":"حساب‌یار — حسابداری هوشمند",
-  "short_name":"حساب‌یار",
-  "lang":"fa",
-  "dir":"rtl",
-  "start_url":"./index.html",
-  "scope":"./",
-  "display":"standalone",
-  "background_color":"#fff9fc",
-  "theme_color":"#e5484d",
-  "description":"حسابداری شخصی و شرکتی، گزارش هوشمند، OCR و دستیار مالی.",
-  "icons":[{"src":"app-icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+  "name": "حساب‌یار — حسابداری هوشمند",
+  "short_name": "حساب‌یار",
+  "lang": "fa",
+  "dir": "rtl",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff9fc",
+  "theme_color": "#e5484d",
+  "description": "حسابداری هوشمند با گزارش، OCR فارسی/انگلیسی، دستیار صوتی مقاوم و حالت آفلاین.",
+  "icons": [
+    {
+      "src": "app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
