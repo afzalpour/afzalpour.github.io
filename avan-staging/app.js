@@ -136,10 +136,143 @@ function renderAccounts(){
   page(`<div class="section-head"><div><h2>درخت حساب‌ها</h2><span class="muted">کل / معین / تفصیلی — حساب دارای گردش حذف نمی‌شود.</span></div><button class="primary" id="addAccount">＋ حساب جدید</button></div><table><thead><tr><th>کد</th><th>نام</th><th>سطح</th><th>ماهیت</th><th>وضعیت</th><th>اقدام</th></tr></thead><tbody>${rows}</tbody></table>`);
 }
 function accountModal(id=null){
-  const a=id?acct(id):null,parents=ctx.accounts.filter(x=>x.is_active&&x.level<3&&(!a||x.id!==a.id));
-  openModal(`<h2>${a?'ویرایش حساب':'حساب جدید'}</h2><form id="accountForm"><div class="form-grid"><div class="field"><label>کد</label><input name="code" value="${esc(a?.code||'')}" required></div><div class="field"><label>نام</label><input name="name" value="${esc(a?.name||'')}" required></div>${!a?`<div class="field"><label>حساب والد</label><select name="parent_id"><option value="">بدون والد (سطح کل)</option>${parents.map(p=>`<option value="${p.id}">${esc(p.code)} — ${esc(p.name)} (${levelFa[p.level]})</option>`).join('')}</select></div><div class="field"><label>گروه حساب کل</label><select name="category"><option value="asset">دارایی</option><option value="liability">بدهی</option><option value="equity">حقوق مالکانه</option><option value="income">درآمد</option><option value="expense">هزینه</option></select></div>`:''}</div><div class="form-actions"><button type="button" class="ghost" id="cancelModal">انصراف</button><button class="primary">ذخیره</button></div></form>`);
+  const a=id?acct(id):null;
+  const parents=ctx.accounts.filter(
+    x=>x.is_active&&x.level<3&&(!a||x.id!==a.id)
+  );
+
+  openModal(`
+    <h2>${a?'ویرایش حساب':'حساب جدید'}</h2>
+
+    <form id="accountForm">
+      <div class="form-grid">
+
+        <div class="field">
+          <label>کد</label>
+          <input
+            value="${a?esc(a.code):'خودکار'}"
+            disabled
+          >
+          <small>
+            ${a
+              ?'کد حساب قابل تغییر نیست.'
+              :'کد حساب پس از ذخیره به‌صورت خودکار تعیین می‌شود.'}
+          </small>
+        </div>
+
+        <div class="field">
+          <label>نام</label>
+          <input
+            name="name"
+            value="${esc(a?.name||'')}"
+            required
+          >
+        </div>
+
+        ${!a?`
+          <div class="field">
+            <label>حساب والد</label>
+            <select name="parent_id" id="accountParent" required>
+              <option value="">انتخاب حساب والد…</option>
+              ${parents.map(p=>`
+                <option value="${p.id}">
+                  ${esc(p.code)} — ${esc(p.name)} (${levelFa[p.level]})
+                </option>
+              `).join('')}
+            </select>
+          </div>
+
+          <div class="field">
+            <label>گروه حساب کل</label>
+            <input
+              id="accountCategoryPreview"
+              value="پس از انتخاب حساب والد"
+              disabled
+            >
+            <small>
+              گروه حساب به‌صورت خودکار از حساب والد تعیین می‌شود.
+            </small>
+          </div>
+        `:''}
+
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="ghost" id="cancelModal">
+          انصراف
+        </button>
+        <button class="primary">
+          ذخیره
+        </button>
+      </div>
+    </form>
+  `);
+
   Q('cancelModal').onclick=closeModal;
-  Q('accountForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);try{if(a){await C.update('accounts',{code:f.get('code').trim(),name:f.get('name').trim()},`id=eq.${a.id}&workspace_id=eq.${ctx.workspace.id}`)}else{const pid=f.get('parent_id')||null,p=pid?acct(pid):null;await C.insert('accounts',{workspace_id:ctx.workspace.id,parent_id:pid,code:f.get('code').trim(),name:f.get('name').trim(),level:p?p.level+1:1,category:p?p.category:f.get('category'),normal_balance:p?p.normal_balance:(['liability','equity','income'].includes(f.get('category'))?'credit':'debit'),is_postable:false,is_system:false})}closeModal();await reloadAndRender();toast('حساب ذخیره شد')}catch(err){showError(err)}};
+
+  if(!a){
+    Q('accountParent').onchange=()=>{
+      const p=acct(Q('accountParent').value);
+
+      Q('accountCategoryPreview').value=
+        p
+          ? `${catFa[p.category]} — از حساب والد`
+          : 'پس از انتخاب حساب والد';
+    };
+  }
+
+  Q('accountForm').onsubmit=async e=>{
+    e.preventDefault();
+
+    const f=new FormData(e.target);
+    const name=f.get('name').trim();
+
+    if(!name)
+      return toast('نام حساب الزامی است');
+
+    try{
+
+      if(a){
+
+        await C.update(
+          'accounts',
+          {
+            name:name
+          },
+          `id=eq.${a.id}&workspace_id=eq.${ctx.workspace.id}`
+        );
+
+      }else{
+
+        const pid=f.get('parent_id');
+
+        if(!pid)
+          return toast('حساب والد را انتخاب کنید');
+
+        const p=acct(pid);
+
+        if(!p)
+          return toast('حساب والد معتبر نیست');
+
+        await C.insert(
+          'accounts',
+          {
+            workspace_id:ctx.workspace.id,
+            parent_id:pid,
+            name:name,
+            is_system:false
+          }
+        );
+      }
+
+      closeModal();
+      await reloadAndRender();
+      toast('حساب ذخیره شد');
+
+    }catch(err){
+      showError(err);
+    }
+  };
 }
 async function toggleArchive(id){const a=acct(id),wasActive=a.is_active;await C.update('accounts',{is_active:!wasActive},`id=eq.${id}&workspace_id=eq.${ctx.workspace.id}`);await reloadAndRender();toast(wasActive?'حساب بایگانی شد':'حساب فعال شد')}
 async function deleteAccount(id){if(!confirm('این حساب حذف شود؟ حساب دارای گردش یا زیرحساب حذف نمی‌شود.'))return;try{await C.remove('accounts',`id=eq.${id}&workspace_id=eq.${ctx.workspace.id}`);await reloadAndRender();toast('حساب حذف شد')}catch(e){showError(e)}}
