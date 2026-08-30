@@ -2130,51 +2130,355 @@ function reverseModal(id){
   const e=ctx.entries.find(x=>x.id===id);openModal(`<h2>برگشت سند ${e.journal_no}</h2><form id="reverseForm"><div class="form-grid"><div class="field"><label>تاریخ برگشت</label><input type="date" name="date" value="${today()}" required></div><div class="field"><label>علت</label><input name="reason" value="برگشت سند" required></div></div><div class="error-box">سند اصلی حذف یا ویرایش نمی‌شود؛ یک سند معکوس جدید Posted خواهد شد.</div><div class="form-actions"><button type="button" class="ghost" id="cancelModal">انصراف</button><button class="danger">ثبت سند برگشتی</button></div></form>`);Q('cancelModal').onclick=closeModal;Q('reverseForm').onsubmit=async ev=>{ev.preventDefault();const f=new FormData(ev.target);try{await C.rpc('reverse_journal_entry',{jid:id,reverse_date:f.get('date'),reason:f.get('reason')});closeModal();await reloadAndRender();toast('سند برگشتی ثبت شد')}catch(err){showError(err)}};
 }
 
-if(kind==='quick'){
+function operationModal(kind){
+
+  if(kind==='quick'){
+
+    openModal(`
+      <h2>ثبت سریع</h2>
+
+      <div class="summary-strip">
+
+        <button
+          class="good-btn"
+          data-op="receipt"
+        >
+          دریافت
+        </button>
+
+        <button
+          class="danger"
+          data-op="payment"
+        >
+          پرداخت
+        </button>
+
+        <button
+          class="ghost"
+          data-op="transfer"
+        >
+          انتقال
+        </button>
+
+        <button
+          class="primary"
+          data-op="journal"
+        >
+          سند دستی
+        </button>
+
+        <button
+          class="good-btn"
+          data-op="sale_invoice"
+        >
+          فاکتور فروش
+        </button>
+
+        <button
+          class="primary"
+          data-op="purchase_invoice"
+        >
+          فاکتور خرید
+        </button>
+
+      </div>
+    `);
+
+    document
+      .querySelectorAll('[data-op]')
+      .forEach(
+        b=>b.onclick=async()=>{
+
+          if(b.dataset.op==='journal'){
+
+            await navigate('journal');
+            journalModal();
+
+          }else if(
+            b.dataset.op==='sale_invoice'||
+            b.dataset.op==='purchase_invoice'
+          ){
+
+            await navigate('invoices');
+
+            invoiceModal(
+              b.dataset.op==='sale_invoice'
+                ?'sale'
+                :'purchase'
+            );
+
+          }else{
+
+            operationModal(
+              b.dataset.op
+            );
+          }
+        }
+      );
+
+    return;
+  }
+
+  const fin=financialPostable();
+
+  if(!fin.length)
+    return toast(
+      'حساب بانک/صندوق فعال پیدا نشد'
+    );
+
+  const title=
+    kind==='receipt'
+      ?'دریافت'
+      :kind==='payment'
+        ?'پرداخت'
+        :'انتقال';
+
+  const defCounter=
+    kind==='receipt'
+      ?role('default_income')
+      :role('default_expense');
+
+  const finIds=
+    new Set(
+      fin.map(a=>a.id)
+    );
+
   openModal(`
-    <h2>ثبت سریع</h2>
-    <div class="summary-strip">
-      <button class="good-btn" data-op="receipt">دریافت</button>
-      <button class="danger" data-op="payment">پرداخت</button>
-      <button class="ghost" data-op="transfer">انتقال</button>
-      <button class="primary" data-op="journal">سند دستی</button>
-      <button class="good-btn" data-op="sale_invoice">فاکتور فروش</button>
-      <button class="primary" data-op="purchase_invoice">فاکتور خرید</button>
-    </div>
+    <h2>${title}</h2>
+
+    <form id="opForm">
+
+      <div class="form-grid">
+
+        <div class="field">
+          <label>تاریخ</label>
+
+          <input
+            type="date"
+            name="date"
+            value="${today()}"
+            required
+          >
+
+          <small>
+            جلالی: ${dateFa(today())}
+          </small>
+        </div>
+
+        <div class="field">
+          <label>مبلغ</label>
+
+          <input
+            name="amount"
+            inputmode="numeric"
+            required
+          >
+        </div>
+
+        ${
+          kind==='receipt'
+            ?`
+              <div class="field">
+                <label>واریز به</label>
+
+                <select name="primary">
+                  ${
+                    accountOptions(
+                      role('bank'),
+                      a=>finIds.has(a.id)
+                    )
+                  }
+                </select>
+              </div>
+
+              <div class="field">
+                <label>حساب مقابل</label>
+
+                <select name="counter">
+                  ${
+                    accountOptions(
+                      defCounter,
+                      a=>a.is_active&&a.is_postable
+                    )
+                  }
+                </select>
+              </div>
+            `
+            :kind==='payment'
+              ?`
+                <div class="field">
+                  <label>پرداخت از</label>
+
+                  <select name="primary">
+                    ${
+                      accountOptions(
+                        role('bank'),
+                        a=>finIds.has(a.id)
+                      )
+                    }
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label>حساب هزینه/مقابل</label>
+
+                  <select name="counter">
+                    ${
+                      accountOptions(
+                        defCounter,
+                        a=>a.is_active&&a.is_postable
+                      )
+                    }
+                  </select>
+                </div>
+              `
+              :`
+                <div class="field">
+                  <label>از حساب</label>
+
+                  <select name="primary">
+                    ${
+                      accountOptions(
+                        role('bank'),
+                        a=>finIds.has(a.id)
+                      )
+                    }
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label>به حساب</label>
+
+                  <select name="counter">
+                    ${
+                      accountOptions(
+                        role('cash'),
+                        a=>finIds.has(a.id)
+                      )
+                    }
+                  </select>
+                </div>
+              `
+        }
+
+        <div class="field">
+          <label>طرف‌حساب</label>
+
+          <select name="party">
+            ${partyOptions()}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>شرح</label>
+
+          <input
+            name="description"
+            value="${title}"
+            required
+          >
+        </div>
+
+      </div>
+
+      <div class="form-actions">
+
+        <button
+          type="button"
+          class="ghost"
+          id="cancelModal"
+        >
+          انصراف
+        </button>
+
+        <button class="primary">
+          ثبت قطعی
+        </button>
+
+      </div>
+
+    </form>
   `);
 
-  document
-    .querySelectorAll('[data-op]')
-    .forEach(b=>b.onclick=async()=>{
+  Q('cancelModal').onclick=
+    closeModal;
 
-      if(b.dataset.op==='journal'){
-        await navigate('journal');
-        journalModal();
+  Q('opForm').onsubmit=
+    async e=>{
 
-      }else if(
-        b.dataset.op==='sale_invoice'||
-        b.dataset.op==='purchase_invoice'
-      ){
-        await navigate('invoices');
+      e.preventDefault();
 
-        invoiceModal(
-          b.dataset.op==='sale_invoice'
-            ?'sale'
-            :'purchase'
+      const f=
+        new FormData(e.target);
+
+      const amt=
+        cleanAmount(
+          f.get('amount')
         );
 
-      }else{
-        operationModal(b.dataset.op);
-      }
-    });
+      const primary=
+        f.get('primary');
 
-  return;
-}{
-  if(kind==='quick'){openModal(`<h2>ثبت سریع</h2><div class="summary-strip"><button class="good-btn" data-op="receipt">دریافت</button><button class="danger" data-op="payment">پرداخت</button><button class="ghost" data-op="transfer">انتقال</button><button class="primary" data-op="journal">سند دستی</button></div>`);document.querySelectorAll('[data-op]').forEach(b=>b.onclick=async()=>{if(b.dataset.op==='journal'){await navigate('journal');journalModal()}else operationModal(b.dataset.op)});return}
-  const fin=financialPostable();if(!fin.length)return toast('حساب بانک/صندوق فعال پیدا نشد');const title=kind==='receipt'?'دریافت':kind==='payment'?'پرداخت':'انتقال',defCounter=kind==='receipt'?role('default_income'):role('default_expense');
-  const finIds=new Set(fin.map(a=>a.id));
-  openModal(`<h2>${title}</h2><form id="opForm"><div class="form-grid"><div class="field"><label>تاریخ</label><input type="date" name="date" value="${today()}" required><small>جلالی: ${dateFa(today())}</small></div><div class="field"><label>مبلغ</label><input name="amount" inputmode="numeric" required></div>${kind==='receipt'?`<div class="field"><label>واریز به</label><select name="primary">${accountOptions(role('bank'),a=>finIds.has(a.id))}</select></div><div class="field"><label>حساب مقابل</label><select name="counter">${accountOptions(defCounter,a=>a.is_active&&a.is_postable)}</select></div>`:kind==='payment'?`<div class="field"><label>پرداخت از</label><select name="primary">${accountOptions(role('bank'),a=>finIds.has(a.id))}</select></div><div class="field"><label>حساب هزینه/مقابل</label><select name="counter">${accountOptions(defCounter,a=>a.is_active&&a.is_postable)}</select></div>`:`<div class="field"><label>از حساب</label><select name="primary">${accountOptions(role('bank'),a=>finIds.has(a.id))}</select></div><div class="field"><label>به حساب</label><select name="counter">${accountOptions(role('cash'),a=>finIds.has(a.id))}</select></div>`}<div class="field"><label>طرف‌حساب</label><select name="party">${partyOptions()}</select></div><div class="field"><label>شرح</label><input name="description" value="${title}" required></div></div><div class="form-actions"><button type="button" class="ghost" id="cancelModal">انصراف</button><button class="primary">ثبت قطعی</button></div></form>`);
-  Q('cancelModal').onclick=closeModal;Q('opForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),amt=cleanAmount(f.get('amount')),primary=f.get('primary'),counter=f.get('counter');if(bi(amt)<=0n)return toast('مبلغ معتبر وارد کنید');if(primary===counter)return toast('حساب مبدأ و مقصد/مقابل باید متفاوت باشند');try{await C.rpc('post_financial_operation',{p_workspace_id:ctx.workspace.id,p_fiscal_year_id:ctx.fiscalYear.id,p_tx_date:f.get('date'),p_tx_type:kind,p_amount:amt,p_primary_account_id:primary,p_counterpart_account_id:counter,p_party_id:f.get('party')||null,p_description:f.get('description')});closeModal();await reloadAndRender();toast(`${title} ثبت شد`)}catch(err){showError(err)}};
+      const counter=
+        f.get('counter');
+
+      if(bi(amt)<=0n)
+        return toast(
+          'مبلغ معتبر وارد کنید'
+        );
+
+      if(primary===counter)
+        return toast(
+          'حساب مبدأ و مقصد/مقابل باید متفاوت باشند'
+        );
+
+      try{
+
+        await C.rpc(
+          'post_financial_operation',
+          {
+            p_workspace_id:
+              ctx.workspace.id,
+
+            p_fiscal_year_id:
+              ctx.fiscalYear.id,
+
+            p_tx_date:
+              f.get('date'),
+
+            p_tx_type:
+              kind,
+
+            p_amount:
+              amt,
+
+            p_primary_account_id:
+              primary,
+
+            p_counterpart_account_id:
+              counter,
+
+            p_party_id:
+              f.get('party')||null,
+
+            p_description:
+              f.get('description')
+          }
+        );
+
+        closeModal();
+
+        await reloadAndRender();
+
+        toast(
+          `${title} ثبت شد`
+        );
+
+      }catch(err){
+
+        showError(err);
+      }
+    };
 }
 
 function reportToolbar(){return `<div class="report-toolbar card"><div class="field"><label>از تاریخ</label><input id="reportFrom" type="date" value="${reportState.from}"><small>${dateFa(reportState.from)}</small></div><div class="field"><label>تا تاریخ</label><input id="reportTo" type="date" value="${reportState.to}"><small>${dateFa(reportState.to)}</small></div><button class="primary" id="applyReportRange">اعمال بازه</button></div>`}
