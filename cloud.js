@@ -31,6 +31,77 @@
   }
   async function token(){const s=await refreshIfNeeded();return s?.access_token||null}
   async function authed(path,opts={}){const t=await token();if(!t)throw new Error('AUTH_REQUIRED');return raw(path,{...opts,token:t})}
+  function consumeAuthCallback(){
+  const rawHash=String(location.hash||'').replace(/^#/,'');
+  if(!rawHash)return null;
+
+  const p=new URLSearchParams(rawHash);
+
+  const access_token=p.get('access_token');
+  const refresh_token=p.get('refresh_token');
+
+  if(!access_token)return null;
+
+  const expires_in=Number(p.get('expires_in')||0);
+
+  const expires_at=
+    Number(p.get('expires_at')||0)||
+    Math.floor(Date.now()/1000)+expires_in;
+
+  const s={
+    access_token,
+    refresh_token,
+    expires_in,
+    expires_at,
+    token_type:p.get('token_type')||'bearer'
+  };
+
+  saveSession(s);
+
+  const type=p.get('type')||'';
+
+  history.replaceState(
+    null,
+    document.title,
+    location.pathname+location.search
+  );
+
+  return {
+    type,
+    session:s
+  };
+}
+
+async function requestPasswordReset(email,redirectTo){
+  const rt=
+    redirectTo||
+    cfg.authRedirectUrl||
+    location.origin+location.pathname;
+
+  return raw(
+    `/auth/v1/recover?redirect_to=${encodeURIComponent(rt)}`,
+    {
+      method:'POST',
+      body:{email}
+    }
+  );
+}
+
+async function updatePassword(password){
+  const t=await token();
+
+  if(!t)
+    throw new Error('AUTH_REQUIRED');
+
+  return raw(
+    '/auth/v1/user',
+    {
+      method:'PUT',
+      token:t,
+      body:{password}
+    }
+  );
+}
   async function signup(email,password){
     const data=await raw('/auth/v1/signup',{method:'POST',body:{email,password,data:{app:'avan'}}});
     if(data?.access_token)saveSession(data);
@@ -45,5 +116,23 @@
   async function update(table,patch,query,selectFields='*'){return authed(`/rest/v1/${table}?${query}&select=${enc(selectFields)}`,{method:'PATCH',body:patch,prefer:'return=representation'})}
   async function remove(table,query){return authed(`/rest/v1/${table}?${query}`,{method:'DELETE',prefer:'return=representation'})}
   async function rpc(name,args={}){return authed(`/rest/v1/rpc/${name}`,{method:'POST',body:args})}
-  g.AvanCloud={cfg,SESSION_KEY,session,saveSession,signup,login,logout,user,select,insert,update,remove,rpc,token};
+  g.AvanCloud={
+  cfg,
+  SESSION_KEY,
+  session,
+  saveSession,
+  consumeAuthCallback,
+  requestPasswordReset,
+  updatePassword,
+  signup,
+  login,
+  logout,
+  user,
+  select,
+  insert,
+  update,
+  remove,
+  rpc,
+  token
+};
 })(window);
