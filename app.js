@@ -1313,34 +1313,41 @@ function renderInvoices(){
               >
                 مشاهده
               </button>
-
               ${
-                i.status==='draft'
-                  ?`
-                    <button
-                      class="ghost small"
-                      data-edit-invoice="${i.id}"
-                    >
-                      ویرایش
-                    </button>
+  i.status==='draft'
+    ?`
+      <button
+        class="ghost small"
+        data-edit-invoice="${i.id}"
+      >
+        ویرایش
+      </button>
 
-                    <button
-                      class="good-btn small"
-                      data-post-invoice="${i.id}"
-                    >
-                      ثبت قطعی
-                    </button>
+      <button
+        class="good-btn small"
+        data-post-invoice="${i.id}"
+      >
+        ثبت قطعی
+      </button>
 
-                    <button
-                      class="danger small"
-                      data-delete-invoice="${i.id}"
-                    >
-                      حذف
-                    </button>
-                  `
-                  :''
-              }
-
+      <button
+        class="danger small"
+        data-delete-invoice="${i.id}"
+      >
+        حذف
+      </button>
+    `
+    :i.status==='posted'
+      ?`
+        <button
+          class="danger small"
+          data-reverse-invoice="${i.id}"
+        >
+          برگشت فاکتور
+        </button>
+      `
+      :''
+}
             </div>
           </td>
 
@@ -1872,6 +1879,110 @@ function viewInvoice(id){
   Q('cancelModal').onclick=
     closeModal;
 }
+function reverseInvoiceModal(id){
+
+  const inv=invoice(id);
+
+  if(!inv)
+    return toast('فاکتور پیدا نشد');
+
+  if(inv.status!=='posted')
+    return toast('فقط فاکتور ثبت‌شده قابل برگشت است');
+
+  if(!inv.journal_entry_id)
+    return toast('سند حسابداری فاکتور پیدا نشد');
+
+  openModal(`
+    <h2>
+      برگشت فاکتور
+      ${invoiceTypeFa[inv.invoice_type]}
+      ${inv.invoice_no??''}
+    </h2>
+
+    <div class="info-box">
+      با برگشت فاکتور، سند حسابداری اصلی حذف نمی‌شود؛
+      یک سند معکوس جدید ثبت می‌شود و وضعیت فاکتور نیز
+      به «برگشتی» تغییر می‌کند.
+    </div>
+
+    <form id="reverseInvoiceForm">
+
+      <div class="form-grid">
+
+        <div class="field">
+          <label>تاریخ برگشت</label>
+          <input
+            type="date"
+            name="date"
+            value="${today()}"
+            required
+          >
+        </div>
+
+        <div class="field">
+          <label>علت برگشت</label>
+          <input
+            name="reason"
+            value="برگشت فاکتور ${inv.invoice_no??''}"
+            required
+          >
+        </div>
+
+      </div>
+
+      <div class="form-actions">
+
+        <button
+          type="button"
+          class="ghost"
+          id="cancelModal"
+        >
+          انصراف
+        </button>
+
+        <button
+          class="danger"
+        >
+          ثبت برگشت فاکتور
+        </button>
+
+      </div>
+
+    </form>
+  `);
+
+  Q('cancelModal').onclick=closeModal;
+
+  Q('reverseInvoiceForm').onsubmit=
+    async ev=>{
+
+      ev.preventDefault();
+
+      const f=
+        new FormData(ev.target);
+
+      try{
+
+        await C.rpc(
+          'reverse_journal_entry',
+          {
+            jid:inv.journal_entry_id,
+            reverse_date:f.get('date'),
+            reason:f.get('reason')
+          }
+        );
+
+        closeModal();
+
+        await reloadAndRender();
+
+        toast('فاکتور برگشت داده شد');
+
+      }catch(err){
+        showError(err);
+      }
+    };
+}  
 function renderJournal(){
   setTitle('اسناد حسابداری');
   const rows=ctx.entries.map(e=>`<tr><td>${e.journal_no??'پیش‌نویس'}</td><td>${dateFa(e.entry_date)}</td><td>${esc(e.description)}</td><td>${esc(e.source_type)}</td><td><span class="badge ${e.status}">${statusFa[e.status]||esc(e.status)}</span></td><td><div class="row-actions"><button class="ghost small" data-view-journal="${e.id}">مشاهده</button>${e.status==='draft'?`<button class="ghost small" data-edit-journal="${e.id}">ویرایش</button><button class="good-btn small" data-post-journal="${e.id}">ثبت قطعی</button><button class="danger small" data-delete-journal="${e.id}">حذف</button>`:e.status==='posted'?`<button class="danger small" data-reverse-journal="${e.id}">برگشت سند</button>`:''}</div></td></tr>`).join('');
@@ -1999,7 +2110,14 @@ document
   .querySelectorAll('[data-delete-invoice]')
   .forEach(
     b=>b.onclick=async()=>{
-
+document
+  .querySelectorAll('[data-reverse-invoice]')
+  .forEach(
+    b=>b.onclick=()=>
+      reverseInvoiceModal(
+        b.dataset.reverseInvoice
+      )
+  );
       if(
         !confirm(
           'پیش‌نویس فاکتور حذف شود؟'
