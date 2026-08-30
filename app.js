@@ -2021,7 +2021,46 @@ function reverseModal(id){
   const e=ctx.entries.find(x=>x.id===id);openModal(`<h2>برگشت سند ${e.journal_no}</h2><form id="reverseForm"><div class="form-grid"><div class="field"><label>تاریخ برگشت</label><input type="date" name="date" value="${today()}" required></div><div class="field"><label>علت</label><input name="reason" value="برگشت سند" required></div></div><div class="error-box">سند اصلی حذف یا ویرایش نمی‌شود؛ یک سند معکوس جدید Posted خواهد شد.</div><div class="form-actions"><button type="button" class="ghost" id="cancelModal">انصراف</button><button class="danger">ثبت سند برگشتی</button></div></form>`);Q('cancelModal').onclick=closeModal;Q('reverseForm').onsubmit=async ev=>{ev.preventDefault();const f=new FormData(ev.target);try{await C.rpc('reverse_journal_entry',{jid:id,reverse_date:f.get('date'),reason:f.get('reason')});closeModal();await reloadAndRender();toast('سند برگشتی ثبت شد')}catch(err){showError(err)}};
 }
 
-function operationModal(kind){
+if(kind==='quick'){
+  openModal(`
+    <h2>ثبت سریع</h2>
+    <div class="summary-strip">
+      <button class="good-btn" data-op="receipt">دریافت</button>
+      <button class="danger" data-op="payment">پرداخت</button>
+      <button class="ghost" data-op="transfer">انتقال</button>
+      <button class="primary" data-op="journal">سند دستی</button>
+      <button class="good-btn" data-op="sale_invoice">فاکتور فروش</button>
+      <button class="primary" data-op="purchase_invoice">فاکتور خرید</button>
+    </div>
+  `);
+
+  document
+    .querySelectorAll('[data-op]')
+    .forEach(b=>b.onclick=async()=>{
+
+      if(b.dataset.op==='journal'){
+        await navigate('journal');
+        journalModal();
+
+      }else if(
+        b.dataset.op==='sale_invoice'||
+        b.dataset.op==='purchase_invoice'
+      ){
+        await navigate('invoices');
+
+        invoiceModal(
+          b.dataset.op==='sale_invoice'
+            ?'sale'
+            :'purchase'
+        );
+
+      }else{
+        operationModal(b.dataset.op);
+      }
+    });
+
+  return;
+}{
   if(kind==='quick'){openModal(`<h2>ثبت سریع</h2><div class="summary-strip"><button class="good-btn" data-op="receipt">دریافت</button><button class="danger" data-op="payment">پرداخت</button><button class="ghost" data-op="transfer">انتقال</button><button class="primary" data-op="journal">سند دستی</button></div>`);document.querySelectorAll('[data-op]').forEach(b=>b.onclick=async()=>{if(b.dataset.op==='journal'){await navigate('journal');journalModal()}else operationModal(b.dataset.op)});return}
   const fin=financialPostable();if(!fin.length)return toast('حساب بانک/صندوق فعال پیدا نشد');const title=kind==='receipt'?'دریافت':kind==='payment'?'پرداخت':'انتقال',defCounter=kind==='receipt'?role('default_income'):role('default_expense');
   const finIds=new Set(fin.map(a=>a.id));
