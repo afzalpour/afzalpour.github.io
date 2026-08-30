@@ -24,3 +24,99 @@ table{width:100%;border-collapse:collapse;background:var(--surface);border:1px s
 .invoice-lines{display:flex;flex-direction:column;gap:9px;margin-top:14px}.invoice-line{display:grid;grid-template-columns:1.6fr 1.6fr .7fr 1fr 1fr 1fr auto;gap:8px;align-items:end;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--surface2)}.invoice-line-total{font-size:12px;font-weight:800;padding:11px 4px;white-space:nowrap}.invoice-grand-total{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;padding:11px 12px;border-radius:10px;background:var(--brand-soft);font-size:14px}.invoice-grand-total b{color:var(--brand2)}
 @media(max-width:900px){.invoice-line{grid-template-columns:1fr 1fr}.invoice-line .field:first-child,.invoice-line .field:nth-child(2){grid-column:1/-1}.invoice-line-total{align-self:end}.invoice-line>[data-remove-invoice-line]{align-self:end;min-height:42px}}
 @media(max-width:520px){.invoice-line{grid-template-columns:1fr 1fr}.invoice-line .field{min-width:0}}
+.jalali-picker-btn{
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:var(--surface2);
+  color:var(--brand2);
+  padding:7px 10px;
+  font-size:12px;
+  font-weight:700;
+  min-height:36px;
+}
+
+.jalali-picker-layer{
+  position:fixed;
+  inset:0;
+  z-index:260;
+  display:grid;
+  place-items:center;
+  padding:16px;
+  background:rgba(15,15,25,.22);
+  backdrop-filter:blur(2px);
+}
+
+.jalali-picker{
+  width:min(370px,94vw);
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:14px;
+  box-shadow:0 24px 80px -26px rgba(10,10,25,.65);
+}
+
+.jalali-picker-head{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  gap:8px;
+  margin-bottom:12px;
+}
+
+.jalali-picker-head strong{
+  text-align:center;
+  white-space:nowrap;
+}
+
+.jalali-picker-week,
+.jalali-picker-days{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:5px;
+}
+
+.jalali-picker-week{
+  margin-bottom:5px;
+}
+
+.jalali-picker-week span{
+  text-align:center;
+  font-size:11px;
+  color:var(--muted);
+  padding:5px 0;
+}
+
+.jalali-day{
+  border:1px solid transparent;
+  background:transparent;
+  border-radius:9px;
+  min-height:38px;
+  color:var(--ink);
+}
+
+.jalali-day:hover{
+  background:var(--brand-soft);
+}
+
+.jalali-day.today{
+  border-color:var(--brand);
+}
+
+.jalali-day.selected{
+  background:var(--brand);
+  color:#fff;
+  font-weight:800;
+}
+
+.jalali-day-empty{
+  min-height:38px;
+}
+
+.jalali-picker-actions{
+  display:flex;
+  gap:7px;
+  justify-content:flex-end;
+  margin-top:12px;
+  padding-top:10px;
+  border-top:1px solid var(--line);
+}
