@@ -823,7 +823,7 @@ Q('loginTab').onclick=()=>setAuthMode('login');Q('signupTab').onclick=()=>setAut
 Q('authForm').onsubmit=async e=>{e.preventDefault();const email=Q('authEmail').value.trim(),password=Q('authPassword').value;Q('authSubmit').disabled=true;Q('authStatus').textContent='در حال ارتباط با Supabase…';try{if(authMode==='login'){await C.login(email,password);Q('authStatus').textContent='ورود موفق';await showApp()}else{const r=await C.signup(email,password);if(r?.access_token){Q('authStatus').textContent='حساب ساخته شد.';await showApp()}else{setAuthMode('login');Q('authStatus').innerHTML='<span class="success-box" style="display:block">ثبت‌نام انجام شد. در صورت فعال بودن تأیید ایمیل، ابتدا ایمیل را تأیید کنید.</span>'}}}catch(err){Q('authStatus').innerHTML=`<span class="error-box" style="display:block">${esc(msgFor(err))}</span>`}finally{Q('authSubmit').disabled=false}};
 
 async function navigate(p){currentPage=p;setNav(p);closeModal();await render()}
-async function render(){try{if(currentPage==='dashboard')await renderDashboard();else if(currentPage==='accounts')renderAccounts();else if(currentPage==='parties')renderParties();else if(currentPage==='journal')renderJournal();else if(cuasync function render(){
+async function render(){
   try{
     if(currentPage==='dashboard')await renderDashboard();
     else if(currentPage==='accounts')renderAccounts();
@@ -834,13 +834,11 @@ async function render(){try{if(currentPage==='dashboard')await renderDashboard()
     else renderSettings();
 
     bind();
-
   }catch(e){
     page(`<div class="error-box">${esc(msgFor(e))}</div>`);
     console.error(e);
   }
-}rrentPage==='reports')await renderReports();else renderSettings();bind()}catch(e){page(`<div class="error-box">${esc(msgFor(e))}</div>`);console.error(e)}}
-
+}
 async function renderDashboard(){
   setTitle('داشبورد');page('<div class="loading">در حال محاسبه از Ledger…</div>');
   const wid=ctx.workspace.id,from=ctx.fiscalYear.date_from,to=today();
@@ -2036,29 +2034,23 @@ document
   document.querySelectorAll('[data-reverse-journal]').forEach(b=>b.onclick=()=>reverseModal(b.dataset.reverseJournal));
   document.querySelectorAll('[data-report]').forEach(b=>b.onclick=async()=>{reportState.tab=b.dataset.report;await renderReports()});
   document.querySelectorAll('[data-reopen-period]').forEach(b=>b.onclick=async()=>{if(!confirm('این دوره دوباره باز شود؟'))return;try{await C.rpc('reopen_fiscal_period',{pid:b.dataset.reopenPeriod});await reloadAndRender();toast('دوره باز شد')}catch(e){showError(e)}});
-  if(Q('addAccount'))Q('addAccount').onclick=()=>accountModal();if(Q('addParty'))Q('addParty'if(Q('addAccount'))
-  Q('addAccount').onclick=
-    ()=>accountModal();
+ if(Q('addAccount'))
+  Q('addAccount').onclick=()=>accountModal();
 
 if(Q('addParty'))
-  Q('addParty').onclick=
-    ()=>partyModal();
+  Q('addParty').onclick=()=>partyModal();
 
 if(Q('newSaleInvoice'))
-  Q('newSaleInvoice').onclick=
-    ()=>invoiceModal('sale');
+  Q('newSaleInvoice').onclick=()=>invoiceModal('sale');
 
 if(Q('newPurchaseInvoice'))
-  Q('newPurchaseInvoice').onclick=
-    ()=>invoiceModal('purchase');
+  Q('newPurchaseInvoice').onclick=()=>invoiceModal('purchase');
 
 if(Q('addJournal'))
-  Q('addJournal').onclick=
-    ()=>journalModal();
+  Q('addJournal').onclick=()=>journalModal();
 
 if(Q('closePeriodBtn'))
-  Q('closePeriodBtn').onclick=
-    closePeriodModal;).onclick=()=>partyModal();if(Q('addJournal'))Q('addJournal').onclick=()=>journalModal();if(Q('closePeriodBtn'))Q('closePeriodBtn').onclick=closePeriodModal;
+  Q('closePeriodBtn').onclick=closePeriodModal;
   if(Q('applyReportRange'))Q('applyReportRange').onclick=async()=>{const f=Q('reportFrom').value,t=Q('reportTo').value;if(!f||!t||f>t)return toast('بازه گزارش معتبر نیست');reportState.from=f;reportState.to=t;await renderReports()};
   if(Q('ledgerAccount'))Q('ledgerAccount').onchange=()=>refreshLedger().catch(showError);
   if(Q('logoutBtn'))Q('logoutBtn').onclick=async()=>{await C.logout();location.reload()};
