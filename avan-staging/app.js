@@ -378,7 +378,6 @@ function openModal(html){
   Q('modalBackdrop').hidden=false;
   document.body.classList.add('mobile-scroll-lock');
 }
-}html){Q('modal').innerHTML=html;Q('modalBackdrop').hidden=false;document.body.classList.add('mobile-scroll-lock')}
 function closeModal(){Q('modalBackdrop').hidden=true;Q('modal').innerHTML='';document.body.classList.remove('mobile-scroll-lock')}
 Q('modalBackdrop').addEventListener('click',e=>{if(e.target===Q('modalBackdrop'))closeModal()});
 function setTitle(t){Q('pageTitle').textContent=t;Q('breadcrumb').textContent=`آوان › ${t}`}
