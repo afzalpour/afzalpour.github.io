@@ -4,8 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#3D3B8C" />
-  <meta name="robots" content="noindex,nofollow" />
-  <title>آوان — Avan Core 1.0 RC1</title>
+    <title>آوان — مدیریت مالی و حسابداری</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -20,6 +19,7 @@
         <div class="field"><label>ایمیل</label><input id="authEmail" type="email" autocomplete="email" required /></div>
         <div class="field" style="margin-top:10px"><label>رمز عبور</label><input id="authPassword" type="password" minlength="6" autocomplete="current-password" required /></div>
         <button class="primary" id="authSubmit" style="width:100%;margin-top:16px">ورود</button>
+        <button type="button" class="ghost" id="forgotPasswordBtn" style="width:100%;margin-top:8px">فراموشی رمز عبور</button>
       </form>
       <div class="auth-status" id="authStatus"></div>
     </div>
@@ -34,7 +34,7 @@
       <section class="content" id="content"><div class="loading">در حال اتصال به فضای مالی…</div></section>
     </main>
     <aside class="sidebar">
-      <div class="brand"><div class="brand-mark">آ</div><div><strong>آوان</strong><span>Core 1.0 — RC1</span></div></div>
+      <div class="brand"><div class="brand-mark">آ</div><div><strong>آوان</strong><span>Core 1.0</span></div></div>
       <nav class="nav" id="nav">
         <button data-page="dashboard" class="active"><span>⌂</span>داشبورد</button>
         <div class="nav-label">ثبت مالی</div>
