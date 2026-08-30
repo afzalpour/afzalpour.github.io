@@ -372,20 +372,21 @@ function msgFor(e){
 }
 function toast(t){const el=Q('toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2800)}
 function showError(e,where=''){console.error(where,e);toast(msgFor(e))}
-function openModal(function openModal(html){
+function openModal(html){
   Q('modal').innerHTML=html;
   jalalizeDateInputs(Q('modal'));
   Q('modalBackdrop').hidden=false;
   document.body.classList.add('mobile-scroll-lock');
+}
 }html){Q('modal').innerHTML=html;Q('modalBackdrop').hidden=false;document.body.classList.add('mobile-scroll-lock')}
 function closeModal(){Q('modalBackdrop').hidden=true;Q('modal').innerHTML='';document.body.classList.remove('mobile-scroll-lock')}
 Q('modalBackdrop').addEventListener('click',e=>{if(e.target===Q('modalBackdrop'))closeModal()});
 function setTitle(t){Q('pageTitle').textContent=t;Q('breadcrumb').textContent=`آوان › ${t}`}
 function setNav(page){document.querySelectorAll('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page))}
-function page(function page(html){
+function page(html){
   Q('content').innerHTML=html;
   jalalizeDateInputs(Q('content'));
-}html){Q('content').innerHTML=html}
+}
 const acct=id=>ctx.accounts.find(a=>a.id===id);
 const party=id=>ctx.parties.find(p=>p.id===id);
 const invoice=id=>ctx.invoices.find(x=>x.id===id);
