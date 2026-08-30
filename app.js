@@ -9,8 +9,8 @@ const cleanAmount=v=>faDigits(v).replace(/[٬,\s]/g,'').replace(/[^0-9-]/g,'');
 const bi=v=>{try{return BigInt(cleanAmount(v)||'0')}catch{return 0n}};
 const money=v=>{let n=bi(v),sign=n<0n?'-':'';if(n<0n)n=-n;return sign+n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,'٬')+' تومان'};
 const today=()=>new Date().toISOString().slice(0,10);
-const dateFa=const pad2=n=>Strconst dateFa=s=>{try{return new Intl.DateTimeFormat('fa-IR-u-ca-persian',{year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(s+'T12:00:00'))}catch{return s||'—'}};
-const pad2=n=>String(n).padStart(2,'0');ing(n).padStart(2,'0');
+const dateFa=s=>{try{return new Intl.DateTimeFormat('fa-IR-u-ca-persian',{year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(s+'T12:00:00'))}catch{return s||'—'}};
+const pad2=n=>String(n).padStart(2,'0');
 const jDiv=(a,b)=>Math.trunc(a/b);
 const jMod=(a,b)=>a-Math.trunc(a/b)*b;
 
