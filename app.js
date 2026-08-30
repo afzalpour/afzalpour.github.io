@@ -744,6 +744,7 @@ function page(html){
 }
 const acct=id=>ctx.accounts.find(a=>a.id===id);
 const party=id=>ctx.parties.find(p=>p.id===id);
+const invoice=id=>ctx.invoices.find(x=>x.id===id);
 const role=k=>ctx.roles[k];
 const activePostable=()=>ctx.accounts.filter(a=>a.is_active&&a.is_postable);
 const financialLedgerIds=()=>new Set(ctx.financialAccounts.filter(f=>f.is_active).map(f=>f.ledger_account_id));
@@ -822,7 +823,23 @@ Q('loginTab').onclick=()=>setAuthMode('login');Q('signupTab').onclick=()=>setAut
 Q('authForm').onsubmit=async e=>{e.preventDefault();const email=Q('authEmail').value.trim(),password=Q('authPassword').value;Q('authSubmit').disabled=true;Q('authStatus').textContent='در حال ارتباط با Supabase…';try{if(authMode==='login'){await C.login(email,password);Q('authStatus').textContent='ورود موفق';await showApp()}else{const r=await C.signup(email,password);if(r?.access_token){Q('authStatus').textContent='حساب ساخته شد.';await showApp()}else{setAuthMode('login');Q('authStatus').innerHTML='<span class="success-box" style="display:block">ثبت‌نام انجام شد. در صورت فعال بودن تأیید ایمیل، ابتدا ایمیل را تأیید کنید.</span>'}}}catch(err){Q('authStatus').innerHTML=`<span class="error-box" style="display:block">${esc(msgFor(err))}</span>`}finally{Q('authSubmit').disabled=false}};
 
 async function navigate(p){currentPage=p;setNav(p);closeModal();await render()}
-async function render(){try{if(currentPage==='dashboard')await renderDashboard();else if(currentPage==='accounts')renderAccounts();else if(currentPage==='parties')renderParties();else if(currentPage==='journal')renderJournal();else if(currentPage==='reports')await renderReports();else renderSettings();bind()}catch(e){page(`<div class="error-box">${esc(msgFor(e))}</div>`);console.error(e)}}
+async function render(){try{if(currentPage==='dashboard')await renderDashboard();else if(currentPage==='accounts')renderAccounts();else if(currentPage==='parties')renderParties();else if(currentPage==='journal')renderJournal();else if(cuasync function render(){
+  try{
+    if(currentPage==='dashboard')await renderDashboard();
+    else if(currentPage==='accounts')renderAccounts();
+    else if(currentPage==='parties')renderParties();
+    else if(currentPage==='invoices')renderInvoices();
+    else if(currentPage==='journal')renderJournal();
+    else if(currentPage==='reports')await renderReports();
+    else renderSettings();
+
+    bind();
+
+  }catch(e){
+    page(`<div class="error-box">${esc(msgFor(e))}</div>`);
+    console.error(e);
+  }
+}rrentPage==='reports')await renderReports();else renderSettings();bind()}catch(e){page(`<div class="error-box">${esc(msgFor(e))}</div>`);console.error(e)}}
 
 async function renderDashboard(){
   setTitle('داشبورد');page('<div class="loading">در حال محاسبه از Ledger…</div>');
@@ -992,7 +1009,871 @@ function renderParties(){
 function partyModal(id=null){
   const p=id?ctx.parties.find(x=>x.id===id):null;openModal(`<h2>${p?'ویرایش طرف‌حساب':'طرف‌حساب جدید'}</h2><form id="partyForm"><div class="form-grid"><div class="field"><label>نام</label><input name="name" value="${esc(p?.name||'')}" required></div><div class="field"><label>نوع</label><select name="kind"><option value="customer">مشتری</option><option value="vendor">فروشنده</option><option value="both">هر دو</option><option value="other">سایر</option></select></div><div class="field"><label>تلفن</label><input name="phone" value="${esc(p?.phone||'')}"></div></div><div class="form-actions"><button type="button" class="ghost" id="cancelModal">انصراف</button><button class="primary">ذخیره</button></div></form>`);if(p)Q('partyForm').kind.value=p.kind;Q('cancelModal').onclick=closeModal;Q('partyForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),row={name:f.get('name').trim(),kind:f.get('kind'),phone:f.get('phone').trim()};try{p?await C.update('parties',row,`id=eq.${p.id}&workspace_id=eq.${ctx.workspace.id}`):await C.insert('parties',{workspace_id:ctx.workspace.id,...row});closeModal();await reloadAndRender();toast('طرف‌حساب ذخیره شد')}catch(err){showError(err)}};
 }
+const cleanQty=v=>
+  faDigits(v)
+    .trim()
+    .replace(/٫/g,'.')
+    .replace(/,/g,'.')
+    .replace(/\s/g,'');
 
+function qtyMilli(v){
+  const s=cleanQty(v);
+
+  if(!/^\d+(\.\d{1,3})?$/.test(s))
+    return null;
+
+  const [a,b='']=s.split('.');
+
+  return (
+    BigInt(a)*1000n+
+    BigInt((b+'000').slice(0,3))
+  );
+}
+
+function invoiceAmount(qty,price,discount){
+
+  const q=qtyMilli(qty);
+  const p=bi(price);
+  const d=bi(discount);
+
+  if(
+    q===null||
+    q<=0n||
+    p<0n||
+    d<0n
+  )
+    return null;
+
+  const gross=(q*p+500n)/1000n;
+
+  return d>gross
+    ?null
+    :gross-d;
+}
+
+function invoicePartyOptions(type,selected=''){
+
+  const kinds=
+    type==='sale'
+      ?new Set(['customer','both'])
+      :new Set(['vendor','both']);
+
+  return (
+    `<option value="">انتخاب طرف‌حساب…</option>`+
+    ctx.parties
+      .filter(
+        p=>p.is_active&&kinds.has(p.kind)
+      )
+      .map(
+        p=>`
+          <option
+            value="${p.id}"
+            ${p.id===selected?'selected':''}
+          >
+            ${esc(p.name)}
+          </option>
+        `
+      )
+      .join('')
+  );
+}
+
+function invoiceAccountOptions(type,selected=''){
+
+  const fin=financialLedgerIds();
+  const ar=role('receivable');
+  const salesDiscount=role('sales_discount');
+
+  const filter=a=>
+    a.is_active&&
+    a.is_postable&&
+    (
+      type==='sale'
+        ?(
+          a.category==='income'&&
+          a.id!==salesDiscount
+        )
+        :(
+          a.category==='expense'||
+          (
+            a.category==='asset'&&
+            !fin.has(a.id)&&
+            a.id!==ar
+          )
+        )
+    );
+
+  return (
+    `<option value="">انتخاب حساب…</option>`+
+    accountOptions(selected,filter)
+  );
+}
+
+function invoiceLineRow(type,l={}){
+
+  return `
+    <div class="invoice-line" data-invoice-line>
+
+      <div class="field">
+        <label>شرح ردیف</label>
+        <input
+          name="description"
+          value="${esc(l.description||'')}"
+          placeholder="شرح خدمت/خرید"
+        >
+      </div>
+
+      <div class="field">
+        <label>حساب</label>
+        <select name="account">
+          ${invoiceAccountOptions(
+            type,
+            l.account_id||''
+          )}
+        </select>
+      </div>
+
+      <div class="field">
+        <label>تعداد</label>
+        <input
+          name="quantity"
+          inputmode="decimal"
+          value="${esc(l.quantity||'1')}"
+        >
+      </div>
+
+      <div class="field">
+        <label>فی</label>
+        <input
+          name="unit_price"
+          inputmode="numeric"
+          value="${
+            esc(
+              l.unit_price&&
+              String(l.unit_price)!=='0'
+                ?l.unit_price
+                :''
+            )
+          }"
+        >
+      </div>
+
+      <div class="field">
+        <label>تخفیف</label>
+        <input
+          name="discount"
+          inputmode="numeric"
+          value="${
+            esc(
+              l.discount&&
+              String(l.discount)!=='0'
+                ?l.discount
+                :''
+            )
+          }"
+        >
+      </div>
+
+      <div
+        class="invoice-line-total"
+        data-line-amount
+      >
+        ${money(l.line_total||0)}
+      </div>
+
+      <button
+        type="button"
+        class="danger small"
+        data-remove-invoice-line
+      >
+        ×
+      </button>
+
+    </div>
+  `;
+}
+
+function updateInvoiceTotals(){
+
+  let total=0n;
+
+  document
+    .querySelectorAll('[data-invoice-line]')
+    .forEach(r=>{
+
+      const a=
+        invoiceAmount(
+          r.querySelector('[name=quantity]').value,
+          cleanAmount(
+            r.querySelector('[name=unit_price]').value
+          )||'0',
+          cleanAmount(
+            r.querySelector('[name=discount]').value
+          )||'0'
+        );
+
+      const el=
+        r.querySelector('[data-line-amount]');
+
+      if(a===null){
+
+        el.textContent='نامعتبر';
+        el.classList.add('neg');
+
+      }else{
+
+        el.textContent=money(a);
+        el.classList.remove('neg');
+        total+=a;
+      }
+    });
+
+  if(Q('invoiceTotal'))
+    Q('invoiceTotal').textContent=money(total);
+}
+
+function bindInvoiceLines(){
+
+  document
+    .querySelectorAll(
+      '[data-remove-invoice-line]'
+    )
+    .forEach(b=>{
+
+      b.onclick=()=>{
+
+        b.closest(
+          '[data-invoice-line]'
+        ).remove();
+
+        updateInvoiceTotals();
+      };
+    });
+
+  document
+    .querySelectorAll(
+      '[data-invoice-line] input,[data-invoice-line] select'
+    )
+    .forEach(
+      i=>i.oninput=updateInvoiceTotals
+    );
+
+  updateInvoiceTotals();
+}
+
+function renderInvoices(){
+
+  setTitle('فاکتورها');
+
+  const rows=
+    ctx.invoices
+      .filter(
+        i=>
+          invoiceFilter==='all'||
+          i.invoice_type===invoiceFilter
+      )
+      .map(i=>`
+        <tr>
+
+          <td>
+            ${i.invoice_no??'پیش‌نویس'}
+          </td>
+
+          <td>
+            ${invoiceTypeFa[i.invoice_type]}
+          </td>
+
+          <td>
+            ${dateFa(i.invoice_date)}
+          </td>
+
+          <td>
+            ${esc(
+              party(i.party_id)?.name||'—'
+            )}
+          </td>
+
+          <td class="num">
+            ${money(i.total_amount)}
+          </td>
+
+          <td>
+            <span class="badge ${i.status}">
+              ${
+                statusFa[i.status]||
+                esc(i.status)
+              }
+            </span>
+          </td>
+
+          <td>
+            <div class="row-actions">
+
+              <button
+                class="ghost small"
+                data-view-invoice="${i.id}"
+              >
+                مشاهده
+              </button>
+
+              ${
+                i.status==='draft'
+                  ?`
+                    <button
+                      class="ghost small"
+                      data-edit-invoice="${i.id}"
+                    >
+                      ویرایش
+                    </button>
+
+                    <button
+                      class="good-btn small"
+                      data-post-invoice="${i.id}"
+                    >
+                      ثبت قطعی
+                    </button>
+
+                    <button
+                      class="danger small"
+                      data-delete-invoice="${i.id}"
+                    >
+                      حذف
+                    </button>
+                  `
+                  :''
+              }
+
+            </div>
+          </td>
+
+        </tr>
+      `)
+      .join('');
+
+  page(`
+    <div class="section-head">
+
+      <div>
+        <h2>فاکتور فروش و خرید</h2>
+        <span class="muted">
+          ثبت قطعی فاکتور مستقیماً سند دوبل روی Ledger می‌سازد.
+        </span>
+      </div>
+
+      <div class="row-actions">
+
+        <button
+          class="good-btn"
+          id="newSaleInvoice"
+        >
+          ＋ فروش
+        </button>
+
+        <button
+          class="primary"
+          id="newPurchaseInvoice"
+        >
+          ＋ خرید
+        </button>
+
+      </div>
+    </div>
+
+    <div class="tabs">
+
+      <button
+        data-invoice-filter="all"
+        class="${invoiceFilter==='all'?'active':''}"
+      >
+        همه
+      </button>
+
+      <button
+        data-invoice-filter="sale"
+        class="${invoiceFilter==='sale'?'active':''}"
+      >
+        فروش
+      </button>
+
+      <button
+        data-invoice-filter="purchase"
+        class="${invoiceFilter==='purchase'?'active':''}"
+      >
+        خرید
+      </button>
+
+    </div>
+
+    ${
+      rows
+        ?`
+          <table>
+            <thead>
+              <tr>
+                <th>شماره</th>
+                <th>نوع</th>
+                <th>تاریخ</th>
+                <th>طرف‌حساب</th>
+                <th>مبلغ</th>
+                <th>وضعیت</th>
+                <th>اقدام</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+        `
+        :`
+          <div class="empty">
+            فاکتوری در این بخش وجود ندارد.
+          </div>
+        `
+    }
+  `);
+}
+
+function invoiceModal(type,id=null){
+
+  const inv=
+    id
+      ?invoice(id)
+      :null;
+
+  if(
+    inv&&
+    inv.status!=='draft'
+  )
+    return toast(
+      'فقط فاکتور پیش‌نویس قابل ویرایش است'
+    );
+
+  type=
+    inv?.invoice_type||
+    type;
+
+  const ls=
+    inv
+      ?ctx.invoiceLines.filter(
+        l=>l.invoice_id===inv.id
+      )
+      :[];
+
+  openModal(`
+    <h2>
+      ${inv?'ویرایش':'فاکتور'}
+      ${invoiceTypeFa[type]}
+    </h2>
+
+    <div class="info-box">
+      این مرحله برای فاکتورهای غیرانبار/خدمات است.
+      مالیات و موجودی در D1 ثبت نمی‌شوند.
+    </div>
+
+    <form id="invoiceForm">
+
+      <div class="form-grid">
+
+        <div class="field">
+          <label>تاریخ</label>
+          <input
+            type="date"
+            name="date"
+            value="${inv?.invoice_date||today()}"
+            required
+          >
+        </div>
+
+        <div class="field">
+          <label>سررسید</label>
+          <input
+            type="date"
+            name="due"
+            value="${inv?.due_date||''}"
+          >
+        </div>
+
+        <div class="field">
+          <label>طرف‌حساب</label>
+          <select
+            name="party"
+            required
+          >
+            ${
+              invoicePartyOptions(
+                type,
+                inv?.party_id||''
+              )
+            }
+          </select>
+        </div>
+
+        <div class="field">
+          <label>شرح کلی</label>
+          <input
+            name="description"
+            value="${
+              esc(
+                inv?.description||
+                `فاکتور ${invoiceTypeFa[type]}`
+              )
+            }"
+          >
+        </div>
+
+      </div>
+
+      <div
+        class="invoice-lines"
+        id="invoiceLines"
+      >
+        ${
+          (
+            ls.length
+              ?ls
+              :[{}]
+          )
+          .map(
+            l=>invoiceLineRow(type,l)
+          )
+          .join('')
+        }
+      </div>
+
+      <div class="invoice-grand-total">
+        جمع فاکتور:
+        <b id="invoiceTotal">
+          ${money(inv?.total_amount||0)}
+        </b>
+      </div>
+
+      <div class="form-actions">
+
+        <button
+          type="button"
+          class="ghost"
+          id="addInvoiceLine"
+        >
+          ＋ ردیف
+        </button>
+
+        <button
+          type="button"
+          class="ghost"
+          id="cancelModal"
+        >
+          انصراف
+        </button>
+
+        <button
+          class="ghost"
+          data-invoice-save="draft"
+        >
+          ذخیره پیش‌نویس
+        </button>
+
+        <button
+          class="primary"
+          data-invoice-save="post"
+        >
+          ذخیره و ثبت قطعی
+        </button>
+
+      </div>
+
+    </form>
+  `);
+
+  Q('cancelModal').onclick=
+    closeModal;
+
+  Q('addInvoiceLine').onclick=()=>{
+
+    Q('invoiceLines')
+      .insertAdjacentHTML(
+        'beforeend',
+        invoiceLineRow(type)
+      );
+
+    bindInvoiceLines();
+  };
+
+  bindInvoiceLines();
+
+  Q('invoiceForm').onsubmit=
+    async ev=>{
+
+      ev.preventDefault();
+
+      const mode=
+        ev.submitter?.dataset.invoiceSave||
+        'draft';
+
+      const f=
+        new FormData(ev.target);
+
+      const rows=[];
+
+      for(
+        const r of
+        document.querySelectorAll(
+          '[data-invoice-line]'
+        )
+      ){
+
+        const aid=
+          r.querySelector(
+            '[name=account]'
+          ).value;
+
+        const desc=
+          r.querySelector(
+            '[name=description]'
+          ).value.trim();
+
+        const qty=
+          cleanQty(
+            r.querySelector(
+              '[name=quantity]'
+            ).value||'1'
+          );
+
+        const price=
+          cleanAmount(
+            r.querySelector(
+              '[name=unit_price]'
+            ).value
+          );
+
+        const disc=
+          cleanAmount(
+            r.querySelector(
+              '[name=discount]'
+            ).value
+          )||'0';
+
+        const isBlank=
+          !aid&&
+          !desc&&
+          !price;
+
+        if(isBlank)
+          continue;
+
+        if(!aid)
+          return toast(
+            'حساب ردیف را انتخاب کنید'
+          );
+
+        if(
+          qtyMilli(qty)===null||
+          qtyMilli(qty)<=0n
+        )
+          return toast(
+            'تعداد ردیف معتبر نیست'
+          );
+
+        if(bi(price)<=0n)
+          return toast(
+            'فی باید بیشتر از صفر باشد'
+          );
+
+        if(
+          invoiceAmount(
+            qty,
+            price,
+            disc
+          )===null||
+          invoiceAmount(
+            qty,
+            price,
+            disc
+          )<=0n
+        )
+          return toast(
+            'مبلغ/تخفیف ردیف معتبر نیست'
+          );
+
+        rows.push({
+          account_id:aid,
+          description:desc,
+          quantity:qty,
+          unit_price:price,
+          discount:disc
+        });
+      }
+
+      if(
+        mode==='post'&&
+        !rows.length
+      )
+        return toast(
+          'برای ثبت قطعی حداقل یک ردیف لازم است'
+        );
+
+      try{
+
+        const iid=
+          await C.rpc(
+            'save_draft_invoice',
+            {
+              p_workspace_id:
+                ctx.workspace.id,
+
+              p_fiscal_year_id:
+                ctx.fiscalYear.id,
+
+              p_invoice_id:
+                inv?.id||null,
+
+              p_invoice_type:
+                type,
+
+              p_invoice_date:
+                f.get('date'),
+
+              p_due_date:
+                f.get('due')||null,
+
+              p_party_id:
+                f.get('party'),
+
+              p_description:
+                f.get('description'),
+
+              p_lines:
+                rows
+            }
+          );
+
+        if(mode==='post')
+          await C.rpc(
+            'post_invoice',
+            {iid}
+          );
+
+        closeModal();
+
+        await reloadAndRender();
+
+        toast(
+          mode==='post'
+            ?'فاکتور ثبت قطعی و سند حسابداری ایجاد شد'
+            :'پیش‌نویس فاکتور ذخیره شد'
+        );
+
+      }catch(err){
+        showError(err);
+      }
+    };
+}
+
+function viewInvoice(id){
+
+  const inv=invoice(id);
+
+  const ls=
+    ctx.invoiceLines.filter(
+      l=>l.invoice_id===id
+    );
+
+  openModal(`
+    <div class="section-head">
+
+      <div>
+        <h2>
+          فاکتور
+          ${invoiceTypeFa[inv.invoice_type]}
+          ${inv.invoice_no??'پیش‌نویس'}
+        </h2>
+
+        <span class="muted">
+          ${dateFa(inv.invoice_date)}
+          —
+          ${esc(party(inv.party_id)?.name||'—')}
+        </span>
+      </div>
+
+      <span class="badge ${inv.status}">
+        ${statusFa[inv.status]}
+      </span>
+
+    </div>
+
+    <table>
+
+      <thead>
+        <tr>
+          <th>شرح</th>
+          <th>حساب</th>
+          <th>تعداد</th>
+          <th>فی</th>
+          <th>تخفیف</th>
+          <th>جمع</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        ${
+          ls.map(l=>`
+            <tr>
+
+              <td>
+                ${esc(l.description||'—')}
+              </td>
+
+              <td>
+                ${esc(
+                  acct(l.account_id)?.name||'—'
+                )}
+              </td>
+
+              <td>
+                ${esc(l.quantity)}
+              </td>
+
+              <td class="num">
+                ${money(l.unit_price)}
+              </td>
+
+              <td class="num">
+                ${money(l.discount)}
+              </td>
+
+              <td class="num">
+                ${money(l.line_total)}
+              </td>
+
+            </tr>
+          `).join('')
+        }
+
+      </tbody>
+
+    </table>
+
+    <div class="invoice-grand-total">
+      جمع:
+      <b>
+        ${money(inv.total_amount)}
+      </b>
+    </div>
+
+    <div class="form-actions">
+      <button
+        class="ghost"
+        id="cancelModal"
+      >
+        بستن
+      </button>
+    </div>
+  `);
+
+  Q('cancelModal').onclick=
+    closeModal;
+}
 function renderJournal(){
   setTitle('اسناد حسابداری');
   const rows=ctx.entries.map(e=>`<tr><td>${e.journal_no??'پیش‌نویس'}</td><td>${dateFa(e.entry_date)}</td><td>${esc(e.description)}</td><td>${esc(e.source_type)}</td><td><span class="badge ${e.status}">${statusFa[e.status]||esc(e.status)}</span></td><td><div class="row-actions"><button class="ghost small" data-view-journal="${e.id}">مشاهده</button>${e.status==='draft'?`<button class="ghost small" data-edit-journal="${e.id}">ویرایش</button><button class="good-btn small" data-post-journal="${e.id}">ثبت قطعی</button><button class="danger small" data-delete-journal="${e.id}">حذف</button>`:e.status==='posted'?`<button class="danger small" data-reverse-journal="${e.id}">برگشت سند</button>`:''}</div></td></tr>`).join('');
@@ -1061,6 +1942,93 @@ function bind(){
   document.querySelectorAll('[data-delete-account]').forEach(b=>b.onclick=()=>deleteAccount(b.dataset.deleteAccount));
   document.querySelectorAll('[data-opening]').forEach(b=>b.onclick=()=>openingModal(b.dataset.opening));
   document.querySelectorAll('[data-edit-party]').forEach(b=>b.onclick=()=>partyModal(b.dataset.editParty));
+  document
+  .querySelectorAll('[data-invoice-filter]')
+  .forEach(
+    b=>b.onclick=()=>{
+      invoiceFilter=b.dataset.invoiceFilter;
+      renderInvoices();
+      bind();
+    }
+  );
+
+document
+  .querySelectorAll('[data-view-invoice]')
+  .forEach(
+    b=>b.onclick=()=>
+      viewInvoice(
+        b.dataset.viewInvoice
+      )
+  );
+
+document
+  .querySelectorAll('[data-edit-invoice]')
+  .forEach(
+    b=>b.onclick=()=>
+      invoiceModal(
+        null,
+        b.dataset.editInvoice
+      )
+  );
+
+document
+  .querySelectorAll('[data-post-invoice]')
+  .forEach(
+    b=>b.onclick=async()=>{
+
+      try{
+
+        await C.rpc(
+          'post_invoice',
+          {
+            iid:b.dataset.postInvoice
+          }
+        );
+
+        await reloadAndRender();
+
+        toast(
+          'فاکتور ثبت قطعی شد'
+        );
+
+      }catch(e){
+        showError(e);
+      }
+    }
+  );
+
+document
+  .querySelectorAll('[data-delete-invoice]')
+  .forEach(
+    b=>b.onclick=async()=>{
+
+      if(
+        !confirm(
+          'پیش‌نویس فاکتور حذف شود؟'
+        )
+      )
+        return;
+
+      try{
+
+        await C.rpc(
+          'delete_draft_invoice',
+          {
+            iid:b.dataset.deleteInvoice
+          }
+        );
+
+        await reloadAndRender();
+
+        toast(
+          'پیش‌نویس فاکتور حذف شد'
+        );
+
+      }catch(e){
+        showError(e);
+      }
+    }
+  );
   document.querySelectorAll('[data-edit-journal]').forEach(b=>b.onclick=()=>journalModal(b.dataset.editJournal));
   document.querySelectorAll('[data-view-journal]').forEach(b=>b.onclick=()=>viewJournal(b.dataset.viewJournal));
   document.querySelectorAll('[data-post-journal]').forEach(b=>b.onclick=async()=>{try{await C.rpc('post_journal_entry',{jid:b.dataset.postJournal});await reloadAndRender();toast('سند ثبت قطعی شد')}catch(e){showError(e)}});
@@ -1068,7 +2036,29 @@ function bind(){
   document.querySelectorAll('[data-reverse-journal]').forEach(b=>b.onclick=()=>reverseModal(b.dataset.reverseJournal));
   document.querySelectorAll('[data-report]').forEach(b=>b.onclick=async()=>{reportState.tab=b.dataset.report;await renderReports()});
   document.querySelectorAll('[data-reopen-period]').forEach(b=>b.onclick=async()=>{if(!confirm('این دوره دوباره باز شود؟'))return;try{await C.rpc('reopen_fiscal_period',{pid:b.dataset.reopenPeriod});await reloadAndRender();toast('دوره باز شد')}catch(e){showError(e)}});
-  if(Q('addAccount'))Q('addAccount').onclick=()=>accountModal();if(Q('addParty'))Q('addParty').onclick=()=>partyModal();if(Q('addJournal'))Q('addJournal').onclick=()=>journalModal();if(Q('closePeriodBtn'))Q('closePeriodBtn').onclick=closePeriodModal;
+  if(Q('addAccount'))Q('addAccount').onclick=()=>accountModal();if(Q('addParty'))Q('addParty'if(Q('addAccount'))
+  Q('addAccount').onclick=
+    ()=>accountModal();
+
+if(Q('addParty'))
+  Q('addParty').onclick=
+    ()=>partyModal();
+
+if(Q('newSaleInvoice'))
+  Q('newSaleInvoice').onclick=
+    ()=>invoiceModal('sale');
+
+if(Q('newPurchaseInvoice'))
+  Q('newPurchaseInvoice').onclick=
+    ()=>invoiceModal('purchase');
+
+if(Q('addJournal'))
+  Q('addJournal').onclick=
+    ()=>journalModal();
+
+if(Q('closePeriodBtn'))
+  Q('closePeriodBtn').onclick=
+    closePeriodModal;).onclick=()=>partyModal();if(Q('addJournal'))Q('addJournal').onclick=()=>journalModal();if(Q('closePeriodBtn'))Q('closePeriodBtn').onclick=closePeriodModal;
   if(Q('applyReportRange'))Q('applyReportRange').onclick=async()=>{const f=Q('reportFrom').value,t=Q('reportTo').value;if(!f||!t||f>t)return toast('بازه گزارش معتبر نیست');reportState.from=f;reportState.to=t;await renderReports()};
   if(Q('ledgerAccount'))Q('ledgerAccount').onchange=()=>refreshLedger().catch(showError);
   if(Q('logoutBtn'))Q('logoutBtn').onclick=async()=>{await C.logout();location.reload()};
