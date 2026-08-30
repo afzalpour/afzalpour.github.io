@@ -1,6 +1,7 @@
 (function(){
 'use strict';
 const Q=id=>document.getElementById(id), C=window.AvanCloud;
+const authCallback=C.consumeAuthCallback?.();
 let authMode='login', currentPage='dashboard';
 let reportState={tab:'trial',from:null,to:null,ledgerAccount:null};
 let invoiceFilter='all';
@@ -2347,9 +2348,7 @@ if(Q('closePeriodBtn'))
       .register('sw.js')
       .catch(()=>{});
 
-  const cb=C.consumeAuthCallback?.();
-
-  if(cb?.type==='recovery'){
+  if(authCallback?.type==='recovery'){
     showAuth();
     passwordRecoveryModal();
     return;
@@ -2365,5 +2364,5 @@ if(Q('closePeriodBtn'))
   }else{
     showAuth();
   }
-})();
+
 })();
