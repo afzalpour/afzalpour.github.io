@@ -12,7 +12,337 @@ const bi=v=>{try{return BigInt(cleanAmount(v)||'0')}catch{return 0n}};
 const money=v=>{let n=bi(v),sign=n<0n?'-':'';if(n<0n)n=-n;return sign+n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,'٬')+' تومان'};
 const today=()=>new Date().toISOString().slice(0,10);
 const dateFa=s=>{try{return new Intl.DateTimeFormat('fa-IR-u-ca-persian',{year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(s+'T12:00:00'))}catch{return s||'—'}};
-const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const pad2=n=>String(n).padStart(2,'0');
+const jDiv=(a,b)=>Math.trunc(a/b);
+const jMod=(a,b)=>a-Math.trunc(a/b)*b;
+
+const J_BREAKS=[
+  -61,9,38,199,426,686,756,818,1111,1181,
+  1210,1635,2060,2097,2192,2262,2324,2394,
+  2456,3178
+];
+
+function jalCal(jy,withoutLeap=false){
+  let gy=jy+621;
+  let leapJ=-14;
+  let jp=J_BREAKS[0];
+  let jm,jump=0,leap,leapG,march,n;
+
+  if(jy<jp||jy>=J_BREAKS[J_BREAKS.length-1])
+    throw new Error('JALALI_YEAR_RANGE');
+
+  for(let i=1;i<J_BREAKS.length;i++){
+    jm=J_BREAKS[i];
+    jump=jm-jp;
+    if(jy<jm)break;
+
+    leapJ+=jDiv(jump,33)*8+jDiv(jMod(jump,33),4);
+    jp=jm;
+  }
+
+  n=jy-jp;
+
+  leapJ+=
+    jDiv(n,33)*8+
+    jDiv(jMod(n,33)+3,4);
+
+  if(jMod(jump,33)===4&&jump-n===4)
+    leapJ++;
+
+  leapG=
+    jDiv(gy,4)-
+    jDiv((jDiv(gy,100)+1)*3,4)-
+    150;
+
+  march=20+leapJ-leapG;
+
+  if(withoutLeap)
+    return {gy,march};
+
+  if(jump-n<6)
+    n=n-jump+jDiv(jump+4,33)*33;
+
+  leap=jMod(jMod(n+1,33)-1,4);
+
+  if(leap===-1)
+    leap=4;
+
+  return {leap,gy,march};
+}
+
+function g2d(gy,gm,gd){
+  let d=
+    jDiv(
+      (gy+jDiv(gm-8,6)+100100)*1461,
+      4
+    )+
+    jDiv(
+      153*jMod(gm+9,12)+2,
+      5
+    )+
+    gd-
+    34840408;
+
+  d=
+    d-
+    jDiv(
+      jDiv(
+        gy+100100+jDiv(gm-8,6),
+        100
+      )*3,
+      4
+    )+
+    752;
+
+  return d;
+}
+
+function d2g(jdn){
+  let j=4*jdn+139361631;
+
+  j=
+    j+
+    jDiv(
+      jDiv(
+        4*jdn+183187720,
+        146097
+      )*3,
+      4
+    )*4-
+    3908;
+
+  let i=
+    jDiv(jMod(j,1461),4)*5+
+    308;
+
+  let gd=
+    jDiv(jMod(i,153),5)+1;
+
+  let gm=
+    jMod(jDiv(i,153),12)+1;
+
+  let gy=
+    jDiv(j,1461)-
+    100100+
+    jDiv(8-gm,6);
+
+  return {gy,gm,gd};
+}
+
+function j2d(jy,jm,jd){
+  const r=jalCal(jy,true);
+
+  return (
+    g2d(r.gy,3,r.march)+
+    (jm-1)*31-
+    jDiv(jm,7)*(jm-7)+
+    jd-
+    1
+  );
+}
+
+function d2j(jdn){
+  const g=d2g(jdn);
+
+  let jy=g.gy-621;
+  let r=jalCal(jy);
+  let jdn1f=g2d(g.gy,3,r.march);
+  let k=jdn-jdn1f;
+  let jd,jm;
+
+  if(k>=0){
+
+    if(k<=185){
+      jm=1+jDiv(k,31);
+      jd=jMod(k,31)+1;
+
+      return {jy,jm,jd};
+    }
+
+    k-=186;
+
+  }else{
+
+    jy-=1;
+    k+=179;
+
+    if(r.leap===1)
+      k+=1;
+  }
+
+  jm=7+jDiv(k,30);
+  jd=jMod(k,30)+1;
+
+  return {jy,jm,jd};
+}
+
+function jalaliToIso(v){
+  const s=
+    faDigits(v)
+      .trim()
+      .replace(/[.\-]/g,'/');
+
+  const m=
+    s.match(
+      /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/
+    );
+
+  if(!m)
+    return null;
+
+  const jy=Number(m[1]);
+  const jm=Number(m[2]);
+  const jd=Number(m[3]);
+
+  if(
+    jm<1||
+    jm>12||
+    jd<1||
+    jd>31
+  )
+    return null;
+
+  try{
+
+    const g=
+      d2g(
+        j2d(jy,jm,jd)
+      );
+
+    const back=
+      d2j(
+        g2d(g.gy,g.gm,g.gd)
+      );
+
+    if(
+      back.jy!==jy||
+      back.jm!==jm||
+      back.jd!==jd
+    )
+      return null;
+
+    return (
+      `${g.gy}-`+
+      `${pad2(g.gm)}-`+
+      `${pad2(g.gd)}`
+    );
+
+  }catch{
+    return null;
+  }
+}
+
+function jalalizeDateInputs(root=document){
+
+  root
+    .querySelectorAll(
+      'input[type="date"]:not([data-jalalized])'
+    )
+    .forEach(input=>{
+
+      const iso=input.value||'';
+      const name=input.getAttribute('name')||'';
+      const id=input.id||'';
+      const required=input.required;
+
+      const next=input.nextElementSibling;
+
+      if(
+        next&&
+        next.tagName==='SMALL'&&
+        next.textContent.trim().startsWith('جلالی:')
+      ){
+        next.remove();
+      }
+
+      const hidden=
+        document.createElement('input');
+
+      hidden.type='hidden';
+      hidden.value=iso;
+
+      if(name)
+        hidden.name=name;
+
+      if(id)
+        hidden.id=id;
+
+      input.type='text';
+
+      input.removeAttribute('name');
+      input.removeAttribute('id');
+
+      input.dataset.jalalized='1';
+      input.inputMode='numeric';
+      input.autocomplete='off';
+
+      input.placeholder='۱۴۰۵/۰۶/۰۸';
+
+      input.value=
+        iso
+          ?dateFa(iso)
+          :'';
+
+      const sync=()=>{
+
+        const raw=
+          input.value.trim();
+
+        if(!raw){
+
+          hidden.value='';
+
+          input.setCustomValidity(
+            required
+              ?'تاریخ الزامی است.'
+              :''
+          );
+
+          return;
+        }
+
+        const parsed=
+          jalaliToIso(raw);
+
+        if(parsed){
+
+          hidden.value=parsed;
+          input.setCustomValidity('');
+
+        }else{
+
+          hidden.value='';
+
+          input.setCustomValidity(
+            'تاریخ شمسی معتبر وارد کنید؛ مثال ۱۴۰۵/۰۶/۰۸'
+          );
+        }
+      };
+
+      input.addEventListener(
+        'input',
+        sync
+      );
+
+      input.addEventListener(
+        'blur',
+        ()=>{
+          sync();
+
+          if(hidden.value)
+            input.value=
+              dateFa(hidden.value);
+        }
+      );
+
+      input.insertAdjacentElement(
+        'afterend',
+        hidden
+      );
+
+    });
+}
+  const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const catFa={asset:'دارایی',liability:'بدهی',equity:'حقوق مالکانه',income:'درآمد',expense:'هزینه'};
 const levelFa={1:'کل',2:'معین',3:'تفصیلی'};
 const statusFa={draft:'پیش‌نویس',posted:'ثبت‌شده',reversed:'برگشتی'};
@@ -42,12 +372,20 @@ function msgFor(e){
 }
 function toast(t){const el=Q('toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2800)}
 function showError(e,where=''){console.error(where,e);toast(msgFor(e))}
-function openModal(html){Q('modal').innerHTML=html;Q('modalBackdrop').hidden=false;document.body.classList.add('mobile-scroll-lock')}
+function openModal(function openModal(html){
+  Q('modal').innerHTML=html;
+  jalalizeDateInputs(Q('modal'));
+  Q('modalBackdrop').hidden=false;
+  document.body.classList.add('mobile-scroll-lock');
+}html){Q('modal').innerHTML=html;Q('modalBackdrop').hidden=false;document.body.classList.add('mobile-scroll-lock')}
 function closeModal(){Q('modalBackdrop').hidden=true;Q('modal').innerHTML='';document.body.classList.remove('mobile-scroll-lock')}
 Q('modalBackdrop').addEventListener('click',e=>{if(e.target===Q('modalBackdrop'))closeModal()});
 function setTitle(t){Q('pageTitle').textContent=t;Q('breadcrumb').textContent=`آوان › ${t}`}
 function setNav(page){document.querySelectorAll('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page))}
-function page(html){Q('content').innerHTML=html}
+function page(function page(html){
+  Q('content').innerHTML=html;
+  jalalizeDateInputs(Q('content'));
+}html){Q('content').innerHTML=html}
 const acct=id=>ctx.accounts.find(a=>a.id===id);
 const party=id=>ctx.parties.find(p=>p.id===id);
 const invoice=id=>ctx.invoices.find(x=>x.id===id);
