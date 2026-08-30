@@ -722,7 +722,24 @@ function msgFor(e){
     'AMOUNT_INVALID':'مبلغ معتبر و صحیح وارد کنید.','PARTY_NOT_FOUND':'طرف‌حساب معتبر نیست.','ROLE_NOT_ALLOWED':'سطح دسترسی شما برای این عملیات کافی نیست.',
     'PERIOD_OVERLAPS_CLOSED':'این بازه با یک دوره بسته هم‌پوشانی دارد.','PERIOD_OUTSIDE_FISCAL_YEAR':'بازه قفل باید داخل سال مالی باشد.',
     'PERIOD_RANGE_INVALID':'بازه دوره معتبر نیست.','PERIOD_NAME_REQUIRED':'نام دوره الزامی است.','PATCH_B4_REQUIRED':'Patch Gate B-4 روی دیتابیس اجرا نشده است.',
-    'CLOUD_CONFIG_MISSING':'تنظیمات اتصال Supabase ناقص است.'
+    'CLOUD_CONFIG_MISSING':'تنظیمات اتصال Supabase ناقص است.',
+'PATCH_D1_REQUIRED':'ماژول فاکتور D1 روی دیتابیس نصب یا در دسترس نیست.',
+'INVOICE_NOT_FOUND':'فاکتور پیدا نشد.',
+'INVOICE_TYPE_INVALID':'نوع فاکتور معتبر نیست.',
+'INVOICE_DATE_REQUIRED':'تاریخ فاکتور الزامی است.',
+'DUE_DATE_INVALID':'سررسید نمی‌تواند قبل از تاریخ فاکتور باشد.',
+'PARTY_REQUIRED':'انتخاب طرف‌حساب الزامی است.',
+'PARTY_NOT_CUSTOMER':'برای فاکتور فروش، طرف‌حساب باید مشتری یا دوطرفه باشد.',
+'PARTY_NOT_VENDOR':'برای فاکتور خرید، طرف‌حساب باید فروشنده یا دوطرفه باشد.',
+'INVOICE_LINE_INVALID':'مقدار، قیمت یا تخفیف ردیف فاکتور معتبر نیست.',
+'SALE_LINE_MUST_BE_INCOME':'ردیف فاکتور فروش باید به حساب درآمد ثبت شود.',
+'PURCHASE_LINE_ACCOUNT_INVALID':'ردیف فاکتور خرید باید به حساب هزینه یا دارایی ثبت شود.',
+'DISCOUNT_TOO_LARGE':'تخفیف ردیف از مبلغ ناخالص بیشتر است.',
+'INVOICE_LINE_TOTAL_INVALID':'مبلغ نهایی ردیف باید بیشتر از صفر باشد.',
+'INVOICE_EMPTY':'فاکتور بدون ردیف معتبر قابل ثبت قطعی نیست.',
+'INVOICE_TOTAL_MISMATCH':'جمع فاکتور با ردیف‌ها سازگار نیست.',
+'INVOICE_CONTROL_ACCOUNT_MISSING':'حساب کنترل دریافتنی یا پرداختنی تعریف نشده است.',
+'POSTED_INVOICE_IMMUTABLE':'فاکتور ثبت‌شده قابل ویرایش یا حذف نیست.'
   };
   return map[m]||m;
 }
