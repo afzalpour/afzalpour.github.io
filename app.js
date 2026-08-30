@@ -2341,7 +2341,29 @@ if(Q('closePeriodBtn'))
 }
 
 (async function boot(){
-  if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
-  if(C.session()){try{await showApp()}catch(e){showError(e);showAuth()}}else showAuth();
+
+  if('serviceWorker'in navigator)
+    navigator.serviceWorker
+      .register('sw.js')
+      .catch(()=>{});
+
+  const cb=C.consumeAuthCallback?.();
+
+  if(cb?.type==='recovery'){
+    showAuth();
+    passwordRecoveryModal();
+    return;
+  }
+
+  if(C.session()){
+    try{
+      await showApp();
+    }catch(e){
+      showError(e);
+      showAuth();
+    }
+  }else{
+    showAuth();
+  }
 })();
 })();
