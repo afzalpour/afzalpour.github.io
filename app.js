@@ -838,7 +838,115 @@ function showAuth(){Q('authShell').hidden=false;Q('appShell').hidden=true;Q('bot
 function setAuthMode(mode){authMode=mode;Q('loginTab').classList.toggle('active',mode==='login');Q('signupTab').classList.toggle('active',mode==='signup');Q('authSubmit').textContent=mode==='login'?'ورود':'ساخت حساب';Q('authPassword').autocomplete=mode==='login'?'current-password':'new-password';Q('authStatus').textContent=''}
 Q('loginTab').onclick=()=>setAuthMode('login');Q('signupTab').onclick=()=>setAuthMode('signup');
 Q('authForm').onsubmit=async e=>{e.preventDefault();const email=Q('authEmail').value.trim(),password=Q('authPassword').value;Q('authSubmit').disabled=true;Q('authStatus').textContent='در حال ارتباط با Supabase…';try{if(authMode==='login'){await C.login(email,password);Q('authStatus').textContent='ورود موفق';await showApp()}else{const r=await C.signup(email,password);if(r?.access_token){Q('authStatus').textContent='حساب ساخته شد.';await showApp()}else{setAuthMode('login');Q('authStatus').innerHTML='<span class="success-box" style="display:block">ثبت‌نام انجام شد. در صورت فعال بودن تأیید ایمیل، ابتدا ایمیل را تأیید کنید.</span>'}}}catch(err){Q('authStatus').innerHTML=`<span class="error-box" style="display:block">${esc(msgFor(err))}</span>`}finally{Q('authSubmit').disabled=false}};
+Q('forgotPasswordBtn').onclick=async()=>{
 
+  const email=Q('authEmail').value.trim();
+
+  if(!email)
+    return Q('authStatus').innerHTML=
+      '<span class="error-box" style="display:block">ابتدا ایمیل خود را وارد کنید.</span>';
+
+  Q('forgotPasswordBtn').disabled=true;
+
+  try{
+
+    await C.requestPasswordReset(
+      email,
+      C.cfg.authRedirectUrl
+    );
+
+    Q('authStatus').innerHTML=
+      '<span class="success-box" style="display:block">اگر این ایمیل در آوان ثبت شده باشد، لینک بازیابی رمز ارسال می‌شود.</span>';
+
+  }catch(err){
+
+    Q('authStatus').innerHTML=
+      `<span class="error-box" style="display:block">${esc(msgFor(err))}</span>`;
+
+  }finally{
+
+    Q('forgotPasswordBtn').disabled=false;
+  }
+};
+
+
+function passwordRecoveryModal(){
+
+  openModal(`
+    <h2>تنظیم رمز عبور جدید</h2>
+
+    <p class="muted">
+      رمز عبور جدید را وارد کنید.
+    </p>
+
+    <form id="recoveryForm">
+
+      <div class="field">
+        <label>رمز عبور جدید</label>
+        <input
+          id="newPassword"
+          type="password"
+          minlength="8"
+          autocomplete="new-password"
+          required
+        >
+      </div>
+
+      <div class="field" style="margin-top:10px">
+        <label>تکرار رمز عبور</label>
+        <input
+          id="newPassword2"
+          type="password"
+          minlength="8"
+          autocomplete="new-password"
+          required
+        >
+      </div>
+
+      <div class="form-actions">
+        <button class="primary">
+          ذخیره رمز جدید
+        </button>
+      </div>
+
+      <div id="recoveryStatus"></div>
+
+    </form>
+  `);
+
+  Q('recoveryForm').onsubmit=async e=>{
+
+    e.preventDefault();
+
+    const p1=Q('newPassword').value;
+    const p2=Q('newPassword2').value;
+
+    if(p1!==p2)
+      return Q('recoveryStatus').innerHTML=
+        '<span class="error-box" style="display:block">دو رمز عبور یکسان نیستند.</span>';
+
+    try{
+
+      await C.updatePassword(p1);
+
+      Q('recoveryStatus').innerHTML=
+        '<span class="success-box" style="display:block">رمز عبور با موفقیت تغییر کرد.</span>';
+
+      setTimeout(
+        async()=>{
+          closeModal();
+          await showApp();
+        },
+        500
+      );
+
+    }catch(err){
+
+      Q('recoveryStatus').innerHTML=
+        `<span class="error-box" style="display:block">${esc(msgFor(err))}</span>`;
+    }
+  };
+}
 async function navigate(p){currentPage=p;setNav(p);closeModal();await render()}
 async function render(){
   try{
