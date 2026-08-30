@@ -341,6 +341,364 @@ function jalalizeDateInputs(root=document){
       );
 
     });
+  bindJalaliPickers(root);
+}
+  const J_MONTH_NAMES=[
+  'فروردین','اردیبهشت','خرداد',
+  'تیر','مرداد','شهریور',
+  'مهر','آبان','آذر',
+  'دی','بهمن','اسفند'
+];
+
+const J_WEEK_DAYS=[
+  'ش','ی','د','س','چ','پ','ج'
+];
+
+function jalaliMonthDays(jy,jm){
+  if(jm<=6)return 31;
+  if(jm<=11)return 30;
+
+  try{
+    return j2d(jy+1,1,1)-j2d(jy,1,1)===366
+      ?30
+      :29;
+  }catch{
+    return 29;
+  }
+}
+
+function isoToJalali(iso){
+  const m=String(iso||'')
+    .match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  if(!m)return null;
+
+  try{
+    return d2j(
+      g2d(
+        Number(m[1]),
+        Number(m[2]),
+        Number(m[3])
+      )
+    );
+  }catch{
+    return null;
+  }
+}
+
+function closeJalaliPicker(){
+  const old=
+    document.getElementById('jalaliPickerLayer');
+
+  if(old)old.remove();
+}
+
+function openJalaliPicker(input,hidden){
+
+  closeJalaliPicker();
+
+  const todayIso=today();
+
+  const base=
+    isoToJalali(hidden.value||todayIso)||
+    isoToJalali(todayIso);
+
+  let viewYear=base.jy;
+  let viewMonth=base.jm;
+
+  const layer=
+    document.createElement('div');
+
+  layer.id='jalaliPickerLayer';
+  layer.className='jalali-picker-layer';
+
+  layer.innerHTML=`
+    <div class="jalali-picker" role="dialog" aria-label="تقویم شمسی">
+
+      <div class="jalali-picker-head">
+        <button
+          type="button"
+          class="ghost small"
+          data-j-prev
+        >
+          ماه قبل
+        </button>
+
+        <strong data-j-title></strong>
+
+        <button
+          type="button"
+          class="ghost small"
+          data-j-next
+        >
+          ماه بعد
+        </button>
+      </div>
+
+      <div class="jalali-picker-week">
+        ${J_WEEK_DAYS
+          .map(x=>`<span>${x}</span>`)
+          .join('')}
+      </div>
+
+      <div
+        class="jalali-picker-days"
+        data-j-days
+      ></div>
+
+      <div class="jalali-picker-actions">
+
+        <button
+          type="button"
+          class="ghost small"
+          data-j-clear
+        >
+          پاک کردن
+        </button>
+
+        <button
+          type="button"
+          class="ghost small"
+          data-j-close
+        >
+          بستن
+        </button>
+
+        <button
+          type="button"
+          class="primary small"
+          data-j-today
+        >
+          امروز
+        </button>
+
+      </div>
+
+    </div>
+  `;
+
+  document.body.appendChild(layer);
+
+  const title=
+    layer.querySelector('[data-j-title]');
+
+  const daysBox=
+    layer.querySelector('[data-j-days]');
+
+  const renderCalendar=()=>{
+
+    const faYear=
+      new Intl.NumberFormat(
+        'fa-IR',
+        {useGrouping:false}
+      ).format(viewYear);
+
+    title.textContent=
+      `${J_MONTH_NAMES[viewMonth-1]} ${faYear}`;
+
+    const firstIso=
+      jalaliToIso(
+        `${viewYear}/${viewMonth}/1`
+      );
+
+    if(!firstIso){
+      daysBox.innerHTML='';
+      return;
+    }
+
+    const firstDate=
+      new Date(firstIso+'T12:00:00');
+
+    // شنبه = 0
+    const offset=
+      (firstDate.getDay()+1)%7;
+
+    const count=
+      jalaliMonthDays(
+        viewYear,
+        viewMonth
+      );
+
+    let html='';
+
+    for(let i=0;i<offset;i++)
+      html+='<span class="jalali-day-empty"></span>';
+
+    for(let day=1;day<=count;day++){
+
+      const iso=
+        jalaliToIso(
+          `${viewYear}/${viewMonth}/${day}`
+        );
+
+      const selected=
+        iso&&iso===hidden.value;
+
+      const isToday=
+        iso===todayIso;
+
+      const faDay=
+        new Intl.NumberFormat(
+          'fa-IR',
+          {useGrouping:false}
+        ).format(day);
+
+      html+=`
+        <button
+          type="button"
+          class="jalali-day
+            ${selected?'selected':''}
+            ${isToday?'today':''}"
+          data-j-day="${day}"
+        >
+          ${faDay}
+        </button>
+      `;
+    }
+
+    daysBox.innerHTML=html;
+
+    daysBox
+      .querySelectorAll('[data-j-day]')
+      .forEach(btn=>{
+
+        btn.onclick=()=>{
+
+          const day=
+            Number(btn.dataset.jDay);
+
+          const iso=
+            jalaliToIso(
+              `${viewYear}/${viewMonth}/${day}`
+            );
+
+          if(!iso)return;
+
+          hidden.value=iso;
+          input.value=dateFa(iso);
+
+          input.setCustomValidity('');
+
+          input.dispatchEvent(
+            new Event(
+              'input',
+              {bubbles:true}
+            )
+          );
+
+          closeJalaliPicker();
+        };
+      });
+  };
+
+  layer.querySelector('[data-j-prev]').onclick=()=>{
+
+    viewMonth--;
+
+    if(viewMonth<1){
+      viewMonth=12;
+      viewYear--;
+    }
+
+    renderCalendar();
+  };
+
+  layer.querySelector('[data-j-next]').onclick=()=>{
+
+    viewMonth++;
+
+    if(viewMonth>12){
+      viewMonth=1;
+      viewYear++;
+    }
+
+    renderCalendar();
+  };
+
+  layer.querySelector('[data-j-today]').onclick=()=>{
+
+    hidden.value=todayIso;
+    input.value=dateFa(todayIso);
+
+    input.setCustomValidity('');
+
+    input.dispatchEvent(
+      new Event(
+        'input',
+        {bubbles:true}
+      )
+    );
+
+    closeJalaliPicker();
+  };
+
+  layer.querySelector('[data-j-clear]').onclick=()=>{
+
+    hidden.value='';
+    input.value='';
+
+    input.dispatchEvent(
+      new Event(
+        'input',
+        {bubbles:true}
+      )
+    );
+
+    closeJalaliPicker();
+  };
+
+  layer.querySelector('[data-j-close]').onclick=
+    closeJalaliPicker;
+
+  layer.onclick=e=>{
+    if(e.target===layer)
+      closeJalaliPicker();
+  };
+
+  renderCalendar();
+}
+
+function bindJalaliPickers(root=document){
+
+  root
+    .querySelectorAll(
+      'input[data-jalalized]:not([data-picker-bound])'
+    )
+    .forEach(input=>{
+
+      const hidden=
+        input.nextElementSibling;
+
+      if(
+        !hidden||
+        hidden.type!=='hidden'
+      )return;
+
+      input.dataset.pickerBound='1';
+
+      const button=
+        document.createElement('button');
+
+      button.type='button';
+      button.className='jalali-picker-btn';
+      button.textContent='📅 انتخاب تاریخ';
+      button.title='انتخاب تاریخ از تقویم شمسی';
+
+      button.onclick=e=>{
+        e.preventDefault();
+        e.stopPropagation();
+
+        openJalaliPicker(
+          input,
+          hidden
+        );
+      };
+
+      input.insertAdjacentElement(
+        'afterend',
+        button
+      );
+    });
 }
   const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const catFa={asset:'دارایی',liability:'بدهی',equity:'حقوق مالکانه',income:'درآمد',expense:'هزینه'};
