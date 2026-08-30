@@ -2110,14 +2110,7 @@ document
   .querySelectorAll('[data-delete-invoice]')
   .forEach(
     b=>b.onclick=async()=>{
-document
-  .querySelectorAll('[data-reverse-invoice]')
-  .forEach(
-    b=>b.onclick=()=>
-      reverseInvoiceModal(
-        b.dataset.reverseInvoice
-      )
-  );
+
       if(
         !confirm(
           'پیش‌نویس فاکتور حذف شود؟'
@@ -2144,6 +2137,15 @@ document
         showError(e);
       }
     }
+  );
+
+document
+  .querySelectorAll('[data-reverse-invoice]')
+  .forEach(
+    b=>b.onclick=()=>
+      reverseInvoiceModal(
+        b.dataset.reverseInvoice
+      )
   );
   document.querySelectorAll('[data-edit-journal]').forEach(b=>b.onclick=()=>journalModal(b.dataset.editJournal));
   document.querySelectorAll('[data-view-journal]').forEach(b=>b.onclick=()=>viewJournal(b.dataset.viewJournal));
