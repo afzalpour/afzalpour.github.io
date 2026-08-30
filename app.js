@@ -3,7 +3,8 @@
 const Q=id=>document.getElementById(id), C=window.AvanCloud;
 let authMode='login', currentPage='dashboard';
 let reportState={tab:'trial',from:null,to:null,ledgerAccount:null};
-let ctx={user:null,workspace:null,fiscalYear:null,accounts:[],roles:{},parties:[],entries:[],lines:[],financialAccounts:[],periods:[],transactions:[],health:null,integrity:null,workspaceRole:null,visibleWorkspaces:0};
+let invoiceFilter='all';
+let ctx={user:null,workspace:null,fiscalYear:null,accounts:[],roles:{},parties:[],entries:[],lines:[],financialAccounts:[],periods:[],transactions:[],invoices:[],invoiceLines:[],invoiceIntegrity:null,health:null,integrity:null,workspaceRole:null,visibleWorkspaces:0};
 const faDigits=s=>String(s??'').replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
 const cleanAmount=v=>faDigits(v).replace(/[٬,\s]/g,'').replace(/[^0-9-]/g,'');
 const bi=v=>{try{return BigInt(cleanAmount(v)||'0')}catch{return 0n}};
@@ -703,7 +704,7 @@ const catFa={asset:'دارایی',liability:'بدهی',equity:'حقوق مالک
 const levelFa={1:'کل',2:'معین',3:'تفصیلی'};
 const statusFa={draft:'پیش‌نویس',posted:'ثبت‌شده',reversed:'برگشتی'};
 const roleFa={owner:'مالک',manager:'مدیر',accountant:'حسابدار',viewer:'مشاهده‌گر'};
-
+const invoiceTypeFa={sale:'فروش',purchase:'خرید'};
 function msgFor(e){
   const m=String(e?.message||e||'خطای نامشخص');
   const map={
@@ -782,14 +783,37 @@ async function loadContext(){
   ctx.fiscalYear=fy?.[0]||null;ctx.accounts=accounts||[];ctx.roles=Object.fromEntries((roles||[]).map(r=>[r.role_key,r.account_id]));
   ctx.parties=parties||[];ctx.entries=entries||[];ctx.lines=lines||[];ctx.financialAccounts=financialAccounts||[];ctx.periods=periods||[];ctx.transactions=transactions||[];
   ctx.health=health;ctx.integrity=integrity;ctx.workspaceRole=workspaceRole;
-  if(!reportState.from&&ctx.fiscalYear){reportState.from=ctx.fiscalYear.date_from;reportState.to=today()}
+
+try{
+  const d1=await Promise.all([
+    C.select('invoices',`select=*&workspace_id=eq.${wid}&order=invoice_date.desc,invoice_no.desc.nullslast,created_at.desc`),
+    C.select('invoice_lines',`select=*&workspace_id=eq.${wid}&order=line_no.asc`),
+    C.rpc('invoice_integrity',{wid})
+  ]);
+
+  ctx.invoices=d1[0]||[];
+  ctx.invoiceLines=d1[1]||[];
+  ctx.invoiceIntegrity=d1[2]||{};
+
+}catch(e){
+  throw new Error('PATCH_D1_REQUIRED');
+}
+
+if(!reportState.from&&ctx.fiscalYear){
+  reportState.from=ctx.fiscalYear.date_from;
+  reportState.to=today();
+}
 }
 async function reloadAndRender(){await loadContext();await render()}
 async function showApp(){
   Q('authShell').hidden=true;Q('appShell').hidden=false;Q('bottomNav').hidden=false;
   try{await reloadAndRender()}catch(e){
-    if(e.message==='PATCH_B4_REQUIRED')page(`<div class="error-box"><b>Gate B-4 هنوز روی دیتابیس نصب نشده است.</b><br>فایل <code>GATE_B_4_PATCH.sql</code> را در SQL Editor اجرا کنید و سپس Refresh کنید.</div>`);
-    else showError(e,'showApp');
+    if(e.message==='PATCH_B4_REQUIRED')
+  page(`<div class="error-box"><b>Gate B-4 هنوز روی دیتابیس نصب نشده است.</b></div>`);
+else if(e.message==='PATCH_D1_REQUIRED')
+  page(`<div class="error-box"><b>ماژول فاکتور D1 روی دیتابیس در دسترس نیست.</b></div>`);
+else
+  showError(e,'showApp');
   }
 }
 function showAuth(){Q('authShell').hidden=false;Q('appShell').hidden=true;Q('bottomNav').hidden=true}
