@@ -4,13 +4,699 @@ const Q=id=>document.getElementById(id), C=window.AvanCloud;
 let authMode='login', currentPage='dashboard';
 let reportState={tab:'trial',from:null,to:null,ledgerAccount:null};
 let ctx={user:null,workspace:null,fiscalYear:null,accounts:[],roles:{},parties:[],entries:[],lines:[],financialAccounts:[],periods:[],transactions:[],health:null,integrity:null,workspaceRole:null,visibleWorkspaces:0};
-
 const faDigits=s=>String(s??'').replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
 const cleanAmount=v=>faDigits(v).replace(/[٬,\s]/g,'').replace(/[^0-9-]/g,'');
 const bi=v=>{try{return BigInt(cleanAmount(v)||'0')}catch{return 0n}};
 const money=v=>{let n=bi(v),sign=n<0n?'-':'';if(n<0n)n=-n;return sign+n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,'٬')+' تومان'};
 const today=()=>new Date().toISOString().slice(0,10);
-const dateFa=s=>{try{return new Intl.DateTimeFormat('fa-IR-u-ca-persian',{year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(s+'T12:00:00'))}catch{return s||'—'}};
+const dateFa=const pad2=n=>String(n).padStart(2,'0');
+const jDiv=(a,b)=>Math.trunc(a/b);
+const jMod=(a,b)=>a-Math.trunc(a/b)*b;
+
+const J_BREAKS=[
+  -61,9,38,199,426,686,756,818,1111,1181,
+  1210,1635,2060,2097,2192,2262,2324,2394,
+  2456,3178
+];
+
+function jalCal(jy,withoutLeap=false){
+  let gy=jy+621;
+  let leapJ=-14;
+  let jp=J_BREAKS[0];
+  let jm,jump=0,leap,leapG,march,n;
+
+  if(jy<jp||jy>=J_BREAKS[J_BREAKS.length-1])
+    throw new Error('JALALI_YEAR_RANGE');
+
+  for(let i=1;i<J_BREAKS.length;i++){
+    jm=J_BREAKS[i];
+    jump=jm-jp;
+    if(jy<jm)break;
+
+    leapJ+=jDiv(jump,33)*8+jDiv(jMod(jump,33),4);
+    jp=jm;
+  }
+
+  n=jy-jp;
+
+  leapJ+=
+    jDiv(n,33)*8+
+    jDiv(jMod(n,33)+3,4);
+
+  if(jMod(jump,33)===4&&jump-n===4)
+    leapJ++;
+
+  leapG=
+    jDiv(gy,4)-
+    jDiv((jDiv(gy,100)+1)*3,4)-
+    150;
+
+  march=20+leapJ-leapG;
+
+  if(withoutLeap)
+    return {gy,march};
+
+  if(jump-n<6)
+    n=n-jump+jDiv(jump+4,33)*33;
+
+  leap=jMod(jMod(n+1,33)-1,4);
+
+  if(leap===-1)
+    leap=4;
+
+  return {leap,gy,march};
+}
+
+function g2d(gy,gm,gd){
+  let d=
+    jDiv(
+      (gy+jDiv(gm-8,6)+100100)*1461,
+      4
+    )+
+    jDiv(
+      153*jMod(gm+9,12)+2,
+      5
+    )+
+    gd-
+    34840408;
+
+  d=
+    d-
+    jDiv(
+      jDiv(
+        gy+100100+jDiv(gm-8,6),
+        100
+      )*3,
+      4
+    )+
+    752;
+
+  return d;
+}
+
+function d2g(jdn){
+  let j=4*jdn+139361631;
+
+  j=
+    j+
+    jDiv(
+      jDiv(
+        4*jdn+183187720,
+        146097
+      )*3,
+      4
+    )*4-
+    3908;
+
+  let i=
+    jDiv(jMod(j,1461),4)*5+
+    308;
+
+  let gd=
+    jDiv(jMod(i,153),5)+1;
+
+  let gm=
+    jMod(jDiv(i,153),12)+1;
+
+  let gy=
+    jDiv(j,1461)-
+    100100+
+    jDiv(8-gm,6);
+
+  return {gy,gm,gd};
+}
+
+function j2d(jy,jm,jd){
+  const r=jalCal(jy,true);
+
+  return (
+    g2d(r.gy,3,r.march)+
+    (jm-1)*31-
+    jDiv(jm,7)*(jm-7)+
+    jd-
+    1
+  );
+}
+
+function d2j(jdn){
+  const g=d2g(jdn);
+
+  let jy=g.gy-621;
+  let r=jalCal(jy);
+  let jdn1f=g2d(g.gy,3,r.march);
+  let k=jdn-jdn1f;
+  let jd,jm;
+
+  if(k>=0){
+
+    if(k<=185){
+      jm=1+jDiv(k,31);
+      jd=jMod(k,31)+1;
+
+      return {jy,jm,jd};
+    }
+
+    k-=186;
+
+  }else{
+
+    jy-=1;
+    k+=179;
+
+    if(r.leap===1)
+      k+=1;
+  }
+
+  jm=7+jDiv(k,30);
+  jd=jMod(k,30)+1;
+
+  return {jy,jm,jd};
+}
+
+function jalaliToIso(v){
+  const s=
+    faDigits(v)
+      .trim()
+      .replace(/[.\-]/g,'/');
+
+  const m=
+    s.match(
+      /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/
+    );
+
+  if(!m)
+    return null;
+
+  const jy=Number(m[1]);
+  const jm=Number(m[2]);
+  const jd=Number(m[3]);
+
+  if(
+    jm<1||
+    jm>12||
+    jd<1||
+    jd>31
+  )
+    return null;
+
+  try{
+
+    const g=
+      d2g(
+        j2d(jy,jm,jd)
+      );
+
+    const back=
+      d2j(
+        g2d(g.gy,g.gm,g.gd)
+      );
+
+    if(
+      back.jy!==jy||
+      back.jm!==jm||
+      back.jd!==jd
+    )
+      return null;
+
+    return (
+      `${g.gy}-`+
+      `${pad2(g.gm)}-`+
+      `${pad2(g.gd)}`
+    );
+
+  }catch{
+    return null;
+  }
+}
+
+function jalalizeDateInputs(root=document){
+
+  root
+    .querySelectorAll(
+      'input[type="date"]:not([data-jalalized])'
+    )
+    .forEach(input=>{
+
+      const iso=input.value||'';
+      const name=input.getAttribute('name')||'';
+      const id=input.id||'';
+      const required=input.required;
+
+      const next=input.nextElementSibling;
+
+      if(
+        next&&
+        next.tagName==='SMALL'&&
+        next.textContent.trim().startsWith('جلالی:')
+      ){
+        next.remove();
+      }
+
+      const hidden=
+        document.createElement('input');
+
+      hidden.type='hidden';
+      hidden.value=iso;
+
+      if(name)
+        hidden.name=name;
+
+      if(id)
+        hidden.id=id;
+
+      input.type='text';
+
+      input.removeAttribute('name');
+      input.removeAttribute('id');
+
+      input.dataset.jalalized='1';
+      input.inputMode='numeric';
+      input.autocomplete='off';
+
+      input.placeholder='۱۴۰۵/۰۶/۰۸';
+
+      input.value=
+        iso
+          ?dateFa(iso)
+          :'';
+
+      const sync=()=>{
+
+        const raw=
+          input.value.trim();
+
+        if(!raw){
+
+          hidden.value='';
+
+          input.setCustomValidity(
+            required
+              ?'تاریخ الزامی است.'
+              :''
+          );
+
+          return;
+        }
+
+        const parsed=
+          jalaliToIso(raw);
+
+        if(parsed){
+
+          hidden.value=parsed;
+          input.setCustomValidity('');
+
+        }else{
+
+          hidden.value='';
+
+          input.setCustomValidity(
+            'تاریخ شمسی معتبر وارد کنید؛ مثال ۱۴۰۵/۰۶/۰۸'
+          );
+        }
+      };
+
+      input.addEventListener(
+        'input',
+        sync
+      );
+
+      input.addEventListener(
+        'blur',
+        ()=>{
+          sync();
+
+          if(hidden.value)
+            input.value=
+              dateFa(hidden.value);
+        }
+      );
+
+      input.insertAdjacentElement(
+        'afterend',
+        hidden
+      );
+
+    });
+  bindJalaliPickers(root);
+}
+  const J_MONTH_NAMES=[
+  'فروردین','اردیبهشت','خرداد',
+  'تیر','مرداد','شهریور',
+  'مهر','آبان','آذر',
+  'دی','بهمن','اسفند'
+];
+
+const J_WEEK_DAYS=[
+  'ش','ی','د','س','چ','پ','ج'
+];
+
+function jalaliMonthDays(jy,jm){
+  if(jm<=6)return 31;
+  if(jm<=11)return 30;
+
+  try{
+    return j2d(jy+1,1,1)-j2d(jy,1,1)===366
+      ?30
+      :29;
+  }catch{
+    return 29;
+  }
+}
+
+function isoToJalali(iso){
+  const m=String(iso||'')
+    .match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  if(!m)return null;
+
+  try{
+    return d2j(
+      g2d(
+        Number(m[1]),
+        Number(m[2]),
+        Number(m[3])
+      )
+    );
+  }catch{
+    return null;
+  }
+}
+
+function closeJalaliPicker(){
+  const old=
+    document.getElementById('jalaliPickerLayer');
+
+  if(old)old.remove();
+}
+
+function openJalaliPicker(input,hidden){
+
+  closeJalaliPicker();
+
+  const todayIso=today();
+
+  const base=
+    isoToJalali(hidden.value||todayIso)||
+    isoToJalali(todayIso);
+
+  let viewYear=base.jy;
+  let viewMonth=base.jm;
+
+  const layer=
+    document.createElement('div');
+
+  layer.id='jalaliPickerLayer';
+  layer.className='jalali-picker-layer';
+
+  layer.innerHTML=`
+    <div class="jalali-picker" role="dialog" aria-label="تقویم شمسی">
+
+      <div class="jalali-picker-head">
+        <button
+          type="button"
+          class="ghost small"
+          data-j-prev
+        >
+          ماه قبل
+        </button>
+
+        <strong data-j-title></strong>
+
+        <button
+          type="button"
+          class="ghost small"
+          data-j-next
+        >
+          ماه بعد
+        </button>
+      </div>
+
+      <div class="jalali-picker-week">
+        ${J_WEEK_DAYS
+          .map(x=>`<span>${x}</span>`)
+          .join('')}
+      </div>
+
+      <div
+        class="jalali-picker-days"
+        data-j-days
+      ></div>
+
+      <div class="jalali-picker-actions">
+
+        <button
+          type="button"
+          class="ghost small"
+          data-j-clear
+        >
+          پاک کردن
+        </button>
+
+        <button
+          type="button"
+          class="ghost small"
+          data-j-close
+        >
+          بستن
+        </button>
+
+        <button
+          type="button"
+          class="primary small"
+          data-j-today
+        >
+          امروز
+        </button>
+
+      </div>
+
+    </div>
+  `;
+
+  document.body.appendChild(layer);
+
+  const title=
+    layer.querySelector('[data-j-title]');
+
+  const daysBox=
+    layer.querySelector('[data-j-days]');
+
+  const renderCalendar=()=>{
+
+    const faYear=
+      new Intl.NumberFormat(
+        'fa-IR',
+        {useGrouping:false}
+      ).format(viewYear);
+
+    title.textContent=
+      `${J_MONTH_NAMES[viewMonth-1]} ${faYear}`;
+
+    const firstIso=
+      jalaliToIso(
+        `${viewYear}/${viewMonth}/1`
+      );
+
+    if(!firstIso){
+      daysBox.innerHTML='';
+      return;
+    }
+
+    const firstDate=
+      new Date(firstIso+'T12:00:00');
+
+    // شنبه = 0
+    const offset=
+      (firstDate.getDay()+1)%7;
+
+    const count=
+      jalaliMonthDays(
+        viewYear,
+        viewMonth
+      );
+
+    let html='';
+
+    for(let i=0;i<offset;i++)
+      html+='<span class="jalali-day-empty"></span>';
+
+    for(let day=1;day<=count;day++){
+
+      const iso=
+        jalaliToIso(
+          `${viewYear}/${viewMonth}/${day}`
+        );
+
+      const selected=
+        iso&&iso===hidden.value;
+
+      const isToday=
+        iso===todayIso;
+
+      const faDay=
+        new Intl.NumberFormat(
+          'fa-IR',
+          {useGrouping:false}
+        ).format(day);
+
+      html+=`
+        <button
+          type="button"
+          class="jalali-day
+            ${selected?'selected':''}
+            ${isToday?'today':''}"
+          data-j-day="${day}"
+        >
+          ${faDay}
+        </button>
+      `;
+    }
+
+    daysBox.innerHTML=html;
+
+    daysBox
+      .querySelectorAll('[data-j-day]')
+      .forEach(btn=>{
+
+        btn.onclick=()=>{
+
+          const day=
+            Number(btn.dataset.jDay);
+
+          const iso=
+            jalaliToIso(
+              `${viewYear}/${viewMonth}/${day}`
+            );
+
+          if(!iso)return;
+
+          hidden.value=iso;
+          input.value=dateFa(iso);
+
+          input.setCustomValidity('');
+
+          input.dispatchEvent(
+            new Event(
+              'input',
+              {bubbles:true}
+            )
+          );
+
+          closeJalaliPicker();
+        };
+      });
+  };
+
+  layer.querySelector('[data-j-prev]').onclick=()=>{
+
+    viewMonth--;
+
+    if(viewMonth<1){
+      viewMonth=12;
+      viewYear--;
+    }
+
+    renderCalendar();
+  };
+
+  layer.querySelector('[data-j-next]').onclick=()=>{
+
+    viewMonth++;
+
+    if(viewMonth>12){
+      viewMonth=1;
+      viewYear++;
+    }
+
+    renderCalendar();
+  };
+
+  layer.querySelector('[data-j-today]').onclick=()=>{
+
+    hidden.value=todayIso;
+    input.value=dateFa(todayIso);
+
+    input.setCustomValidity('');
+
+    input.dispatchEvent(
+      new Event(
+        'input',
+        {bubbles:true}
+      )
+    );
+
+    closeJalaliPicker();
+  };
+
+  layer.querySelector('[data-j-clear]').onclick=()=>{
+
+    hidden.value='';
+    input.value='';
+
+    input.dispatchEvent(
+      new Event(
+        'input',
+        {bubbles:true}
+      )
+    );
+
+    closeJalaliPicker();
+  };
+
+  layer.querySelector('[data-j-close]').onclick=
+    closeJalaliPicker;
+
+  layer.onclick=e=>{
+    if(e.target===layer)
+      closeJalaliPicker();
+  };
+
+  renderCalendar();
+}
+
+function bindJalaliPickers(root=document){
+
+  root
+    .querySelectorAll(
+      'input[data-jalalized]:not([data-picker-bound])'
+    )
+    .forEach(input=>{
+
+      const hidden=
+        input.nextElementSibling;
+
+      if(
+        !hidden||
+        hidden.type!=='hidden'
+      )return;
+
+      input.dataset.pickerBound='1';
+
+      const button=
+        document.createElement('button');
+
+      button.type='button';
+      button.className='jalali-picker-btn';
+      button.textContent='📅 انتخاب تاریخ';
+      button.title='انتخاب تاریخ از تقویم شمسی';
+
+      button.onclick=e=>{
+        e.preventDefault();
+        e.stopPropagation();
+
+        openJalaliPicker(
+          input,
+          hidden
+        );
+      };
+
+      input.insertAdjacentElement(
+        'afterend',
+        button
+      );
+    });
+}
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const catFa={asset:'دارایی',liability:'بدهی',equity:'حقوق مالکانه',income:'درآمد',expense:'هزینه'};
 const levelFa={1:'کل',2:'معین',3:'تفصیلی'};
@@ -40,12 +726,20 @@ function msgFor(e){
 }
 function toast(t){const el=Q('toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2800)}
 function showError(e,where=''){console.error(where,e);toast(msgFor(e))}
-function openModal(html){Q('modal').innerHTML=html;Q('modalBackdrop').hidden=false;document.body.classList.add('mobile-scroll-lock')}
+function openModal(html){
+  Q('modal').innerHTML=html;
+  jalalizeDateInputs(Q('modal'));
+  Q('modalBackdrop').hidden=false;
+  document.body.classList.add('mobile-scroll-lock');
+}
 function closeModal(){Q('modalBackdrop').hidden=true;Q('modal').innerHTML='';document.body.classList.remove('mobile-scroll-lock')}
 Q('modalBackdrop').addEventListener('click',e=>{if(e.target===Q('modalBackdrop'))closeModal()});
 function setTitle(t){Q('pageTitle').textContent=t;Q('breadcrumb').textContent=`آوان › ${t}`}
 function setNav(page){document.querySelectorAll('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page))}
-function page(html){Q('content').innerHTML=html}
+function page(html){
+  Q('content').innerHTML=html;
+  jalalizeDateInputs(Q('content'));
+}
 const acct=id=>ctx.accounts.find(a=>a.id===id);
 const party=id=>ctx.parties.find(p=>p.id===id);
 const role=k=>ctx.roles[k];
