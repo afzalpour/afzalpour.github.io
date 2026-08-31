@@ -43,11 +43,16 @@ const invoiceTypeFa={sale:'فروش',purchase:'خرید'};
 
 bindModalBackdrop();
 
-function setTitle(t){Q('pageTitle').textContent=t;Q('breadcrumb').textContent=`آوان › ${t}`}
-function setNav(page){document.querySelectorAll('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page))}
+function setTitle(title){
+  return uiSetTitle(title);
+}
+
+function setNav(pageName){
+  return uiSetNav(pageName);
+}
+
 function page(html){
-  Q('content').innerHTML=html;
-  jalalizeDateInputs(Q('content'));
+  return uiPage(html);
 }
 const acct=id=>ctx.accounts.find(a=>a.id===id);
 const party=id=>ctx.parties.find(p=>p.id===id);
