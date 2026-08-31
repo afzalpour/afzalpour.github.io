@@ -30,16 +30,6 @@ function jalaliToIso(v){
 function jalalizeDateInputs(root=document){
   return uiJalalizeDateInputs(root);
 }
-  const J_MONTH_NAMES=[
-  'فروردین','اردیبهشت','خرداد',
-  'تیر','مرداد','شهریور',
-  'مهر','آبان','آذر',
-  'دی','بهمن','اسفند'
-];
-
-const J_WEEK_DAYS=[
-  'ش','ی','د','س','چ','پ','ج'
-];
 
 function jalaliMonthDays(jy,jm){
   return coreJalaliMonthDays(jy,jm);
@@ -49,7 +39,6 @@ function isoToJalali(iso){
   return coreIsoToJalali(iso);
 }
 
-
 function closeJalaliPicker(){
   return uiCloseJalaliPicker();
 }
@@ -58,51 +47,10 @@ function openJalaliPicker(input,hidden){
   return uiOpenJalaliPicker(input,hidden);
 }
 
-  layer.querySelector('[data-j-today]').onclick=()=>{
-
-    hidden.value=todayIso;
-    input.value=dateFa(todayIso);
-
-    input.setCustomValidity('');
-
-    input.dispatchEvent(
-      new Event(
-        'input',
-        {bubbles:true}
-      )
-    );
-
-    closeJalaliPicker();
-  };
-
-  layer.querySelector('[data-j-clear]').onclick=()=>{
-
-    hidden.value='';
-    input.value='';
-
-    input.dispatchEvent(
-      new Event(
-        'input',
-        {bubbles:true}
-      )
-    );
-
-    closeJalaliPicker();
-  };
-
-  layer.querySelector('[data-j-close]').onclick=
-    closeJalaliPicker;
-
-  layer.onclick=e=>{
-    if(e.target===layer)
-      closeJalaliPicker();
-  };
-
-  renderCalendar();
-}
-
 function bindJalaliPickers(root=document){
   return uiBindJalaliPickers(root);
+}
+
 }
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const catFa={asset:'دارایی',liability:'بدهی',equity:'حقوق مالکانه',income:'درآمد',expense:'هزینه'};
