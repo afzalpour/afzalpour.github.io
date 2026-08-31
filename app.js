@@ -145,7 +145,7 @@ Q('forgotPasswordBtn').onclick=async()=>{
   }catch(err){
 
     Q('authStatus').innerHTML=
-      `<span class="error-box" style="display:block">${esc(msgFor(err))}</span>`;
+      `<span class="error-box" style="display:block">${esc(errorMessageFa(err))}</span>`;
 
   }finally{
 
@@ -227,7 +227,7 @@ function passwordRecoveryModal(){
     }catch(err){
 
       Q('recoveryStatus').innerHTML=
-        `<span class="error-box" style="display:block">${esc(msgFor(err))}</span>`;
+        `<span class="error-box" style="display:block">${esc(errorMessageFa(err))}</span>`;
     }
   };
 }
