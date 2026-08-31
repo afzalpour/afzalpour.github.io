@@ -14,6 +14,12 @@ import {
   bindModalBackdrop
 } from './src/ui/components/modal.js';
 
+import {
+  setTitle as uiSetTitle,
+  setNav as uiSetNav,
+  page as uiPage
+} from './src/ui/shell/shell-view.js';
+
 (function(){
 'use strict';
 const Q=id=>document.getElementById(id), C=window.AvanCloud;
