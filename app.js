@@ -5,8 +5,8 @@ import {
   errorMessageFa
 } from './src/ui/errors/error-messages-fa.js';
 import {
-  toast as uiToast,
-  showError as uiShowError
+  toast,
+  showError
 } from './src/ui/feedback/toast.js';
 (function(){
 'use strict';
@@ -28,13 +28,7 @@ const levelFa={1:'کل',2:'معین',3:'تفصیلی'};
 const statusFa={draft:'پیش‌نویس',posted:'ثبت‌شده',reversed:'برگشتی'};
 const roleFa={owner:'مالک',manager:'مدیر',accountant:'حسابدار',viewer:'مشاهده‌گر'};
 const invoiceTypeFa={sale:'فروش',purchase:'خرید'};
-function toast(message){
-  return uiToast(message);
-}
 
-function showError(error,where=''){
-  return uiShowError(error,where);
-}
 function openModal(html){
   Q('modal').innerHTML=html;
   jalalizeDateInputs(Q('modal'));
