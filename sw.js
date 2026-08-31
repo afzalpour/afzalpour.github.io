@@ -1,5 +1,5 @@
 const CACHE_PREFIX='avan-prod-core-';
-const CACHE='avan-prod-core-1-0-v12';
+const CACHE='avan-prod-core-1-0-v13';
 
 const ASSETS=[
   './',
@@ -10,7 +10,8 @@ const ASSETS=[
   './app.js',
   './manifest.webmanifest',
   './src/core/date/jalali.js',
-  './src/ui/date/jalali-picker.js'
+'./src/ui/date/jalali-picker.js',
+'./src/ui/errors/error-messages-fa.js'
 ];
 
 self.addEventListener(
