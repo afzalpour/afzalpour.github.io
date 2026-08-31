@@ -36,13 +36,15 @@ const roleFa={owner:'مالک',manager:'مدیر',accountant:'حسابدار',vi
 const invoiceTypeFa={sale:'فروش',purchase:'خرید'};
 
 function openModal(html){
-  Q('modal').innerHTML=html;
-  jalalizeDateInputs(Q('modal'));
-  Q('modalBackdrop').hidden=false;
-  document.body.classList.add('mobile-scroll-lock');
+  return uiOpenModal(html);
 }
-function closeModal(){Q('modalBackdrop').hidden=true;Q('modal').innerHTML='';document.body.classList.remove('mobile-scroll-lock')}
-Q('modalBackdrop').addEventListener('click',e=>{if(e.target===Q('modalBackdrop'))closeModal()});
+
+function closeModal(){
+  return uiCloseModal();
+}
+
+uiBindModalBackdrop();
+
 function setTitle(t){Q('pageTitle').textContent=t;Q('breadcrumb').textContent=`آوان › ${t}`}
 function setNav(page){document.querySelectorAll('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page))}
 function page(html){
