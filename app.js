@@ -3,7 +3,12 @@ import {
   jalaliMonthDays as coreJalaliMonthDays,
   isoToJalali as coreIsoToJalali
 } from './src/core/date/jalali.js';
-
+import {
+  jalalizeDateInputs as uiJalalizeDateInputs,
+  closeJalaliPicker as uiCloseJalaliPicker,
+  openJalaliPicker as uiOpenJalaliPicker,
+  bindJalaliPickers as uiBindJalaliPickers
+} from './src/ui/date/jalali-picker.js';
 (function(){
 'use strict';
 const Q=id=>document.getElementById(id), C=window.AvanCloud;
