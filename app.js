@@ -2,7 +2,7 @@ import {
   jalalizeDateInputs
 } from './src/ui/date/jalali-picker.js';
 import {
-  errorMessageFa as uiErrorMessageFa
+  errorMessageFa
 } from './src/ui/errors/error-messages-fa.js';
 (function(){
 'use strict';
@@ -25,7 +25,7 @@ const statusFa={draft:'پیش‌نویس',posted:'ثبت‌شده',reversed:'ب�
 const roleFa={owner:'مالک',manager:'مدیر',accountant:'حسابدار',viewer:'مشاهده‌گر'};
 const invoiceTypeFa={sale:'فروش',purchase:'خرید'};
 function msgFor(e){
-  return uiErrorMessageFa(e);
+  return errorMessageFa(e);
 }
 function toast(t){const el=Q('toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2800)}
 function showError(e,where=''){console.error(where,e);toast(msgFor(e))}
