@@ -1,3 +1,9 @@
+import {
+  jalaliToIso as coreJalaliToIso,
+  jalaliMonthDays as coreJalaliMonthDays,
+  isoToJalali as coreIsoToJalali
+} from './src/core/date/jalali.js';
+
 (function(){
 'use strict';
 const Q=id=>document.getElementById(id), C=window.AvanCloud;
