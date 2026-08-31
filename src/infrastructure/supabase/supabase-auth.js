@@ -164,9 +164,9 @@ export function createSupabaseAuth({
     redirectTo
   ) {
     const target =
-      redirectTo ||
-      config.authRedirectUrl ||
-      '';
+  redirectTo ||
+  config.authRedirectUrl ||
+  location.origin + location.pathname;
 
     return raw(
       `/auth/v1/recover?redirect_to=${
