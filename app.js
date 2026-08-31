@@ -1,8 +1,5 @@
 import {
-  jalalizeDateInputs as uiJalalizeDateInputs,
-  closeJalaliPicker as uiCloseJalaliPicker,
-  openJalaliPicker as uiOpenJalaliPicker,
-  bindJalaliPickers as uiBindJalaliPickers
+  jalalizeDateInputs
 } from './src/ui/date/jalali-picker.js';
 (function(){
 'use strict';
@@ -18,10 +15,6 @@ const bi=v=>{try{return BigInt(cleanAmount(v)||'0')}catch{return 0n}};
 const money=v=>{let n=bi(v),sign=n<0n?'-':'';if(n<0n)n=-n;return sign+n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,'٬')+' تومان'};
 const today=()=>new Date().toISOString().slice(0,10);
 const dateFa=s=>{try{return new Intl.DateTimeFormat('fa-IR-u-ca-persian',{year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(s+'T12:00:00'))}catch{return s||'—'}};
-
-function jalalizeDateInputs(root=document){
-  return uiJalalizeDateInputs(root);
-}
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const catFa={asset:'دارایی',liability:'بدهی',equity:'حقوق مالکانه',income:'درآمد',expense:'هزینه'};
 const levelFa={1:'کل',2:'معین',3:'تفصیلی'};
