@@ -1,6 +1,9 @@
 import {
   jalalizeDateInputs
 } from './src/ui/date/jalali-picker.js';
+import {
+  errorMessageFa as uiErrorMessageFa
+} from './src/ui/errors/error-messages-fa.js';
 (function(){
 'use strict';
 const Q=id=>document.getElementById(id), C=window.AvanCloud;
