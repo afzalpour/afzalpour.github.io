@@ -1,5 +1,5 @@
 const CACHE_PREFIX='avan-prod-core-';
-const CACHE='avan-prod-core-1-0-v16';
+const CACHE='avan-prod-core-1-0-v17';
 
 const ASSETS=[
   './',
@@ -14,7 +14,13 @@ const ASSETS=[
 './src/ui/errors/error-messages-fa.js',
 './src/ui/feedback/toast.js',
 './src/ui/components/modal.js',
-'./src/ui/shell/shell-view.js' 
+'./src/ui/shell/shell-view.js',
+'./src/infrastructure/supabase/supabase-transport.js',
+'./src/infrastructure/supabase/supabase-session.js',
+'./src/infrastructure/supabase/supabase-auth.js',
+'./src/infrastructure/supabase/supabase-rest.js',
+'./src/infrastructure/supabase/supabase-client.js',
+'./src/infrastructure/supabase/avan-cloud-bootstrap.js'
 ];
 
 self.addEventListener(
