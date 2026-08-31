@@ -183,6 +183,7 @@ function d2j(jdn){
 }
 
 function jalaliToIso(v){
+    return coreJalaliToIso(v);
   const s=
     faDigits(v)
       .trim()
@@ -361,6 +362,7 @@ const J_WEEK_DAYS=[
 ];
 
 function jalaliMonthDays(jy,jm){
+    return coreJalaliMonthDays(jy,jm);
   if(jm<=6)return 31;
   if(jm<=11)return 30;
 
@@ -374,6 +376,7 @@ function jalaliMonthDays(jy,jm){
 }
 
 function isoToJalali(iso){
+    return coreIsoToJalali(iso);
   const m=String(iso||'')
     .match(/^(\d{4})-(\d{2})-(\d{2})$/);
 
