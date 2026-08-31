@@ -20,9 +20,13 @@ import {
   page
 } from './src/ui/shell/shell-view.js';
 
+import {
+  installAvanCloud
+} from './src/infrastructure/supabase/avan-cloud-bootstrap.js';
+
 (function(){
 'use strict';
-const Q=id=>document.getElementById(id), C=window.AvanCloud;
+const Q=id=>document.getElementById(id), C=installAvanCloud();
 const authCallback=C.consumeAuthCallback?.();
 let authMode='login', currentPage='dashboard';
 let reportState={tab:'trial',from:null,to:null,ledgerAccount:null};
