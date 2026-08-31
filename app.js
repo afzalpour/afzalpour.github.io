@@ -24,9 +24,6 @@ const levelFa={1:'کل',2:'معین',3:'تفصیلی'};
 const statusFa={draft:'پیش‌نویس',posted:'ثبت‌شده',reversed:'برگشتی'};
 const roleFa={owner:'مالک',manager:'مدیر',accountant:'حسابدار',viewer:'مشاهده‌گر'};
 const invoiceTypeFa={sale:'فروش',purchase:'خرید'};
-function msgFor(e){
-  return errorMessageFa(e);
-}
 function toast(t){const el=Q('toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2800)}
 function showError(e,where=''){console.error(where,e);toast(errorMessageFa(e))}
 function openModal(html){
