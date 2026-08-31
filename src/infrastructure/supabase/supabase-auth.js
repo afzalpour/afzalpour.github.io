@@ -158,7 +158,67 @@ export function createSupabaseAuth({
       }
     );
   }
+function consumeAuthCallback() {
+  const rawHash =
+    String(location.hash || '')
+      .replace(/^#/, '');
 
+  if (!rawHash) {
+    return null;
+  }
+
+  const params =
+    new URLSearchParams(rawHash);
+
+  const accessToken =
+    params.get('access_token');
+
+  const refreshToken =
+    params.get('refresh_token');
+
+  if (!accessToken) {
+    return null;
+  }
+
+  const expiresIn =
+    Number(
+      params.get('expires_in') || 0
+    );
+
+  const expiresAt =
+    Number(
+      params.get('expires_at') || 0
+    ) ||
+    Math.floor(Date.now() / 1000) +
+      expiresIn;
+
+  const currentSession = {
+    access_token: accessToken,
+    refresh_token: refreshToken,
+    expires_in: expiresIn,
+    expires_at: expiresAt,
+    token_type:
+      params.get('token_type') ||
+      'bearer'
+  };
+
+  saveSession(currentSession);
+
+  const type =
+    params.get('type') || '';
+
+  history.replaceState(
+    null,
+    document.title,
+    location.pathname +
+      location.search
+  );
+
+  return {
+    type,
+    session: currentSession
+  };
+}
   async function requestPasswordReset(
     email,
     redirectTo
@@ -204,13 +264,14 @@ export function createSupabaseAuth({
   }
 
   return {
-    refreshIfNeeded,
-    token,
-    signup,
-    login,
-    logout,
-    user,
-    requestPasswordReset,
-    updatePassword
-  };
+  refreshIfNeeded,
+  token,
+  consumeAuthCallback,
+  signup,
+  login,
+  logout,
+  user,
+  requestPasswordReset,
+  updatePassword
+};
 }
