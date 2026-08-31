@@ -51,7 +51,6 @@ function bindJalaliPickers(root=document){
   return uiBindJalaliPickers(root);
 }
 
-}
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const catFa={asset:'دارایی',liability:'بدهی',equity:'حقوق مالکانه',income:'درآمد',expense:'هزینه'};
 const levelFa={1:'کل',2:'معین',3:'تفصیلی'};
