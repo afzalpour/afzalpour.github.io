@@ -183,62 +183,8 @@ function d2j(jdn){
 }
 
 function jalaliToIso(v){
-    return coreJalaliToIso(v);
-  const s=
-    faDigits(v)
-      .trim()
-      .replace(/[.\-]/g,'/');
-
-  const m=
-    s.match(
-      /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/
-    );
-
-  if(!m)
-    return null;
-
-  const jy=Number(m[1]);
-  const jm=Number(m[2]);
-  const jd=Number(m[3]);
-
-  if(
-    jm<1||
-    jm>12||
-    jd<1||
-    jd>31
-  )
-    return null;
-
-  try{
-
-    const g=
-      d2g(
-        j2d(jy,jm,jd)
-      );
-
-    const back=
-      d2j(
-        g2d(g.gy,g.gm,g.gd)
-      );
-
-    if(
-      back.jy!==jy||
-      back.jm!==jm||
-      back.jd!==jd
-    )
-      return null;
-
-    return (
-      `${g.gy}-`+
-      `${pad2(g.gm)}-`+
-      `${pad2(g.gd)}`
-    );
-
-  }catch{
-    return null;
-  }
+  return coreJalaliToIso(v);
 }
-
 function jalalizeDateInputs(root=document){
 
   root
@@ -362,38 +308,13 @@ const J_WEEK_DAYS=[
 ];
 
 function jalaliMonthDays(jy,jm){
-    return coreJalaliMonthDays(jy,jm);
-  if(jm<=6)return 31;
-  if(jm<=11)return 30;
-
-  try{
-    return j2d(jy+1,1,1)-j2d(jy,1,1)===366
-      ?30
-      :29;
-  }catch{
-    return 29;
-  }
+  return coreJalaliMonthDays(jy,jm);
 }
 
 function isoToJalali(iso){
-    return coreIsoToJalali(iso);
-  const m=String(iso||'')
-    .match(/^(\d{4})-(\d{2})-(\d{2})$/);
-
-  if(!m)return null;
-
-  try{
-    return d2j(
-      g2d(
-        Number(m[1]),
-        Number(m[2]),
-        Number(m[3])
-      )
-    );
-  }catch{
-    return null;
-  }
+  return coreIsoToJalali(iso);
 }
+
 
 function closeJalaliPicker(){
   const old=
