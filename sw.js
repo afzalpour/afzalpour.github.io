@@ -1,12 +1,11 @@
 const CACHE_PREFIX='avan-prod-core-';
-const CACHE='avan-prod-core-1-0-v17';
+const CACHE='avan-prod-core-1-0-v18';
 
 const ASSETS=[
   './',
   './index.html',
   './styles.css',
   './config.js',
-  './cloud.js',
   './app.js',
   './manifest.webmanifest',
   './src/core/date/jalali.js',
