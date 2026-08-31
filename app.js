@@ -1,9 +1,4 @@
 import {
-  jalaliToIso as coreJalaliToIso,
-  jalaliMonthDays as coreJalaliMonthDays,
-  isoToJalali as coreIsoToJalali
-} from './src/core/date/jalali.js';
-import {
   jalalizeDateInputs as uiJalalizeDateInputs,
   closeJalaliPicker as uiCloseJalaliPicker,
   openJalaliPicker as uiOpenJalaliPicker,
