@@ -8,6 +8,12 @@ import {
   toast,
   showError
 } from './src/ui/feedback/toast.js';
+import {
+  openModal as uiOpenModal,
+  closeModal as uiCloseModal,
+  bindModalBackdrop as uiBindModalBackdrop
+} from './src/ui/components/modal.js';
+
 (function(){
 'use strict';
 const Q=id=>document.getElementById(id), C=window.AvanCloud;
