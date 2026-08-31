@@ -15,9 +15,9 @@ import {
 } from './src/ui/components/modal.js';
 
 import {
-  setTitle as uiSetTitle,
-  setNav as uiSetNav,
-  page as uiPage
+  setTitle,
+  setNav,
+  page
 } from './src/ui/shell/shell-view.js';
 
 (function(){
@@ -43,17 +43,6 @@ const invoiceTypeFa={sale:'فروش',purchase:'خرید'};
 
 bindModalBackdrop();
 
-function setTitle(title){
-  return uiSetTitle(title);
-}
-
-function setNav(pageName){
-  return uiSetNav(pageName);
-}
-
-function page(html){
-  return uiPage(html);
-}
 const acct=id=>ctx.accounts.find(a=>a.id===id);
 const party=id=>ctx.parties.find(p=>p.id===id);
 const invoice=id=>ctx.invoices.find(x=>x.id===id);
