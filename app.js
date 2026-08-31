@@ -4,6 +4,10 @@ import {
 import {
   errorMessageFa
 } from './src/ui/errors/error-messages-fa.js';
+import {
+  toast as uiToast,
+  showError as uiShowError
+} from './src/ui/feedback/toast.js';
 (function(){
 'use strict';
 const Q=id=>document.getElementById(id), C=window.AvanCloud;
