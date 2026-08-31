@@ -9,9 +9,9 @@ import {
   showError
 } from './src/ui/feedback/toast.js';
 import {
-  openModal as uiOpenModal,
-  closeModal as uiCloseModal,
-  bindModalBackdrop as uiBindModalBackdrop
+  openModal,
+  closeModal,
+  bindModalBackdrop
 } from './src/ui/components/modal.js';
 
 (function(){
@@ -35,15 +35,7 @@ const statusFa={draft:'پیش‌نویس',posted:'ثبت‌شده',reversed:'ب�
 const roleFa={owner:'مالک',manager:'مدیر',accountant:'حسابدار',viewer:'مشاهده‌گر'};
 const invoiceTypeFa={sale:'فروش',purchase:'خرید'};
 
-function openModal(html){
-  return uiOpenModal(html);
-}
-
-function closeModal(){
-  return uiCloseModal();
-}
-
-uiBindModalBackdrop();
+bindModalBackdrop();
 
 function setTitle(t){Q('pageTitle').textContent=t;Q('breadcrumb').textContent=`آوان › ${t}`}
 function setNav(page){document.querySelectorAll('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page))}
