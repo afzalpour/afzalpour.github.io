@@ -12,7 +12,7 @@ const ASSETS=[
   './src/core/date/jalali.js',
 './src/ui/date/jalali-picker.js',
 './src/ui/errors/error-messages-fa.js',
-'./src/ui/feedback/toast.js'
+'./src/ui/feedback/toast.js',
 './src/ui/components/modal.js'
 ];
 
