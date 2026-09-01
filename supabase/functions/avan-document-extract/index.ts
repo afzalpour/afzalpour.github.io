@@ -1,7 +1,11 @@
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
+
   'Access-Control-Allow-Headers':
-    'authorization, apikey, content-type'
+    'authorization, apikey, content-type',
+
+  'Access-Control-Allow-Methods':
+    'POST, OPTIONS'
 };
 
 const jsonHeaders = {
@@ -317,21 +321,17 @@ Deno.serve(
       }
 
       if (
-        ![
-          'uploaded',
-          'extracted'
-        ].includes(
-          document.status
-        )
-      ) {
-        return reply(
-          {
-            error:
-              'DOCUMENT_STATUS_NOT_EXTRACTABLE'
-          },
-          409
-        );
-      }
+  document.status !==
+    'uploaded'
+) {
+  return reply(
+    {
+      error:
+        'DOCUMENT_STATUS_NOT_EXTRACTABLE'
+    },
+    409
+  );
+}
 
       const previousStatus =
         document.status;
@@ -340,9 +340,54 @@ Deno.serve(
       // 4) Set processing state
       // ---------------------------------
 
-      await fetch(
-        `${supabaseUrl}` +
-        `/rest/v1/documents` +
+      const processingResponse =
+  await fetch(
+    `${supabaseUrl}` +
+    `/rest/v1/documents` +
+    `?id=eq.${
+      encodeURIComponent(
+        document.id
+      )
+    }` +
+    `&workspace_id=eq.${
+      encodeURIComponent(
+        document.workspace_id
+      )
+    }`,
+    {
+      method: 'PATCH',
+
+      headers: {
+        apikey:
+          apiKey,
+
+        Authorization:
+          authorization,
+
+        'Content-Type':
+          'application/json'
+      },
+
+      body:
+        JSON.stringify({
+          status:
+            'ocr_processing'
+        })
+    }
+  );
+
+if (
+  !processingResponse.ok
+) {
+  console.error(
+    'DOCUMENT_PROCESSING_STATE_FAILED',
+    processingResponse.status
+  );
+
+  throw new Error(
+    'DOCUMENT_PROCESSING_STATE_FAILED'
+  );
+}
         `?id=eq.${
           encodeURIComponent(
             document.id
@@ -488,9 +533,20 @@ Rules:
 - document_type must be one of:
   receipt, invoice, purchase_invoice,
   sales_invoice, bank_slip, other
-- document_date must be Gregorian YYYY-MM-DD
-  only when confidently determinable.
+- document_date must be Gregorian YYYY-MM-DD.
+- If the source date is Persian/Jalali,
+  convert it to Gregorian only when the
+  source date is clearly determinable.
   Otherwise return an empty string.
+- Avan stores monetary amounts in Toman.
+- If the source explicitly states Toman,
+  extract the amount as-is.
+- If the source explicitly states Rial,
+  convert it exactly to Toman by dividing
+  the Rial amount by 10.
+- If the monetary unit is ambiguous,
+  return an empty string for the affected
+  amount and lower the amount confidence.
 - monetary values must contain digits only,
   with no currency symbol or separators.
 - account_hint is only a short accounting
