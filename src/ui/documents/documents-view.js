@@ -119,13 +119,30 @@ documentsPageHtml({
             </td>
 
             <td>
-              <button
-                class="ghost small"
-                data-view-document="${document.id}"
-              >
-                مشاهده
-              </button>
-            </td>
+  <div class="row-actions">
+
+    <button
+      class="ghost small"
+      data-view-document="${document.id}"
+    >
+      مشاهده
+    </button>
+
+    ${
+      document.status !== 'linked'
+        ?`
+          <button
+            class="primary small"
+            data-review-document="${document.id}"
+          >
+            بازبینی
+          </button>
+        `
+        :''
+    }
+
+  </div>
+</td>
 
           </tr>
         `
