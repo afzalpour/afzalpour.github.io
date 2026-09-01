@@ -21,6 +21,11 @@ import {
 } from './src/ui/shell/shell-view.js';
 
 import {
+  showAuth as uiShowAuth,
+  setAuthMode as uiSetAuthMode
+} from './src/ui/auth/auth-view.js';
+
+import {
   installAvanCloud
 } from './src/infrastructure/supabase/avan-cloud-bootstrap.js';
 
