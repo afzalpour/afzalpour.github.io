@@ -9,6 +9,27 @@ export function createAuthController(
     );
   }
 
+  let mode = 'login';
+
+function setMode(nextMode) {
+  if (
+    nextMode !== 'login' &&
+    nextMode !== 'signup'
+  ) {
+    throw new Error(
+      'AUTH_MODE_INVALID'
+    );
+  }
+
+  mode = nextMode;
+
+  return mode;
+}
+
+function getMode() {
+  return mode;
+}
+  
   async function login(
     email,
     password
@@ -92,6 +113,8 @@ export function createAuthController(
   }
 
   return {
+    setMode,
+    getMode,
     login,
     signup,
     logout,
