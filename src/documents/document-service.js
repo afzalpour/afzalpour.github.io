@@ -146,9 +146,10 @@ function normalizeDocumentType(
 export function
 createDocumentService(cloud) {
   if (
-    !cloud?.uploadFile ||
-    !cloud?.insert
-  ) {
+  !cloud?.uploadFile ||
+  !cloud?.insert ||
+  !cloud?.invokeFunction
+) {
     throw new Error(
       'DOCUMENT_CLOUD_REQUIRED'
     );
@@ -472,6 +473,45 @@ createDocumentService(cloud) {
 
   return updated;
 }
+
+async function extract(
+  document
+) {
+  if (!document?.id) {
+    throw new Error(
+      'DOCUMENT_REQUIRED'
+    );
+  }
+
+  if (
+    document.status !==
+      'uploaded'
+  ) {
+    throw new Error(
+      'DOCUMENT_STATUS_NOT_EXTRACTABLE'
+    );
+  }
+
+  const result =
+    await cloud.invokeFunction(
+      'avan-document-extract',
+      {
+        documentId:
+          document.id
+      }
+    );
+
+  if (
+    !result?.ok ||
+    !result?.document?.id
+  ) {
+    throw new Error(
+      'DOCUMENT_EXTRACTION_FAILED'
+    );
+  }
+
+  return result.document;
+}
   
   return {
   bucket: BUCKET,
@@ -481,6 +521,6 @@ createDocumentService(cloud) {
 
   upload,
   signedUrl,
-  saveReview
+  saveReview,
+  extract
 };
-}
