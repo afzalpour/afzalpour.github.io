@@ -68,7 +68,7 @@ const accountOptions=(selected='',filter=()=>true)=>ctx.accounts.filter(filter).
 const partyOptions=(selected='')=>`<option value="">بدون طرف‌حساب</option>`+ctx.parties.filter(p=>p.is_active).map(p=>`<option value="${p.id}" ${p.id===selected?'selected':''}>${esc(p.name)}</option>`).join('');
 
 async function loadContext(){
-  ctx.user=await C.user(); if(!ctx.user)throw new Error('AUTH_REQUIRED');
+  ctx.user=await Auth.user(); if(!ctx.user)throw new Error('AUTH_REQUIRED');
   let ws=await C.select('workspaces','select=id,name,mode,base_currency,created_at&order=created_at.asc');
   if(!ws?.length){
     await C.rpc('bootstrap_avan_workspace',{p_name:'فضای مالی من',p_mode:'personal',p_money_unit:'toman',p_fiscal_name:'۱۴۰۵',p_date_from:'2026-03-21',p_date_to:'2027-03-20'});
