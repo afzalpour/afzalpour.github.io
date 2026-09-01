@@ -513,7 +513,7 @@ async function extract(
   return result.document;
 }
   
-  return {
+ return {
   bucket: BUCKET,
 
   maxFileSize:
@@ -524,3 +524,4 @@ async function extract(
   saveReview,
   extract
 };
+}
