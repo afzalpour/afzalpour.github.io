@@ -2493,33 +2493,63 @@ function renderSettings(){
 function closePeriodModal(){openModal(`<h2>بستن دوره مالی</h2><form id="periodForm"><div class="form-grid"><div class="field"><label>نام دوره</label><input name="name" value="قفل تا ${dateFa(today())}" required></div><div class="field"><label>از تاریخ</label><input type="date" name="from" value="${ctx.fiscalYear.date_from}" required></div><div class="field"><label>تا تاریخ</label><input type="date" name="to" value="${today()}" required></div></div><div class="error-box">پس از بستن دوره، ثبت قطعی یا برگشت سند با تاریخ داخل این بازه مسدود می‌شود. Draft را می‌توان نگه داشت ولی Post نخواهد شد.</div><div class="form-actions"><button type="button" class="ghost" id="cancelModal">انصراف</button><button class="primary">بستن دوره</button></div></form>`);Q('cancelModal').onclick=closeModal;Q('periodForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);try{await C.rpc('close_fiscal_period',{p_workspace_id:ctx.workspace.id,p_fiscal_year_id:ctx.fiscalYear.id,p_name:f.get('name'),p_date_from:f.get('from'),p_date_to:f.get('to')});closeModal();await reloadAndRender();toast('دوره مالی بسته شد')}catch(err){showError(err)}}}
 
 function bind(){
-  document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>navigate(b.dataset.page));
-  document.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>operationModal(b.dataset.action));
   document
-  .querySelectorAll(
-    '[data-why-number]'
-  )
-    document
-  .querySelectorAll(
-    '[data-aging-party]'
-  )
-  .forEach(
-    button =>
-      button.onclick = () =>
-        agingDetailModal(
-          button.dataset.agingSide,
-          button.dataset.agingParty
-        )
-  );
-  .forEach(
-    button =>
-      button.onclick = () =>
-        whyNumberModal(
-          button.dataset.whyNumber,
-          button.dataset.whyAmount
-        )
-  );
-  document.querySelectorAll('[data-edit-account]').forEach(b=>b.onclick=()=>accountModal(b.dataset.editAccount));
+    .querySelectorAll('[data-page]')
+    .forEach(
+      b =>
+        b.onclick = () =>
+          navigate(
+            b.dataset.page
+          )
+    );
+
+  document
+    .querySelectorAll('[data-action]')
+    .forEach(
+      b =>
+        b.onclick = () =>
+          operationModal(
+            b.dataset.action
+          )
+    );
+
+  document
+    .querySelectorAll(
+      '[data-why-number]'
+    )
+    .forEach(
+      button =>
+        button.onclick = () =>
+          whyNumberModal(
+            button.dataset.whyNumber,
+            button.dataset.whyAmount
+          )
+    );
+
+  document
+    .querySelectorAll(
+      '[data-aging-party]'
+    )
+    .forEach(
+      button =>
+        button.onclick = () =>
+          agingDetailModal(
+            button.dataset.agingSide,
+            button.dataset.agingParty
+          )
+    );
+
+  document
+    .querySelectorAll(
+      '[data-edit-account]'
+    )
+    .forEach(
+      b =>
+        b.onclick = () =>
+          accountModal(
+            b.dataset.editAccount
+          )
+    );
   document.querySelectorAll('[data-archive-account]').forEach(b=>b.onclick=()=>toggleArchive(b.dataset.archiveAccount).catch(showError));
   document.querySelectorAll('[data-delete-account]').forEach(b=>b.onclick=()=>deleteAccount(b.dataset.deleteAccount));
   document.querySelectorAll('[data-opening]').forEach(b=>b.onclick=()=>openingModal(b.dataset.opening));
