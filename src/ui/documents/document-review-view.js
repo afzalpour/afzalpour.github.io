@@ -106,7 +106,7 @@ const selectedAccountId =
 
 const selectedAction =
   savedReview.action ||
-  selectedAction ||
+  proposal?.action ||
   'review_required';
   
   return `
