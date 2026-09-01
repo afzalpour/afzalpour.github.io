@@ -154,10 +154,9 @@ Q('forgotPasswordBtn').onclick=async()=>{
 
   try{
 
-    await C.requestPasswordReset(
-      email,
-      C.cfg.authRedirectUrl
-    );
+    await Auth.requestPasswordReset(
+  email
+);
 
     Q('authStatus').innerHTML=
       '<span class="success-box" style="display:block">اگر این ایمیل در آوان ثبت شده باشد، لینک بازیابی رمز ارسال می‌شود.</span>';
