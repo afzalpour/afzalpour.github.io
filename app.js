@@ -27,8 +27,12 @@ import {
 } from './src/ui/auth/auth-view.js';
 
 import {
-  createAuthController
-} from './src/application/auth/auth-controller.js';
+  buildWhyNumberEvidence
+} from './src/reports/why-number.js';
+
+import {
+  buildWhyNumberEvidence
+} from './src/reports/why-number.js';
 
 import {
   installAvanCloud
@@ -269,14 +273,602 @@ async function render(){
   }
 }
 async function renderDashboard(){
-  setTitle('داشبورد');page('<div class="loading">در حال محاسبه از Ledger…</div>');
-  const wid=ctx.workspace.id,from=ctx.fiscalYear.date_from,to=today();
-  const [bs,pnl,cash]=await Promise.all([C.rpc('report_balance_sheet',{wid,as_of:to}),C.rpc('report_profit_loss',{wid,dfrom:from,dto:to}),C.rpc('report_cash_bank_balances',{wid,as_of:to})]);
-  const B=Object.fromEntries((bs||[]).map(x=>[x.category,bi(x.amount)])),P=Object.fromEntries((pnl||[]).map(x=>[x.category,bi(x.amount)]));
-  const assets=B.asset||0n,liab=B.liability||0n,equity=(B.equity||0n)+(B.current_profit||0n),profit=(P.income||0n)-(P.expense||0n),cashTotal=(cash||[]).reduce((s,x)=>s+bi(x.amount),0n);
-  const recent=ctx.entries.filter(e=>e.status!=='draft').slice(0,6);
-  page(`<div class="grid4"><div class="card"><div class="kpi-label">دارایی</div><div class="kpi-value">${money(assets)}</div></div><div class="card"><div class="kpi-label">بانک و صندوق</div><div class="kpi-value">${money(cashTotal)}</div></div><div class="card"><div class="kpi-label">بدهی</div><div class="kpi-value">${money(liab)}</div></div><div class="card"><div class="kpi-label">سود/زیان سال</div><div class="kpi-value ${profit>=0n?'pos':'neg'}">${money(profit)}</div></div></div>
-  <div class="section card"><div class="section-head"><div><h2>آخرین اسناد</h2><span class="muted">حقوق مالکانه + سود جاری: ${money(equity)}</span></div><span class="cloud-badge">● Ledger زنده</span></div>${recent.length?`<table><thead><tr><th>شماره</th><th>تاریخ</th><th>شرح</th><th>منبع</th><th>وضعیت</th></tr></thead><tbody>${recent.map(e=>`<tr><td>${e.journal_no??'—'}</td><td>${dateFa(e.entry_date)}</td><td>${esc(e.description)}</td><td>${esc(e.source_type)}</td><td><span class="badge ${e.status}">${statusFa[e.status]||esc(e.status)}</span></td></tr>`).join('')}</tbody></table>`:'<div class="empty">هنوز سندی ثبت نشده است.</div>'}</div>`);
+  setTitle('داشبورد');
+
+  page(
+    '<div class="loading">در حال محاسبه از Ledger…</div>'
+  );
+
+  const wid =
+    ctx.workspace.id;
+
+  const from =
+    ctx.fiscalYear.date_from;
+
+  const to =
+    today();
+
+  const [
+    bs,
+    pnl,
+    cash
+  ] = await Promise.all([
+    C.rpc(
+      'report_balance_sheet',
+      {
+        wid,
+        as_of: to
+      }
+    ),
+
+    C.rpc(
+      'report_profit_loss',
+      {
+        wid,
+        dfrom: from,
+        dto: to
+      }
+    ),
+
+    C.rpc(
+      'report_cash_bank_balances',
+      {
+        wid,
+        as_of: to
+      }
+    )
+  ]);
+
+  const B =
+    Object.fromEntries(
+      (bs || []).map(
+        x => [
+          x.category,
+          bi(x.amount)
+        ]
+      )
+    );
+
+  const P =
+    Object.fromEntries(
+      (pnl || []).map(
+        x => [
+          x.category,
+          bi(x.amount)
+        ]
+      )
+    );
+
+  const assets =
+    B.asset || 0n;
+
+  const liab =
+    B.liability || 0n;
+
+  const equity =
+    (B.equity || 0n) +
+    (B.current_profit || 0n);
+
+  const profit =
+    (P.income || 0n) -
+    (P.expense || 0n);
+
+  const cashTotal =
+    (cash || []).reduce(
+      (sum, item) =>
+        sum + bi(item.amount),
+      0n
+    );
+
+  const recent =
+    ctx.entries
+      .filter(
+        entry =>
+          entry.status !== 'draft'
+      )
+      .slice(0, 6);
+
+  const whyButton =
+    (metric, amount) => `
+      <button
+        class="ghost small"
+        data-why-number="${metric}"
+        data-why-amount="${amount.toString()}"
+      >
+        چرا این عدد؟
+      </button>
+    `;
+
+  page(`
+    <div class="grid4">
+
+      <div class="card">
+        <div class="kpi-label">
+          دارایی
+        </div>
+
+        <div class="kpi-value">
+          ${money(assets)}
+        </div>
+
+        <div class="section">
+          ${whyButton(
+            'assets',
+            assets
+          )}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="kpi-label">
+          بانک و صندوق
+        </div>
+
+        <div class="kpi-value">
+          ${money(cashTotal)}
+        </div>
+
+        <div class="section">
+          ${whyButton(
+            'cash',
+            cashTotal
+          )}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="kpi-label">
+          بدهی
+        </div>
+
+        <div class="kpi-value">
+          ${money(liab)}
+        </div>
+
+        <div class="section">
+          ${whyButton(
+            'liabilities',
+            liab
+          )}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="kpi-label">
+          سود/زیان سال
+        </div>
+
+        <div
+          class="kpi-value ${
+            profit >= 0n
+              ? 'pos'
+              : 'neg'
+          }"
+        >
+          ${money(profit)}
+        </div>
+
+        <div class="section">
+          ${whyButton(
+            'profit',
+            profit
+          )}
+        </div>
+      </div>
+
+    </div>
+
+    <div class="section card">
+
+      <div class="section-head">
+
+        <div>
+          <h2>
+            آخرین اسناد
+          </h2>
+
+          <span class="muted">
+            حقوق مالکانه + سود جاری:
+            ${money(equity)}
+          </span>
+        </div>
+
+        <span class="cloud-badge">
+          ● Ledger زنده
+        </span>
+
+      </div>
+
+      ${
+        recent.length
+          ?`
+            <table>
+              <thead>
+                <tr>
+                  <th>شماره</th>
+                  <th>تاریخ</th>
+                  <th>شرح</th>
+                  <th>منبع</th>
+                  <th>وضعیت</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                ${
+                  recent.map(
+                    entry => `
+                      <tr>
+                        <td>
+                          ${
+                            entry.journal_no ??
+                            '—'
+                          }
+                        </td>
+
+                        <td>
+                          ${
+                            dateFa(
+                              entry.entry_date
+                            )
+                          }
+                        </td>
+
+                        <td>
+                          ${
+                            esc(
+                              entry.description
+                            )
+                          }
+                        </td>
+
+                        <td>
+                          ${
+                            esc(
+                              entry.source_type
+                            )
+                          }
+                        </td>
+
+                        <td>
+                          <span
+                            class="badge ${entry.status}"
+                          >
+                            ${
+                              statusFa[
+                                entry.status
+                              ] ||
+                              esc(
+                                entry.status
+                              )
+                            }
+                          </span>
+                        </td>
+                      </tr>
+                    `
+                  ).join('')
+                }
+              </tbody>
+            </table>
+          `
+          :`
+            <div class="empty">
+              هنوز سندی ثبت نشده است.
+            </div>
+          `
+      }
+
+    </div>
+  `);
+}
+
+function whyNumberModal(
+  metric,
+  amount
+) {
+  const from =
+    ctx.fiscalYear?.date_from ||
+    null;
+
+  const to =
+    today();
+
+  let evidence;
+
+  try {
+    evidence =
+      buildWhyNumberEvidence({
+        metric,
+        accounts:
+          ctx.accounts,
+
+        financialAccounts:
+          ctx.financialAccounts,
+
+        entries:
+          ctx.entries,
+
+        lines:
+          ctx.lines,
+
+        from,
+        to
+      });
+  } catch (error) {
+    return showError(
+      error,
+      'whyNumberModal'
+    );
+  }
+
+  const scopeText =
+    evidence.scope === 'range'
+      ?`${dateFa(from)} تا ${dateFa(to)}`
+      :`تا ${dateFa(to)}`;
+
+  const accountRows =
+    evidence.accounts
+      .slice(0, 12)
+      .map(
+        account => `
+          <tr>
+            <td>
+              ${
+                esc(
+                  account.code || ''
+                )
+              }
+            </td>
+
+            <td>
+              ${
+                esc(
+                  account.name || ''
+                )
+              }
+            </td>
+
+            <td>
+              ${
+                esc(
+                  catFa[
+                    account.category
+                  ] ||
+                  account.category ||
+                  '—'
+                )
+              }
+            </td>
+          </tr>
+        `
+      )
+      .join('');
+
+  const journalRows =
+    evidence.journals
+      .slice(0, 12)
+      .map(
+        entry => `
+          <tr>
+            <td>
+              ${
+                entry.journal_no ??
+                '—'
+              }
+            </td>
+
+            <td>
+              ${
+                dateFa(
+                  entry.entry_date
+                )
+              }
+            </td>
+
+            <td>
+              ${
+                esc(
+                  entry.description ||
+                  ''
+                )
+              }
+            </td>
+
+            <td>
+              <button
+                class="ghost small"
+                data-why-journal="${entry.id}"
+              >
+                مشاهده سند
+              </button>
+            </td>
+          </tr>
+        `
+      )
+      .join('');
+
+  openModal(`
+    <div class="section-head">
+
+      <div>
+        <h2>
+          چرا این عدد؟ —
+          ${esc(evidence.title)}
+        </h2>
+
+        <span class="muted">
+          مسیر ردیابی عدد از گزارش معتبر تا Ledger
+        </span>
+      </div>
+
+      <span class="cloud-badge">
+        Ledger Evidence
+      </span>
+
+    </div>
+
+    <div class="grid4">
+
+      <div class="card">
+        <div class="kpi-label">
+          عدد گزارش
+        </div>
+
+        <div class="kpi-value small-kpi">
+          ${money(amount)}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="kpi-label">
+          منبع محاسبه
+        </div>
+
+        <div class="kpi-value small-kpi">
+          ${esc(
+            evidence.sourceReport
+          )}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="kpi-label">
+          حساب‌های مرتبط
+        </div>
+
+        <div class="kpi-value small-kpi">
+          ${evidence.accountCount}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="kpi-label">
+          شواهد Ledger
+        </div>
+
+        <div class="kpi-value small-kpi">
+          ${evidence.lineCount}
+          ردیف /
+          ${evidence.journalCount}
+          سند
+        </div>
+      </div>
+
+    </div>
+
+    <div class="info-box">
+      عدد اصلی مستقیماً از RPC گزارش محاسبه می‌شود؛
+      این پنجره آن را دوباره در مرورگر محاسبه نمی‌کند.
+
+      <br><br>
+
+      مسیر داده:
+
+      <b>
+        Dashboard
+        →
+        ${esc(
+          evidence.sourceReport
+        )}
+        →
+        Accounts
+        →
+        Journal Lines
+        →
+        Journal
+      </b>
+
+      <br><br>
+
+      بازه:
+      ${scopeText}
+    </div>
+
+    <div class="section">
+      <h3>
+        حساب‌های مرتبط
+      </h3>
+
+      ${
+        accountRows
+          ?`
+            <table>
+              <thead>
+                <tr>
+                  <th>کد</th>
+                  <th>حساب</th>
+                  <th>گروه</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                ${accountRows}
+              </tbody>
+            </table>
+          `
+          :`
+            <div class="empty">
+              حساب مرتبطی پیدا نشد.
+            </div>
+          `
+      }
+    </div>
+
+    <div class="section">
+      <h3>
+        آخرین اسناد مؤثر
+      </h3>
+
+      ${
+        journalRows
+          ?`
+            <table>
+              <thead>
+                <tr>
+                  <th>سند</th>
+                  <th>تاریخ</th>
+                  <th>شرح</th>
+                  <th>Drill-down</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                ${journalRows}
+              </tbody>
+            </table>
+          `
+          :`
+            <div class="empty">
+              سند مرتبطی در این بازه پیدا نشد.
+            </div>
+          `
+      }
+    </div>
+
+    <div class="form-actions">
+      <button
+        class="ghost"
+        id="cancelModal"
+      >
+        بستن
+      </button>
+    </div>
+  `);
+
+  Q('cancelModal').onclick =
+    closeModal;
+
+  document
+    .querySelectorAll(
+      '[data-why-journal]'
+    )
+    .forEach(
+      button =>
+        button.onclick = () =>
+          viewJournal(
+            button.dataset
+              .whyJournal
+          )
+    );
 }
 
 function renderAccounts(){
@@ -1818,6 +2410,18 @@ function closePeriodModal(){openModal(`<h2>بستن دوره مالی</h2><form 
 function bind(){
   document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>navigate(b.dataset.page));
   document.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>operationModal(b.dataset.action));
+  document
+  .querySelectorAll(
+    '[data-why-number]'
+  )
+  .forEach(
+    button =>
+      button.onclick = () =>
+        whyNumberModal(
+          button.dataset.whyNumber,
+          button.dataset.whyAmount
+        )
+  );
   document.querySelectorAll('[data-edit-account]').forEach(b=>b.onclick=()=>accountModal(b.dataset.editAccount));
   document.querySelectorAll('[data-archive-account]').forEach(b=>b.onclick=()=>toggleArchive(b.dataset.archiveAccount).catch(showError));
   document.querySelectorAll('[data-delete-account]').forEach(b=>b.onclick=()=>deleteAccount(b.dataset.deleteAccount));
