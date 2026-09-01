@@ -22,7 +22,8 @@ import {
 
 import {
   showAuth as uiShowAuth,
-  setAuthMode as uiSetAuthMode
+  setAuthMode as uiSetAuthMode,
+  bindAuthModeTabs
 } from './src/ui/auth/auth-view.js';
 
 import {
