@@ -2757,9 +2757,19 @@ function bind(){
     );
 
   document
-    .querySelectorAll(
-      '[data-aging-party]'
-      if (Q('uploadDocumentBtn')) {
+  .querySelectorAll(
+    '[data-aging-party]'
+  )
+  .forEach(
+    button =>
+      button.onclick = () =>
+        agingDetailModal(
+          button.dataset.agingSide,
+          button.dataset.agingParty
+        )
+  );
+
+if (Q('uploadDocumentBtn')) {
   Q('uploadDocumentBtn')
     .onclick =
       documentUploadModal;
@@ -2777,15 +2787,6 @@ document
             .viewDocument
         )
   );
-    )
-    .forEach(
-      button =>
-        button.onclick = () =>
-          agingDetailModal(
-            button.dataset.agingSide,
-            button.dataset.agingParty
-          )
-    );
 
   document
     .querySelectorAll(
