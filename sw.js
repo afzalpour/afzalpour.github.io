@@ -1,5 +1,5 @@
 const CACHE_PREFIX='avan-prod-core-';
-const CACHE='avan-prod-core-1-0-v24';
+const CACHE='avan-prod-core-1-0-v25';
 
 const ASSETS=[
   './',
@@ -18,6 +18,7 @@ const ASSETS=[
 './src/infrastructure/supabase/supabase-session.js',
 './src/infrastructure/supabase/supabase-auth.js',
 './src/infrastructure/supabase/supabase-rest.js',
+'./src/infrastructure/supabase/supabase-storage.js',
 './src/infrastructure/supabase/supabase-client.js',
 './src/infrastructure/supabase/avan-cloud-bootstrap.js',
 './src/application/auth/auth-controller.js',
