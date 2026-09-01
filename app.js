@@ -141,7 +141,7 @@ function setAuthMode(mode){
   Auth.setMode(mode);
   return uiSetAuthMode(mode);
 }
-Q('loginTab').onclick=()=>setAuthMode('login');Q('signupTab').onclick=()=>setAuthMode('signup');
+bindAuthModeTabs(setAuthMode);
 Q('authForm').onsubmit=async e=>{e.preventDefault();const email=Q('authEmail').value.trim(),password=Q('authPassword').value;Q('authSubmit').disabled=true;Q('authStatus').textContent='در حال ارتباط با Supabase…';try{if(Auth.getMode()==='login'){await Auth.login(email,password);Q('authStatus').textContent='ورود موفق';await showApp()}else{const r=await Auth.signup(email,password);if(r?.status==='authenticated'){Q('authStatus').textContent='حساب ساخته شد.';await showApp()}else{setAuthMode('login');Q('authStatus').innerHTML='<span class="success-box" style="display:block">ثبت‌نام انجام شد. در صورت فعال بودن تأیید ایمیل، ابتدا ایمیل را تأیید کنید.</span>'}}}catch(err){Q('authStatus').innerHTML=`<span class="error-box" style="display:block">${esc(errorMessageFa(err))}</span>`}finally{Q('authSubmit').disabled=false}};
 Q('forgotPasswordBtn').onclick=async()=>{
 
