@@ -54,6 +54,9 @@ export function createAuthController(
     };
   }
 
+  async function user() {
+  return authClient.user();
+}
   async function requestPasswordReset(
     email
   ) {
@@ -92,6 +95,7 @@ export function createAuthController(
     login,
     signup,
     logout,
+    user,
     requestPasswordReset,
     updatePassword,
     session,
