@@ -128,6 +128,19 @@ documentsPageHtml({
       مشاهده
     </button>
 
+${
+  document.status === 'uploaded'
+    ?`
+      <button
+        class="primary small"
+        data-extract-document="${document.id}"
+      >
+        ✦ استخراج هوشمند
+      </button>
+    `
+    :''
+}
+
     ${
       document.status !== 'linked'
         ?`
