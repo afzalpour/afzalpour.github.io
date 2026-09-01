@@ -713,17 +713,57 @@ Rules:
             .json();
 
         if (
-          !aiResponse.ok
-        ) {
-          console.error(
-            'OPENAI_DOCUMENT_ERROR',
-            aiData
-          );
+  !aiResponse.ok
+) {
+  const apiError =
+    aiData?.error || {};
 
-          throw new Error(
-            'DOCUMENT_AI_FAILED'
-          );
-        }
+  const errorInfo = {
+    status:
+      aiResponse.status,
+
+    type:
+      String(
+        apiError.type ||
+        ''
+      ),
+
+    code:
+      String(
+        apiError.code ||
+        ''
+      ),
+
+    param:
+      String(
+        apiError.param ||
+        ''
+      ),
+
+    message:
+      String(
+        apiError.message ||
+        'OpenAI request failed'
+      ).slice(0, 800)
+  };
+
+  console.error(
+    'OPENAI_DOCUMENT_ERROR ' +
+    JSON.stringify(
+      errorInfo
+    )
+  );
+
+  throw new Error(
+    `DOCUMENT_AI_FAILED:` +
+    `${errorInfo.status}:` +
+    `${
+      errorInfo.code ||
+      errorInfo.type ||
+      'UNKNOWN'
+    }`
+  );
+}
 
         const text =
           outputText(
