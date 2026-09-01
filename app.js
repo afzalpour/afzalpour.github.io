@@ -27,8 +27,8 @@ import {
 } from './src/ui/auth/auth-view.js';
 
 import {
-  buildWhyNumberEvidence
-} from './src/reports/why-number.js';
+  createAuthController
+} from './src/application/auth/auth-controller.js';
 
 import {
   buildWhyNumberEvidence
