@@ -1,5 +1,5 @@
 const CACHE_PREFIX='avan-prod-core-';
-const CACHE='avan-prod-core-1-0-v23';
+const CACHE='avan-prod-core-1-0-v24';
 
 const ASSETS=[
   './',
