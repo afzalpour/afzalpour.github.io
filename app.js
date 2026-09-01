@@ -230,8 +230,8 @@ function passwordRecoveryModal(){
 
     try{
 
-      await C.updatePassword(p1);
-
+await Auth.updatePassword(p1);
+      
       Q('recoveryStatus').innerHTML=
         '<span class="success-box" style="display:block">رمز عبور با موفقیت تغییر کرد.</span>';
 
