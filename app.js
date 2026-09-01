@@ -50,6 +50,13 @@ import {
   documentsPageHtml,
   documentUploadModalHtml
 } from './src/ui/documents/documents-view.js';
+import {
+  buildDocumentDraftProposal
+} from './src/documents/document-proposal.js';
+
+import {
+  documentReviewModalHtml
+} from './src/ui/documents/document-review-view.js';
 
 import {
   installAvanCloud
@@ -2713,7 +2720,171 @@ async function openDocument(
     );
   }
 }  
-function renderSettings(){
+function documentReviewModal(
+  documentId
+) {
+  const document =
+    ctx.documents.find(
+      item =>
+        item.id === documentId
+    );
+
+  if (!document) {
+    return toast(
+      'سند پیدا نشد'
+    );
+  }
+
+  if (
+    document.status === 'linked' ||
+    document.linked_journal_entry_id
+  ) {
+    return toast(
+      'سند متصل به Ledger قابل ویرایش نیست'
+    );
+  }
+
+  const proposal =
+    buildDocumentDraftProposal({
+      document,
+
+      extraction:
+        document.extracted_data ||
+        {},
+
+      accounts:
+        ctx.accounts,
+
+      parties:
+        ctx.parties
+    });
+
+  openModal(
+    documentReviewModalHtml({
+      document,
+      proposal,
+
+      parties:
+        ctx.parties,
+
+      accounts:
+        ctx.accounts,
+
+      dateFa,
+      money,
+      esc
+    })
+  );
+
+  Q('cancelModal').onclick =
+    closeModal;
+
+  Q(
+    'viewSourceDocumentBtn'
+  ).onclick =
+    () =>
+      openDocument(
+        document.id
+      );
+
+  Q(
+    'documentReviewForm'
+  ).onsubmit =
+    async e => {
+
+      e.preventDefault();
+
+      const form =
+        e.target;
+
+      const data =
+        new FormData(form);
+
+      const submit =
+        Q(
+          'saveDocumentReviewBtn'
+        );
+
+      submit.disabled =
+        true;
+
+      try {
+
+        await Documents.saveReview({
+          document,
+
+          userId:
+            ctx.user.id,
+
+          review: {
+            action:
+              data.get('action'),
+
+            documentDate:
+              data.get(
+                'documentDate'
+              ),
+
+            documentNumber:
+              data.get(
+                'documentNumber'
+              ),
+
+            totalAmount:
+              data.get(
+                'totalAmount'
+              ),
+
+            taxAmount:
+              data.get(
+                'taxAmount'
+              ),
+
+            partyId:
+              data.get(
+                'partyId'
+              ),
+
+            accountId:
+              data.get(
+                'accountId'
+              ),
+
+            description:
+              data.get(
+                'description'
+              )
+          }
+        });
+
+        closeModal();
+
+        await loadContext();
+
+        currentPage =
+          'documents';
+
+        await render();
+
+        toast(
+          'بازبینی سند ذخیره شد'
+        );
+
+      } catch (err) {
+
+        showError(
+          err,
+          'documentReview'
+        );
+
+      } finally {
+
+        submit.disabled =
+          false;
+      }
+    };
+}
+  function renderSettings(){
   setTitle('تنظیمات');const I=ctx.integrity||{},closed=ctx.periods.filter(p=>p.status==='closed');
   page(`<div class="grid4"><div class="card"><div class="kpi-label">فضای مالی</div><div class="kpi-value small-kpi">${esc(ctx.workspace.name)}</div></div><div class="card"><div class="kpi-label">نقش</div><div class="kpi-value small-kpi">${roleFa[ctx.workspaceRole]||esc(ctx.workspaceRole||'—')}</div></div><div class="card"><div class="kpi-label">اسناد نامتوازن Posted</div><div class="kpi-value ${Number(I.unbalanced_journals||0)===0?'pos':'neg'}">${I.unbalanced_journals??'—'}</div></div><div class="card"><div class="kpi-label">محل ذخیره</div><div class="kpi-value small-kpi">Supabase</div></div></div>
   <div class="section card"><div class="section-head"><div><h2>قفل دوره مالی</h2><span class="muted">Posting در بازه بسته توسط Database مسدود می‌شود.</span></div><button class="primary" id="closePeriodBtn">بستن یک بازه</button></div>${ctx.periods.length?`<table><thead><tr><th>نام</th><th>از</th><th>تا</th><th>وضعیت</th><th>اقدام</th></tr></thead><tbody>${ctx.periods.map(p=>`<tr><td>${esc(p.name)}</td><td>${dateFa(p.date_from)}</td><td>${dateFa(p.date_to)}</td><td><span class="badge ${p.status==='closed'?'reversed':'draft'}">${p.status==='closed'?'بسته':'باز'}</span></td><td>${p.status==='closed'?`<button class="ghost small" data-reopen-period="${p.id}">بازگشایی</button>`:'—'}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">هنوز دوره‌ای قفل نشده است.</div>'}</div>
@@ -2788,6 +2959,19 @@ document
         )
   );
 
+  document
+  .querySelectorAll(
+    '[data-review-document]'
+  )
+  .forEach(
+    button =>
+      button.onclick = () =>
+        documentReviewModal(
+          button.dataset
+            .reviewDocument
+        )
+  );
+  
   document
     .querySelectorAll(
       '[data-edit-account]'
