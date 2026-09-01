@@ -2719,7 +2719,96 @@ async function openDocument(
       'openDocument'
     );
   }
-}  
+} 
+
+async function extractDocument(
+  documentId,
+  button = null
+) {
+  const document =
+    ctx.documents.find(
+      item =>
+        item.id ===
+        documentId
+    );
+
+  if (!document) {
+    return toast(
+      'سند پیدا نشد'
+    );
+  }
+
+  if (
+    document.status !==
+      'uploaded'
+  ) {
+    return toast(
+      'این سند قابل استخراج نیست'
+    );
+  }
+
+  if (button) {
+    button.disabled =
+      true;
+
+    button.textContent =
+      'در حال استخراج…';
+  }
+
+  try {
+
+    await Documents.extract(
+      document
+    );
+
+    await loadContext();
+
+    currentPage =
+      'documents';
+
+    await render();
+
+    toast(
+      'استخراج هوشمند انجام شد'
+    );
+
+    documentReviewModal(
+      documentId
+    );
+
+  } catch (err) {
+
+    try {
+      await loadContext();
+
+      currentPage =
+        'documents';
+
+      await render();
+    } catch {
+      // keep original extraction error
+    }
+
+    showError(
+      err,
+      'documentExtract'
+    );
+
+  } finally {
+
+    if (
+      button &&
+      button.isConnected
+    ) {
+      button.disabled =
+        false;
+
+      button.textContent =
+        '✦ استخراج هوشمند';
+    }
+  }
+}
+  
 function documentReviewModal(
   documentId
 ) {
@@ -2959,6 +3048,20 @@ document
         )
   );
 
+document
+  .querySelectorAll(
+    '[data-extract-document]'
+  )
+  .forEach(
+    button =>
+      button.onclick = () =>
+        extractDocument(
+          button.dataset
+            .extractDocument,
+          button
+        )
+  );
+  
   document
   .querySelectorAll(
     '[data-review-document]'
