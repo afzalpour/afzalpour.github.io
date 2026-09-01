@@ -17,6 +17,10 @@ import {
   createSupabaseRest
 } from './supabase-rest.js';
 
+import {
+  createSupabaseStorage
+} from './supabase-storage.js';
+
 export function createSupabaseClient({
   config = {},
   storage
@@ -48,6 +52,11 @@ export function createSupabaseClient({
       transport,
       auth
     });
+  const objectStorage =
+  createSupabaseStorage({
+    config,
+    auth
+  });
 
   return {
     cfg: config,
@@ -93,9 +102,18 @@ export function createSupabaseClient({
       rest.remove,
 
     rpc:
-      rest.rpc,
+  rest.rpc,
 
-    token:
-      auth.token
+uploadFile:
+  objectStorage.upload,
+
+signedFileUrl:
+  objectStorage.signedUrl,
+
+removeFiles:
+  objectStorage.remove,
+
+token:
+  auth.token
   };
 }
