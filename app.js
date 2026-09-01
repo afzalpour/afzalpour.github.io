@@ -1945,7 +1945,7 @@ if(Q('closePeriodBtn'))
   Q('closePeriodBtn').onclick=closePeriodModal;
   if(Q('applyReportRange'))Q('applyReportRange').onclick=async()=>{const f=Q('reportFrom').value,t=Q('reportTo').value;if(!f||!t||f>t)return toast('بازه گزارش معتبر نیست');reportState.from=f;reportState.to=t;await renderReports()};
   if(Q('ledgerAccount'))Q('ledgerAccount').onchange=()=>refreshLedger().catch(showError);
-  if(Q('logoutBtn'))Q('logoutBtn').onclick=async()=>{await C.logout();location.reload()};
+  if(Q('logoutBtn'))Q('logoutBtn').onclick=async()=>{await Auth.logout();location.reload()};
 }
 
 (async function boot(){
