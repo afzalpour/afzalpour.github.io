@@ -127,8 +127,14 @@ else
   showError(e,'showApp');
   }
 }
-function showAuth(){Q('authShell').hidden=false;Q('appShell').hidden=true;Q('bottomNav').hidden=true}
-function setAuthMode(mode){authMode=mode;Q('loginTab').classList.toggle('active',mode==='login');Q('signupTab').classList.toggle('active',mode==='signup');Q('authSubmit').textContent=mode==='login'?'ورود':'ساخت حساب';Q('authPassword').autocomplete=mode==='login'?'current-password':'new-password';Q('authStatus').textContent=''}
+function showAuth(){
+  return uiShowAuth();
+}
+
+function setAuthMode(mode){
+  authMode = mode;
+  return uiSetAuthMode(mode);
+}
 Q('loginTab').onclick=()=>setAuthMode('login');Q('signupTab').onclick=()=>setAuthMode('signup');
 Q('authForm').onsubmit=async e=>{e.preventDefault();const email=Q('authEmail').value.trim(),password=Q('authPassword').value;Q('authSubmit').disabled=true;Q('authStatus').textContent='در حال ارتباط با Supabase…';try{if(authMode==='login'){await C.login(email,password);Q('authStatus').textContent='ورود موفق';await showApp()}else{const r=await C.signup(email,password);if(r?.access_token){Q('authStatus').textContent='حساب ساخته شد.';await showApp()}else{setAuthMode('login');Q('authStatus').innerHTML='<span class="success-box" style="display:block">ثبت‌نام انجام شد. در صورت فعال بودن تأیید ایمیل، ابتدا ایمیل را تأیید کنید.</span>'}}}catch(err){Q('authStatus').innerHTML=`<span class="error-box" style="display:block">${esc(errorMessageFa(err))}</span>`}finally{Q('authSubmit').disabled=false}};
 Q('forgotPasswordBtn').onclick=async()=>{
