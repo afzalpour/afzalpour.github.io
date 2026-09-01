@@ -189,10 +189,22 @@ export function createSupabaseStorage({
     }
 
     return signed.startsWith(
-      'http'
-    )
-      ? signed
-      : baseUrl + signed;
+  'http'
+)
+  ? signed
+  : baseUrl +
+    (
+      signed.startsWith(
+        '/storage/v1/'
+      )
+        ? signed
+        : '/storage/v1' +
+          (
+            signed.startsWith('/')
+              ? signed
+              : '/' + signed
+          )
+    );
   }
 
   async function remove(
