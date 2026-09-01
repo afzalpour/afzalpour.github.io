@@ -278,12 +278,209 @@ createDocumentService(cloud) {
     );
   }
 
-  return {
-    bucket: BUCKET,
-    maxFileSize:
-      MAX_FILE_SIZE,
+  async function saveReview({
+  document,
+  review,
+  userId = null
+}) {
+  if (
+    !document?.id ||
+    !document?.workspace_id
+  ) {
+    throw new Error(
+      'DOCUMENT_REQUIRED'
+    );
+  }
 
-    upload,
-    signedUrl
+  if (
+    document.status === 'linked' ||
+    document.linked_journal_entry_id
+  ) {
+    throw new Error(
+      'LINKED_DOCUMENT_IMMUTABLE'
+    );
+  }
+
+  const action =
+    String(
+      review?.action || ''
+    );
+
+  const allowedActions =
+    new Set([
+      'purchase_invoice',
+      'sales_invoice',
+      'journal',
+      'review_required'
+    ]);
+
+  if (
+    !allowedActions.has(action)
+  ) {
+    throw new Error(
+      'DOCUMENT_REVIEW_ACTION_INVALID'
+    );
+  }
+
+  const totalAmount =
+    String(
+      review?.totalAmount ?? ''
+    )
+      .replace(/[۰-۹]/g, d =>
+        '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)
+      )
+      .replace(/[٠-٩]/g, d =>
+        '٠١٢٣٤٥٦٧٨٩'.indexOf(d)
+      )
+      .replace(/[٬,\s]/g, '')
+      .trim();
+
+  if (
+    totalAmount &&
+    !/^\d+$/.test(totalAmount)
+  ) {
+    throw new Error(
+      'DOCUMENT_REVIEW_AMOUNT_INVALID'
+    );
+  }
+
+  const taxAmount =
+    String(
+      review?.taxAmount ?? ''
+    )
+      .replace(/[۰-۹]/g, d =>
+        '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)
+      )
+      .replace(/[٠-٩]/g, d =>
+        '٠١٢٣٤٥٦٧٨٩'.indexOf(d)
+      )
+      .replace(/[٬,\s]/g, '')
+      .trim();
+
+  if (
+    taxAmount &&
+    !/^\d+$/.test(taxAmount)
+  ) {
+    throw new Error(
+      'DOCUMENT_REVIEW_TAX_INVALID'
+    );
+  }
+
+  const documentType =
+    action === 'purchase_invoice'
+      ? 'purchase_invoice'
+      : action === 'sales_invoice'
+        ? 'sales_invoice'
+        : document.document_type;
+
+  const existingExtraction =
+    (
+      document.extracted_data &&
+      typeof document.extracted_data ===
+        'object'
+    )
+      ? document.extracted_data
+      : {};
+
+  const reviewedData = {
+    ...existingExtraction,
+
+    document_type:
+      documentType,
+
+    document_number:
+      String(
+        review?.documentNumber ||
+        ''
+      ).trim(),
+
+    document_date:
+      review?.documentDate ||
+      null,
+
+    total_amount:
+      totalAmount || null,
+
+    tax_amount:
+      taxAmount || null,
+
+    description:
+      String(
+        review?.description ||
+        ''
+      ).trim(),
+
+    review: {
+      action,
+
+      party_id:
+        review?.partyId ||
+        null,
+
+      account_id:
+        review?.accountId ||
+        null,
+
+      reviewed_by:
+        userId,
+
+      reviewed_at:
+        new Date()
+          .toISOString()
+    }
   };
+
+  const rows =
+    await cloud.update(
+      'documents',
+
+      {
+        document_type:
+          documentType,
+
+        status:
+          'reviewed',
+
+        party_id:
+          review?.partyId ||
+          null,
+
+        source_document_date:
+          review?.documentDate ||
+          null,
+
+        total_amount:
+          totalAmount ||
+          null,
+
+        extracted_data:
+          reviewedData
+      },
+
+      `id=eq.${document.id}` +
+      `&workspace_id=eq.${document.workspace_id}`
+    );
+
+  const updated =
+    rows?.[0];
+
+  if (!updated?.id) {
+    throw new Error(
+      'DOCUMENT_REVIEW_SAVE_FAILED'
+    );
+  }
+
+  return updated;
+}
+  
+  return {
+  bucket: BUCKET,
+
+  maxFileSize:
+    MAX_FILE_SIZE,
+
+  upload,
+  signedUrl,
+  saveReview
+};
 }
