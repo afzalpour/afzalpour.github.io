@@ -1,5 +1,5 @@
 const CACHE_PREFIX='avan-prod-core-';
-const CACHE='avan-prod-core-1-0-v26';
+const CACHE='avan-prod-core-1-0-v27';
 
 const ASSETS=[
   './',
@@ -26,6 +26,8 @@ const ASSETS=[
 './src/reports/why-number.js',
 './src/reports/party-aging.js',
 './src/ui/reports/party-aging-view.js'
+'./src/documents/document-service.js',
+'./src/ui/documents/documents-view.js',
 ];
 
 self.addEventListener(
