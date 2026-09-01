@@ -38,7 +38,7 @@ import {
 const Q=id=>document.getElementById(id), C=installAvanCloud();
 const Auth=createAuthController(C);
 const authCallback=Auth.consumeAuthCallback();
-let authMode='login', currentPage='dashboard';
+let currentPage='dashboard';
 let reportState={tab:'trial',from:null,to:null,ledgerAccount:null};
 let invoiceFilter='all';
 let ctx={user:null,workspace:null,fiscalYear:null,accounts:[],roles:{},parties:[],entries:[],lines:[],financialAccounts:[],periods:[],transactions:[],invoices:[],invoiceLines:[],invoiceIntegrity:null,health:null,integrity:null,workspaceRole:null,visibleWorkspaces:0};
@@ -137,11 +137,11 @@ function showAuth(){
 }
 
 function setAuthMode(mode){
-  authMode = mode;
+  Auth.setMode(mode);
   return uiSetAuthMode(mode);
 }
 Q('loginTab').onclick=()=>setAuthMode('login');Q('signupTab').onclick=()=>setAuthMode('signup');
-Q('authForm').onsubmit=async e=>{e.preventDefault();const email=Q('authEmail').value.trim(),password=Q('authPassword').value;Q('authSubmit').disabled=true;Q('authStatus').textContent='در حال ارتباط با Supabase…';try{if(authMode==='login'){await Auth.login(email,password);Q('authStatus').textContent='ورود موفق';await showApp()}else{const r=await Auth.signup(email,password);if(r?.status==='authenticated'){Q('authStatus').textContent='حساب ساخته شد.';await showApp()}else{setAuthMode('login');Q('authStatus').innerHTML='<span class="success-box" style="display:block">ثبت‌نام انجام شد. در صورت فعال بودن تأیید ایمیل، ابتدا ایمیل را تأیید کنید.</span>'}}}catch(err){Q('authStatus').innerHTML=`<span class="error-box" style="display:block">${esc(errorMessageFa(err))}</span>`}finally{Q('authSubmit').disabled=false}};
+Q('authForm').onsubmit=async e=>{e.preventDefault();const email=Q('authEmail').value.trim(),password=Q('authPassword').value;Q('authSubmit').disabled=true;Q('authStatus').textContent='در حال ارتباط با Supabase…';try{if(Auth.getMode()==='login'){await Auth.login(email,password);Q('authStatus').textContent='ورود موفق';await showApp()}else{const r=await Auth.signup(email,password);if(r?.status==='authenticated'){Q('authStatus').textContent='حساب ساخته شد.';await showApp()}else{setAuthMode('login');Q('authStatus').innerHTML='<span class="success-box" style="display:block">ثبت‌نام انجام شد. در صورت فعال بودن تأیید ایمیل، ابتدا ایمیل را تأیید کنید.</span>'}}}catch(err){Q('authStatus').innerHTML=`<span class="error-box" style="display:block">${esc(errorMessageFa(err))}</span>`}finally{Q('authSubmit').disabled=false}};
 Q('forgotPasswordBtn').onclick=async()=>{
 
   const email=Q('authEmail').value.trim();
