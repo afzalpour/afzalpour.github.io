@@ -21,6 +21,10 @@ import {
   createSupabaseStorage
 } from './supabase-storage.js';
 
+import {
+  createSupabaseFunctions
+} from './supabase-functions.js';
+
 export function createSupabaseClient({
   config = {},
   storage
@@ -55,6 +59,12 @@ export function createSupabaseClient({
   const objectStorage =
   createSupabaseStorage({
     config,
+    auth
+  });
+
+  const edgeFunctions =
+  createSupabaseFunctions({
+    transport,
     auth
   });
 
@@ -112,6 +122,8 @@ signedFileUrl:
 
 removeFiles:
   objectStorage.remove,
+invokeFunction:
+  edgeFunctions.invoke,
 
 token:
   auth.token
