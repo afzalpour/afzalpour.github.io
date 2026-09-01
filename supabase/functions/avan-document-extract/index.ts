@@ -388,37 +388,6 @@ if (
     'DOCUMENT_PROCESSING_STATE_FAILED'
   );
 }
-        `?id=eq.${
-          encodeURIComponent(
-            document.id
-          )
-        }` +
-        `&workspace_id=eq.${
-          encodeURIComponent(
-            document.workspace_id
-          )
-        }`,
-        {
-          method: 'PATCH',
-
-          headers: {
-            apikey:
-              apiKey,
-
-            Authorization:
-              authorization,
-
-            'Content-Type':
-              'application/json'
-          },
-
-          body:
-            JSON.stringify({
-              status:
-                'ocr_processing'
-            })
-        }
-      );
 
       try {
 
