@@ -42,6 +42,14 @@ import {
   partyAgingSection,
   partyAgingDetailHtml
 } from './src/ui/reports/party-aging-view.js';
+import {
+  createDocumentService
+} from './src/documents/document-service.js';
+
+import {
+  documentsPageHtml,
+  documentUploadModalHtml
+} from './src/ui/documents/documents-view.js';
 
 import {
   installAvanCloud
@@ -51,12 +59,34 @@ import {
 'use strict';
 const Q=id=>document.getElementById(id), C=installAvanCloud();
 const Auth=createAuthController(C);
+const Documents=
+  createDocumentService(C);
 const authCallback=Auth.consumeAuthCallback();
 let currentPage='dashboard';
 let reportState={tab:'trial',from:null,to:null,ledgerAccount:null};
 let invoiceFilter='all';
 let dashboardAging=null;  
-let ctx={user:null,workspace:null,fiscalYear:null,accounts:[],roles:{},parties:[],entries:[],lines:[],financialAccounts:[],periods:[],transactions:[],invoices:[],invoiceLines:[],invoiceIntegrity:null,health:null,integrity:null,workspaceRole:null,visibleWorkspaces:0};
+let ctx={
+  user:null,
+  workspace:null,
+  fiscalYear:null,
+  accounts:[],
+  roles:{},
+  parties:[],
+  entries:[],
+  lines:[],
+  financialAccounts:[],
+  periods:[],
+  transactions:[],
+  invoices:[],
+  invoiceLines:[],
+  documents:[],
+  invoiceIntegrity:null,
+  health:null,
+  integrity:null,
+  workspaceRole:null,
+  visibleWorkspaces:0
+};
 const faDigits=s=>String(s??'').replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
 const cleanAmount=v=>faDigits(v).replace(/[٬,\s]/g,'').replace(/[^0-9-]/g,'');
 const bi=v=>{try{return BigInt(cleanAmount(v)||'0')}catch{return 0n}};
@@ -125,6 +155,11 @@ try{
   ctx.invoices=d1[0]||[];
   ctx.invoiceLines=d1[1]||[];
   ctx.invoiceIntegrity=d1[2]||{};
+  ctx.documents =
+  await C.select(
+    'documents',
+    `select=*&workspace_id=eq.${wid}&order=created_at.desc`
+  ) || [];
 
 }catch(e){
   throw new Error('PATCH_D1_REQUIRED');
@@ -273,6 +308,7 @@ async function render(){
     else if(currentPage==='parties')renderParties();
     else if(currentPage==='invoices')renderInvoices();
     else if(currentPage==='journal')renderJournal();
+    else if(currentPage==='documents')renderDocuments();
     else if(currentPage==='reports')await renderReports();
     else renderSettings();
 
@@ -2113,7 +2149,13 @@ function reverseModal(id){
 function operationModal(kind){
 
   if(kind==='quick'){
-
+<button
+  class="ghost"
+  data-op="document"
+>
+  آپلود سند
+</button>
+    
     openModal(`
       <h2>ثبت سریع</h2>
 
@@ -2483,6 +2525,175 @@ async function renderReports(){
 }
 async function refreshLedger(){const aid=Q('ledgerAccount')?.value;if(!aid)return;reportState.ledgerAccount=aid;const r=await C.rpc('report_account_statement',{wid:ctx.workspace.id,aid,dfrom:reportState.from,dto:reportState.to});Q('ledgerBody').innerHTML=r.length?`<table><thead><tr><th>سند</th><th>تاریخ</th><th>شرح</th><th>بدهکار</th><th>بستانکار</th><th>مانده</th></tr></thead><tbody>${r.map(x=>`<tr><td>${x.journal_no}</td><td>${dateFa(x.entry_date)}</td><td>${esc(x.description)}</td><td class="num">${money(x.debit)}</td><td class="num">${money(x.credit)}</td><td class="num">${money(x.running_net)}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">گردشی وجود ندارد.</div>'}
 
+function renderDocuments(){
+  setTitle('اسناد هوشمند');
+
+  page(
+    documentsPageHtml({
+      documents:
+        ctx.documents,
+
+      parties:
+        ctx.parties,
+
+      dateFa,
+      money,
+      esc
+    })
+  );
+}
+
+function documentUploadModal(){
+
+  openModal(
+    documentUploadModalHtml({
+      parties:
+        ctx.parties,
+
+      esc
+    })
+  );
+
+  Q('cancelModal').onclick =
+    closeModal;
+
+  Q('documentUploadForm')
+    .onsubmit =
+      async e => {
+
+        e.preventDefault();
+
+        const form =
+          e.target;
+
+        const data =
+          new FormData(form);
+
+        const file =
+          form.elements.file
+            .files?.[0];
+
+        const submit =
+          Q(
+            'documentUploadSubmit'
+          );
+
+        const status =
+          Q(
+            'documentUploadStatus'
+          );
+
+        submit.disabled =
+          true;
+
+        status.textContent =
+          'در حال آپلود امن سند…';
+
+        try {
+
+          await Documents.upload({
+            workspaceId:
+              ctx.workspace.id,
+
+            userId:
+              ctx.user.id,
+
+            file,
+
+            documentType:
+              data.get(
+                'documentType'
+              ),
+
+            partyId:
+              data.get(
+                'partyId'
+              ) || null
+          });
+
+          closeModal();
+
+          await loadContext();
+
+          currentPage =
+            'documents';
+
+          await render();
+
+          toast(
+            'سند با موفقیت آپلود شد'
+          );
+
+        } catch (err) {
+
+          status.innerHTML =
+            `<span class="error-box" style="display:block">${
+              esc(
+                errorMessageFa(
+                  err
+                )
+              )
+            }</span>`;
+
+        } finally {
+
+          submit.disabled =
+            false;
+        }
+      };
+}
+
+async function openDocument(
+  documentId
+) {
+  const document =
+    ctx.documents.find(
+      item =>
+        item.id ===
+        documentId
+    );
+
+  if (!document) {
+    return toast(
+      'سند پیدا نشد'
+    );
+  }
+
+  try {
+
+    const url =
+      await Documents.signedUrl(
+        document,
+        300
+      );
+
+    const a =
+      window.document
+        .createElement('a');
+
+    a.href =
+      url;
+
+    a.target =
+      '_blank';
+
+    a.rel =
+      'noopener noreferrer';
+
+    window.document.body
+      .appendChild(a);
+
+    a.click();
+
+    a.remove();
+
+  } catch (err) {
+    showError(
+      err,
+      'openDocument'
+    );
+  }
+}  
 function renderSettings(){
   setTitle('تنظیمات');const I=ctx.integrity||{},closed=ctx.periods.filter(p=>p.status==='closed');
   page(`<div class="grid4"><div class="card"><div class="kpi-label">فضای مالی</div><div class="kpi-value small-kpi">${esc(ctx.workspace.name)}</div></div><div class="card"><div class="kpi-label">نقش</div><div class="kpi-value small-kpi">${roleFa[ctx.workspaceRole]||esc(ctx.workspaceRole||'—')}</div></div><div class="card"><div class="kpi-label">اسناد نامتوازن Posted</div><div class="kpi-value ${Number(I.unbalanced_journals||0)===0?'pos':'neg'}">${I.unbalanced_journals??'—'}</div></div><div class="card"><div class="kpi-label">محل ذخیره</div><div class="kpi-value small-kpi">Supabase</div></div></div>
@@ -2529,6 +2740,24 @@ function bind(){
   document
     .querySelectorAll(
       '[data-aging-party]'
+      if (Q('uploadDocumentBtn')) {
+  Q('uploadDocumentBtn')
+    .onclick =
+      documentUploadModal;
+}
+
+document
+  .querySelectorAll(
+    '[data-view-document]'
+  )
+  .forEach(
+    button =>
+      button.onclick = () =>
+        openDocument(
+          button.dataset
+            .viewDocument
+        )
+  );
     )
     .forEach(
       button =>
