@@ -223,22 +223,78 @@ buildDocumentDraftProposal({
     document.document_type ||
     'other';
 
-  const suggestedParty =
-    findParty(
-      parties,
-      normalized.partyName
-    );
+  const savedReview =
+  (
+    extraction?.review &&
+    typeof extraction.review ===
+      'object'
+  )
+    ? extraction.review
+    : {};
 
-  const suggestedAccount =
-    findAccount(
-      accounts,
-      normalized.accountHint
-    );
+const savedPartyId =
+  savedReview.party_id ||
+  document.party_id ||
+  null;
 
-  const action =
-    actionForType(
-      documentType
-    );
+const savedAccountId =
+  savedReview.account_id ||
+  null;
+
+const suggestedParty =
+  (
+    savedPartyId
+      ? parties.find(
+          party =>
+            party.id ===
+            savedPartyId
+        )
+      : null
+  ) ||
+  findParty(
+    parties,
+    normalized.partyName
+  );
+
+const suggestedAccount =
+  (
+    savedAccountId
+      ? accounts.find(
+          account =>
+            account.id ===
+              savedAccountId &&
+            account.is_active &&
+            account.is_postable
+        )
+      : null
+  ) ||
+  findAccount(
+    accounts,
+    normalized.accountHint
+  );
+
+const savedAction =
+  String(
+    savedReview.action ||
+    ''
+  );
+
+const allowedActions =
+  new Set([
+    'purchase_invoice',
+    'sales_invoice',
+    'journal',
+    'review_required'
+  ]);
+
+const action =
+  allowedActions.has(
+    savedAction
+  )
+    ? savedAction
+    : actionForType(
+        documentType
+      );
 
   const warnings = [];
 
