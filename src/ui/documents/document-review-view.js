@@ -75,6 +75,40 @@ documentReviewModalHtml({
         item.is_postable
     );
 
+const savedReview =
+  (
+    document
+      ?.extracted_data
+      ?.review &&
+    typeof document
+      .extracted_data
+      .review === 'object'
+  )
+    ? document
+        .extracted_data
+        .review
+    : {};
+
+const selectedPartyId =
+  savedReview.party_id ||
+  document?.party_id ||
+  proposal
+    ?.party
+    ?.suggestedId ||
+  '';
+
+const selectedAccountId =
+  savedReview.account_id ||
+  proposal
+    ?.account
+    ?.suggestedId ||
+  '';
+
+const selectedAction =
+  savedReview.action ||
+  selectedAction ||
+  'review_required';
+  
   return `
     <h2>
       بازبینی سند هوشمند
@@ -99,7 +133,7 @@ documentReviewModalHtml({
       <span class="summary-pill">
         ${
           ACTION_FA[
-            proposal?.action
+            selectedAction
           ] ||
           'نیازمند بررسی'
         }
@@ -178,7 +212,7 @@ documentReviewModalHtml({
               option(
                 'purchase_invoice',
                 'فاکتور خرید',
-                proposal?.action
+                selectedAction
               )
             }
 
@@ -186,7 +220,7 @@ documentReviewModalHtml({
               option(
                 'sales_invoice',
                 'فاکتور فروش',
-                proposal?.action
+                selectedAction
               )
             }
 
@@ -194,7 +228,7 @@ documentReviewModalHtml({
               option(
                 'journal',
                 'سند حسابداری',
-                proposal?.action
+                selectedAction
               )
             }
 
@@ -202,7 +236,7 @@ documentReviewModalHtml({
               option(
                 'review_required',
                 'فعلاً فقط بازبینی',
-                proposal?.action
+                selectedAction
               )
             }
           </select>
@@ -326,9 +360,7 @@ documentReviewModalHtml({
                       esc(
                         party.name
                       ),
-                      proposal
-                        ?.party
-                        ?.suggestedId
+                      selectedPartyId
                     )
                 )
                 .join('')
@@ -380,9 +412,7 @@ documentReviewModalHtml({
                       esc(
                         `${account.code} — ${account.name}`
                       ),
-                      proposal
-                        ?.account
-                        ?.suggestedId
+                      selectedAccountId
                     )
                 )
                 .join('')
