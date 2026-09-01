@@ -2149,97 +2149,116 @@ function reverseModal(id){
 function operationModal(kind){
 
   if(kind==='quick'){
-<button
-  class="ghost"
-  data-op="document"
->
-  آپلود سند
-</button>
-    
-    openModal(`
-      <h2>ثبت سریع</h2>
 
-      <div class="summary-strip">
+  openModal(`
+    <h2>ثبت سریع</h2>
 
-        <button
-          class="good-btn"
-          data-op="receipt"
-        >
-          دریافت
-        </button>
+    <div class="summary-strip">
 
-        <button
-          class="danger"
-          data-op="payment"
-        >
-          پرداخت
-        </button>
+      <button
+        class="good-btn"
+        data-op="receipt"
+      >
+        دریافت
+      </button>
 
-        <button
-          class="ghost"
-          data-op="transfer"
-        >
-          انتقال
-        </button>
+      <button
+        class="danger"
+        data-op="payment"
+      >
+        پرداخت
+      </button>
 
-        <button
-          class="primary"
-          data-op="journal"
-        >
-          سند دستی
-        </button>
+      <button
+        class="ghost"
+        data-op="transfer"
+      >
+        انتقال
+      </button>
 
-        <button
-          class="good-btn"
-          data-op="sale_invoice"
-        >
-          فاکتور فروش
-        </button>
+      <button
+        class="primary"
+        data-op="journal"
+      >
+        سند دستی
+      </button>
 
-        <button
-          class="primary"
-          data-op="purchase_invoice"
-        >
-          فاکتور خرید
-        </button>
+      <button
+        class="good-btn"
+        data-op="sale_invoice"
+      >
+        فاکتور فروش
+      </button>
 
-      </div>
-    `);
+      <button
+        class="primary"
+        data-op="purchase_invoice"
+      >
+        فاکتور خرید
+      </button>
 
-    document
-      .querySelectorAll('[data-op]')
-      .forEach(
-        b=>b.onclick=async()=>{
+      <button
+        class="ghost"
+        data-op="document"
+      >
+        آپلود سند
+      </button>
 
-          if(b.dataset.op==='journal'){
+    </div>
+  `);
 
-            await navigate('journal');
-            journalModal();
+  document
+    .querySelectorAll('[data-op]')
+    .forEach(
+      b=>b.onclick=async()=>{
 
-          }else if(
-            b.dataset.op==='sale_invoice'||
-            b.dataset.op==='purchase_invoice'
-          ){
+        if(
+          b.dataset.op==='journal'
+        ){
 
-            await navigate('invoices');
+          await navigate(
+            'journal'
+          );
 
-            invoiceModal(
-              b.dataset.op==='sale_invoice'
-                ?'sale'
-                :'purchase'
-            );
+          journalModal();
 
-          }else{
+        }else if(
+          b.dataset.op==='sale_invoice'||
+          b.dataset.op==='purchase_invoice'
+        ){
 
-            operationModal(
-              b.dataset.op
-            );
-          }
+          await navigate(
+            'invoices'
+          );
+
+          invoiceModal(
+            b.dataset.op==='sale_invoice'
+              ?'sale'
+              :'purchase'
+          );
+
+        }else if(
+          b.dataset.op==='document'
+        ){
+
+          await navigate(
+            'documents'
+          );
+
+          documentUploadModal();
+
+        }else{
+
+          operationModal(
+            b.dataset.op
+          );
         }
-      );
+      }
+    );
 
-    return;
-  }
+  return;
+}
+
 
   const fin=financialPostable();
 
