@@ -1961,8 +1961,8 @@ if(Q('closePeriodBtn'))
     return;
   }
 
-  if(C.session()){
-    try{
+if(Auth.session()){
+  try{
       await showApp();
     }catch(e){
       showError(e);
