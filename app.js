@@ -35,6 +35,15 @@ import {
 } from './src/reports/why-number.js';
 
 import {
+  buildPartyAging
+} from './src/reports/party-aging.js';
+
+import {
+  partyAgingSection,
+  partyAgingDetailHtml
+} from './src/ui/reports/party-aging-view.js';
+
+import {
   installAvanCloud
 } from './src/infrastructure/supabase/avan-cloud-bootstrap.js';
 
@@ -46,6 +55,7 @@ const authCallback=Auth.consumeAuthCallback();
 let currentPage='dashboard';
 let reportState={tab:'trial',from:null,to:null,ledgerAccount:null};
 let invoiceFilter='all';
+let dashboardAging=null;  
 let ctx={user:null,workspace:null,fiscalYear:null,accounts:[],roles:{},parties:[],entries:[],lines:[],financialAccounts:[],periods:[],transactions:[],invoices:[],invoiceLines:[],invoiceIntegrity:null,health:null,integrity:null,workspaceRole:null,visibleWorkspaces:0};
 const faDigits=s=>String(s??'').replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
 const cleanAmount=v=>faDigits(v).replace(/[٬,\s]/g,'').replace(/[^0-9-]/g,'');
@@ -368,6 +378,27 @@ async function renderDashboard(){
       )
       .slice(0, 6);
 
+  dashboardAging =
+  buildPartyAging({
+    roles:
+      ctx.roles,
+
+    parties:
+      ctx.parties,
+
+    entries:
+      ctx.entries,
+
+    lines:
+      ctx.lines,
+
+    invoices:
+      ctx.invoices,
+
+    asOf:
+      to
+  });
+
   const whyButton =
     (metric, amount) => `
       <button
@@ -456,7 +487,18 @@ async function renderDashboard(){
         </div>
       </div>
 
-    </div>
+       </div>
+
+    ${
+      partyAgingSection(
+        dashboardAging,
+        {
+          money,
+          dateFa,
+          esc
+        }
+      )
+    }
 
     <div class="section card">
 
@@ -561,6 +603,49 @@ async function renderDashboard(){
   `);
 }
 
+function agingDetailModal(
+  sideName,
+  partyId
+) {
+  if (!dashboardAging) {
+    return toast(
+      'اطلاعات Aging هنوز آماده نیست'
+    );
+  }
+
+  openModal(
+    partyAgingDetailHtml({
+      aging:
+        dashboardAging,
+
+      sideName,
+      partyId,
+
+      money,
+      dateFa,
+      esc
+    })
+  );
+
+  if (Q('cancelModal')) {
+    Q('cancelModal').onclick =
+      closeModal;
+  }
+
+  document
+    .querySelectorAll(
+      '[data-aging-journal]'
+    )
+    .forEach(
+      button =>
+        button.onclick = () =>
+          viewJournal(
+            button.dataset
+              .agingJournal
+          )
+    );
+}
+  
 function whyNumberModal(
   metric,
   amount
@@ -2414,6 +2499,18 @@ function bind(){
   .querySelectorAll(
     '[data-why-number]'
   )
+    document
+  .querySelectorAll(
+    '[data-aging-party]'
+  )
+  .forEach(
+    button =>
+      button.onclick = () =>
+        agingDetailModal(
+          button.dataset.agingSide,
+          button.dataset.agingParty
+        )
+  );
   .forEach(
     button =>
       button.onclick = () =>
