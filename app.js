@@ -26,6 +26,10 @@ import {
 } from './src/ui/auth/auth-view.js';
 
 import {
+  createAuthController
+} from './src/application/auth/auth-controller.js';
+
+import {
   installAvanCloud
 } from './src/infrastructure/supabase/avan-cloud-bootstrap.js';
 
