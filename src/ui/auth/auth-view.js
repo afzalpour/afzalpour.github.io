@@ -60,3 +60,21 @@ export function setAuthMode(mode) {
     authStatus.textContent = '';
   }
 }
+export function bindAuthModeTabs(
+  onModeChange
+) {
+  const loginTab = byId('loginTab');
+  const signupTab = byId('signupTab');
+
+  if (loginTab) {
+    loginTab.onclick = () => {
+      onModeChange('login');
+    };
+  }
+
+  if (signupTab) {
+    signupTab.onclick = () => {
+      onModeChange('signup');
+    };
+  }
+}
