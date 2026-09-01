@@ -36,7 +36,8 @@ import {
 (function(){
 'use strict';
 const Q=id=>document.getElementById(id), C=installAvanCloud();
-const authCallback=C.consumeAuthCallback?.();
+const Auth=createAuthController(C);
+const authCallback=Auth.consumeAuthCallback();
 let authMode='login', currentPage='dashboard';
 let reportState={tab:'trial',from:null,to:null,ledgerAccount:null};
 let invoiceFilter='all';
