@@ -78,8 +78,7 @@ create table if not exists public.documents (
     on delete set null,
 
   created_by uuid not null
-    default auth.uid()
-    references auth.users(id),
+  default auth.uid(),
 
   created_at timestamptz not null
     default now(),
@@ -142,6 +141,110 @@ on public.documents
 for each row
 execute function
   public.touch_avan_document_updated_at();
+
+
+-- ---------------------------------------------------------
+-- 2.1) Workspace / lineage integrity
+-- ---------------------------------------------------------
+
+create or replace function
+public.guard_avan_document_integrity()
+returns trigger
+language plpgsql
+set search_path=public
+as $$
+begin
+
+  if tg_op='UPDATE'
+     and old.linked_journal_entry_id
+         is not null
+  then
+    raise exception
+      'LINKED_DOCUMENT_IMMUTABLE';
+  end if;
+
+  if tg_op='DELETE' then
+
+    if old.linked_journal_entry_id
+       is not null
+    then
+      raise exception
+        'LINKED_DOCUMENT_IMMUTABLE';
+    end if;
+
+    return old;
+  end if;
+
+  if tg_op='UPDATE'
+     and new.workspace_id
+         is distinct from
+         old.workspace_id
+  then
+    raise exception
+      'DOCUMENT_WORKSPACE_IMMUTABLE';
+  end if;
+
+  if new.party_id is not null
+     and not exists (
+       select 1
+       from public.parties p
+       where p.id=new.party_id
+         and p.workspace_id=
+             new.workspace_id
+     )
+  then
+    raise exception
+      'DOCUMENT_PARTY_WORKSPACE_MISMATCH';
+  end if;
+
+  if new.linked_journal_entry_id
+     is not null
+  then
+
+    if not exists (
+      select 1
+      from public.journal_entries j
+      where
+        j.id=
+          new.linked_journal_entry_id
+        and j.workspace_id=
+          new.workspace_id
+        and j.status<>'draft'
+    )
+    then
+      raise exception
+        'DOCUMENT_JOURNAL_WORKSPACE_MISMATCH';
+    end if;
+
+    if new.status<>'linked' then
+      raise exception
+        'DOCUMENT_LINK_STATUS_INVALID';
+    end if;
+
+  elsif new.status='linked' then
+
+    raise exception
+      'DOCUMENT_LINK_REQUIRED';
+
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists
+  trg_documents_integrity
+on public.documents;
+
+create trigger
+  trg_documents_integrity
+before insert
+or update
+or delete
+on public.documents
+for each row
+execute function
+  public.guard_avan_document_integrity();
 
 -- ---------------------------------------------------------
 -- 3) RLS
@@ -315,43 +418,27 @@ create policy
 on storage.objects
 for insert
 to authenticated
-with check (
+
+  with check (
   bucket_id='avan-documents'
-  and
-  public.has_workspace_access(
+
+  and public.has_workspace_access(
     (
       (storage.foldername(name))[1]
     )::uuid
   )
+
+  and (
+    (storage.foldername(name))[2]
+  ) = (
+    (select auth.uid())::text
+  )
 );
 
+-- Source files are immutable after upload.
 drop policy if exists
   avan_documents_storage_update
 on storage.objects;
-
-create policy
-  avan_documents_storage_update
-on storage.objects
-for update
-to authenticated
-using (
-  bucket_id='avan-documents'
-  and
-  public.has_workspace_access(
-    (
-      (storage.foldername(name))[1]
-    )::uuid
-  )
-)
-with check (
-  bucket_id='avan-documents'
-  and
-  public.has_workspace_access(
-    (
-      (storage.foldername(name))[1]
-    )::uuid
-  )
-);
 
 drop policy if exists
   avan_documents_storage_delete
