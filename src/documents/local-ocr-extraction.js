@@ -617,6 +617,53 @@ function extractAccountHint(
   );
 }
 
+function usefulOcrLine(
+  line
+) {
+  const text =
+    cleanText(line);
+
+  if (
+    text.length < 5 ||
+    text.length > 160
+  ) {
+    return false;
+  }
+
+  const compact =
+    text.replace(
+      /\s/g,
+      ''
+    );
+
+  if (!compact) {
+    return false;
+  }
+
+  const useful =
+    (
+      compact.match(
+        /[\u0600-\u06FF0-9۰-۹]/g
+      ) || []
+    ).length;
+
+  const latinNoise =
+    (
+      compact.match(
+        /[A-Za-z£=_|]/g
+      ) || []
+    ).length;
+
+  const ratio =
+    useful /
+    compact.length;
+
+  return (
+    ratio >= 0.55 &&
+    latinNoise <= 3
+  );
+}
+
 function descriptionFromLines(
   lines
 ) {
@@ -624,14 +671,13 @@ function descriptionFromLines(
     /جمع|مبلغ|مالیات|تومان|ریال|شماره|تاریخ|invoice|total|tax|vat/i;
 
   const useful =
-    lines
-      .filter(
-        line =>
-          line.length >= 5 &&
-          line.length <= 160 &&
-          !excluded.test(line)
-      )
-      .slice(0, 3);
+  lines
+    .filter(
+      line =>
+        usefulOcrLine(line) &&
+        !excluded.test(line)
+    )
+    .slice(0, 3);
 
   return cleanText(
     useful.join(' — ')
