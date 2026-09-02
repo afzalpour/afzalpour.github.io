@@ -1,7 +1,7 @@
 'use strict';
 
 const TESSERACT_URL =
-  'https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.esm.min.js';
+  'https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js';
 
 const PDFJS_URL =
   'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.3.289/build/pdf.min.mjs';
@@ -13,9 +13,122 @@ let tesseractModulePromise = null;
 let pdfModulePromise = null;
 
 function loadTesseract() {
+
+  if (
+    globalThis.Tesseract
+      ?.createWorker
+  ) {
+    return Promise.resolve(
+      globalThis.Tesseract
+    );
+  }
+
   if (!tesseractModulePromise) {
+
     tesseractModulePromise =
-      import(TESSERACT_URL);
+      new Promise(
+        (resolve, reject) => {
+
+          const finish = () => {
+
+            if (
+              globalThis.Tesseract
+                ?.createWorker
+            ) {
+              resolve(
+                globalThis.Tesseract
+              );
+
+              return;
+            }
+
+            reject(
+              new Error(
+                'LOCAL_OCR_RUNTIME_UNAVAILABLE'
+              )
+            );
+          };
+
+          const existing =
+            document.querySelector(
+              'script[data-avan-tesseract]'
+            );
+
+          if (existing) {
+
+            if (
+              existing.dataset
+                .loaded === 'true'
+            ) {
+              finish();
+              return;
+            }
+
+            existing.addEventListener(
+              'load',
+              finish,
+              {
+                once: true
+              }
+            );
+
+            existing.addEventListener(
+              'error',
+              () =>
+                reject(
+                  new Error(
+                    'LOCAL_OCR_RUNTIME_LOAD_FAILED'
+                  )
+                ),
+              {
+                once: true
+              }
+            );
+
+            return;
+          }
+
+          const script =
+            document.createElement(
+              'script'
+            );
+
+          script.src =
+            TESSERACT_URL;
+
+          script.async =
+            true;
+
+          script.crossOrigin =
+            'anonymous';
+
+          script.dataset
+            .avanTesseract =
+              'true';
+
+          script.onload =
+            () => {
+
+              script.dataset.loaded =
+                'true';
+
+              finish();
+            };
+
+          script.onerror =
+            () =>
+              reject(
+                new Error(
+                  'LOCAL_OCR_RUNTIME_LOAD_FAILED'
+                )
+              );
+
+          document.head
+            .appendChild(
+              script
+            );
+        }
+      );
   }
 
   return tesseractModulePromise;
