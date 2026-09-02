@@ -512,6 +512,102 @@ async function extract(
 
   return result.document;
 }
+
+async function
+saveLocalExtraction({
+  document,
+  extraction
+}) {
+  if (
+    !document?.id ||
+    !document?.workspace_id
+  ) {
+    throw new Error(
+      'DOCUMENT_REQUIRED'
+    );
+  }
+
+  if (
+    document.status !==
+      'uploaded'
+  ) {
+    throw new Error(
+      'DOCUMENT_STATUS_NOT_EXTRACTABLE'
+    );
+  }
+
+  if (
+    !extraction ||
+    typeof extraction !==
+      'object'
+  ) {
+    throw new Error(
+      'LOCAL_OCR_EXTRACTION_REQUIRED'
+    );
+  }
+
+  const existing =
+    (
+      document.extracted_data &&
+      typeof document
+        .extracted_data ===
+        'object'
+    )
+      ? document.extracted_data
+      : {};
+
+  const {
+    ocr_text,
+    confidence,
+    ...data
+  } = extraction;
+
+  const rows =
+    await cloud.update(
+      'documents',
+
+      {
+        status:
+          'extracted',
+
+        ocr_text:
+          String(
+            ocr_text || ''
+          ).slice(
+            0,
+            12000
+          ),
+
+        extracted_data: {
+          ...existing,
+          ...data
+        },
+
+        confidence:
+          (
+            confidence &&
+            typeof confidence ===
+              'object'
+          )
+            ? confidence
+            : {}
+      },
+
+      `id=eq.${document.id}` +
+      `&workspace_id=eq.${document.workspace_id}`
+    );
+
+  const updated =
+    rows?.[0];
+
+  if (!updated?.id) {
+    throw new Error(
+      'LOCAL_OCR_SAVE_FAILED'
+    );
+  }
+
+  return updated;
+}
   
  return {
   bucket: BUCKET,
@@ -522,6 +618,7 @@ async function extract(
   upload,
   signedUrl,
   saveReview,
-  extract
+  extract,
+  saveLocalExtraction
 };
 }
