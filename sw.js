@@ -1,5 +1,5 @@
 const CACHE_PREFIX='avan-prod-core-';
-const CACHE='avan-prod-core-1-0-v35';
+const CACHE='avan-prod-core-1-0-v36';
 
 const ASSETS=[
   './',
@@ -31,6 +31,7 @@ const ASSETS=[
 './src/ui/documents/documents-view.js',
 './src/documents/document-proposal.js',
 './src/documents/local-ocr-runtime.js',
+'./src/documents/local-ocr-extraction.js',
 './src/ui/documents/document-review-view.js',
 ];
 
