@@ -252,6 +252,213 @@ async function createOcrWorker(
   return worker;
 }
 
+async function preprocessImage(
+  blob
+) {
+  if (
+    !globalThis
+      .createImageBitmap
+  ) {
+    return blob;
+  }
+
+  const bitmap =
+    await createImageBitmap(
+      blob
+    );
+
+  try {
+
+    let scale = 1;
+
+    if (
+      bitmap.width < 1600
+    ) {
+      scale =
+        Math.min(
+          1600 /
+            bitmap.width,
+          2.5
+        );
+    }
+
+    if (
+      bitmap.width > 2400
+    ) {
+      scale =
+        2400 /
+        bitmap.width;
+    }
+
+    const canvas =
+      document.createElement(
+        'canvas'
+      );
+
+    canvas.width =
+      Math.round(
+        bitmap.width *
+        scale
+      );
+
+    canvas.height =
+      Math.round(
+        bitmap.height *
+        scale
+      );
+
+    const context =
+      canvas.getContext(
+        '2d',
+        {
+          alpha: false,
+          willReadFrequently:
+            true
+        }
+      );
+
+    if (!context) {
+      return blob;
+    }
+
+    context.fillStyle =
+      '#ffffff';
+
+    context.fillRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    context.drawImage(
+      bitmap,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    const image =
+      context.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+    const pixels =
+      image.data;
+
+    for (
+      let i = 0;
+      i < pixels.length;
+      i += 4
+    ) {
+      const gray =
+        (
+          pixels[i] *
+            0.299 +
+          pixels[i + 1] *
+            0.587 +
+          pixels[i + 2] *
+            0.114
+        );
+
+      const contrast =
+        Math.max(
+          0,
+          Math.min(
+            255,
+            (
+              gray - 128
+            ) * 1.45 +
+            128
+          )
+        );
+
+      pixels[i] =
+        contrast;
+
+      pixels[i + 1] =
+        contrast;
+
+      pixels[i + 2] =
+        contrast;
+    }
+
+    context.putImageData(
+      image,
+      0,
+      0
+    );
+
+    return canvas;
+
+  } finally {
+
+    if (bitmap.close) {
+      bitmap.close();
+    }
+  }
+}
+
+function ocrResultScore(
+  result
+) {
+  const text =
+    String(
+      result
+        ?.data
+        ?.text ||
+      ''
+    ).trim();
+
+  const confidence =
+    Number(
+      result
+        ?.data
+        ?.confidence ||
+      0
+    );
+
+  const usefulChars =
+    (
+      text.match(
+        /[\u0600-\u06FF0-9۰-۹]/g
+      ) || []
+    ).length;
+
+  return (
+    confidence +
+    Math.min(
+      25,
+      usefulChars / 8
+    )
+  );
+}
+
+async function recognizePass(
+  worker,
+  source,
+  psm
+) {
+  await worker.setParameters({
+    tessedit_pageseg_mode:
+      psm,
+
+    preserve_interword_spaces:
+      '1',
+
+    user_defined_dpi:
+      '300'
+  });
+
+  return worker.recognize(
+    source
+  );
+}
+
 async function recognizeImage(
   worker,
   source,
@@ -260,24 +467,82 @@ async function recognizeImage(
   report(
     onProgress,
     {
+      phase:
+        'preprocess',
+
+      progress: 0,
+
+      page: 1,
+      pages: 1,
+
+      message:
+        'در حال بهبود تصویر…'
+    }
+  );
+
+  const prepared =
+    await preprocessImage(
+      source
+    );
+
+  report(
+    onProgress,
+    {
       phase: 'ocr',
       progress: 0,
       page: 1,
       pages: 1,
+
       message:
-        'در حال خواندن تصویر…'
+        'در حال OCR دقیق تصویر…'
     }
   );
 
-  const result =
-    await worker.recognize(
-      source
+  // Pass 1:
+  // مناسب قبض‌ها و متن‌های پراکنده
+  const sparse =
+    await recognizePass(
+      worker,
+      prepared,
+      '11'
     );
+
+  report(
+    onProgress,
+    {
+      phase: 'ocr',
+      progress: 0.55,
+      page: 1,
+      pages: 1,
+
+      message:
+        'در حال کنترل مجدد متن…'
+    }
+  );
+
+  // Pass 2:
+  // مناسب فاکتور و بلوک متنی
+  const block =
+    await recognizePass(
+      worker,
+      prepared,
+      '6'
+    );
+
+  const best =
+    ocrResultScore(
+      sparse
+    ) >=
+    ocrResultScore(
+      block
+    )
+      ? sparse
+      : block;
 
   return {
     text:
       String(
-        result
+        best
           ?.data
           ?.text ||
         ''
@@ -285,7 +550,7 @@ async function recognizeImage(
 
     confidence:
       Number(
-        result
+        best
           ?.data
           ?.confidence ||
         0
