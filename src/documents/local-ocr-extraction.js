@@ -75,15 +75,15 @@ function unitOf(value) {
     comparable(value);
 
   if (
-    /\bتومان\b/.test(text) ||
-    /\btoman\b/.test(text)
+    text.includes('تومان') ||
+    /\btoman\b/i.test(text)
   ) {
     return 'toman';
   }
 
   if (
-    /\bریال\b/.test(text) ||
-    /\brial\b/.test(text)
+    text.includes('ریال') ||
+    /\brial\b/i.test(text)
   ) {
     return 'rial';
   }
