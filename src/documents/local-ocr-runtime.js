@@ -459,6 +459,146 @@ async function recognizePass(
   );
 }
 
+function cropVerticalBand(
+  source,
+  fromRatio,
+  toRatio
+) {
+  if (
+    !source?.width ||
+    !source?.height
+  ) {
+    return null;
+  }
+
+  const top =
+    Math.max(
+      0,
+      Math.floor(
+        source.height *
+        fromRatio
+      )
+    );
+
+  const bottom =
+    Math.min(
+      source.height,
+      Math.ceil(
+        source.height *
+        toRatio
+      )
+    );
+
+  const height =
+    bottom - top;
+
+  if (
+    height <= 20
+  ) {
+    return null;
+  }
+
+  const canvas =
+    document.createElement(
+      'canvas'
+    );
+
+  canvas.width =
+    source.width;
+
+  canvas.height =
+    height;
+
+  const context =
+    canvas.getContext(
+      '2d',
+      {
+        alpha: false
+      }
+    );
+
+  if (!context) {
+    return null;
+  }
+
+  context.fillStyle =
+    '#ffffff';
+
+  context.fillRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  context.drawImage(
+    source,
+
+    0,
+    top,
+    source.width,
+    height,
+
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  return canvas;
+}
+
+async function recognizeCriticalBand(
+  worker,
+  source,
+  onProgress,
+  message
+) {
+  if (!source) {
+    return {
+      text: '',
+      confidence: 0
+    };
+  }
+
+  report(
+    onProgress,
+    {
+      phase:
+        'critical-ocr',
+
+      progress: 0,
+
+      message
+    }
+  );
+
+  const result =
+    await recognizePass(
+      worker,
+      source,
+      '6'
+    );
+
+  return {
+    text:
+      String(
+        result
+          ?.data
+          ?.text ||
+        ''
+      ).trim(),
+
+    confidence:
+      Number(
+        result
+          ?.data
+          ?.confidence ||
+        0
+      )
+  };
+}
+
 async function recognizeImage(
   worker,
   source,
@@ -490,16 +630,15 @@ async function recognizeImage(
     {
       phase: 'ocr',
       progress: 0,
+
       page: 1,
       pages: 1,
 
       message:
-        'در حال OCR دقیق تصویر…'
+        'در حال OCR متن رسید…'
     }
   );
 
-  // Pass 1:
-  // مناسب قبض‌ها و متن‌های پراکنده
   const sparse =
     await recognizePass(
       worker,
@@ -511,17 +650,16 @@ async function recognizeImage(
     onProgress,
     {
       phase: 'ocr',
-      progress: 0.55,
+      progress: 0.35,
+
       page: 1,
       pages: 1,
 
       message:
-        'در حال کنترل مجدد متن…'
+        'در حال کنترل ساختار رسید…'
     }
   );
 
-  // Pass 2:
-  // مناسب فاکتور و بلوک متنی
   const block =
     await recognizePass(
       worker,
@@ -539,14 +677,65 @@ async function recognizeImage(
       ? sparse
       : block;
 
+  /*
+    Receipt-oriented regions.
+
+    Date/time is commonly located
+    around the middle-upper area.
+
+    Amount is commonly located
+    in the lower part of the receipt.
+  */
+
+  const dateBand =
+    cropVerticalBand(
+      prepared,
+      0.25,
+      0.62
+    );
+
+  const amountBand =
+    cropVerticalBand(
+      prepared,
+      0.60,
+      0.94
+    );
+
+  const dateResult =
+    await recognizeCriticalBand(
+      worker,
+      dateBand,
+      onProgress,
+      'در حال خواندن دقیق تاریخ و زمان…'
+    );
+
+  const amountResult =
+    await recognizeCriticalBand(
+      worker,
+      amountBand,
+      onProgress,
+      'در حال خواندن دقیق مبلغ…'
+    );
+
+  const fullText =
+    String(
+      best
+        ?.data
+        ?.text ||
+      ''
+    ).trim();
+
+  const criticalText =
+    [
+      dateResult.text,
+      amountResult.text
+    ]
+      .filter(Boolean)
+      .join('\n');
+
   return {
     text:
-      String(
-        best
-          ?.data
-          ?.text ||
-        ''
-      ).trim(),
+      fullText,
 
     confidence:
       Number(
@@ -555,6 +744,23 @@ async function recognizeImage(
           ?.confidence ||
         0
       ),
+
+    critical_text:
+      criticalText,
+
+    critical: {
+      date_text:
+        dateResult.text,
+
+      date_confidence:
+        dateResult.confidence,
+
+      amount_text:
+        amountResult.text,
+
+      amount_confidence:
+        amountResult.confidence
+    },
 
     pages: 1,
 
