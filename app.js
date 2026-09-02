@@ -53,6 +53,13 @@ import {
 import {
   buildDocumentDraftProposal
 } from './src/documents/document-proposal.js';
+import {
+  recognizeLocalDocument
+} from './src/documents/local-ocr-runtime.js';
+
+import {
+  buildLocalOcrExtraction
+} from './src/documents/local-ocr-extraction.js';
 
 import {
   documentReviewModalHtml
@@ -2752,14 +2759,63 @@ async function extractDocument(
       true;
 
     button.textContent =
-      'در حال استخراج…';
+      'در حال آماده‌سازی OCR…';
   }
 
   try {
 
-    await Documents.extract(
-      document
-    );
+    const sourceUrl =
+      await Documents.signedUrl(
+        document,
+        900
+      );
+
+    const ocr =
+      await recognizeLocalDocument({
+        sourceUrl,
+
+        mimeType:
+          document.mime_type,
+
+        onProgress:
+          progress => {
+
+            if (
+              !button ||
+              !button.isConnected
+            ) {
+              return;
+            }
+
+            if (
+              progress?.message
+            ) {
+              button.textContent =
+                progress.message;
+            } else {
+              button.textContent =
+                'در حال OCR…';
+            }
+          }
+      });
+
+    const extraction =
+      buildLocalOcrExtraction({
+        document,
+        ocr,
+
+        parties:
+          ctx.parties,
+
+        accounts:
+          ctx.accounts
+      });
+
+    await Documents
+      .saveLocalExtraction({
+        document,
+        extraction
+      });
 
     await loadContext();
 
@@ -2769,7 +2825,7 @@ async function extractDocument(
     await render();
 
     toast(
-      'استخراج هوشمند انجام شد'
+      'OCR محلی و استخراج اطلاعات انجام شد'
     );
 
     documentReviewModal(
@@ -2786,12 +2842,12 @@ async function extractDocument(
 
       await render();
     } catch {
-      // keep original extraction error
+      // keep original OCR error
     }
 
     showError(
       err,
-      'documentExtract'
+      'localDocumentExtract'
     );
 
   } finally {
