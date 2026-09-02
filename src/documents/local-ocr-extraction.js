@@ -266,6 +266,111 @@ function extractTotalAmount(
   );
 }
 
+function extractCriticalAmount(
+  lines
+) {
+  const candidates = [];
+
+  lines.forEach(
+    (line, index) => {
+
+      const windowText = [
+        lines[index - 1] || '',
+        line,
+        lines[index + 1] || ''
+      ].join(' ');
+
+      const unit =
+        unitOf(
+          windowText
+        );
+
+      if (!unit) {
+        return;
+      }
+
+      const normalized =
+        comparable(
+          line
+        );
+
+      const hasAmountHint =
+        /مبلغ|تومان|ریال|amount|toman|rial/i
+          .test(
+            normalized
+          );
+
+      const numbers =
+        numbersInLine(
+          line
+        );
+
+      for (
+        const number of
+        numbers
+      ) {
+        const toman =
+          toToman(
+            number,
+            unit
+          );
+
+        if (
+          toman === null ||
+          toman <= 0n
+        ) {
+          continue;
+        }
+
+        candidates.push({
+          value:
+            toman,
+
+          score:
+            hasAmountHint
+              ? 100
+              : 60,
+
+          line
+        });
+      }
+    }
+  );
+
+  candidates.sort(
+    (a, b) => {
+
+      if (
+        b.score !== a.score
+      ) {
+        return (
+          b.score -
+          a.score
+        );
+      }
+
+      if (
+        a.value ===
+        b.value
+      ) {
+        return 0;
+      }
+
+      return (
+        a.value >
+        b.value
+          ? -1
+          : 1
+      );
+    }
+  );
+
+  return (
+    candidates[0] ||
+    null
+  );
+}
+
 function extractTaxAmount(
   lines
 ) {
@@ -569,50 +674,123 @@ buildLocalOcrExtraction({
     );
   }
 
-  const text =
+  const fullText =
     cleanText(
       ocr?.text || ''
     );
 
-  if (!text) {
+  const dateText =
+    cleanText(
+      ocr
+        ?.critical
+        ?.date_text ||
+      ''
+    );
+
+  const amountText =
+    cleanText(
+      ocr
+        ?.critical
+        ?.amount_text ||
+      ''
+    );
+
+  const combinedText =
+    cleanText(
+      [
+        fullText,
+        dateText,
+        amountText
+      ]
+        .filter(Boolean)
+        .join('\n')
+    );
+
+  if (!combinedText) {
     throw new Error(
       'LOCAL_OCR_TEXT_EMPTY'
     );
   }
 
-  const lines =
-    linesOf(text);
+  const fullLines =
+    linesOf(
+      fullText ||
+      combinedText
+    );
 
+  const amountLines =
+    linesOf(
+      amountText
+    );
+
+  /*
+    Priority:
+    1) critical amount region
+    2) permissive critical parser
+    3) full receipt OCR
+  */
   const total =
     extractTotalAmount(
-      lines
+      amountLines
+    ) ||
+    extractCriticalAmount(
+      amountLines
+    ) ||
+    extractTotalAmount(
+      fullLines
     );
 
   const tax =
     extractTaxAmount(
-      lines
+      fullLines
     );
 
+  /*
+    Priority:
+    critical date region first,
+    full OCR only as fallback.
+  */
   const date =
     extractDate(
-      text
+      dateText
+    ) ||
+    extractDate(
+      fullText
     );
+
+  const searchableText =
+    fullText ||
+    combinedText;
 
   const partyName =
     extractParty(
-      text,
+      searchableText,
       parties
     );
 
   const accountHint =
     extractAccountHint(
-      text,
+      searchableText,
       accounts
     );
 
   const baseConfidence =
     confidence01(
       ocr?.confidence
+    );
+
+  const dateConfidence =
+    confidence01(
+      ocr
+        ?.critical
+        ?.date_confidence
+    );
+
+  const amountConfidence =
+    confidence01(
+      ocr
+        ?.critical
+        ?.amount_confidence
     );
 
   return {
@@ -625,7 +803,7 @@ buildLocalOcrExtraction({
 
     document_number:
       extractDocumentNumber(
-        lines
+        fullLines
       ),
 
     document_date:
@@ -644,7 +822,7 @@ buildLocalOcrExtraction({
 
     description:
       descriptionFromLines(
-        lines
+        fullLines
       ),
 
     account_hint:
@@ -680,6 +858,26 @@ buildLocalOcrExtraction({
           ocr?.truncated
         ),
 
+      critical: {
+        date_text:
+          dateText.slice(
+            0,
+            2000
+          ),
+
+        date_confidence:
+          dateConfidence,
+
+        amount_text:
+          amountText.slice(
+            0,
+            2000
+          ),
+
+        amount_confidence:
+          amountConfidence
+      },
+
       extracted_at:
         new Date()
           .toISOString()
@@ -693,7 +891,8 @@ buildLocalOcrExtraction({
         total
           ? Math.max(
               0.55,
-              baseConfidence
+              baseConfidence,
+              amountConfidence
             )
           : 0,
 
@@ -701,7 +900,8 @@ buildLocalOcrExtraction({
         date
           ? Math.max(
               0.6,
-              baseConfidence
+              baseConfidence,
+              dateConfidence
             )
           : 0,
 
@@ -723,7 +923,7 @@ buildLocalOcrExtraction({
     },
 
     ocr_text:
-      text.slice(
+      combinedText.slice(
         0,
         12000
       )
