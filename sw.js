@@ -1,18 +1,18 @@
 const CACHE_PREFIX='avan-prod-core-';
-const CACHE='avan-prod-core-1-0-v52';
+const CACHE='avan-prod-core-1-0-v53';
 
 const ASSETS=[
-  './',
-  './index.html',
-  './styles.css',
-  './config.js',
-  './app.js',
-  './manifest.webmanifest',
-  './avan-icon-192.png',
+'./',
+'./index.html',
+'./styles.css',
+'./config.js',
+'./app.js',
+'./manifest.webmanifest',
+'./avan-icon-192.png',
 './avan-icon-512.png',
 './apple-touch-icon.png',
 './avan-favicon-32.png',
-  './src/core/date/jalali.js',
+'./src/core/date/jalali.js',
 './src/ui/date/jalali-picker.js',
 './src/ui/errors/error-messages-fa.js',
 './src/ui/feedback/toast.js',
@@ -36,6 +36,8 @@ const ASSETS=[
 './src/ui/reports/party-aging-view.js',
 './src/ai/business-copilot.js',
 './src/ui/intelligence/business-copilot-view.js',
+'./src/ai/risk-audit.js',
+'./src/ui/intelligence/risk-audit-view.js',
 './src/documents/document-service.js',
 './src/ui/documents/documents-view.js',
 './src/documents/document-proposal.js',
