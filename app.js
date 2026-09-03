@@ -693,7 +693,6 @@ ${
     }
   )
 }
-${
  ${
   riskAuditSectionHtml(
     dashboardRiskAudit,
