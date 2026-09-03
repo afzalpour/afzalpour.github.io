@@ -39,7 +39,15 @@ documentsPageHtml({
   const rows =
     documents
       .map(
-        document => `
+  document => {
+
+    const draft =
+      document
+        ?.extracted_data
+        ?.accounting_draft ||
+      null;
+
+    return `
           <tr>
 
             <td>
@@ -150,6 +158,57 @@ ${
           >
             بازبینی
           </button>
+          ${
+  document.status === 'reviewed' &&
+  !draft
+    ?`
+      <button
+        class="good-btn small"
+        data-create-document-draft="${document.id}"
+      >
+        ساخت پیش‌نویس حسابداری
+      </button>
+    `
+    :''
+}
+
+${
+  document.status === 'reviewed' &&
+  draft
+    ?`
+      <button
+        class="ghost small"
+        data-open-document-draft="${document.id}"
+      >
+        ادامه پیش‌نویس
+      </button>
+
+      <button
+        class="good-btn small"
+        data-link-document-ledger="${document.id}"
+      >
+        اتصال به Ledger
+      </button>
+    `
+    :''
+}
+
+${
+  document.status === 'linked' &&
+  document.linked_journal_entry_id
+    ?`
+      <button
+        class="ghost small"
+        data-view-linked-journal="${
+          document
+            .linked_journal_entry_id
+        }"
+      >
+        مشاهده سند Ledger
+      </button>
+    `
+    :''
+}
         `
         :''
     }
@@ -158,7 +217,8 @@ ${
 </td>
 
           </tr>
-        `
+        `;
+  }
       )
       .join('');
 
