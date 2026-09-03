@@ -800,3 +800,4 @@ linkToJournal({
   saveAccountingDraftRef,
   linkToJournal
 };
+}
