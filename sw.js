@@ -1,5 +1,5 @@
 const CACHE_PREFIX='avan-prod-core-';
-const CACHE='avan-prod-core-1-0-v49';
+const CACHE='avan-prod-core-1-0-v50';
 
 const ASSETS=[
   './',
@@ -8,6 +8,10 @@ const ASSETS=[
   './config.js',
   './app.js',
   './manifest.webmanifest',
+  './avan-icon-192.png',
+'./avan-icon-512.png',
+'./apple-touch-icon.png',
+'./avan-favicon-32.png',
   './src/core/date/jalali.js',
 './src/ui/date/jalali-picker.js',
 './src/ui/errors/error-messages-fa.js',
