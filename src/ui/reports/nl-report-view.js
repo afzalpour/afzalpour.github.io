@@ -608,6 +608,57 @@ naturalReportBoxHtml({
   `;
 }
 
+function whyNumberButtonHtml({
+  result,
+  esc
+}) {
+  if (
+    !result
+      ?.evidence_metric ||
+    result.value ===
+      undefined ||
+    result.value ===
+      null
+  ) {
+    return '';
+  }
+
+  return `
+    <div class="section">
+      <button
+        type="button"
+        class="ghost small"
+        data-nl-why-number="${
+          esc(
+            result
+              .evidence_metric
+          )
+        }"
+        data-nl-why-amount="${
+          esc(
+            result.value
+          )
+        }"
+        data-nl-why-from="${
+          esc(
+            result.period
+              ?.from ||
+            ''
+          )
+        }"
+        data-nl-why-to="${
+          esc(
+            result.period
+              ?.to ||
+            ''
+          )
+        }"
+      >
+        چرا این عدد؟
+      </button>
+    </div>
+  `;
+}
 
 export function
 naturalReportResultHtml({
@@ -731,7 +782,12 @@ naturalReportResultHtml({
 
       ${body}
 
-      ${
+${whyNumberButtonHtml({
+  result,
+  esc
+})}
+
+${
         result.note
           ? `
             <div class="info-box section">
