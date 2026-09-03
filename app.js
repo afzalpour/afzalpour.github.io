@@ -717,13 +717,17 @@ function agingDetailModal(
   
 function whyNumberModal(
   metric,
-  amount
+  amount,
+  fromOverride = null,
+  toOverride = null
 ) {
   const from =
+    fromOverride ||
     ctx.fiscalYear?.date_from ||
     null;
 
   const to =
+    toOverride ||
     today();
 
   let evidence;
@@ -3270,6 +3274,30 @@ function bind(){
             button.dataset.whyAmount
           )
     );
+
+  document
+  .querySelectorAll(
+    '[data-nl-why-number]'
+  )
+  .forEach(
+    button =>
+      button.onclick = () =>
+        whyNumberModal(
+          button.dataset
+            .nlWhyNumber,
+
+          button.dataset
+            .nlWhyAmount,
+
+          button.dataset
+            .nlWhyFrom ||
+            null,
+
+          button.dataset
+            .nlWhyTo ||
+            null
+        )
+  );
 
   document
   .querySelectorAll(
