@@ -63,6 +63,15 @@ import {
   financialCopilotSectionHtml,
   businessAnswerHtml
 } from './src/ui/intelligence/business-copilot-view.js';
+
+import {
+  buildRiskAuditSnapshot
+} from './src/ai/risk-audit.js';
+
+import {
+  riskAuditSectionHtml
+} from './src/ui/intelligence/risk-audit-view.js';
+
 import {
   createDocumentService
 } from './src/documents/document-service.js';
@@ -108,7 +117,8 @@ let reportState={
 };
 let invoiceFilter='all';
 let dashboardAging=null;
-let dashboardIntelligence=null;  
+let dashboardIntelligence=null;
+let dashboardRiskAudit=null;  
 let ctx={
   user:null,
   workspace:null,
@@ -518,6 +528,36 @@ async function renderDashboard(){
       ctx.integrity
   });
 
+dashboardRiskAudit =
+  buildRiskAuditSnapshot({
+    asOf:
+      to,
+
+    cash:
+      cashTotal,
+
+    aging:
+      dashboardAging,
+
+    parties:
+      ctx.parties,
+
+    invoices:
+      ctx.invoices,
+
+    transactions:
+      ctx.transactions,
+
+    documents:
+      ctx.documents,
+
+    integrity:
+      ctx.integrity,
+
+    invoiceIntegrity:
+      ctx.invoiceIntegrity
+  });
+  
   const whyButton =
     (metric, amount) => `
       <button
@@ -617,9 +657,19 @@ ${
     }
   )
 }
-    ${
-      partyAgingSection(
-        dashboardAging,
+${
+  riskAuditSectionHtml(
+    dashboardRiskAudit,
+    {
+      money,
+      dateFa,
+      esc
+    }
+  )
+}
+${
+  partyAgingSection(
+    dashboardAging,
         {
           money,
           dateFa,
@@ -3984,6 +4034,52 @@ document
             button.dataset
               .businessExample
           )
+  );
+
+document
+  .querySelectorAll(
+    '[data-risk-entity]'
+  )
+  .forEach(
+    button =>
+      button.onclick =
+        () => {
+
+          const type =
+            button.dataset
+              .riskEntity;
+
+          const id =
+            button.dataset
+              .riskId;
+
+          if (
+            type ===
+              'invoice'
+          ) {
+            return viewInvoice(
+              id
+            );
+          }
+
+          if (
+            type ===
+              'document'
+          ) {
+            return openDocument(
+              id
+            );
+          }
+
+          if (
+            type ===
+              'journal'
+          ) {
+            return viewJournal(
+              id
+            );
+          }
+        }
   );
   
 if (Q('uploadDocumentBtn')) {
