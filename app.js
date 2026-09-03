@@ -55,6 +55,15 @@ import {
   naturalReportResultHtml
 } from './src/ui/reports/nl-report-view.js';
 import {
+  buildFinancialCopilotSnapshot,
+  answerBusinessQuestion
+} from './src/ai/business-copilot.js';
+
+import {
+  financialCopilotSectionHtml,
+  businessAnswerHtml
+} from './src/ui/intelligence/business-copilot-view.js';
+import {
   createDocumentService
 } from './src/documents/document-service.js';
 
@@ -98,7 +107,8 @@ let reportState={
   nlResult:null
 };
 let invoiceFilter='all';
-let dashboardAging=null;  
+let dashboardAging=null;
+let dashboardIntelligence=null;  
 let ctx={
   user:null,
   workspace:null,
@@ -468,6 +478,46 @@ async function renderDashboard(){
       to
   });
 
+  dashboardIntelligence =
+  buildFinancialCopilotSnapshot({
+    asOf:
+      to,
+
+    fiscalFrom:
+      from,
+
+    assets,
+
+    liabilities:
+      liab,
+
+    profit,
+
+    cash:
+      cashTotal,
+
+    aging:
+      dashboardAging,
+
+    accounts:
+      ctx.accounts,
+
+    entries:
+      ctx.entries,
+
+    lines:
+      ctx.lines,
+
+    documents:
+      ctx.documents,
+
+    invoices:
+      ctx.invoices,
+
+    integrity:
+      ctx.integrity
+  });
+
   const whyButton =
     (metric, amount) => `
       <button
@@ -557,7 +607,16 @@ async function renderDashboard(){
       </div>
 
        </div>
-
+${
+  financialCopilotSectionHtml(
+    dashboardIntelligence,
+    {
+      money,
+      esc,
+      dateFa
+    }
+  )
+}
     ${
       partyAgingSection(
         dashboardAging,
@@ -3805,6 +3864,128 @@ function bind(){
         )
   );
 
+const runBusinessAsk =
+  query => {
+
+    if (
+      !dashboardIntelligence
+    ) {
+      return toast(
+        'تحلیل مدیریتی هنوز آماده نیست'
+      );
+    }
+
+    const cleanQuery =
+      String(
+        query || ''
+      ).trim();
+
+    if (!cleanQuery) {
+      return toast(
+        'سؤال مدیریتی را وارد کنید'
+      );
+    }
+
+    const input =
+      Q(
+        'businessAskQuery'
+      );
+
+    if (input) {
+      input.value =
+        cleanQuery;
+    }
+
+    let answer;
+
+    try {
+
+      answer =
+        answerBusinessQuestion({
+          query:
+            cleanQuery,
+
+          snapshot:
+            dashboardIntelligence
+        });
+
+    } catch (err) {
+
+      return showError(
+        err,
+        'businessCopilot'
+      );
+    }
+
+    const box =
+      Q(
+        'businessAskAnswer'
+      );
+
+    if (!box) {
+      return;
+    }
+
+    box.innerHTML =
+      businessAnswerHtml(
+        answer,
+        {
+          money,
+          esc
+        }
+      );
+
+    box
+      .querySelectorAll(
+        '[data-business-why]'
+      )
+      .forEach(
+        button =>
+          button.onclick =
+            () =>
+              whyNumberModal(
+                button.dataset
+                  .businessWhy,
+
+                button.dataset
+                  .businessAmount
+              )
+      );
+  };
+
+
+if (
+  Q('businessAskForm')
+) {
+  Q('businessAskForm')
+    .onsubmit =
+      event => {
+
+        event.preventDefault();
+
+        runBusinessAsk(
+          Q(
+            'businessAskQuery'
+          )?.value
+        );
+      };
+}
+
+
+document
+  .querySelectorAll(
+    '[data-business-example]'
+  )
+  .forEach(
+    button =>
+      button.onclick =
+        () =>
+          runBusinessAsk(
+            button.dataset
+              .businessExample
+          )
+  );
+  
 if (Q('uploadDocumentBtn')) {
   Q('uploadDocumentBtn')
     .onclick =
