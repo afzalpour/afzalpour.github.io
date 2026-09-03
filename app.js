@@ -73,6 +73,14 @@ import {
 } from './src/ui/intelligence/risk-audit-view.js';
 
 import {
+  buildCollectionCloseSnapshot
+} from './src/ai/collection-close.js';
+
+import {
+  collectionCloseSectionHtml
+} from './src/ui/intelligence/collection-close-view.js';
+
+import {
   createDocumentService
 } from './src/documents/document-service.js';
 
@@ -118,7 +126,8 @@ let reportState={
 let invoiceFilter='all';
 let dashboardAging=null;
 let dashboardIntelligence=null;
-let dashboardRiskAudit=null;  
+let dashboardRiskAudit=null;
+let dashboardCollectionClose=null;
 let ctx={
   user:null,
   workspace:null,
@@ -557,6 +566,33 @@ dashboardRiskAudit =
     invoiceIntegrity:
       ctx.invoiceIntegrity
   });
+
+dashboardCollectionClose =
+  buildCollectionCloseSnapshot({
+    asOf:
+      to,
+
+    aging:
+      dashboardAging,
+
+    entries:
+      ctx.entries,
+
+    invoices:
+      ctx.invoices,
+
+    documents:
+      ctx.documents,
+
+    periods:
+      ctx.periods,
+
+    integrity:
+      ctx.integrity,
+
+    invoiceIntegrity:
+      ctx.invoiceIntegrity
+  });
   
   const whyButton =
     (metric, amount) => `
@@ -668,6 +704,18 @@ ${
   )
 }
 ${
+
+  ${
+  collectionCloseSectionHtml(
+    dashboardCollectionClose,
+    {
+      money,
+      dateFa,
+      esc
+    }
+  )
+}
+  
   partyAgingSection(
     dashboardAging,
         {
@@ -4080,6 +4128,73 @@ document
             );
           }
         }
+  );
+
+document
+  .querySelectorAll(
+    '[data-collection-party]'
+  )
+  .forEach(
+    button =>
+      button.onclick =
+        () =>
+          agingDetailModal(
+            'receivables',
+            button.dataset
+              .collectionParty
+          )
+  );
+
+
+document
+  .querySelectorAll(
+    '[data-copy-collection-message]'
+  )
+  .forEach(
+    button =>
+      button.onclick =
+        async () => {
+
+          const message =
+            button.dataset
+              .copyCollectionMessage ||
+            '';
+
+          try {
+
+            await navigator
+              .clipboard
+              .writeText(
+                message
+              );
+
+            toast(
+              'متن پیگیری کپی شد'
+            );
+
+          } catch {
+
+            window.prompt(
+              'متن پیگیری را کپی کنید:',
+              message
+            );
+          }
+        }
+  );
+
+
+document
+  .querySelectorAll(
+    '[data-monthend-page]'
+  )
+  .forEach(
+    button =>
+      button.onclick =
+        () =>
+          navigate(
+            button.dataset
+              .monthendPage
+          )
   );
   
 if (Q('uploadDocumentBtn')) {
