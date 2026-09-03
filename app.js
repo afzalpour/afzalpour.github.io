@@ -1618,7 +1618,11 @@ function renderInvoices(){
   `);
 }
 
-function invoiceModal(type,id=null){
+function invoiceModal(
+  type,
+  id = null,
+  prefill = null
+){
 
   const inv=
     id
@@ -1638,11 +1642,15 @@ function invoiceModal(type,id=null){
     type;
 
   const ls=
-    inv
-      ?ctx.invoiceLines.filter(
-        l=>l.invoice_id===inv.id
-      )
-      :[];
+  inv
+    ?ctx.invoiceLines.filter(
+      l=>l.invoice_id===inv.id
+    )
+    :(
+      prefill?.lines?.length
+        ?prefill.lines
+        :[]
+    );
 
   openModal(`
     <h2>
@@ -1664,7 +1672,11 @@ function invoiceModal(type,id=null){
           <input
             type="date"
             name="date"
-            value="${inv?.invoice_date||today()}"
+            value="${
+  inv?.invoice_date ||
+  prefill?.date ||
+  today()
+}"
             required
           >
         </div>
@@ -1686,9 +1698,11 @@ function invoiceModal(type,id=null){
           >
             ${
               invoicePartyOptions(
-                type,
-                inv?.party_id||''
-              )
+  type,
+  inv?.party_id ||
+  prefill?.partyId ||
+  ''
+)
             }
           </select>
         </div>
@@ -1699,8 +1713,9 @@ function invoiceModal(type,id=null){
             name="description"
             value="${
               esc(
-                inv?.description||
-                `فاکتور ${invoiceTypeFa[type]}`
+                inv?.description ||
+prefill?.description ||
+`فاکتور ${invoiceTypeFa[type]}`
               )
             }"
           >
@@ -1931,6 +1946,34 @@ function invoiceModal(type,id=null){
             }
           );
 
+if (
+  prefill?.sourceDocumentId
+) {
+  const sourceDocument =
+    ctx.documents.find(
+      document =>
+        document.id ===
+        prefill.sourceDocumentId
+    );
+
+  if (sourceDocument) {
+    await Documents
+      .saveAccountingDraftRef({
+        document:
+          sourceDocument,
+
+        entityType:
+          'invoice',
+
+        entityId:
+          iid,
+
+        userId:
+          ctx.user.id
+      });
+  }
+}
+        
         if(mode==='post')
           await C.rpc(
             'post_invoice',
@@ -2170,11 +2213,35 @@ function renderJournal(){
 function lineRow(l={}){return `<div class="journal-line" data-line-row><div class="field"><label>حساب</label><select name="account"><option value="">انتخاب حساب…</option>${accountOptions(l.account_id||'',a=>a.is_active&&a.is_postable)}</select></div><div class="field"><label>طرف‌حساب</label><select name="party">${partyOptions(l.party_id||'')}</select></div><div class="field"><label>بدهکار</label><input name="debit" inputmode="numeric" value="${esc(l.debit&&String(l.debit)!=='0'?l.debit:'')}"></div><div class="field"><label>بستانکار</label><input name="credit" inputmode="numeric" value="${esc(l.credit&&String(l.credit)!=='0'?l.credit:'')}"></div><button type="button" class="danger small" data-remove-line>×</button></div>`}
 function bindLines(){document.querySelectorAll('[data-remove-line]').forEach(b=>b.onclick=()=>{b.closest('[data-line-row]').remove();updateLineTotals()});document.querySelectorAll('[data-line-row] input,[data-line-row] select').forEach(i=>i.oninput=updateLineTotals);updateLineTotals()}
 function updateLineTotals(){const rows=[...document.querySelectorAll('[data-line-row]')],d=rows.reduce((s,r)=>s+bi(r.querySelector('[name=debit]').value),0n),c=rows.reduce((s,r)=>s+bi(r.querySelector('[name=credit]').value),0n),complete=rows.filter(r=>r.querySelector('[name=account]').value&&(bi(r.querySelector('[name=debit]').value)>0n||bi(r.querySelector('[name=credit]').value)>0n)).length;Q('lineTotals').innerHTML=`جمع بدهکار: <b>${money(d)}</b> | جمع بستانکار: <b>${money(c)}</b> | ${d>0n&&d===c&&complete>=2?'<span class="pos">آماده ثبت قطعی</span>':'<span class="warn">پیش‌نویس — هنوز آماده Post نیست</span>'}`}
-function journalModal(id=null){
-  const e=id?ctx.entries.find(x=>x.id===id):null;if(e&&e.status!=='draft')return toast('فقط پیش‌نویس قابل ویرایش است');const ls=e?ctx.lines.filter(l=>l.journal_entry_id===e.id):[];
-  openModal(`<h2>${e?'ویرایش پیش‌نویس':'سند دستی جدید'}</h2><div class="info-box">پیش‌نویس لازم نیست متوازن باشد. تراز بودن، حداقل دو ردیف و اعتبار حساب‌ها هنگام «ثبت قطعی» کنترل می‌شود.</div><form id="journalForm"><div class="form-grid"><div class="field"><label>تاریخ</label><input type="date" name="date" value="${e?.entry_date||today()}" required></div><div class="field"><label>شرح سند</label><input name="description" value="${esc(e?.description||'سند دستی')}" required></div></div><div class="journal-lines" id="journalLines">${(ls.length?ls:[{},{}]).map(lineRow).join('')}</div><div class="line-total" id="lineTotals"></div><div class="form-actions"><button type="button" class="ghost" id="addLine">＋ ردیف</button><button type="button" class="ghost" id="cancelModal">انصراف</button><button class="primary">ذخیره پیش‌نویس</button></div></form>`);
+function journalModal(
+  id = null,
+  prefill = null
+){
+  const e=id?ctx.entries.find(x=>x.id===id):null;if(e&&e.status!=='draft')return toast('فقط پیش‌نویس قابل ویرایش است');const ls=
+  e
+    ?ctx.lines.filter(
+      l =>
+        l.journal_entry_id ===
+        e.id
+    )
+    :(
+      prefill?.lines ||
+      []
+    );
+  openModal(`<h2>${e?'ویرایش پیش‌نویس':'سند دستی جدید'}</h2><div class="info-box">پیش‌نویس لازم نیست متوازن باشد. تراز بودن، حداقل دو ردیف و اعتبار حساب‌ها هنگام «ثبت قطعی» کنترل می‌شود.</div><form id="journalForm"><div class="form-grid"><div class="field"><label>تاریخ</label><input type="date" name="date" value="${
+  e?.entry_date ||
+  prefill?.date ||
+  today()
+}" required></div><div class="field"><label>شرح سند</label><input name="description" value="${
+  esc(
+    e?.description ||
+    prefill?.description ||
+    'سند دستی'
+  )
+}" required></div></div><div class="journal-lines" id="journalLines">${(ls.length?ls:[{},{}]).map(lineRow).join('')}</div><div class="line-total" id="lineTotals"></div><div class="form-actions"><button type="button" class="ghost" id="addLine">＋ ردیف</button><button type="button" class="ghost" id="cancelModal">انصراف</button><button class="primary">ذخیره پیش‌نویس</button></div></form>`);
   Q('addLine').onclick=()=>{Q('journalLines').insertAdjacentHTML('beforeend',lineRow());bindLines()};Q('cancelModal').onclick=closeModal;bindLines();
-  Q('journalForm').onsubmit=async ev=>{ev.preventDefault();const f=new FormData(ev.target),rawRows=[...document.querySelectorAll('[data-line-row]')].map(r=>({account_id:r.querySelector('[name=account]').value,party_id:r.querySelector('[name=party]').value||null,debit:cleanAmount(r.querySelector('[name=debit]').value)||'0',credit:cleanAmount(r.querySelector('[name=credit]').value)||'0'}));for(const r of rawRows){const d=bi(r.debit),c=bi(r.credit);if((d>0n||c>0n)&&!r.account_id)return toast('برای ردیفی که مبلغ دارد، حساب را انتخاب کنید');if(d>0n&&c>0n)return toast('هر ردیف فقط می‌تواند بدهکار یا بستانکار باشد، نه هر دو');}const rows=rawRows.filter(r=>r.account_id&&(bi(r.debit)>0n||bi(r.credit)>0n));try{await C.rpc('save_draft_journal',{p_workspace_id:ctx.workspace.id,p_fiscal_year_id:ctx.fiscalYear.id,p_journal_id:e?.id||null,p_entry_date:f.get('date'),p_description:f.get('description'),p_lines:rows});closeModal();await reloadAndRender();const d=rows.reduce((s,x)=>s+bi(x.debit),0n),c=rows.reduce((s,x)=>s+bi(x.credit),0n);toast(rows.length>=2&&d>0n&&d===c?'پیش‌نویس متوازن ذخیره شد':'پیش‌نویس ذخیره شد؛ برای ثبت قطعی هنوز باید تکمیل و متوازن شود')}catch(err){showError(err)}};
+  Q('journalForm').onsubmit=async ev=>{ev.preventDefault();const f=new FormData(ev.target),rawRows=[...document.querySelectorAll('[data-line-row]')].map(r=>({account_id:r.querySelector('[name=account]').value,party_id:r.querySelector('[name=party]').value||null,debit:cleanAmount(r.querySelector('[name=debit]').value)||'0',credit:cleanAmount(r.querySelector('[name=credit]').value)||'0'}));for(const r of rawRows){const d=bi(r.debit),c=bi(r.credit);if((d>0n||c>0n)&&!r.account_id)return toast('برای ردیفی که مبلغ دارد، حساب را انتخاب کنید');if(d>0n&&c>0n)return toast('هر ردیف فقط می‌تواند بدهکار یا بستانکار باشد، نه هر دو');}const rows=rawRows.filter(r=>r.account_id&&(bi(r.debit)>0n||bi(r.credit)>0n));try{const jid =
+  await C.rpc('save_draft_journal',{p_workspace_id:ctx.workspace.id,p_fiscal_year_id:ctx.fiscalYear.id,p_journal_id:e?.id||null,p_entry_date:f.get('date'),p_description:f.get('description'),p_lines:rows});closeModal();await reloadAndRender();const d=rows.reduce((s,x)=>s+bi(x.debit),0n),c=rows.reduce((s,x)=>s+bi(x.credit),0n);toast(rows.length>=2&&d>0n&&d===c?'پیش‌نویس متوازن ذخیره شد':'پیش‌نویس ذخیره شد؛ برای ثبت قطعی هنوز باید تکمیل و متوازن شود')}catch(err){showError(err)}};
 }
 function viewJournal(id){
   const e=ctx.entries.find(x=>x.id===id),ls=ctx.lines.filter(l=>l.journal_entry_id===id);openModal(`<div class="section-head"><div><h2>سند ${e.journal_no??'پیش‌نویس'}</h2><span class="muted">${dateFa(e.entry_date)} — ${esc(e.description)}</span></div><span class="badge ${e.status}">${statusFa[e.status]}</span></div><table><thead><tr><th>حساب</th><th>طرف‌حساب</th><th>بدهکار</th><th>بستانکار</th></tr></thead><tbody>${ls.map(l=>`<tr><td>${esc(acct(l.account_id)?.code||'')} — ${esc(acct(l.account_id)?.name||'')}</td><td>${esc(party(l.party_id)?.name||'—')}</td><td class="num">${money(l.debit)}</td><td class="num">${money(l.credit)}</td></tr>`).join('')}</tbody></table><div class="form-actions"><button class="ghost" id="cancelModal">بستن</button></div>`);Q('cancelModal').onclick=closeModal;
@@ -2543,6 +2610,34 @@ function operationModal(kind){
               f.get('description')
           }
         );
+
+        if (
+  prefill?.sourceDocumentId
+) {
+  const sourceDocument =
+    ctx.documents.find(
+      document =>
+        document.id ===
+        prefill.sourceDocumentId
+    );
+
+  if (sourceDocument) {
+    await Documents
+      .saveAccountingDraftRef({
+        document:
+          sourceDocument,
+
+        entityType:
+          'journal',
+
+        entityId:
+          jid,
+
+        userId:
+          ctx.user.id
+      });
+  }
+}
 
         closeModal();
 
@@ -3071,6 +3166,401 @@ async function extractDocument(
 function documentReviewModal(
   documentId
 ) {
+  function
+documentAccountingDraft(
+  documentId
+) {
+  const document =
+    ctx.documents.find(
+      item =>
+        item.id ===
+        documentId
+    );
+
+  if (!document) {
+    return toast(
+      'سند پیدا نشد'
+    );
+  }
+
+  if (
+    document.status !==
+      'reviewed'
+  ) {
+    return toast(
+      'ابتدا بازبینی سند را تأیید کنید'
+    );
+  }
+
+  const extracted =
+    (
+      document.extracted_data &&
+      typeof document
+        .extracted_data ===
+        'object'
+    )
+      ? document.extracted_data
+      : {};
+
+  const review =
+    (
+      extracted.review &&
+      typeof extracted.review ===
+        'object'
+    )
+      ? extracted.review
+      : {};
+
+  const draft =
+    extracted.accounting_draft;
+
+  if (
+    draft?.entity_id
+  ) {
+
+    if (
+      draft.entity_type ===
+        'invoice'
+    ) {
+      const inv =
+        ctx.invoices.find(
+          item =>
+            item.id ===
+            draft.entity_id
+        );
+
+      if (!inv) {
+        return toast(
+          'پیش‌نویس فاکتور پیدا نشد'
+        );
+      }
+
+      if (
+        inv.status !==
+          'draft'
+      ) {
+        return toast(
+          'فاکتور ثبت قطعی شده؛ اکنون «اتصال به Ledger» را بزنید'
+        );
+      }
+
+      return invoiceModal(
+        inv.invoice_type,
+        inv.id
+      );
+    }
+
+    if (
+      draft.entity_type ===
+        'journal'
+    ) {
+      const entry =
+        ctx.entries.find(
+          item =>
+            item.id ===
+            draft.entity_id
+        );
+
+      if (!entry) {
+        return toast(
+          'پیش‌نویس سند حسابداری پیدا نشد'
+        );
+      }
+
+      if (
+        entry.status !==
+          'draft'
+      ) {
+        return toast(
+          'سند ثبت قطعی شده؛ اکنون «اتصال به Ledger» را بزنید'
+        );
+      }
+
+      return journalModal(
+        entry.id
+      );
+    }
+  }
+
+  const action =
+    review.action;
+
+  const amount =
+    cleanAmount(
+      document.total_amount ||
+      extracted.total_amount ||
+      ''
+    );
+
+  const date =
+    document
+      .source_document_date ||
+    extracted.document_date ||
+    today();
+
+  const partyId =
+    review.party_id ||
+    document.party_id ||
+    '';
+
+  const accountId =
+    review.account_id ||
+    '';
+
+  const description =
+    String(
+      extracted.description ||
+      `ثبت از سند هوشمند ${document.file_name}`
+    ).trim();
+
+  if (
+    !amount ||
+    bi(amount) <= 0n
+  ) {
+    return toast(
+      'مبلغ سند را در بازبینی تکمیل کنید'
+    );
+  }
+
+  if (!accountId) {
+    return toast(
+      'حساب پیشنهادی را در بازبینی انتخاب کنید'
+    );
+  }
+
+  if (
+    action ===
+      'purchase_invoice' ||
+    action ===
+      'sales_invoice'
+  ) {
+
+    if (!partyId) {
+      return toast(
+        'برای فاکتور، طرف‌حساب را انتخاب کنید'
+      );
+    }
+
+    return invoiceModal(
+      action ===
+        'purchase_invoice'
+        ? 'purchase'
+        : 'sale',
+
+      null,
+
+      {
+        sourceDocumentId:
+          document.id,
+
+        date,
+
+        partyId,
+
+        description,
+
+        lines: [
+          {
+            account_id:
+              accountId,
+
+            description,
+
+            quantity:
+              '1',
+
+            unit_price:
+              amount,
+
+            discount:
+              '0'
+          }
+        ]
+      }
+    );
+  }
+
+  if (
+    action ===
+      'journal'
+  ) {
+    const account =
+      acct(
+        accountId
+      );
+
+    const debitSide =
+      [
+        'asset',
+        'expense'
+      ].includes(
+        account?.category
+      );
+
+    return journalModal(
+      null,
+
+      {
+        sourceDocumentId:
+          document.id,
+
+        date,
+
+        description,
+
+        lines: [
+          {
+            account_id:
+              accountId,
+
+            party_id:
+              partyId ||
+              null,
+
+            debit:
+              debitSide
+                ? amount
+                : '0',
+
+            credit:
+              debitSide
+                ? '0'
+                : amount
+          },
+
+          {}
+        ]
+      }
+    );
+  }
+
+  return toast(
+    'نوع عملیات حسابداری را در بازبینی مشخص کنید'
+  );
+}
+
+
+async function
+linkReviewedDocumentToLedger(
+  documentId
+) {
+  const document =
+    ctx.documents.find(
+      item =>
+        item.id ===
+        documentId
+    );
+
+  if (!document) {
+    return toast(
+      'سند پیدا نشد'
+    );
+  }
+
+  const draft =
+    document
+      ?.extracted_data
+      ?.accounting_draft;
+
+  if (
+    !draft?.entity_id
+  ) {
+    return toast(
+      'پیش‌نویس حسابداری برای این سند وجود ندارد'
+    );
+  }
+
+  let journalEntryId =
+    null;
+
+  if (
+    draft.entity_type ===
+      'invoice'
+  ) {
+    const inv =
+      ctx.invoices.find(
+        item =>
+          item.id ===
+          draft.entity_id
+      );
+
+    if (
+      !inv ||
+      inv.status !==
+        'posted' ||
+      !inv.journal_entry_id
+    ) {
+      return toast(
+        'ابتدا فاکتور پیش‌نویس را ثبت قطعی کنید'
+      );
+    }
+
+    journalEntryId =
+      inv.journal_entry_id;
+  }
+
+  if (
+    draft.entity_type ===
+      'journal'
+  ) {
+    const entry =
+      ctx.entries.find(
+        item =>
+          item.id ===
+          draft.entity_id
+      );
+
+    if (
+      !entry ||
+      entry.status !==
+        'posted'
+    ) {
+      return toast(
+        'ابتدا سند پیش‌نویس را ثبت قطعی کنید'
+      );
+    }
+
+    journalEntryId =
+      entry.id;
+  }
+
+  if (!journalEntryId) {
+    return toast(
+      'سند Ledger معتبر پیدا نشد'
+    );
+  }
+
+  try {
+
+    await Documents
+      .linkToJournal({
+        document,
+
+        journalEntryId,
+
+        userId:
+          ctx.user.id
+      });
+
+    await loadContext();
+
+    currentPage =
+      'documents';
+
+    await render();
+
+    toast(
+      'سند هوشمند با موفقیت به Ledger متصل شد'
+    );
+
+  } catch (err) {
+
+    showError(
+      err,
+      'documentLedgerLink'
+    );
+  }
+}
   const document =
     ctx.documents.find(
       item =>
@@ -3355,6 +3845,61 @@ document
         documentReviewModal(
           button.dataset
             .reviewDocument
+        )
+  );
+
+  document
+  .querySelectorAll(
+    '[data-create-document-draft]'
+  )
+  .forEach(
+    button =>
+      button.onclick = () =>
+        documentAccountingDraft(
+          button.dataset
+            .createDocumentDraft
+        )
+  );
+
+
+document
+  .querySelectorAll(
+    '[data-open-document-draft]'
+  )
+  .forEach(
+    button =>
+      button.onclick = () =>
+        documentAccountingDraft(
+          button.dataset
+            .openDocumentDraft
+        )
+  );
+
+
+document
+  .querySelectorAll(
+    '[data-link-document-ledger]'
+  )
+  .forEach(
+    button =>
+      button.onclick = () =>
+        linkReviewedDocumentToLedger(
+          button.dataset
+            .linkDocumentLedger
+        )
+  );
+
+
+document
+  .querySelectorAll(
+    '[data-view-linked-journal]'
+  )
+  .forEach(
+    button =>
+      button.onclick = () =>
+        viewJournal(
+          button.dataset
+            .viewLinkedJournal
         )
   );
   
