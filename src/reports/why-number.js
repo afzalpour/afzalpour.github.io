@@ -22,11 +22,32 @@ const METRICS = Object.freeze({
     scope: 'as_of'
   },
 
-  profit: {
+    profit: {
     title: 'سود/زیان سال',
-    sourceReport: 'report_profit_loss',
+    sourceReport:
+      'report_profit_loss',
     categories: [
       'income',
+      'expense'
+    ],
+    scope: 'range'
+  },
+
+  income: {
+    title: 'درآمد',
+    sourceReport:
+      'report_profit_loss',
+    categories: [
+      'income'
+    ],
+    scope: 'range'
+  },
+
+  expense: {
+    title: 'هزینه',
+    sourceReport:
+      'report_profit_loss',
+    categories: [
       'expense'
     ],
     scope: 'range'
