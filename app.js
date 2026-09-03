@@ -43,6 +43,18 @@ import {
   partyAgingDetailHtml
 } from './src/ui/reports/party-aging-view.js';
 import {
+  parsePersianReportIntent
+} from './src/reports/nl-report-intent.js';
+
+import {
+  executeReportIntent
+} from './src/reports/nl-report-executor.js';
+
+import {
+  naturalReportBoxHtml,
+  naturalReportResultHtml
+} from './src/ui/reports/nl-report-view.js';
+import {
   createDocumentService
 } from './src/documents/document-service.js';
 
@@ -77,7 +89,14 @@ const Documents=
   createDocumentService(C);
 const authCallback=Auth.consumeAuthCallback();
 let currentPage='dashboard';
-let reportState={tab:'trial',from:null,to:null,ledgerAccount:null};
+let reportState={
+  tab:'trial',
+  from:null,
+  to:null,
+  ledgerAccount:null,
+  nlQuery:'',
+  nlResult:null
+};
 let invoiceFilter='all';
 let dashboardAging=null;  
 let ctx={
@@ -2536,6 +2555,124 @@ function operationModal(kind){
     };
 }
 
+async function
+runNaturalReport(
+  queryOverride = null
+) {
+  const input =
+    Q('nlReportQuery');
+
+  const query =
+    String(
+      queryOverride ??
+      input?.value ??
+      ''
+    ).trim();
+
+  reportState.nlQuery =
+    query;
+
+  const submit =
+    Q('nlReportSubmit');
+
+  if (submit) {
+    submit.disabled =
+      true;
+
+    submit.textContent =
+      'در حال محاسبه…';
+  }
+
+  try {
+
+    const intent =
+      parsePersianReportIntent({
+        query,
+
+        todayIso:
+          today(),
+
+        fiscalYearFrom:
+          ctx.fiscalYear
+            ?.date_from ||
+          null,
+
+        fiscalYearTo:
+          ctx.fiscalYear
+            ?.date_to ||
+          null,
+
+        accounts:
+          ctx.accounts
+      });
+
+    const result =
+      await executeReportIntent({
+        intent,
+
+        workspaceId:
+          ctx.workspace.id,
+
+        rpc:
+          (
+            name,
+            params
+          ) =>
+            C.rpc(
+              name,
+              params
+            ),
+
+        agingContext: {
+          roles:
+            ctx.roles,
+
+          parties:
+            ctx.parties,
+
+          entries:
+            ctx.entries,
+
+          lines:
+            ctx.lines,
+
+          invoices:
+            ctx.invoices
+        }
+      });
+
+    reportState.nlResult = {
+      intent,
+      result
+    };
+
+    await renderReports();
+
+  } catch (err) {
+
+    reportState.nlResult =
+      null;
+
+    showError(
+      err,
+      'naturalReport'
+    );
+
+  } finally {
+
+    if (
+      submit &&
+      submit.isConnected
+    ) {
+      submit.disabled =
+        false;
+
+      submit.textContent =
+        'اجرای گزارش';
+    }
+  }
+}
+  
 function reportToolbar(){return `<div class="report-toolbar card"><div class="field"><label>از تاریخ</label><input id="reportFrom" type="date" value="${reportState.from}"><small>${dateFa(reportState.from)}</small></div><div class="field"><label>تا تاریخ</label><input id="reportTo" type="date" value="${reportState.to}"><small>${dateFa(reportState.to)}</small></div><button class="primary" id="applyReportRange">اعمال بازه</button></div>`}
 async function renderReports(){
   setTitle('گزارش‌ها');const tab=reportState.tab,wid=ctx.workspace.id,from=reportState.from||ctx.fiscalYear.date_from,to=reportState.to||today();page('<div class="loading">در حال محاسبه گزارش از Ledger…</div>');
@@ -2553,7 +2690,69 @@ async function renderReports(){
   }else if(tab==='ledger'){
     const selected=reportState.ledgerAccount||activePostable()[0]?.id||'';reportState.ledgerAccount=selected;body=`<div class="field ledger-select"><label>حساب تفصیلی</label><select id="ledgerAccount">${accountOptions(selected,a=>a.is_active&&a.is_postable)}</select></div><div class="section" id="ledgerBody"></div>`;
   }
-  page(`${reportToolbar()}<div class="tabs"><button data-report="journal" class="${tab==='journal'?'active':''}">دفتر روزنامه</button><button data-report="trial" class="${tab==='trial'?'active':''}">تراز آزمایشی</button><button data-report="ledger" class="${tab==='ledger'?'active':''}">گردش حساب</button><button data-report="pnl" class="${tab==='pnl'?'active':''}">سود و زیان</button><button data-report="balance" class="${tab==='balance'?'active':''}">ترازنامه</button><button data-report="cash" class="${tab==='cash'?'active':''}">بانک/صندوق</button></div>${body}`);
+  page(`
+  ${naturalReportBoxHtml({
+    query:
+      reportState.nlQuery,
+    esc
+  })}
+
+  ${naturalReportResultHtml({
+    payload:
+      reportState.nlResult,
+    money,
+    dateFa,
+    esc
+  })}
+
+  ${reportToolbar()}
+
+  <div class="tabs">
+    <button
+      data-report="journal"
+      class="${tab==='journal'?'active':''}"
+    >
+      دفتر روزنامه
+    </button>
+
+    <button
+      data-report="trial"
+      class="${tab==='trial'?'active':''}"
+    >
+      تراز آزمایشی
+    </button>
+
+    <button
+      data-report="ledger"
+      class="${tab==='ledger'?'active':''}"
+    >
+      گردش حساب
+    </button>
+
+    <button
+      data-report="pnl"
+      class="${tab==='pnl'?'active':''}"
+    >
+      سود و زیان
+    </button>
+
+    <button
+      data-report="balance"
+      class="${tab==='balance'?'active':''}"
+    >
+      ترازنامه
+    </button>
+
+    <button
+      data-report="cash"
+      class="${tab==='cash'?'active':''}"
+    >
+      بانک/صندوق
+    </button>
+  </div>
+
+  ${body}
+`);
   if(tab==='ledger')await refreshLedger();bind();
 }
 async function refreshLedger(){const aid=Q('ledgerAccount')?.value;if(!aid)return;reportState.ledgerAccount=aid;const r=await C.rpc('report_account_statement',{wid:ctx.workspace.id,aid,dfrom:reportState.from,dto:reportState.to});Q('ledgerBody').innerHTML=r.length?`<table><thead><tr><th>سند</th><th>تاریخ</th><th>شرح</th><th>بدهکار</th><th>بستانکار</th><th>مانده</th></tr></thead><tbody>${r.map(x=>`<tr><td>${x.journal_no}</td><td>${dateFa(x.entry_date)}</td><td>${esc(x.description)}</td><td class="num">${money(x.debit)}</td><td class="num">${money(x.credit)}</td><td class="num">${money(x.running_net)}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">گردشی وجود ندارد.</div>'}
@@ -3247,6 +3446,45 @@ document
   document.querySelectorAll('[data-post-journal]').forEach(b=>b.onclick=async()=>{try{await C.rpc('post_journal_entry',{jid:b.dataset.postJournal});await reloadAndRender();toast('سند ثبت قطعی شد')}catch(e){showError(e)}});
   document.querySelectorAll('[data-delete-journal]').forEach(b=>b.onclick=async()=>{if(!confirm('پیش‌نویس حذف شود؟'))return;try{await C.rpc('delete_draft_journal',{jid:b.dataset.deleteJournal});await reloadAndRender();toast('پیش‌نویس حذف شد')}catch(e){showError(e)}});
   document.querySelectorAll('[data-reverse-journal]').forEach(b=>b.onclick=()=>reverseModal(b.dataset.reverseJournal));
+  if (
+  Q('nlReportForm')
+) {
+  Q('nlReportForm')
+    .onsubmit =
+      async event => {
+
+        event.preventDefault();
+
+        await runNaturalReport();
+      };
+}
+
+document
+  .querySelectorAll(
+    '[data-nl-example]'
+  )
+  .forEach(
+    button =>
+      button.onclick =
+        async () => {
+
+          const query =
+            button.dataset
+              .nlExample;
+
+          const input =
+            Q('nlReportQuery');
+
+          if (input) {
+            input.value =
+              query;
+          }
+
+          await runNaturalReport(
+            query
+          );
+        }
+  );
   document.querySelectorAll('[data-report]').forEach(b=>b.onclick=async()=>{reportState.tab=b.dataset.report;await renderReports()});
   document.querySelectorAll('[data-reopen-period]').forEach(b=>b.onclick=async()=>{if(!confirm('این دوره دوباره باز شود؟'))return;try{await C.rpc('reopen_fiscal_period',{pid:b.dataset.reopenPeriod});await reloadAndRender();toast('دوره باز شد')}catch(e){showError(e)}});
  if(Q('addAccount'))
