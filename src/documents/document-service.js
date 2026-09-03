@@ -608,6 +608,183 @@ saveLocalExtraction({
 
   return updated;
 }
+
+async function
+saveAccountingDraftRef({
+  document,
+  entityType,
+  entityId,
+  userId = null
+}) {
+  if (
+    !document?.id ||
+    !document?.workspace_id
+  ) {
+    throw new Error(
+      'DOCUMENT_REQUIRED'
+    );
+  }
+
+  if (
+    document.status !==
+      'reviewed'
+  ) {
+    throw new Error(
+      'DOCUMENT_NOT_REVIEWED'
+    );
+  }
+
+  if (
+    ![
+      'invoice',
+      'journal'
+    ].includes(
+      entityType
+    ) ||
+    !entityId
+  ) {
+    throw new Error(
+      'DOCUMENT_DRAFT_REF_INVALID'
+    );
+  }
+
+  const existing =
+    (
+      document.extracted_data &&
+      typeof document
+        .extracted_data ===
+        'object'
+    )
+      ? document.extracted_data
+      : {};
+
+  const rows =
+    await cloud.update(
+      'documents',
+
+      {
+        extracted_data: {
+          ...existing,
+
+          accounting_draft: {
+            entity_type:
+              entityType,
+
+            entity_id:
+              entityId,
+
+            created_by:
+              userId,
+
+            created_at:
+              new Date()
+                .toISOString()
+          }
+        }
+      },
+
+      `id=eq.${document.id}` +
+      `&workspace_id=eq.${document.workspace_id}`
+    );
+
+  const updated =
+    rows?.[0];
+
+  if (!updated?.id) {
+    throw new Error(
+      'DOCUMENT_DRAFT_REF_SAVE_FAILED'
+    );
+  }
+
+  return updated;
+}
+
+
+async function
+linkToJournal({
+  document,
+  journalEntryId,
+  userId = null
+}) {
+  if (
+    !document?.id ||
+    !document?.workspace_id
+  ) {
+    throw new Error(
+      'DOCUMENT_REQUIRED'
+    );
+  }
+
+  if (!journalEntryId) {
+    throw new Error(
+      'DOCUMENT_JOURNAL_REQUIRED'
+    );
+  }
+
+  if (
+    document.status ===
+      'linked' ||
+    document
+      .linked_journal_entry_id
+  ) {
+    throw new Error(
+      'LINKED_DOCUMENT_IMMUTABLE'
+    );
+  }
+
+  const existing =
+    (
+      document.extracted_data &&
+      typeof document
+        .extracted_data ===
+        'object'
+    )
+      ? document.extracted_data
+      : {};
+
+  const rows =
+    await cloud.update(
+      'documents',
+
+      {
+        status:
+          'linked',
+
+        linked_journal_entry_id:
+          journalEntryId,
+
+        extracted_data: {
+          ...existing,
+
+          ledger_link: {
+            journal_entry_id:
+              journalEntryId,
+
+            linked_by:
+              userId,
+
+            linked_at:
+              new Date()
+                .toISOString()
+          }
+        }
+      },
+
+      `id=eq.${document.id}` +
+      `&workspace_id=eq.${document.workspace_id}`
+    );
+
+  const updated =
+    rows?.[0];
+
+  if (!updated?.id) {
+    throw new Error(
+      'DOCUMENT_LEDGER_LINK_FAILED'
+    );
+  }
+
+  return updated;
+}
   
  return {
   bucket: BUCKET,
@@ -619,6 +796,7 @@ saveLocalExtraction({
   signedUrl,
   saveReview,
   extract,
-  saveLocalExtraction
+  saveLocalExtraction,
+  saveAccountingDraftRef,
+  linkToJournal
 };
-}
