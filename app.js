@@ -694,6 +694,7 @@ ${
   )
 }
 ${
+ ${
   riskAuditSectionHtml(
     dashboardRiskAudit,
     {
@@ -703,9 +704,8 @@ ${
     }
   )
 }
-${
 
-  ${
+${
   collectionCloseSectionHtml(
     dashboardCollectionClose,
     {
@@ -715,16 +715,18 @@ ${
     }
   )
 }
-  
+
+${
   partyAgingSection(
     dashboardAging,
-        {
-          money,
-          dateFa,
-          esc
-        }
-      )
+    {
+      money,
+      dateFa,
+      esc
     }
+  )
+}
+
 
     <div class="section card">
 
@@ -2398,7 +2400,33 @@ function journalModal(
 }" required></div></div><div class="journal-lines" id="journalLines">${(ls.length?ls:[{},{}]).map(lineRow).join('')}</div><div class="line-total" id="lineTotals"></div><div class="form-actions"><button type="button" class="ghost" id="addLine">＋ ردیف</button><button type="button" class="ghost" id="cancelModal">انصراف</button><button class="primary">ذخیره پیش‌نویس</button></div></form>`);
   Q('addLine').onclick=()=>{Q('journalLines').insertAdjacentHTML('beforeend',lineRow());bindLines()};Q('cancelModal').onclick=closeModal;bindLines();
   Q('journalForm').onsubmit=async ev=>{ev.preventDefault();const f=new FormData(ev.target),rawRows=[...document.querySelectorAll('[data-line-row]')].map(r=>({account_id:r.querySelector('[name=account]').value,party_id:r.querySelector('[name=party]').value||null,debit:cleanAmount(r.querySelector('[name=debit]').value)||'0',credit:cleanAmount(r.querySelector('[name=credit]').value)||'0'}));for(const r of rawRows){const d=bi(r.debit),c=bi(r.credit);if((d>0n||c>0n)&&!r.account_id)return toast('برای ردیفی که مبلغ دارد، حساب را انتخاب کنید');if(d>0n&&c>0n)return toast('هر ردیف فقط می‌تواند بدهکار یا بستانکار باشد، نه هر دو');}const rows=rawRows.filter(r=>r.account_id&&(bi(r.debit)>0n||bi(r.credit)>0n));try{const jid =
-  await C.rpc('save_draft_journal',{p_workspace_id:ctx.workspace.id,p_fiscal_year_id:ctx.fiscalYear.id,p_journal_id:e?.id||null,p_entry_date:f.get('date'),p_description:f.get('description'),p_lines:rows});closeModal();await reloadAndRender();const d=rows.reduce((s,x)=>s+bi(x.debit),0n),c=rows.reduce((s,x)=>s+bi(x.credit),0n);toast(rows.length>=2&&d>0n&&d===c?'پیش‌نویس متوازن ذخیره شد':'پیش‌نویس ذخیره شد؛ برای ثبت قطعی هنوز باید تکمیل و متوازن شود')}catch(err){showError(err)}};
+  await C.rpc('save_draft_journal',{p_workspace_id:ctx.workspace.id,p_fiscal_year_id:ctx.fiscalYear.id,p_journal_id:e?.id||null,p_entry_date:f.get('date'),p_description:f.get('description'),p_lines:rows});if (
+  prefill?.sourceDocumentId
+) {
+  const sourceDocument =
+    ctx.documents.find(
+      document =>
+        document.id ===
+        prefill.sourceDocumentId
+    );
+
+  if (sourceDocument) {
+    await Documents
+      .saveAccountingDraftRef({
+        document:
+          sourceDocument,
+
+        entityType:
+          'journal',
+
+        entityId:
+          jid,
+
+        userId:
+          ctx.user.id
+      });
+  }
+}closeModal();await reloadAndRender();const d=rows.reduce((s,x)=>s+bi(x.debit),0n),c=rows.reduce((s,x)=>s+bi(x.credit),0n);toast(rows.length>=2&&d>0n&&d===c?'پیش‌نویس متوازن ذخیره شد':'پیش‌نویس ذخیره شد؛ برای ثبت قطعی هنوز باید تکمیل و متوازن شود')}catch(err){showError(err)}};
 }
 function viewJournal(id){
   const e=ctx.entries.find(x=>x.id===id),ls=ctx.lines.filter(l=>l.journal_entry_id===id);openModal(`<div class="section-head"><div><h2>سند ${e.journal_no??'پیش‌نویس'}</h2><span class="muted">${dateFa(e.entry_date)} — ${esc(e.description)}</span></div><span class="badge ${e.status}">${statusFa[e.status]}</span></div><table><thead><tr><th>حساب</th><th>طرف‌حساب</th><th>بدهکار</th><th>بستانکار</th></tr></thead><tbody>${ls.map(l=>`<tr><td>${esc(acct(l.account_id)?.code||'')} — ${esc(acct(l.account_id)?.name||'')}</td><td>${esc(party(l.party_id)?.name||'—')}</td><td class="num">${money(l.debit)}</td><td class="num">${money(l.credit)}</td></tr>`).join('')}</tbody></table><div class="form-actions"><button class="ghost" id="cancelModal">بستن</button></div>`);Q('cancelModal').onclick=closeModal;
@@ -2768,35 +2796,7 @@ function operationModal(kind){
           }
         );
 
-        if (
-  prefill?.sourceDocumentId
-) {
-  const sourceDocument =
-    ctx.documents.find(
-      document =>
-        document.id ===
-        prefill.sourceDocumentId
-    );
-
-  if (sourceDocument) {
-    await Documents
-      .saveAccountingDraftRef({
-        document:
-          sourceDocument,
-
-        entityType:
-          'journal',
-
-        entityId:
-          jid,
-
-        userId:
-          ctx.user.id
-      });
-  }
-}
-
-        closeModal();
+       closeModal();
 
         await reloadAndRender();
 
