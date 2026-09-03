@@ -381,6 +381,8 @@ executeReportIntent({
         'مانده بانک و صندوق',
       value:
         total,
+      evidence_metric:
+        'cash',
       rows,
       period:
         intent.period,
@@ -441,6 +443,8 @@ executeReportIntent({
 
     let note =
       null;
+    let evidenceMetric =
+  'profit';
 
     if (
       intent.metric ===
@@ -451,6 +455,8 @@ executeReportIntent({
 
       title =
         'درآمد';
+      evidenceMetric =
+  'income';
     }
 
     if (
@@ -462,6 +468,8 @@ executeReportIntent({
 
       title =
         'هزینه';
+      evidenceMetric =
+  'expense';
     }
 
     if (
@@ -473,6 +481,8 @@ executeReportIntent({
 
       title =
         'درآمد ثبت‌شده';
+      evidenceMetric =
+      'income';
 
       approximate =
         true;
@@ -486,6 +496,8 @@ executeReportIntent({
       kind: 'metric',
       title,
       value,
+      evidence_metric:
+      evidenceMetric,
       rows,
       approximate,
       note,
@@ -545,6 +557,8 @@ executeReportIntent({
 
     let title =
       'دارایی';
+    let evidenceMetric =
+  'assets';
 
     if (
       intent.metric ===
@@ -555,6 +569,8 @@ executeReportIntent({
 
       title =
         'بدهی';
+      evidenceMetric =
+  'liabilities';
     }
 
     if (
@@ -566,6 +582,8 @@ executeReportIntent({
 
       title =
         'حقوق مالکانه + سود جاری';
+      evidenceMetric =
+  null;
     }
 
     return plain({
@@ -573,6 +591,8 @@ executeReportIntent({
       kind: 'metric',
       title,
       value,
+      evidence_metric:
+      evidenceMetric,
       rows,
       period:
         intent.period,
