@@ -265,7 +265,7 @@ function parsePeriod({
   }
 
   if (
-    /\bامروز\b/.test(
+    /امروز/.test(
       query
     )
   ) {
