@@ -1,5 +1,5 @@
 const CACHE_PREFIX='avan-prod-core-';
-const CACHE='avan-prod-core-1-0-v44';
+const CACHE='avan-prod-core-1-0-v45';
 
 const ASSETS=[
   './',
@@ -26,6 +26,7 @@ const ASSETS=[
 './src/ui/auth/auth-view.js',
 './src/reports/why-number.js',
 './src/reports/party-aging.js',
+'./src/reports/nl-report-intent.js',
 './src/ui/reports/party-aging-view.js',
 './src/documents/document-service.js',
 './src/ui/documents/documents-view.js',
