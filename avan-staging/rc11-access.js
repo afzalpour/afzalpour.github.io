@@ -138,6 +138,7 @@ async function refreshWorkspaceState(force = false) {
       state.workspaces = [];
       state.workspace = null;
       state.role = null;
+      state.accessModel = null;
       return;
     }
 
@@ -148,10 +149,17 @@ async function refreshWorkspaceState(force = false) {
       'select=id,name,mode,base_currency,created_at&order=created_at.asc'
     );
 
+    const previousWorkspaceId = state.workspace?.id || null;
+
     state.workspaces = Array.isArray(workspaces)
       ? workspaces
       : [];
     state.workspace = state.workspaces[0] || null;
+
+    if (previousWorkspaceId !== state.workspace?.id) {
+      state.accessModel = null;
+      state.accessError = null;
+    }
 
     state.role = state.workspace
       ? await C.rpc(
@@ -191,6 +199,15 @@ function workspaceSwitcherHtml() {
   `;
 }
 
+function workspaceSignature() {
+  return [
+    state.workspace?.id || '',
+    ...state.workspaces.map(
+      workspace => `${workspace.id}:${workspace.name || ''}`
+    )
+  ].join('|');
+}
+
 function ensureWorkspaceSwitcher() {
   const topbar = document.querySelector('.topbar');
   if (!topbar || !appIsVisible()) return;
@@ -209,6 +226,10 @@ function ensureWorkspaceSwitcher() {
     topbar.append(host);
   }
 
+  const signature = workspaceSignature();
+  if (host.dataset.signature === signature) return;
+
+  host.dataset.signature = signature;
   host.innerHTML = workspaceSwitcherHtml();
 
   const select = document.getElementById('avanWorkspaceSwitcher');
@@ -224,7 +245,7 @@ function ensureWorkspaceSwitcher() {
         nextId
       );
     } catch {
-      // Reload still leaves the server data untouched; session preference is optional.
+      // Session preference is optional and never stores accounting data.
     }
 
     location.reload();
@@ -445,7 +466,17 @@ function accessCardHtml() {
   `;
 }
 
-function placeAccessCard() {
+function accessSignature() {
+  return JSON.stringify({
+    workspace: state.workspace?.id || null,
+    role: state.role || null,
+    loading: state.loadingAccess,
+    error: state.accessError,
+    model: state.accessModel
+  });
+}
+
+function placeAccessCard(force = false) {
   const host = settingsHost();
   if (!host) {
     document.getElementById('workspaceAccessCard')?.remove();
@@ -457,7 +488,13 @@ function placeAccessCard() {
     return;
   }
 
+  const signature = accessSignature();
   const existing = document.getElementById('workspaceAccessCard');
+
+  if (!force && existing?.dataset.signature === signature) {
+    return;
+  }
+
   const html = accessCardHtml();
 
   if (existing) {
@@ -471,14 +508,24 @@ function placeAccessCard() {
     }
   }
 
+  const card = document.getElementById('workspaceAccessCard');
+  if (card) card.dataset.signature = signature;
+
   bindAccessCard();
 }
 
 async function refreshAccessCard(force = false) {
   if (!settingsHost() || !currentActorCanManage()) return;
   if (force) state.accessModel = null;
+
+  if (!state.accessModel && !state.accessError) {
+    state.loadingAccess = true;
+    placeAccessCard(true);
+    state.loadingAccess = false;
+  }
+
   await loadAccessModel(force);
-  placeAccessCard();
+  placeAccessCard(true);
 }
 
 async function inviteMember(form) {
@@ -511,7 +558,7 @@ async function inviteMember(form) {
     } else if (status === 'already_member') {
       toast('این کاربر از قبل عضو Workspace است.');
     } else if (status === 'invitation_pending') {
-      toast('دعوت در آوان ثبت شد؛ پس از ساخت و تأیید حساب با همین ایمیل فعال می‌شود.');
+      toast('دعوت ثبت شد؛ پس از ساخت و تأیید حساب با همین ایمیل فعال می‌شود.');
     } else {
       toast('دسترسی کاربر ثبت شد.');
     }
@@ -664,11 +711,14 @@ function scheduleUiSync(force = false) {
     ensureWorkspaceSwitcher();
 
     if (settingsHost() && currentActorCanManage()) {
-      if (!state.accessModel && !state.loadingAccess) {
-        placeAccessCard();
+      const card = document.getElementById('workspaceAccessCard');
+
+      if (!card) {
+        placeAccessCard(false);
+      }
+
+      if (!state.accessModel && !state.loadingAccess && !state.accessError) {
         await refreshAccessCard(false);
-      } else {
-        placeAccessCard();
       }
     } else {
       document.getElementById('workspaceAccessCard')?.remove();
@@ -677,8 +727,22 @@ function scheduleUiSync(force = false) {
 }
 
 function installObserver() {
-  const observer = new MutationObserver(() => {
-    scheduleUiSync(false);
+  const observer = new MutationObserver(mutations => {
+    const meaningful = mutations.some(mutation => {
+      if (mutation.type === 'attributes') return true;
+
+      return [...mutation.addedNodes, ...mutation.removedNodes]
+        .some(node => {
+          if (!(node instanceof Element)) return false;
+          if (node.id === 'workspaceAccessCard') return false;
+          if (node.id === 'avanWorkspaceSwitcherHost') return false;
+          if (node.closest?.('#workspaceAccessCard')) return false;
+          if (node.closest?.('#avanWorkspaceSwitcherHost')) return false;
+          return true;
+        });
+    });
+
+    if (meaningful) scheduleUiSync(false);
   });
 
   observer.observe(document.body, {
@@ -696,6 +760,8 @@ function install() {
   document.addEventListener('click', event => {
     const settingsButton = event.target.closest?.('[data-page="settings"]');
     if (settingsButton) {
+      state.accessModel = null;
+      state.accessError = null;
       setTimeout(() => scheduleUiSync(true), 120);
     }
   });
