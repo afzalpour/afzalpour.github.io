@@ -170,6 +170,10 @@ input:focus,select:focus,textarea:focus{
   box-shadow:0 5px 14px -13px rgba(49,42,65,.45);
 }
 
+.avan-settings-summary-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+}
+
 .modal{
   background:linear-gradient(160deg,#fffefa,#faf5ed)!important;
   border:1px solid rgba(197,181,157,.48);
@@ -230,9 +234,11 @@ body.avan-account-colors-on tr.avan-account-branch:hover td{
 @media(max-width:900px){
   .content > .card::before,.content .section.card::before{inset-inline-start:14px}
   .grid4 > .card,.grid2 > .card{min-height:96px}
+  .avan-settings-summary-grid{grid-template-columns:1fr 1fr!important}
 }
 
 @media(max-width:520px){
   .grid4 > .card,.grid2 > .card{min-height:auto}
+  .avan-settings-summary-grid{grid-template-columns:1fr!important}
   #avanAccountColorToggle{width:100%;justify-content:center}
 }
