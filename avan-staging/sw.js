@@ -1,5 +1,5 @@
 const CACHE_PREFIX='avan-staging-rc1-';
-const CACHE='avan-staging-rc1-v20';
+const CACHE='avan-staging-rc1-v21';
 const ASSETS=[
 './',
 './index.html',
@@ -63,6 +63,7 @@ const ASSETS=[
 './src/documents/local-ocr-runtime-v5.js',
 './src/documents/local-ocr-runtime-v6.js',
 './src/documents/local-ocr-runtime-v7.js',
+'./src/documents/local-ocr-runtime-v8.js',
 './src/documents/document-delete-ui.js',
 './src/documents/local-ocr-extraction.js',
 './src/ui/documents/document-review-view.js',
