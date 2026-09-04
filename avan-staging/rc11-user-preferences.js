@@ -1,8 +1,9 @@
 'use strict';
 
-(function installUserPreferenceRpc(){
+function installUserPreferenceRpc(){
   const C = window.AvanCloud;
-  if (!C?.rpc || C.__avanUserPreferenceRpcInstalled) return;
+  if (!C?.rpc) return false;
+  if (C.__avanUserPreferenceRpcInstalled) return true;
 
   const baseRpc = C.rpc.bind(C);
   const key = C.ACTIVE_WORKSPACE_KEY || 'avan.active_workspace_id';
@@ -51,4 +52,15 @@
   };
 
   C.__avanUserPreferenceRpcInstalled = true;
-})();
+  return true;
+}
+
+if (!installUserPreferenceRpc()) {
+  let attempts = 0;
+  const timer = window.setInterval(() => {
+    attempts += 1;
+    if (installUserPreferenceRpc() || attempts >= 100) {
+      window.clearInterval(timer);
+    }
+  }, 20);
+}
