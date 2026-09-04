@@ -1,0 +1,19 @@
+.access-member-actions{
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+.owner-password-btn{
+  white-space:nowrap;
+}
+
+@media(max-width:520px){
+  .access-member-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+
+  .access-member-actions button{
+    width:100%;
+  }
+}
