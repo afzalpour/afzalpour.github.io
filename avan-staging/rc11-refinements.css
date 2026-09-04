@@ -7,6 +7,10 @@
   white-space:nowrap;
 }
 
+.self-password-btn{
+  margin-inline-end:8px;
+}
+
 @media(max-width:520px){
   .access-member-actions{
     display:grid;
@@ -15,5 +19,11 @@
 
   .access-member-actions button{
     width:100%;
+  }
+
+  .self-password-btn,
+  #logoutBtn{
+    width:100%;
+    margin:6px 0 0;
   }
 }

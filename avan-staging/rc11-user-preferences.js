@@ -8,12 +8,31 @@ function installUserPreferenceRpc(){
   const baseRpc = C.rpc.bind(C);
   const key = C.ACTIVE_WORKSPACE_KEY || 'avan.active_workspace_id';
 
-  function preferredWorkspaceId(fallback = null) {
+  function preferredWorkspaceId() {
     try {
-      return window.sessionStorage?.getItem(key) || fallback;
+      return window.sessionStorage?.getItem(key) || null;
     } catch {
-      return fallback;
+      return null;
     }
+  }
+
+  async function effectiveWorkspaceId(fallback = null) {
+    const preferred = preferredWorkspaceId();
+    if (preferred) return preferred;
+
+    if (C?.select) {
+      try {
+        const rows = await C.select(
+          'workspaces',
+          'select=id,name,mode,base_currency,created_at&order=created_at.asc'
+        );
+        if (rows?.[0]?.id) return rows[0].id;
+      } catch {
+        // Keep compatibility fallback below.
+      }
+    }
+
+    return fallback;
   }
 
   async function withFallback(primary, primaryArgs, fallback, fallbackArgs) {
@@ -29,7 +48,7 @@ function installUserPreferenceRpc(){
 
   C.rpc = async (name, args = {}) => {
     if (name === 'get_money_display_unit') {
-      const wid = preferredWorkspaceId(args?.wid || null);
+      const wid = await effectiveWorkspaceId(args?.wid || null);
       return withFallback(
         'get_my_money_display_unit',
         { wid },
@@ -39,7 +58,7 @@ function installUserPreferenceRpc(){
     }
 
     if (name === 'set_money_display_unit') {
-      const wid = preferredWorkspaceId(args?.wid || null);
+      const wid = await effectiveWorkspaceId(args?.wid || null);
       return withFallback(
         'set_my_money_display_unit',
         { wid, p_unit: args?.p_unit },
