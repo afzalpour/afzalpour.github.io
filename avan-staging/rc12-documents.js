@@ -10,8 +10,8 @@ import {
   buildLocalOcrExtraction
 } from './src/documents/local-ocr-extraction.js';
 import {
-  recognizeLocalDocumentV2
-} from './src/documents/local-ocr-runtime-v2.js';
+  recognizeLocalDocumentV3
+} from './src/documents/local-ocr-runtime-v3.js';
 import {
   openDocumentViewer
 } from './src/ui/documents/document-viewer-v2.js';
@@ -191,10 +191,11 @@ async function runExtraction(id, button) {
         'accounts',
         `select=*&workspace_id=eq.${item.workspace_id}&order=code.asc`
       ),
-      recognizeLocalDocumentV2({
+      recognizeLocalDocumentV3({
         sourceUrl,
         mimeType: item.mime_type,
         fileName: item.file_name,
+        documentType: item.document_type,
         maxPages: 4,
         onProgress: setProgress
       })
@@ -209,8 +210,13 @@ async function runExtraction(id, button) {
 
     extraction.local_ocr = {
       ...(extraction.local_ocr || {}),
-      pipeline: 'rc1.2-c-v2',
-      viewer_first: true
+      pipeline: String(ocr?.engine || '').includes('receipt-v3')
+        ? 'rc1.2-c2-receipt-v3'
+        : 'rc1.2-c-v2',
+      viewer_first: true,
+      receipt_pipeline:
+        ocr?.receipt_pipeline ||
+        undefined
     };
 
     const updated = await documents.saveLocalExtraction({
