@@ -13,6 +13,9 @@ import {
   recognizeLocalDocumentV4
 } from './src/documents/local-ocr-runtime-v4.js';
 import {
+  jalaliToIso
+} from './src/core/date/jalali.js';
+import {
   openDocumentViewer
 } from './src/ui/documents/document-viewer-v2.js';
 import {
@@ -39,6 +42,12 @@ function esc(value) {
       "'": '&#39;',
       '"': '&quot;'
     })[char]);
+}
+
+function faToEn(value) {
+  return String(value ?? '')
+    .replace(/[۰-۹]/g, d => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
+    .replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
 }
 
 function rememberDocumentsPage(reviewDocumentId = '') {
@@ -174,6 +183,115 @@ function structuredReceiptDescription(item, ocr) {
   return parts.join(' — ');
 }
 
+function structuredReceiptDate(fields) {
+  const normalized = faToEn(fields?.date_text || '').trim();
+  const match = normalized.match(
+    /^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/
+  );
+
+  if (!match) return '';
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+
+  if (month < 1 || month > 12 || day < 1 || day > 31) {
+    return '';
+  }
+
+  if (year >= 1300 && year <= 1600) {
+    return jalaliToIso(`${year}/${month}/${day}`) || '';
+  }
+
+  if (year >= 1900 && year <= 2200) {
+    const candidate =
+      `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const date = new Date(`${candidate}T12:00:00Z`);
+
+    if (
+      date.getUTCFullYear() === year &&
+      date.getUTCMonth() === month - 1 &&
+      date.getUTCDate() === day
+    ) {
+      return candidate;
+    }
+  }
+
+  return '';
+}
+
+function structuredReceiptAmountToman(fields) {
+  const digits = faToEn(fields?.amount_digits || '')
+    .replace(/[^0-9]/g, '');
+
+  if (!/^\d{1,18}$/.test(digits) || /^0+$/.test(digits)) {
+    return '';
+  }
+
+  let amount;
+  try {
+    amount = BigInt(digits);
+  } catch {
+    return '';
+  }
+
+  if (fields?.amount_unit === 'toman') {
+    return amount.toString();
+  }
+
+  if (fields?.amount_unit === 'rial') {
+    if (amount % 10n !== 0n) return '';
+    return (amount / 10n).toString();
+  }
+
+  return '';
+}
+
+function applyStructuredReceiptFields(extraction, ocr) {
+  const fields = ocr?.receipt_fields;
+  if (!fields || typeof fields !== 'object') return;
+
+  const amountToman = structuredReceiptAmountToman(fields);
+  const isoDate = structuredReceiptDate(fields);
+
+  if (amountToman) {
+    extraction.total_amount = amountToman;
+    extraction.confidence = {
+      ...(extraction.confidence || {}),
+      amount: Math.max(
+        Number(extraction?.confidence?.amount || 0),
+        Number(fields.amount_confidence || 0),
+        .55
+      )
+    };
+  }
+
+  if (isoDate) {
+    extraction.document_date = isoDate;
+    extraction.confidence = {
+      ...(extraction.confidence || {}),
+      date: Math.max(
+        Number(extraction?.confidence?.date || 0),
+        Number(fields.date_confidence || 0),
+        .60
+      )
+    };
+  }
+
+  extraction.receipt_fields = fields;
+  extraction.local_ocr = {
+    ...(extraction.local_ocr || {}),
+    structured_receipt: {
+      amount_digits: String(fields.amount_digits || ''),
+      amount_unit: String(fields.amount_unit || ''),
+      amount_unit_confidence: Number(fields.amount_unit_confidence || 0),
+      date_text: String(fields.date_text || ''),
+      reference: String(fields.reference || ''),
+      recovery: fields.recovery || null
+    }
+  };
+}
+
 async function documentById(id) {
   const rows = await cloud.select(
     'documents',
@@ -288,21 +406,24 @@ async function runExtraction(id, button) {
       accounts: accounts || []
     });
 
+    applyStructuredReceiptFields(extraction, ocr);
+
     const receiptDescription = structuredReceiptDescription(item, ocr);
     if (receiptDescription) {
       extraction.description = receiptDescription;
-      extraction.receipt_fields = ocr.receipt_fields;
     }
 
     extraction.local_ocr = {
       ...(extraction.local_ocr || {}),
-      pipeline: String(ocr?.engine || '').includes('receipt-reference-v5')
-        ? 'rc1.2-c4-reference-receipt-v5'
-        : String(ocr?.engine || '').includes('receipt-structured-v4')
-          ? 'rc1.2-c3-structured-receipt-v4'
-          : String(ocr?.engine || '').includes('receipt-v3')
-            ? 'rc1.2-c2-receipt-v3'
-            : 'rc1.2-c-v2',
+      pipeline: String(ocr?.engine || '').includes('receipt-rtl-v6')
+        ? 'rc1.2-c4.2-rtl-structured-v6'
+        : String(ocr?.engine || '').includes('receipt-reference-v5')
+          ? 'rc1.2-c4-reference-receipt-v5'
+          : String(ocr?.engine || '').includes('receipt-structured-v4')
+            ? 'rc1.2-c3-structured-receipt-v4'
+            : String(ocr?.engine || '').includes('receipt-v3')
+              ? 'rc1.2-c2-receipt-v3'
+              : 'rc1.2-c-v2',
       viewer_first: true,
       receipt_pipeline:
         ocr?.receipt_pipeline ||
