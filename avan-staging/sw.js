@@ -1,5 +1,5 @@
 const CACHE_PREFIX='avan-staging-rc1-';
-const CACHE='avan-staging-rc1-v12';
+const CACHE='avan-staging-rc1-v13';
 const ASSETS=[
 './',
 './index.html',
@@ -9,6 +9,7 @@ const ASSETS=[
 './rc11-refinements.css',
 './rc12-design-system.css',
 './rc12-polish.css',
+'./rc12-documents.css',
 './config.js',
 './app.js',
 './rc11-money.js',
@@ -18,6 +19,7 @@ const ASSETS=[
 './rc11-access.js',
 './rc11-refinements.js',
 './rc12-polish.js',
+'./rc12-documents.js',
 './manifest.webmanifest',
 './avan-icon-192.png',
 './avan-icon-512.png',
@@ -55,8 +57,10 @@ const ASSETS=[
 './src/ui/documents/documents-view.js',
 './src/documents/document-proposal.js',
 './src/documents/local-ocr-runtime.js',
+'./src/documents/local-ocr-runtime-v2.js',
 './src/documents/local-ocr-extraction.js',
 './src/ui/documents/document-review-view.js',
+'./src/ui/documents/document-viewer-v2.js',
 ];
 
 self.addEventListener(
