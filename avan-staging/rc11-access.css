@@ -1,0 +1,248 @@
+.workspace-switcher{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-inline-start:auto;
+}
+
+.workspace-switcher-label{
+  color:var(--muted);
+  font-size:11px;
+  white-space:nowrap;
+}
+
+.workspace-switcher-select{
+  min-width:170px;
+  max-width:260px;
+  padding:8px 10px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:var(--surface);
+  color:var(--text);
+  font:inherit;
+}
+
+.access-card-head{
+  align-items:flex-start;
+}
+
+.access-invite-form{
+  display:grid;
+  grid-template-columns:minmax(220px,1fr) minmax(160px,220px) auto;
+  gap:10px;
+  align-items:end;
+  margin:14px 0 18px;
+}
+
+.access-invite-form .primary{
+  min-height:42px;
+}
+
+.access-list{
+  border:1px solid var(--line);
+  border-radius:12px;
+  overflow:hidden;
+}
+
+.access-list-head,
+.access-member-row{
+  display:grid;
+  grid-template-columns:minmax(220px,1.4fr) minmax(150px,.8fr) 100px 130px;
+  gap:10px;
+  align-items:center;
+  padding:10px 12px;
+}
+
+.access-list-head{
+  background:var(--surface2);
+  color:var(--muted);
+  font-size:11px;
+  font-weight:700;
+}
+
+.access-member-row + .access-member-row{
+  border-top:1px solid var(--line);
+}
+
+.access-member-identity{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+}
+
+.access-member-identity strong{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:13px;
+}
+
+.access-you{
+  flex:0 0 auto;
+  padding:1px 6px;
+  border-radius:999px;
+  background:var(--surface2);
+  color:var(--muted);
+  font-size:10px;
+}
+
+.access-role-select{
+  width:100%;
+  min-width:0;
+  padding:7px 8px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:var(--surface);
+  color:var(--text);
+  font:inherit;
+  font-size:12px;
+}
+
+.access-role-select:disabled{
+  opacity:.65;
+  cursor:not-allowed;
+}
+
+.access-member-actions{
+  display:flex;
+  justify-content:flex-start;
+}
+
+.access-member-actions button:disabled,
+.access-invite-row button:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+.access-pending{
+  margin-top:18px;
+}
+
+.access-pending h3{
+  margin:0 0 9px;
+  font-size:13px;
+}
+
+.access-invite-row{
+  display:grid;
+  grid-template-columns:minmax(220px,1fr) 130px 110px;
+  gap:10px;
+  align-items:center;
+  padding:9px 0;
+  border-top:1px solid var(--line);
+}
+
+.access-invite-row>div{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  min-width:0;
+}
+
+.access-invite-row strong{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:12.5px;
+}
+
+.access-invite-row small{
+  color:var(--muted);
+  font-size:10.5px;
+}
+
+@media(max-width:820px){
+  .workspace-switcher{
+    width:100%;
+    margin-top:8px;
+    margin-inline-start:0;
+  }
+
+  .workspace-switcher-select{
+    flex:1;
+    min-width:0;
+    max-width:none;
+  }
+
+  .access-invite-form{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .access-invite-form .primary{
+    grid-column:1/-1;
+  }
+
+  .access-list-head{
+    display:none;
+  }
+
+  .access-member-row{
+    grid-template-columns:1fr auto;
+    gap:9px 12px;
+  }
+
+  .access-member-identity{
+    grid-column:1/-1;
+  }
+
+  .access-member-row>div:nth-child(2){
+    min-width:150px;
+  }
+
+  .access-member-actions{
+    justify-content:flex-end;
+  }
+
+  .access-invite-row{
+    grid-template-columns:1fr auto;
+  }
+
+  .access-invite-row>div{
+    grid-column:1/-1;
+  }
+}
+
+@media(max-width:520px){
+  .workspace-switcher{
+    align-items:stretch;
+    flex-direction:column;
+    gap:4px;
+  }
+
+  .access-invite-form{
+    grid-template-columns:1fr;
+  }
+
+  .access-invite-form .primary{
+    grid-column:auto;
+  }
+
+  .access-member-row{
+    grid-template-columns:1fr;
+  }
+
+  .access-member-identity{
+    grid-column:auto;
+  }
+
+  .access-member-row>div:nth-child(2){
+    min-width:0;
+  }
+
+  .access-member-actions{
+    justify-content:stretch;
+  }
+
+  .access-member-actions button{
+    width:100%;
+  }
+
+  .access-invite-row{
+    grid-template-columns:1fr;
+  }
+
+  .access-invite-row>div{
+    grid-column:auto;
+  }
+}
