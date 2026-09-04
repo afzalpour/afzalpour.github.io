@@ -1,6 +1,6 @@
 # AVAN — Master Project Prompt / Project Constitution
 
-این سند «قانون ثابت پروژه آوان» است. در هر چت جدید، قبل از هر تصمیم یا تغییر فنی، این فایل و سپس `AVAN_CURRENT_STATE.md` را بخوان و از همان نقطه ادامه بده.
+این سند «قانون ثابت پروژه آوان» است. در هر چت جدید، قبل از هر تصمیم یا تغییر فنی، این فایل، سپس `AVAN_CURRENT_STATE.md` و سپس `docs/adr/README.md` و ADRهای مرتبط را بخوان و از همان نقطه ادامه بده.
 
 ---
 
@@ -47,11 +47,13 @@
 ترتیب مرجع:
 1. این فایل: `AVAN_MASTER_PROMPT.md` — قوانین ثابت، Vision و Architecture Principles.
 2. فایل `AVAN_CURRENT_STATE.md` — آخرین وضعیت واقعی، Gateهای پاس‌شده، Commit/PR و گام بعد.
-3. کد و Migrationهای موجود در Repository.
-4. نتیجه Live Gate که کاربر گزارش کرده است.
+3. `docs/adr/README.md` و ADRهای Accepted مرتبط — تصمیم‌های معماری فعال و تاریخچه آنها.
+4. کد و Migrationهای موجود در Repository.
+5. نتیجه Live Gate که کاربر گزارش کرده است.
 
 در ابتدای هر چت جدید:
-- ابتدا این فایل و `AVAN_CURRENT_STATE.md` را بخوان.
+- ابتدا این فایل، `AVAN_CURRENT_STATE.md` و `docs/adr/README.md` را بخوان.
+- پیش از تغییر معماری، ADRهای Accepted مرتبط را بررسی کن.
 - وضعیت GitHub را با Current State تطبیق بده.
 - چیزی را که قبلاً پاس شده دوباره از صفر طراحی نکن مگر Regression یا Requirement جدید وجود داشته باشد.
 - از آخرین Gate واقعی ادامه بده.
@@ -60,6 +62,9 @@
 پس از هر Gate پاس‌شده یا تغییر معماری مهم:
 - `AVAN_CURRENT_STATE.md` را به‌روز کن.
 - Commit/PR/Merge مهم و گام بعد را ثبت کن.
+- اگر تصمیم بنیادی جدید یا تغییر تصمیم قبلی رخ داد، ADR جدید بساز یا ADR مربوط را طبق قواعد ADR به‌روزرسانی کن.
+
+**قانون ADR:** تصمیم `Accepted` نباید بی‌صدا نقض یا حذف شود. تغییر بنیادی باید با ADR جدید و رابطه `Supersedes` ثبت شود. ADRها تاریخچه‌اند و حذف نمی‌شوند.
 
 ---
 
@@ -329,10 +334,12 @@ Production promotion فقط بعد از Regression و RC freeze.
 
 1. `AVAN_MASTER_PROMPT.md` را قانون ثابت پروژه تلقی کن.
 2. `AVAN_CURRENT_STATE.md` را از GitHub بخوان.
-3. Repository `afzalpour/afzalpour.github.io` و آخرین main/PRهای مرتبط را در صورت نیاز بررسی کن.
-4. آخرین Gate پاس‌شده و Next Gate را استخراج کن.
-5. بدون بازطراحی چیزهای پاس‌شده، از همان نقطه ادامه بده.
-6. کیفیت معماری، UX، امنیت و Gate discipline قبلی را حفظ کن.
-7. بعد از هر Gate پاس‌شده، `AVAN_CURRENT_STATE.md` را به‌روزرسانی کن.
+3. `docs/adr/README.md` و ADRهای Accepted مرتبط را بخوان و هیچ تصمیم Accepted را بدون ADR جایگزین نقض نکن.
+4. Repository `afzalpour/afzalpour.github.io` و آخرین main/PRهای مرتبط را در صورت نیاز بررسی کن.
+5. آخرین Gate پاس‌شده و Next Gate را استخراج کن.
+6. بدون بازطراحی چیزهای پاس‌شده، از همان نقطه ادامه بده.
+7. کیفیت معماری، UX، امنیت و Gate discipline قبلی را حفظ کن.
+8. بعد از هر Gate پاس‌شده، `AVAN_CURRENT_STATE.md` را به‌روزرسانی کن.
+9. بعد از هر تصمیم معماری مهم، ADR مناسب ایجاد/به‌روزرسانی کن.
 
 **هدف ثابت:** آوان باید از یک Core مالی قابل اعتماد به یک پلتفرم مالی/ERP هوشمند، پیش‌نگر، توضیح‌پذیر و بسیار کاربرپسند تبدیل شود.
