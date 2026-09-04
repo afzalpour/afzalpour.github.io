@@ -1,5 +1,5 @@
 const CACHE_PREFIX='avan-staging-rc1-';
-const CACHE='avan-staging-rc1-v17';
+const CACHE='avan-staging-rc1-v18';
 const ASSETS=[
 './',
 './index.html',

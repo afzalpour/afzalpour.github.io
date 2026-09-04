@@ -26,6 +26,7 @@ import {
 const cloud = installAvanCloud();
 const documents = createDocumentService(cloud);
 const RETURN_PAGE_KEY = 'avan.rc12c.return_page';
+const RETURN_REVIEW_KEY = 'avan.rc12c.return_review_document';
 let activeReviewDocumentId = null;
 let extractionBusy = false;
 
@@ -40,58 +41,113 @@ function esc(value) {
     })[char]);
 }
 
-function rememberDocumentsPage() {
+function rememberDocumentsPage(reviewDocumentId = '') {
   try {
     window.sessionStorage?.setItem(
       RETURN_PAGE_KEY,
       'documents'
     );
+
+    if (reviewDocumentId) {
+      window.sessionStorage?.setItem(
+        RETURN_REVIEW_KEY,
+        String(reviewDocumentId)
+      );
+    } else {
+      window.sessionStorage?.removeItem(
+        RETURN_REVIEW_KEY
+      );
+    }
   } catch {
     // Navigation preference must never block OCR persistence.
   }
 }
 
-function restoreDocumentsPageAfterRefresh() {
-  let shouldRestore = false;
-
+function pendingReturnState() {
   try {
-    shouldRestore =
-      window.sessionStorage?.getItem(RETURN_PAGE_KEY) === 'documents';
+    return {
+      shouldRestore:
+        window.sessionStorage?.getItem(RETURN_PAGE_KEY) === 'documents',
+      reviewDocumentId:
+        window.sessionStorage?.getItem(RETURN_REVIEW_KEY) || ''
+    };
   } catch {
-    shouldRestore = false;
+    return {
+      shouldRestore: false,
+      reviewDocumentId: ''
+    };
   }
+}
 
-  if (!shouldRestore) return;
+function clearReturnState() {
+  try {
+    window.sessionStorage?.removeItem(RETURN_PAGE_KEY);
+    window.sessionStorage?.removeItem(RETURN_REVIEW_KEY);
+  } catch {
+    // Ignore unavailable session storage.
+  }
+}
+
+function restoreDocumentsPageAfterRefresh() {
+  const state = pendingReturnState();
+  if (!state.shouldRestore) return;
 
   let attempts = 0;
+  let navigationTriggered = false;
+
   const timer = window.setInterval(() => {
     attempts += 1;
 
     const shell = document.getElementById('appShell');
-    const button = document.querySelector(
+    const navButton = document.querySelector(
       '#nav [data-page="documents"]'
     );
 
-    if (shell && !shell.hidden && button) {
-      window.clearInterval(timer);
+    if (
+      !navigationTriggered &&
+      shell &&
+      !shell.hidden &&
+      navButton
+    ) {
+      navigationTriggered = true;
+      navButton.click();
+    }
 
-      try {
-        window.sessionStorage?.removeItem(RETURN_PAGE_KEY);
-      } catch {
-        // Ignore unavailable session storage.
+    if (navigationTriggered) {
+      if (!state.reviewDocumentId) {
+        window.clearInterval(timer);
+        clearReturnState();
+        return;
       }
 
-      window.setTimeout(() => {
-        button.click();
-      }, 80);
+      const reviewButton = document.querySelector(
+        `[data-review-document="${state.reviewDocumentId}"]`
+      );
 
-      return;
+      if (reviewButton) {
+        window.clearInterval(timer);
+        clearReturnState();
+        activeReviewDocumentId = state.reviewDocumentId;
+
+        window.setTimeout(() => {
+          reviewButton.click();
+        }, 120);
+
+        return;
+      }
     }
 
-    if (attempts >= 100) {
+    if (attempts >= 480) {
       window.clearInterval(timer);
+      clearReturnState();
+
+      if (navigationTriggered) {
+        toast(
+          'سند استخراج شده است؛ اگر بازبینی خودکار باز نشد، از همان ردیف «بازبینی» را بزنید.'
+        );
+      }
     }
-  }, 100);
+  }, 250);
 }
 
 function structuredReceiptDescription(item, ocr) {
@@ -240,11 +296,13 @@ async function runExtraction(id, button) {
 
     extraction.local_ocr = {
       ...(extraction.local_ocr || {}),
-      pipeline: String(ocr?.engine || '').includes('receipt-structured-v4')
-        ? 'rc1.2-c3-structured-receipt-v4'
-        : String(ocr?.engine || '').includes('receipt-v3')
-          ? 'rc1.2-c2-receipt-v3'
-          : 'rc1.2-c-v2',
+      pipeline: String(ocr?.engine || '').includes('receipt-reference-v5')
+        ? 'rc1.2-c4-reference-receipt-v5'
+        : String(ocr?.engine || '').includes('receipt-structured-v4')
+          ? 'rc1.2-c3-structured-receipt-v4'
+          : String(ocr?.engine || '').includes('receipt-v3')
+            ? 'rc1.2-c2-receipt-v3'
+            : 'rc1.2-c-v2',
       viewer_first: true,
       receipt_pipeline:
         ocr?.receipt_pipeline ||
@@ -266,11 +324,11 @@ async function runExtraction(id, button) {
     });
 
     toast('استخراج سند انجام شد.');
-    rememberDocumentsPage();
+    rememberDocumentsPage(updated.id);
 
     window.setTimeout(
       () => window.location.reload(),
-      700
+      650
     );
   } catch (error) {
     showOcrError(error);
