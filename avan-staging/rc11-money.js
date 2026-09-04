@@ -13,7 +13,12 @@ const MONEY_FIELD_NAMES = new Set([
 const PERSIAN_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
 const ARABIC_DIGITS = '٠١٢٣٤٥٦٧٨٩';
 const GROUP_SEPARATOR = '٬';
-const CURRENT_RUNTIME_UNIT = 'تومان';
+let currentDisplayUnit = 'toman';
+
+const UNIT_LABELS = {
+  toman: 'تومان',
+  rial: 'ریال'
+};
 
 const ONES = [
   '', 'یک', 'دو', 'سه', 'چهار', 'پنج', 'شش', 'هفت', 'هشت', 'نه',
@@ -94,12 +99,16 @@ function integerToPersianWords(value) {
   return chunks.join(' و ');
 }
 
-function amountInWords(value) {
-  const words = integerToPersianWords(value);
-  return words ? `${words} ${CURRENT_RUNTIME_UNIT}` : '';
+function unitLabel(unit = currentDisplayUnit) {
+  return UNIT_LABELS[unit] || UNIT_LABELS.toman;
 }
 
-function isMoneyInput(input) {
+function amountInWords(value, unit = currentDisplayUnit) {
+  const words = integerToPersianWords(value);
+  return words ? `${words} ${unitLabel(unit)}` : '';
+}
+
+function isMoneyInputElement(input) {
   if (!(input instanceof HTMLInputElement)) return false;
   if (input.dataset.money === 'false') return false;
   if (input.dataset.money === 'true') return true;
@@ -165,7 +174,7 @@ function formatInput(input, preserveCaret = false) {
 }
 
 function enhanceMoneyInput(input) {
-  if (!isMoneyInput(input) || input.dataset.moneyEnhanced === 'true') return;
+  if (!isMoneyInputElement(input) || input.dataset.moneyEnhanced === 'true') return;
 
   input.dataset.moneyEnhanced = 'true';
   input.classList.add('money-input-enhanced');
@@ -183,6 +192,23 @@ function scan(root = document) {
   if (root instanceof HTMLInputElement) enhanceMoneyInput(root);
   if (!root.querySelectorAll) return;
   root.querySelectorAll('input').forEach(enhanceMoneyInput);
+}
+
+function refreshAllMoneyInputs(root = document) {
+  if (root instanceof HTMLInputElement && isMoneyInputElement(root)) {
+    formatInput(root, false);
+    return;
+  }
+  if (!root.querySelectorAll) return;
+  root.querySelectorAll('input').forEach(input => {
+    if (isMoneyInputElement(input)) formatInput(input, false);
+  });
+}
+
+function setDisplayUnit(unit) {
+  currentDisplayUnit = unit === 'rial' ? 'rial' : 'toman';
+  refreshAllMoneyInputs();
+  return currentDisplayUnit;
 }
 
 function installMoneyInputEnhancer() {
@@ -209,5 +235,8 @@ export {
   formatGrouped,
   integerToPersianWords,
   amountInWords,
-  installMoneyInputEnhancer
+  installMoneyInputEnhancer,
+  setDisplayUnit,
+  refreshAllMoneyInputs,
+  isMoneyInputElement
 };
