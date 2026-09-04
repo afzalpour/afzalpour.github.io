@@ -25,6 +25,7 @@ import {
 
 const cloud = installAvanCloud();
 const documents = createDocumentService(cloud);
+const RETURN_PAGE_KEY = 'avan.rc12c.return_page';
 let activeReviewDocumentId = null;
 let extractionBusy = false;
 
@@ -37,6 +38,60 @@ function esc(value) {
       "'": '&#39;',
       '"': '&quot;'
     })[char]);
+}
+
+function rememberDocumentsPage() {
+  try {
+    window.sessionStorage?.setItem(
+      RETURN_PAGE_KEY,
+      'documents'
+    );
+  } catch {
+    // Navigation preference must never block OCR persistence.
+  }
+}
+
+function restoreDocumentsPageAfterRefresh() {
+  let shouldRestore = false;
+
+  try {
+    shouldRestore =
+      window.sessionStorage?.getItem(RETURN_PAGE_KEY) === 'documents';
+  } catch {
+    shouldRestore = false;
+  }
+
+  if (!shouldRestore) return;
+
+  let attempts = 0;
+  const timer = window.setInterval(() => {
+    attempts += 1;
+
+    const shell = document.getElementById('appShell');
+    const button = document.querySelector(
+      '#nav [data-page="documents"]'
+    );
+
+    if (shell && !shell.hidden && button) {
+      window.clearInterval(timer);
+
+      try {
+        window.sessionStorage?.removeItem(RETURN_PAGE_KEY);
+      } catch {
+        // Ignore unavailable session storage.
+      }
+
+      window.setTimeout(() => {
+        button.click();
+      }, 80);
+
+      return;
+    }
+
+    if (attempts >= 100) {
+      window.clearInterval(timer);
+    }
+  }, 100);
 }
 
 async function documentById(id) {
@@ -158,10 +213,14 @@ async function runExtraction(id, button) {
       viewer_first: true
     };
 
-    await documents.saveLocalExtraction({
+    const updated = await documents.saveLocalExtraction({
       document: item,
       extraction
     });
+
+    if (!updated?.id || updated.status !== 'extracted') {
+      throw new Error('LOCAL_OCR_SAVE_FAILED');
+    }
 
     setProgress({
       progress: 1,
@@ -169,6 +228,8 @@ async function runExtraction(id, button) {
     });
 
     toast('استخراج سند انجام شد.');
+    rememberDocumentsPage();
+
     window.setTimeout(
       () => window.location.reload(),
       700
@@ -224,3 +285,13 @@ function intercept(event) {
 }
 
 document.addEventListener('click', intercept, true);
+
+if (document.readyState === 'loading') {
+  document.addEventListener(
+    'DOMContentLoaded',
+    restoreDocumentsPageAfterRefresh,
+    { once: true }
+  );
+} else {
+  restoreDocumentsPageAfterRefresh();
+}
