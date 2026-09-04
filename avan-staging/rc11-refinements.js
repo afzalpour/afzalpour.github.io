@@ -13,6 +13,15 @@ const REMOVE_TEXTS = new Set([
   'ثبت قطعی فاکتور مستقیماً سند دوبل روی Ledger می‌سازد.'
 ]);
 
+const DASHBOARD_MUTED_PREFIXES = [
+  'CFO Autopilot —',
+  'پاسخ از داده‌های واقعی Workspace؛',
+  'Continuous Audit Lite —',
+  'Duplicate، Integrity،',
+  'اولویت‌بندی وصول بر پایه Aging و اثر نقدی',
+  'Aging مبتنی بر Ledger'
+];
+
 const ROLE_LABEL = {
   owner: 'مالک',
   manager: 'مدیر',
@@ -57,6 +66,75 @@ function cleanupTechnicalCopy(root = document) {
     if (element.childElementCount) return;
     if (REMOVE_TEXTS.has(normalize(element.textContent))) {
       element.remove();
+    }
+  });
+}
+
+function removeHeadMuted(heading) {
+  const head = heading?.closest('.section-head');
+  if (!head) return;
+  head.querySelectorAll('.muted').forEach(node => node.remove());
+}
+
+function compactDashboardCopy() {
+  const title = document.getElementById('pageTitle');
+  if (normalize(title?.textContent) !== 'داشبورد') return;
+
+  document.querySelectorAll('#content h2,#content h3').forEach(heading => {
+    const text = normalize(heading.textContent);
+
+    if (text === '✦ Avan Intelligence') {
+      heading.textContent = 'تحلیل مالی';
+      removeHeadMuted(heading);
+      return;
+    }
+
+    if (text === '🛡 Business Risk Radar') {
+      heading.textContent = 'کنترل و ریسک';
+      removeHeadMuted(heading);
+      return;
+    }
+
+    if (text === 'Continuous Audit') {
+      heading.textContent = 'کنترل‌های مستمر';
+      removeHeadMuted(heading);
+      return;
+    }
+
+    if (text === '🎯 Smart Collection Agent') {
+      heading.textContent = 'وصول مطالبات';
+      removeHeadMuted(heading);
+      return;
+    }
+
+    if (text === '✓ Month-End Autopilot') {
+      heading.textContent = 'آمادگی پایان دوره';
+      removeHeadMuted(heading);
+      return;
+    }
+
+    if (text === 'مطالبات و بدهی تجاری') {
+      heading.textContent = 'سررسید مطالبات و بدهی‌ها';
+      removeHeadMuted(heading);
+      return;
+    }
+
+    if (text === 'از آوان درباره کسب‌وکار بپرس') {
+      removeHeadMuted(heading);
+    }
+  });
+
+  document.querySelectorAll('#content .muted').forEach(node => {
+    const text = normalize(node.textContent);
+    if (DASHBOARD_MUTED_PREFIXES.some(prefix => text.startsWith(prefix))) {
+      node.remove();
+    }
+  });
+
+  document.querySelectorAll('#content .info-box').forEach(box => {
+    const text = normalize(box.textContent);
+    if (text.startsWith('این نسخه، Close Assistant است:')) {
+      box.remove();
     }
   });
 }
@@ -121,7 +199,7 @@ async function currentWorkspaceId() {
   try {
     const rows = await cloud.select(
       'workspaces',
-      'select=id,created_at&order=created_at.asc'
+      'select=id,name,mode,base_currency,created_at&order=created_at.asc'
     );
     return rows?.[0]?.id || null;
   } catch {
@@ -252,10 +330,118 @@ async function ensureOwnerPasswordButtons() {
   });
 }
 
+function selfPasswordError(error) {
+  const text = String(error?.message || error || '');
+  if (
+    text.toLowerCase().includes('invalid login credentials') ||
+    text.toLowerCase().includes('invalid credentials') ||
+    error?.status === 400
+  ) {
+    return 'رمز عبور فعلی صحیح نیست.';
+  }
+  if (text.includes('AUTH_REQUIRED')) return 'برای تغییر رمز دوباره وارد حساب شوید.';
+  return 'تغییر رمز عبور انجام نشد.';
+}
+
+async function selfPasswordModal() {
+  const cloud = C();
+  if (!cloud?.user || !cloud?.login || !cloud?.updatePassword) return;
+
+  const user = await cloud.user();
+  if (!user?.email) {
+    toast('ایمیل حساب کاربری در دسترس نیست.');
+    return;
+  }
+
+  openModal(`
+    <h2>تغییر رمز عبور</h2>
+    <form id="selfPasswordForm">
+      <div class="field">
+        <label>رمز عبور فعلی</label>
+        <input id="selfCurrentPassword" type="password" autocomplete="current-password" required>
+      </div>
+      <div class="field" style="margin-top:10px">
+        <label>رمز عبور جدید</label>
+        <input id="selfNewPassword" type="password" minlength="8" autocomplete="new-password" required>
+      </div>
+      <div class="field" style="margin-top:10px">
+        <label>تکرار رمز عبور جدید</label>
+        <input id="selfNewPassword2" type="password" minlength="8" autocomplete="new-password" required>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="ghost" id="selfPasswordCancel">انصراف</button>
+        <button class="primary" id="selfPasswordSubmit">تغییر رمز</button>
+      </div>
+      <div id="selfPasswordStatus"></div>
+    </form>
+  `);
+
+  document.getElementById('selfPasswordCancel').onclick = closeModal;
+  document.getElementById('selfPasswordForm').onsubmit = async event => {
+    event.preventDefault();
+
+    const current = document.getElementById('selfCurrentPassword').value;
+    const p1 = document.getElementById('selfNewPassword').value;
+    const p2 = document.getElementById('selfNewPassword2').value;
+    const status = document.getElementById('selfPasswordStatus');
+    const submit = document.getElementById('selfPasswordSubmit');
+
+    if (p1.length < 8) {
+      status.innerHTML = '<span class="error-box" style="display:block">رمز عبور جدید باید حداقل ۸ کاراکتر باشد.</span>';
+      return;
+    }
+
+    if (p1 !== p2) {
+      status.innerHTML = '<span class="error-box" style="display:block">دو رمز عبور جدید یکسان نیستند.</span>';
+      return;
+    }
+
+    if (current === p1) {
+      status.innerHTML = '<span class="error-box" style="display:block">رمز جدید باید با رمز فعلی متفاوت باشد.</span>';
+      return;
+    }
+
+    submit.disabled = true;
+    try {
+      await cloud.login(user.email, current);
+      await cloud.updatePassword(p1);
+      closeModal();
+      toast('رمز عبور شما تغییر کرد.');
+    } catch (error) {
+      status.innerHTML = `<span class="error-box" style="display:block">${selfPasswordError(error)}</span>`;
+    } finally {
+      if (submit?.isConnected) submit.disabled = false;
+    }
+  };
+}
+
+function ensureSelfPasswordButton() {
+  const content = document.getElementById('content');
+  if (!content || normalize(document.getElementById('pageTitle')?.textContent) !== 'تنظیمات') return;
+
+  const accountCard = [...content.querySelectorAll('.section.card')]
+    .find(card => normalize(card.querySelector('h2')?.textContent) === 'حساب کاربری');
+
+  if (!accountCard || accountCard.querySelector('#selfPasswordBtn')) return;
+
+  const logout = accountCard.querySelector('#logoutBtn');
+  if (!logout) return;
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'ghost self-password-btn';
+  button.id = 'selfPasswordBtn';
+  button.textContent = 'تغییر رمز من';
+  button.onclick = () => selfPasswordModal().catch(() => toast('تغییر رمز انجام نشد.'));
+  logout.before(button);
+}
+
 async function applyRefinements() {
   cleanupTechnicalCopy(document);
+  compactDashboardCopy();
   await ensureWorkspaceOptionLabels();
   await ensureOwnerPasswordButtons();
+  ensureSelfPasswordButton();
 }
 
 function schedule() {
