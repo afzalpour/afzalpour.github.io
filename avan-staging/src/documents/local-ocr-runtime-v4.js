@@ -1,8 +1,8 @@
 'use strict';
 
-// RC1.2-C.4 compatibility entry.
-// Preserve the existing import contract while the improved reference-receipt
-// implementation lives in v5.
+// RC1.2-C compatibility entry.
+// Preserve the existing import contract while the latest receipt recovery
+// implementation lives in v6.
 export {
-  recognizeLocalDocumentV5 as recognizeLocalDocumentV4
-} from './local-ocr-runtime-v5.js';
+  recognizeLocalDocumentV6 as recognizeLocalDocumentV4
+} from './local-ocr-runtime-v6.js';
