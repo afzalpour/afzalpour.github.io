@@ -311,6 +311,7 @@ declare
   v_actor_role text;
   v_target public.workspace_members%rowtype;
   v_owner_count integer;
+  v_primary_owner uuid;
 begin
   if auth.uid() is null then raise exception 'AUTH_REQUIRED'; end if;
 
@@ -341,6 +342,18 @@ begin
     if v_target.role<>'accountant' or p_role<>'accountant' then
       raise exception 'FORBIDDEN';
     end if;
+  end if;
+
+  -- The original workspaces.owner_user_id remains protected until a dedicated
+  -- ownership-transfer workflow is implemented. This also avoids stale owner
+  -- visibility under older workspace SELECT policies.
+  select w.owner_user_id into v_primary_owner
+  from public.workspaces w
+  where w.id=wid;
+
+  if p_user_id=v_primary_owner
+     and (p_role<>'owner' or not p_active) then
+    raise exception 'PRIMARY_OWNER_PROTECTED';
   end if;
 
   -- The workspace must always retain at least one active Owner.
@@ -472,6 +485,7 @@ begin
     )
     on conflict(workspace_id,user_id)
     do update set
+      role=excluded.role,
       is_active=true,
       updated_at=now();
 
