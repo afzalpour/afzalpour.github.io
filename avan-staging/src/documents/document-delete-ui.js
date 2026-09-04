@@ -67,17 +67,12 @@ async function performDelete(item, button) {
   button.disabled = true;
   button.textContent = 'در حال حذف…';
 
-  const query = [
-    `id=eq.${encodeURIComponent(item.id)}`,
-    `workspace_id=eq.${encodeURIComponent(item.workspace_id)}`,
-    'linked_journal_entry_id=is.null',
-    'status=neq.linked'
-  ].join('&');
+  const deleted = await cloud.rpc(
+    'delete_unlinked_smart_document',
+    { p_document_id: item.id }
+  );
 
-  const removed = await cloud.remove('documents', query);
-  const deleted = removed?.[0];
-
-  if (!deleted?.id) {
+  if (!deleted?.id || !deleted?.deleted) {
     throw new Error('DOCUMENT_DELETE_NOT_ALLOWED');
   }
 
@@ -97,7 +92,7 @@ async function performDelete(item, button) {
   toast(
     fileCleanupOk
       ? 'سند حذف شد.'
-      : 'سند از فهرست حذف شد؛ پاکسازی فایل با خطا مواجه شد.'
+      : 'سند حذف شد؛ پاکسازی فایل ذخیره‌شده با خطا مواجه شد.'
   );
 }
 
@@ -118,7 +113,7 @@ async function openDeleteConfirm(id) {
     <h2>حذف سند هوشمند</h2>
 
     <div class="error-box">
-      این عملیات برگشت‌پذیر نیست. فقط سندی حذف می‌شود که هنوز به سند حسابداری یا Ledger متصل نشده باشد.
+      این عملیات برگشت‌پذیر نیست. فقط سندی حذف می‌شود که هنوز به پیش‌نویس حسابداری یا Ledger متصل نشده باشد.
     </div>
 
     <div class="section">
@@ -156,9 +151,20 @@ async function openDeleteConfirm(id) {
         confirm.textContent = 'حذف قطعی';
 
         const message = String(error?.message || error || '');
-        if (message.includes('DOCUMENT_DELETE_PROTECTED')) {
+        if (
+          message.includes('LINKED_DOCUMENT_IMMUTABLE') ||
+          message.includes('DOCUMENT_HAS_ACCOUNTING_DRAFT') ||
+          message.includes('DOCUMENT_DELETE_PROTECTED')
+        ) {
           toast('سند به پیش‌نویس یا Ledger متصل شده و قابل حذف نیست.');
         } else if (
+          message.includes('delete_unlinked_smart_document') &&
+          (Number(error?.status) === 404 || message.includes('Could not find'))
+        ) {
+          toast('Patch حذف امن اسناد هنوز روی دیتابیس نصب نشده است.');
+        } else if (
+          message.includes('DOCUMENT_DELETE_ROLE_DENIED') ||
+          message.includes('WORKSPACE_ACCESS_DENIED') ||
           message.includes('DOCUMENT_DELETE_NOT_ALLOWED') ||
           Number(error?.status) === 401 ||
           Number(error?.status) === 403
