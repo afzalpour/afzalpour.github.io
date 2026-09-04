@@ -10,8 +10,8 @@ import {
   buildLocalOcrExtraction
 } from './src/documents/local-ocr-extraction.js';
 import {
-  recognizeLocalDocumentV3
-} from './src/documents/local-ocr-runtime-v3.js';
+  recognizeLocalDocumentV4
+} from './src/documents/local-ocr-runtime-v4.js';
 import {
   openDocumentViewer
 } from './src/ui/documents/document-viewer-v2.js';
@@ -92,6 +92,30 @@ function restoreDocumentsPageAfterRefresh() {
       window.clearInterval(timer);
     }
   }, 100);
+}
+
+function structuredReceiptDescription(item, ocr) {
+  const fields = ocr?.receipt_fields;
+  if (!fields || typeof fields !== 'object') return '';
+
+  const parts = [
+    item?.document_type === 'bank_slip'
+      ? 'رسید بانکی'
+      : 'رسید کارتخوان'
+  ];
+
+  parts.push(
+    fields.success
+      ? 'عملیات موفق'
+      : 'نیازمند بازبینی'
+  );
+
+  const reference = String(fields.reference || '').trim();
+  if (/^\d{6,22}$/.test(reference)) {
+    parts.push(`پیگیری/مرجع ${reference}`);
+  }
+
+  return parts.join(' — ');
 }
 
 async function documentById(id) {
@@ -191,7 +215,7 @@ async function runExtraction(id, button) {
         'accounts',
         `select=*&workspace_id=eq.${item.workspace_id}&order=code.asc`
       ),
-      recognizeLocalDocumentV3({
+      recognizeLocalDocumentV4({
         sourceUrl,
         mimeType: item.mime_type,
         fileName: item.file_name,
@@ -208,11 +232,19 @@ async function runExtraction(id, button) {
       accounts: accounts || []
     });
 
+    const receiptDescription = structuredReceiptDescription(item, ocr);
+    if (receiptDescription) {
+      extraction.description = receiptDescription;
+      extraction.receipt_fields = ocr.receipt_fields;
+    }
+
     extraction.local_ocr = {
       ...(extraction.local_ocr || {}),
-      pipeline: String(ocr?.engine || '').includes('receipt-v3')
-        ? 'rc1.2-c2-receipt-v3'
-        : 'rc1.2-c-v2',
+      pipeline: String(ocr?.engine || '').includes('receipt-structured-v4')
+        ? 'rc1.2-c3-structured-receipt-v4'
+        : String(ocr?.engine || '').includes('receipt-v3')
+          ? 'rc1.2-c2-receipt-v3'
+          : 'rc1.2-c-v2',
       viewer_first: true,
       receipt_pipeline:
         ocr?.receipt_pipeline ||
