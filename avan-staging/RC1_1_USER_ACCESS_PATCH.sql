@@ -312,6 +312,7 @@ declare
   v_target public.workspace_members%rowtype;
   v_owner_count integer;
   v_primary_owner uuid;
+  v_has_primary_owner_column boolean;
 begin
   if auth.uid() is null then raise exception 'AUTH_REQUIRED'; end if;
 
@@ -344,16 +345,25 @@ begin
     end if;
   end if;
 
-  -- The original workspaces.owner_user_id remains protected until a dedicated
-  -- ownership-transfer workflow is implemented. This also avoids stale owner
-  -- visibility under older workspace SELECT policies.
-  select w.owner_user_id into v_primary_owner
-  from public.workspaces w
-  where w.id=wid;
+  -- Older workspace schemas include owner_user_id; newer Core variants may not.
+  -- Protect it when present, but do not make the migration depend on that column.
+  select exists(
+    select 1
+    from information_schema.columns c
+    where c.table_schema='public'
+      and c.table_name='workspaces'
+      and c.column_name='owner_user_id'
+  ) into v_has_primary_owner_column;
 
-  if p_user_id=v_primary_owner
-     and (p_role<>'owner' or not p_active) then
-    raise exception 'PRIMARY_OWNER_PROTECTED';
+  if v_has_primary_owner_column then
+    execute 'select owner_user_id from public.workspaces where id=$1'
+      into v_primary_owner
+      using wid;
+
+    if p_user_id=v_primary_owner
+       and (p_role<>'owner' or not p_active) then
+      raise exception 'PRIMARY_OWNER_PROTECTED';
+    end if;
   end if;
 
   -- The workspace must always retain at least one active Owner.
