@@ -62,6 +62,10 @@
   font-size:12px;
 }
 
+.currency-settings-card:has(.currency-choice button:not(:disabled)) .currency-status{
+  display:none!important;
+}
+
 .currency-note{
   display:none!important;
 }
