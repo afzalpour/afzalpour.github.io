@@ -1,8 +1,17 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: پس از Live PASS شدن **RC1.2-B**.
+آخرین به‌روزرسانی مرجع: پس از Live PASS شدن **RC1.2-B** و ایجاد ADR Registry.
 
 این فایل وضعیت جاری پروژه است و باید بعد از هر Gate پاس‌شده یا تغییر معماری مهم به‌روزرسانی شود.
+
+## Startup rule for every new chat
+قبل از هر تغییر فنی:
+1. `AVAN_MASTER_PROMPT.md` را بخوان.
+2. همین فایل (`AVAN_CURRENT_STATE.md`) را بخوان.
+3. `docs/adr/README.md` و ADRهای Accepted مرتبط با تغییر را بخوان.
+4. سپس Repository/PR/Live Gate را با این اسناد تطبیق بده.
+
+ADRهای Accepted تصمیم‌های معماری فعال‌اند و بدون ADR جایگزین (`Supersedes`) نباید نقض شوند.
 
 ---
 
@@ -14,6 +23,7 @@ Repository فعال:
 ساختار:
 - Root = Production فعلی/مسیر انتشار اصلی.
 - `avan-staging/` = محیط Staging برای توسعه و Gate.
+- `docs/adr/` = Architecture Decision Record registry و تاریخچه تصمیم‌های بنیادی.
 
 Workflow:
 - تغییرات ابتدا در Staging.
@@ -24,7 +34,13 @@ Workflow:
 آخرین Merge کد UI شناخته‌شده:
 - RC1.2-B merge SHA: `bafdfe4b49b8a4d9b44305997abf452a3490fd80`
 
-پس از آن اسناد مرجع پروژه نیز روی main اضافه شده‌اند.
+پس از آن اسناد مرجع پروژه و ADR Registry روی main اضافه شده‌اند.
+
+Project Constitution / Source of Truth:
+- `AVAN_MASTER_PROMPT.md`
+- `AVAN_CURRENT_STATE.md`
+- `docs/adr/README.md` + ADRهای Accepted
+- Repository + نتیجه Live Gate کاربر
 
 ---
 
@@ -70,6 +86,11 @@ Health snapshot تاریخی تاییدشده:
 - visible workspace: 1 برای سناریوی اصلی پس از workspace suppression
 
 این اعداد snapshot هستند؛ برای تصمیم‌های جدید health live را دوباره بخوان.
+
+ADRهای مستقیم مرتبط:
+- ADR-0001 Canonical Ledger Toman
+- ADR-0002 Journal lifecycle/immutability
+- ADR-0003 Workspace/RLS security boundary
 
 ---
 
@@ -117,6 +138,9 @@ Multi-workspace behavior:
 - only session preference, not financial data.
 - Gate F، Workspace شخصی پیش‌فرض `فضای مالی من` را برای کاربری که shared non-owner workspace دارد از context عملیاتی suppress می‌کند؛ بدون حذف داده.
 - multi-company واقعی حفظ شده است.
+
+ADR مرتبط:
+- ADR-0011 Preserve Multi-workspace → Multi-company
 
 ---
 
@@ -206,6 +230,9 @@ Current architecture:
 
 تا RC1.2-C Live PASS نشده، D را پاس‌شده فرض نکن.
 
+ADR مرتبط:
+- ADR-0009 Smart Documents OCR Review Pipeline
+
 ---
 
 ## 9) Print / Export — AFTER C
@@ -225,6 +252,9 @@ Current architecture:
 - Journal: professional A4 print/PDF.
 - Smart documents: view/download/print original.
 - RTL, Persian font, page breaks, page number, active currency.
+
+ADR مرتبط:
+- ADR-0008 Unified Print and Export System
 
 ---
 
@@ -301,12 +331,18 @@ Current architecture:
 - accounting draft
 - human-controlled posting
 
+AI architecture ADR:
+- ADR-0005 Explainable, Ledger-grounded, Human-controlled AI
+
 ### Voice AI
 - Persian speech-to-text.
 - voice commands to create Draft transactions/invoices/reports.
 - voice management questions.
 - voice response.
 - optional user-voice cloning only with explicit opt-in/consent and never as financial authentication.
+
+ADR مرتبط:
+- ADR-0010 Voice AI Consent and Safety
 
 ### Inventory
 - Stock Ledger / movement-based architecture.
@@ -317,6 +353,9 @@ Current architecture:
 - reorder alerts.
 - costing.
 - accounting integration.
+
+ADR مرتبط:
+- ADR-0006 Inventory Stock Ledger
 
 ### Sales / Purchase
 - quote/proforma.
@@ -331,6 +370,9 @@ Current architecture:
 - electronic invoice / Iranian taxpayer-system requirements according to current law when implemented.
 - pre-validation, status tracking, audit, error/retry.
 - rules must be versioned/configurable.
+
+ADR مرتبط:
+- ADR-0007 Versioned Tax Rules
 
 ### Treasury
 - cash/bank.
@@ -379,7 +421,33 @@ Current architecture:
 
 ---
 
-## 14) Immediate Next Action
+## 14) Architecture Decision Registry
+
+ADR Index:
+- `docs/adr/README.md`
+
+Template:
+- `docs/adr/ADR_TEMPLATE.md`
+
+Accepted ADRs در شروع این Registry:
+- ADR-0001 Canonical Ledger = integer Toman
+- ADR-0002 Journal Lifecycle and Posted Immutability
+- ADR-0003 Workspace + RLS Security Boundary
+- ADR-0004 Staging-first Gate-based Release
+- ADR-0005 Explainable Human-controlled AI
+- ADR-0006 Inventory Stock Ledger
+- ADR-0007 Versioned Tax Rules
+- ADR-0008 Unified Print/Export
+- ADR-0009 Smart Documents OCR Review Pipeline
+- ADR-0010 Voice AI Consent and Safety
+- ADR-0011 Multi-workspace → Multi-company
+- ADR-0012 Project Source of Truth
+
+قاعده: ADR Accepted را حذف یا silently violate نکن. تغییر تصمیم بنیادی با ADR جدید و `Supersedes` انجام شود.
+
+---
+
+## 15) Immediate Next Action
 
 **همین حالا گام بعدی پروژه: RC1.2-C — اصلاح کامل Smart Document Viewer و OCR.**
 
