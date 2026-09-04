@@ -227,7 +227,8 @@ function refreshCompactAmounts(unit = currentUnit()) {
         return;
       }
 
-      element.textContent = grouped(displayFromCanonical(canonical, unit));
+      const next = grouped(displayFromCanonical(canonical, unit));
+      if (element.textContent !== next) element.textContent = next;
     });
 }
 
@@ -252,13 +253,15 @@ function ensurePageUnitBadge() {
     title.insertAdjacentElement('afterend', badge);
   }
 
-  badge.textContent = `واحد: ${UNIT_LABEL[currentUnit()]}`;
+  const label = `واحد: ${UNIT_LABEL[currentUnit()]}`;
+  if (badge.textContent !== label) badge.textContent = label;
 }
 
 function ensureFormUnitBadges() {
   document.querySelectorAll('form').forEach(form => {
     const hasMoney = Boolean(form.querySelector(MONEY_INPUT_SELECTOR));
-    let badge = form.querySelector(':scope > .money-form-unit');
+    let badge = Array.from(form.children)
+      .find(child => child.classList?.contains('money-form-unit')) || null;
 
     if (!hasMoney) {
       badge?.remove();
@@ -271,7 +274,8 @@ function ensureFormUnitBadges() {
       form.prepend(badge);
     }
 
-    badge.textContent = `واحد: ${UNIT_LABEL[currentUnit()]}`;
+    const label = `واحد: ${UNIT_LABEL[currentUnit()]}`;
+    if (badge.textContent !== label) badge.textContent = label;
   });
 }
 
