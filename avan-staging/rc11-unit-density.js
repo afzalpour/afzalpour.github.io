@@ -11,6 +11,17 @@ const PERSIAN_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
 const ARABIC_DIGITS = '٠١٢٣٤٥٦٧٨٩';
 const GROUP_SEPARATOR = '٬';
 const MONEY_PATTERN = /(-?[0-9۰-۹٠-٩][0-9۰-۹٠-٩٬,]*)\s*(تومان|ریال)/g;
+const WORD_UNIT_PATTERN = /\s+(تومان|ریال)\s*$/;
+const MONEY_INPUT_SELECTOR = [
+  'input.money-input-enhanced',
+  'input[name="amount"]',
+  'input[name="debit"]',
+  'input[name="credit"]',
+  'input[name="unit_price"]',
+  'input[name="discount"]',
+  'input[name="opening_balance"]',
+  'input[name="total_amount"]'
+].join(',');
 
 const FINANCIAL_PAGES = new Set([
   'داشبورد',
@@ -79,9 +90,8 @@ function canonicalFromRendered(amount, renderedLabel, node) {
     return n % 10n === 0n ? n / 10n : null;
   }
 
-  // During live invoice/journal calculations in Rial mode, app.js may briefly
-  // render a Rial-sized number with the legacy Toman suffix before the
-  // currency observer relabels it. Treat that number as Rial-sized here.
+  // In Rial mode, live calculations may briefly contain a Rial-sized number
+  // with the legacy Toman suffix before the currency observer relabels it.
   if (
     currentUnit() === UNIT_RIAL &&
     renderedLabel === UNIT_LABEL[UNIT_TOMAN] &&
@@ -100,21 +110,22 @@ function displayFromCanonical(canonical, unit = currentUnit()) {
     : canonical;
 }
 
-function shouldSkip(node) {
+function shouldSkipNumericCompaction(node) {
   const parent = node.parentElement;
   if (!parent) return true;
 
   return Boolean(parent.closest(
     'script,style,input,textarea,select,option,button,' +
-    '.money-in-words,.money-compact,.money-page-unit,' +
+    '.money-in-words,.money-compact,.money-page-unit,.money-form-unit,' +
     '.currency-settings-card,.toast,.error-box,.success-box,.info-box'
   ));
 }
 
 function compactTextNode(node) {
-  if (!(node instanceof Text) || shouldSkip(node)) return;
+  if (!(node instanceof Text) || shouldSkipNumericCompaction(node)) return;
 
   const text = node.nodeValue || '';
+  MONEY_PATTERN.lastIndex = 0;
   const matches = [...text.matchAll(MONEY_PATTERN)];
   if (!matches.length) return;
 
@@ -139,9 +150,7 @@ function compactTextNode(node) {
       const span = document.createElement('span');
       span.className = 'money-compact';
       span.dataset.moneyCanonical = canonical.toString();
-
-      const display = displayFromCanonical(canonical);
-      span.textContent = grouped(display);
+      span.textContent = grouped(displayFromCanonical(canonical));
       fragment.append(span);
     }
 
@@ -155,7 +164,7 @@ function compactTextNode(node) {
   node.replaceWith(fragment);
 }
 
-function compactRoot(root = document) {
+function compactNumericRoot(root = document) {
   if (root instanceof Text) {
     compactTextNode(root);
     return;
@@ -168,7 +177,7 @@ function compactRoot(root = document) {
     NodeFilter.SHOW_TEXT,
     {
       acceptNode(node) {
-        if (shouldSkip(node)) return NodeFilter.FILTER_REJECT;
+        if (shouldSkipNumericCompaction(node)) return NodeFilter.FILTER_REJECT;
         MONEY_PATTERN.lastIndex = 0;
         return MONEY_PATTERN.test(node.nodeValue || '')
           ? NodeFilter.FILTER_ACCEPT
@@ -180,6 +189,32 @@ function compactRoot(root = document) {
   const nodes = [];
   while (walker.nextNode()) nodes.push(walker.currentNode);
   nodes.forEach(compactTextNode);
+}
+
+function stripWordsUnitElement(element) {
+  if (!(element instanceof Element)) return;
+  const text = element.textContent || '';
+  const compacted = text.replace(WORD_UNIT_PATTERN, '').trim();
+  if (compacted !== text.trim()) element.textContent = compacted;
+}
+
+function compactWordsRoot(root = document) {
+  if (root instanceof Text) {
+    const parent = root.parentElement;
+    if (parent?.classList.contains('money-in-words')) {
+      stripWordsUnitElement(parent);
+    }
+    return;
+  }
+
+  if (!(root instanceof Element) && root !== document) return;
+
+  if (root instanceof Element && root.classList.contains('money-in-words')) {
+    stripWordsUnitElement(root);
+  }
+
+  root.querySelectorAll?.('.money-in-words')
+    .forEach(stripWordsUnitElement);
 }
 
 function refreshCompactAmounts(unit = currentUnit()) {
@@ -196,7 +231,7 @@ function refreshCompactAmounts(unit = currentUnit()) {
     });
 }
 
-function ensureUnitBadge() {
+function ensurePageUnitBadge() {
   const title = document.getElementById('pageTitle');
   if (!title) return;
 
@@ -220,6 +255,33 @@ function ensureUnitBadge() {
   badge.textContent = `واحد: ${UNIT_LABEL[currentUnit()]}`;
 }
 
+function ensureFormUnitBadges() {
+  document.querySelectorAll('form').forEach(form => {
+    const hasMoney = Boolean(form.querySelector(MONEY_INPUT_SELECTOR));
+    let badge = form.querySelector(':scope > .money-form-unit');
+
+    if (!hasMoney) {
+      badge?.remove();
+      return;
+    }
+
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.className = 'money-form-unit';
+      form.prepend(badge);
+    }
+
+    badge.textContent = `واحد: ${UNIT_LABEL[currentUnit()]}`;
+  });
+}
+
+function refreshPresentation(root = document) {
+  compactNumericRoot(root);
+  compactWordsRoot(root);
+  ensurePageUnitBadge();
+  ensureFormUnitBadges();
+}
+
 function installObserver() {
   const observer = new MutationObserver(mutations => {
     for (const mutation of mutations) {
@@ -228,12 +290,14 @@ function installObserver() {
           node.nodeType === Node.ELEMENT_NODE ||
           node.nodeType === Node.TEXT_NODE
         ) {
-          compactRoot(node);
+          compactNumericRoot(node);
+          compactWordsRoot(node);
         }
       });
     }
 
-    ensureUnitBadge();
+    ensurePageUnitBadge();
+    ensureFormUnitBadges();
   });
 
   observer.observe(document.body, {
@@ -243,8 +307,7 @@ function installObserver() {
 }
 
 function install() {
-  compactRoot(document);
-  ensureUnitBadge();
+  refreshPresentation(document);
   installObserver();
 
   document.addEventListener('avan:money-unit-changed', event => {
@@ -253,7 +316,9 @@ function install() {
       : UNIT_TOMAN;
 
     refreshCompactAmounts(unit);
-    ensureUnitBadge();
+    compactWordsRoot(document);
+    ensurePageUnitBadge();
+    ensureFormUnitBadges();
   });
 }
 
