@@ -58,7 +58,7 @@
 }
 
 .currency-note{
-  margin-bottom:0;
+  display:none!important;
 }
 
 .toast.currency-good{
