@@ -1,5 +1,5 @@
 const CACHE_PREFIX='avan-staging-rc1-';
-const CACHE='avan-staging-rc1-v27';
+const CACHE='avan-staging-rc1-v28';
 const ASSETS=[
 './',
 './index.html',
@@ -12,6 +12,7 @@ const ASSETS=[
 './rc12-documents.css',
 './rc12-print-export.css',
 './rc12-company-profile.css',
+'./rc12-mobile-final.css',
 './config.js',
 './app.js',
 './rc11-money.js',
