@@ -110,7 +110,7 @@ function prepareDetailOutput(){
 function strongPassword(password){
   const p=String(password||'');
   if(p.length<12)return false;
-  if(!/[A-Za-zآ-ی]/.test(p)||!/[0-9۰-۹]/.test(p)||!/[!@#$%^&*()_+\-=\[\]{};:'"\\|,.<>/?`~]/.test(p))return false;
+  if(!/[A-Za-zآ-ی]/.test(p)||!/[0-9۰-۹]/.test(p)||!/[!@#$%^&*()_+\-=\[\]{};:'"\\|,.<>?\/`~]/.test(p))return false;
   return !COMMON_PASSWORDS.has(p.toLowerCase());
 }
 
