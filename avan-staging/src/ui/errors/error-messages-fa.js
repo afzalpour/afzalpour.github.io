@@ -4,6 +4,15 @@ const ERROR_MESSAGES_FA = {
   'AUTH_REQUIRED':
     'ابتدا وارد حساب کاربری شوید.',
 
+  'COMPANY_SELECTION_REQUIRED':
+    'برای ادامه، ابتدا یکی از شرکت‌های خود را انتخاب کنید.',
+
+  'COMPANY_REQUIRED':
+    'شرکت فعال مشخص نشده است.',
+
+  'COMPANY_ACCESS_REQUIRED':
+    'به این شرکت دسترسی ندارید یا دسترسی شما تغییر کرده است.',
+
   'Invalid login credentials':
     'ایمیل یا رمز عبور صحیح نیست.',
 

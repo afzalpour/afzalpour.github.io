@@ -3,50 +3,47 @@
 import {
   createSupabaseClient
 } from './supabase-client.js';
+import {
+  createCompanyContext
+} from '../../application/company/company-context.js';
 
 const ACTIVE_WORKSPACE_KEY =
   'avan.active_workspace_id';
 
-function preferredWorkspaceId(globalObject) {
-  try {
-    return globalObject.sessionStorage
-      ?.getItem(ACTIVE_WORKSPACE_KEY) || null;
-  } catch {
-    return null;
-  }
+function isSingleWorkspaceQuery(query) {
+  return String(query || '')
+    .split('&')
+    .some(part => part === 'limit=1');
 }
 
-function clearPreferredWorkspace(globalObject) {
-  try {
-    globalObject.sessionStorage
-      ?.removeItem(ACTIVE_WORKSPACE_KEY);
-  } catch {
-    // Session preference is optional; never block app startup.
-  }
-}
+function scopeWorkspaceQueryToId(query, workspaceId) {
+  const parts = String(query || '')
+    .split('&')
+    .filter(Boolean)
+    .filter(part => !part.startsWith('limit='))
+    .filter(part => !part.startsWith('order='))
+    .filter(part => !part.startsWith('id=eq.'));
 
-function orderWorkspaces(rows, preferredId) {
-  if (!Array.isArray(rows) || !rows.length || !preferredId) {
-    return rows;
-  }
-
-  const index = rows.findIndex(
-    workspace => workspace?.id === preferredId
-  );
-
-  if (index <= 0) return rows;
-
-  return [
-    rows[index],
-    ...rows.slice(0, index),
-    ...rows.slice(index + 1)
-  ];
+  parts.push(`id=eq.${workspaceId}`);
+  parts.push('limit=1');
+  return parts.join('&');
 }
 
 export function installAvanCloud({
   globalObject = window,
   storage = localStorage
 } = {}) {
+  // MT-A: all modules in one browser page must share the same Cloud client and
+  // the same CompanyContext. Creating parallel clients was tolerable in the
+  // single-company prototype but is not an acceptable tenant boundary.
+  if (
+    globalObject.AvanCloud?.companyContext &&
+    globalObject.AvanCloud?.select &&
+    globalObject.AvanCloud?.rpc
+  ) {
+    return globalObject.AvanCloud;
+  }
+
   const config =
     globalObject.AVAN_CONFIG || {};
 
@@ -99,6 +96,19 @@ export function installAvanCloud({
     }
   }
 
+  const companyContext = createCompanyContext({
+    client,
+    globalObject,
+    activeKey: ACTIVE_WORKSPACE_KEY,
+    listWorkspaces: async () => {
+      await claimInvitationsForCurrentUser();
+      return baseSelect(
+        'workspaces',
+        'select=id,name,mode,base_currency,created_at&order=created_at.asc'
+      );
+    }
+  });
+
   client.select = async (table, query = '') => {
     if (table !== 'workspaces') {
       return baseSelect(table, query);
@@ -106,36 +116,46 @@ export function installAvanCloud({
 
     await claimInvitationsForCurrentUser();
 
-    // ADR-0014: every workspace is a first-class Company context.
-    // Never hide an owned/personal company merely because the same user is
-    // also a member of another company. The active company is selected
-    // explicitly by session preference and all other authorized companies
-    // remain visible to the Company selector.
-    const rows =
-      await baseSelect(table, query);
-
-    const preferredId =
-      preferredWorkspaceId(globalObject);
-
-    if (
-      preferredId &&
-      Array.isArray(rows) &&
-      !rows.some(workspace => workspace?.id === preferredId)
-    ) {
-      clearPreferredWorkspace(globalObject);
-      return rows;
+    // Company metadata used by legacy Company-scoped modules is no longer a
+    // free-standing tenant selector. If a User has multiple Companies and has
+    // not explicitly selected one, stop here. Only CompanyContext itself reads
+    // the raw authorized portfolio via baseSelect.
+    const contextState = await companyContext.ensure();
+    if (contextState.selection_required) {
+      throw new Error('COMPANY_SELECTION_REQUIRED');
     }
 
-    return orderWorkspaces(
-      rows,
-      preferredId
-    );
+    // Some legacy modules historically asked for `workspaces&limit=1`.
+    // Resolve that request through CompanyContext BEFORE the database limit is
+    // applied, otherwise the oldest Company could win even when another
+    // Company is active.
+    if (isSingleWorkspaceQuery(query)) {
+      const activeId = contextState.active_company?.id || null;
+      if (activeId) {
+        return baseSelect(
+          table,
+          scopeWorkspaceQueryToId(query, activeId)
+        );
+      }
+    }
+
+    // Compatibility facade: legacy modules may still ask for `workspaces` and
+    // read row zero. They no longer choose the tenant themselves; the central
+    // CompanyContext orders the authorized rows so the explicit active Company
+    // is first. New code must use `client.companyContext` directly.
+    const rows = await baseSelect(table, query);
+    return companyContext.orderWorkspaces(rows);
   };
 
   client.ACTIVE_WORKSPACE_KEY =
     ACTIVE_WORKSPACE_KEY;
+  client.ACTIVE_COMPANY_KEY =
+    ACTIVE_WORKSPACE_KEY;
+  client.companyContext =
+    companyContext;
 
   globalObject.AvanCloud = client;
+  globalObject.AvanCompanyContext = companyContext;
 
   return client;
 }

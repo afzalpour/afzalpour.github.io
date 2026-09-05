@@ -3,6 +3,7 @@
 import { installAvanCloud } from './src/infrastructure/supabase/avan-cloud-bootstrap.js';
 
 const cloud = installAvanCloud();
+const companyContext = cloud.companyContext;
 const content = document.getElementById('content');
 const pageTitle = document.getElementById('pageTitle');
 
@@ -18,7 +19,7 @@ const ACTION_FA = Object.freeze({
   post: 'ثبت قطعی',
   upload: 'بارگذاری',
   save_draft: 'ذخیره پیش‌نویس',
-  bootstrap: 'ایجاد فضای مالی',
+  bootstrap: 'ایجاد شرکت',
   reverse: 'سند برگشتی',
   workspace_print_profile_changed: 'تغییر مشخصات شرکت',
   money_display_unit_changed: 'تغییر واحد نمایش پول',
@@ -32,12 +33,12 @@ const ENTITY_FA = Object.freeze({
   document: 'سند هوشمند',
   journal_entry: 'سند حسابداری',
   invoice: 'فاکتور',
-  workspace: 'فضای مالی',
+  workspace: 'شرکت',
   workspace_print_profile: 'مشخصات شرکت',
-  workspace_settings: 'تنظیمات',
+  workspace_settings: 'تنظیمات شرکت',
   fiscal_period: 'دوره مالی',
   workspace_invitation: 'دعوت کاربر',
-  workspace_member: 'عضو فضای مالی'
+  workspace_member: 'عضو شرکت'
 });
 
 const CATEGORY_ACTIONS = Object.freeze({
@@ -124,7 +125,7 @@ function cardShell() {
       <div class="section-head avan-audit-head">
         <div>
           <h2>گزارش فعالیت</h2>
-          <span class="muted">آخرین رویدادهای ثبت‌شده در فضای مالی، فقط به‌صورت خواندنی</span>
+          <span class="muted">آخرین رویدادهای شرکت فعال، فقط به‌صورت خواندنی</span>
           <small class="muted" id="avanAuditScopeNote"></small>
         </div>
         <button type="button" class="ghost" id="avanAuditRefresh">به‌روزرسانی</button>
@@ -161,7 +162,7 @@ function applyRoleVisibility() {
       );
     }
     if (note) {
-      note.textContent = 'مالک و مدیر: رویدادهای مدیریتی و دسترسی نیز قابل مشاهده‌اند.';
+      note.textContent = 'مالک و مدیر شرکت: رویدادهای مدیریتی و دسترسی نیز قابل مشاهده‌اند.';
     }
     return;
   }
@@ -169,7 +170,7 @@ function applyRoleVisibility() {
   if (accessOption) accessOption.remove();
   if (filter.value === 'access') filter.value = 'all';
   if (note) {
-    note.textContent = 'رویدادهای کاربران، دعوت‌ها و تغییرات دسترسی فقط برای مالک یا مدیر قابل مشاهده‌اند.';
+    note.textContent = 'رویدادهای کاربران، دعوت‌ها و تغییرات دسترسی فقط برای مالک یا مدیر همان شرکت قابل مشاهده‌اند.';
   }
 }
 
@@ -193,15 +194,11 @@ async function resolveContext() {
   currentUser = await cloud.user();
   if (!currentUser?.id) throw new Error('AUTH_REQUIRED');
 
-  const workspaces = await cloud.select(
-    'workspaces',
-    'select=id,name,mode,created_at&order=created_at.asc'
-  );
+  const state = await companyContext.ensure();
+  workspace = state.active_company || null;
+  if (!workspace?.id) throw new Error('COMPANY_REQUIRED');
 
-  workspace = workspaces?.[0] || null;
-  if (!workspace?.id) throw new Error('WORKSPACE_REQUIRED');
-
-  workspaceRole = await cloud.rpc(
+  workspaceRole = workspace.role || await cloud.rpc(
     'workspace_role',
     { wid: workspace.id }
   ) || '';
@@ -218,6 +215,7 @@ async function loadAudit({ forceContext = false } = {}) {
 
   try {
     if (forceContext || !workspace?.id || !currentUser?.id || !workspaceRole) {
+      if (forceContext) await companyContext.refresh({ force: true });
       await resolveContext();
     }
 
@@ -278,7 +276,7 @@ if (content) {
   observer.observe(content, { childList: true });
 }
 
-window.addEventListener('avan:workspace-changed', () => {
+window.addEventListener('avan:company-context-changed', () => {
   workspace = null;
   workspaceRole = '';
   rows = [];

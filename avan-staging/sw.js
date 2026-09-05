@@ -1,5 +1,5 @@
 const CACHE_PREFIX='avan-staging-rc1-';
-const CACHE='avan-staging-rc1-v34';
+const CACHE='avan-staging-rc1-v35';
 const ASSETS=[
 './',
 './index.html',
@@ -52,6 +52,7 @@ const ASSETS=[
 './src/infrastructure/supabase/supabase-client.js',
 './src/infrastructure/supabase/avan-cloud-bootstrap.js',
 './src/application/auth/auth-controller.js',
+'./src/application/company/company-context.js',
 './src/ui/auth/auth-view.js',
 './src/reports/why-number.js',
 './src/reports/party-aging.js',
