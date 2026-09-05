@@ -54,6 +54,13 @@ export function setAuthMode(mode) {
       mode === 'login'
         ? 'current-password'
         : 'new-password';
+
+    // Keep historical logins compatible while enforcing the
+    // stronger minimum for newly created accounts.
+    authPassword.minLength =
+      mode === 'login'
+        ? 6
+        : 8;
   }
 
   if (authStatus) {
