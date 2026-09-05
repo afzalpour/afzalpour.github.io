@@ -1,6 +1,6 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: پس از Live PASS شدن **RC1.2-B** و ایجاد ADR Registry.
+آخرین به‌روزرسانی مرجع: پس از Merge شدن **RC1.2-CF (OCR Freeze)** و **RC1.2-D (Print & Export)**. آخرین Live Gate پاس‌شده توسط کاربر همچنان **RC1.2-B** است؛ CF و D هنوز نیازمند Live Gate هستند.
 
 این فایل وضعیت جاری پروژه است و باید بعد از هر Gate پاس‌شده یا تغییر معماری مهم به‌روزرسانی شود.
 
@@ -23,24 +23,23 @@ Repository فعال:
 ساختار:
 - Root = Production فعلی/مسیر انتشار اصلی.
 - `avan-staging/` = محیط Staging برای توسعه و Gate.
-- `docs/adr/` = Architecture Decision Record registry و تاریخچه تصمیم‌های بنیادی.
+- `docs/adr/` = Architecture Decision Record registry.
 
 Workflow:
 - تغییرات ابتدا در Staging.
-- Branch → PR → Merge به `main`.
-- GitHub Pages استیجینگ را از تغییرات منتشر می‌کند.
+- Branch → PR → Diff/Review → Merge به `main`.
 - Production/root فقط پس از Gateها و Regression نهایی promote می‌شود.
 
-آخرین Merge کد UI شناخته‌شده:
-- RC1.2-B merge SHA: `bafdfe4b49b8a4d9b44305997abf452a3490fd80`
-
-پس از آن اسناد مرجع پروژه و ADR Registry روی main اضافه شده‌اند.
-
-Project Constitution / Source of Truth:
+Project Source of Truth:
 - `AVAN_MASTER_PROMPT.md`
 - `AVAN_CURRENT_STATE.md`
 - `docs/adr/README.md` + ADRهای Accepted
 - Repository + نتیجه Live Gate کاربر
+
+Latest important merges:
+- RC1.2-B Premium UI: `bafdfe4b49b8a4d9b44305997abf452a3490fd80` — LIVE PASS.
+- RC1.2-CF OCR Freeze: PR #17, merge `4ef379adab06f6aef576cd6dd528974b7958083b` — awaiting Live Gate.
+- RC1.2-D Print & Export: PR #18, merge `2e8e8fe59765f824910187d5634d5f0d94daf0b1` — awaiting Live Gate.
 
 ---
 
@@ -55,10 +54,14 @@ Project Constitution / Source of Truth:
 - RC1.1-D User Administration — PASS
 - Gate E: Owner changing another user password — live confirmed; سایر refinementها به F منتقل شدند.
 - RC1.1-F UX Cleanup — PASS
-- RC1.2-A Professional Visual System — design direction accepted and superseded/refined by B
+- RC1.2-A Professional Visual System — direction accepted and refined by B
 - **RC1.2-B Premium polish + Persian cleanup + account tree colors — LIVE PASS**
 
-هیچ Gate بعدی را پاس‌شده فرض نکن تا کاربر صریحاً تایید کند.
+Pending Live Gates:
+- **RC1.2-CF — Smart Documents Viewer + OCR Freeze**
+- **RC1.2-D — Print & Export Center**
+
+هیچ Gate pending را پاس‌شده فرض نکن تا کاربر صریحاً تایید کند.
 
 ---
 
@@ -80,12 +83,11 @@ Project Constitution / Source of Truth:
 Health snapshot تاریخی تاییدشده:
 - Accounts: 18
 - Cash/Bank: 2
-- Posted/Reversed docs: در طول تست‌ها افزایش یافته و در RC1.2-B UI فارسی شده است.
-- orphan lines: 0
+- orphan journal lines: 0
 - closed period: 0 در snapshot قبلی
 - visible workspace: 1 برای سناریوی اصلی پس از workspace suppression
 
-این اعداد snapshot هستند؛ برای تصمیم‌های جدید health live را دوباره بخوان.
+اعداد Health snapshot هستند؛ برای تصمیم‌های جدید live health را دوباره بخوان.
 
 ADRهای مستقیم مرتبط:
 - ADR-0001 Canonical Ledger Toman
@@ -96,22 +98,14 @@ ADRهای مستقیم مرتبط:
 
 ## 4) Money / Currency
 
-Gate A:
-- ورودی پول با جداکننده هزارگان.
-- normalize ارقام فارسی/عربی/لاتین.
-- amount-in-words.
-- canonical raw integer submission.
-
-Gate B/C:
 - Canonical Ledger = integer Toman.
-- Rial نمایش = ×10.
+- Rial display = Toman × 10.
 - Rial submit = /10 با divisibility guard.
-- بدون rewrite داده تاریخی.
-- unit density کنترل‌شده؛ تکرار واحد از UI حذف شده است.
-
-Preference:
-- per-user/per-workspace Cloud preference از `workspace_user_preferences`.
-- RPC:
+- بدون Rewrite/Reinterpret داده تاریخی.
+- Thousands separator + Persian/Arabic/Latin digit normalization.
+- Amount-in-words فعال.
+- واحد نمایش per-user/per-workspace و Cloud-backed در `workspace_user_preferences`.
+- RPCهای preference:
   - `get_my_money_display_unit(wid)`
   - `set_my_money_display_unit(wid,p_unit)`
 
@@ -120,27 +114,26 @@ Preference:
 ## 5) Users / Access / Workspace
 
 UI roles:
-- مالک = owner
-- مدیر = manager
-- حسابدار = accountant
-- viewer legacy only
+- owner = مالک
+- manager = مدیر
+- accountant = حسابدار
+- viewer = legacy/display only
 
 Security:
 - browser mutation مستقیم workspace_members ممنوع.
 - RPC امن برای مدیریت اعضا.
 - last active Owner protected.
 - primary owner protected where applicable.
-- invitation flow برای existing auth user و pending invitation.
-- claim_workspace_invitations() در login flow.
+- invitation + `claim_workspace_invitations()` flow موجود.
 
-Multi-workspace behavior:
+Multi-workspace:
 - session key: `avan.active_workspace_id`
-- only session preference, not financial data.
-- Gate F، Workspace شخصی پیش‌فرض `فضای مالی من` را برای کاربری که shared non-owner workspace دارد از context عملیاتی suppress می‌کند؛ بدون حذف داده.
-- multi-company واقعی حفظ شده است.
+- فقط UI/session preference؛ نه داده مالی.
+- Workspace شخصی پیش‌فرض برای کاربری که shared non-owner workspace دارد از context عملیاتی suppress می‌شود؛ داده حذف نمی‌شود.
+- Multi-company واقعی باید حفظ شود.
 
 ADR مرتبط:
-- ADR-0011 Preserve Multi-workspace → Multi-company
+- ADR-0011 Multi-workspace → Multi-company
 
 ---
 
@@ -152,14 +145,14 @@ Owner → other user password:
 - service role server-side only.
 
 Self password:
-- Settings → `تغییر رمز من`
-- re-auth با current password و سپس update password با user-scoped auth.
+- Settings → تغییر رمز من
+- re-auth با current password + user-scoped update password.
 - Gate F passed.
 
-Unresolved operational item:
+Unresolved production item:
 - Password recovery email historically دریافت نمی‌شد.
 - custom domain فعلاً وجود ندارد.
-- SMTP / Auth redirect / email template باید قبل از Production نهایی حل شود.
+- SMTP / Auth redirect / email template قبل از Production نهایی باید کامل شوند.
 
 ---
 
@@ -167,120 +160,148 @@ Unresolved operational item:
 
 RC1.2-A:
 - Vazirmatn variable font + iOS/macOS/Windows fallback.
-- dark desktop finance sidebar.
-- light content area.
-- modern KPI/cards/tables/forms/modals/mobile bottom nav.
-- PWA cache v11.
+- dark finance sidebar.
+- modern cards/tables/forms/modals/mobile bottom nav.
 
 RC1.2-B LIVE PASS:
-- warm ivory/premium finance canvas.
+- warm ivory/premium canvas.
 - richer KPI and section cards.
 - limited gold accent.
-- refined forms/tables/tabs/modals/buttons.
-- semantic finance status colors preserved.
-- report copy cleanup.
-- Settings copy cleanup.
-- account tree branch coloring.
-- PWA cache v12.
+- semantic finance colors preserved.
+- Report/Settings copy cleanup.
+- account tree deterministic branch colors + on/off toggle.
 
-UI copy changes in B:
-- زیر «از آوان بپرس» دو متن فنی اضافی حذف شد.
-- `محل ذخیره` حذف شد.
+UI copy fixed:
+- extra technical text under «از آوان بپرس» removed.
+- `محل ذخیره` removed.
 - `سلامت Core` → `سلامت سیستم`.
-- `اسناد Posted/Reversed` → `اسناد ثبت‌شده/برگشتی`.
-- `Workspace قابل مشاهده` → `فضاهای مالی قابل مشاهده`.
-- `دوره بسته` → `دوره‌های بسته`.
-
-Account tree:
-- deterministic color family per top-level branch.
-- descendants inherit same Hue with lighter intensity.
-- session-level UI toggle روشن/خاموش.
-- no DB schema or financial data change.
+- Posted/Reversed/Workspace/closed-period labels Persianized in final UI layer.
 
 ---
 
-## 8) Smart Documents / OCR — CURRENT NEXT PROBLEM
+## 8) Smart Documents / Viewer / OCR
 
-فعلاً این بخش مشکل عملیاتی دارد:
-- OCR خروجی قابل اعتماد نیست.
-- تصویر به‌درستی render نمی‌شود.
-
-Current architecture:
+### Stable parts
 - private storage bucket: `avan-documents`.
-- allowed: JPG/PNG/WEBP/PDF up to 10MB.
-- signed URL برای مشاهده فایل.
-- local OCR runtime:
-  - Tesseract.js
-  - PDF.js
-  - languages fas + eng
-- preprocess image + multiple OCR passes + critical date/amount bands.
-- review → accounting draft → link to Ledger flow وجود دارد.
+- JPG/PNG/WEBP/PDF up to 10MB.
+- temporary Signed URL for original source.
+- internal Image/PDF Viewer from RC1.2-C:
+  - image display
+  - browser orientation handling
+  - zoom / rotate / fit
+  - PDF.js canvas rendering
+  - multi-page PDF navigation
+- Manual Review → Accounting Draft → Human-controlled Ledger Link remains active.
+- Original source file is preserved.
 
-**Next Gate قطعی:**
-### RC1.2-C — Smart Document Viewer + OCR Reliability
+### OCR history
+Several staging iterations were merged and live-feedback-driven:
+- RC1.2-C base viewer/OCR
+- C.1 return-to-documents fix
+- C.2 receipt-aware OCR
+- C.3 structured receipt fields
+- C.4 amount/date recovery
+- C.4.1 review handoff
+- C.4.2 RTL structured handoff
+- C.4.3 focused receipt OCR / safe delete infrastructure
 
-ترتیب C:
-1. اول Viewer/Renderer منبع را اصلاح کن.
-2. image EXIF/orientation/rotation.
-3. correct aspect ratio, contain/fit, zoom/pan.
-4. PDF renderer مستقل و قابل اعتماد.
-5. سپس OCR quality را روی منبع صحیح ارزیابی کن.
-6. structured extraction/date/amount confidence را تقویت کن.
-7. هیچ OCR result مستقیم Posting نشود؛ Human review حفظ شود.
+Despite Tesseract.js tuning, real Persian receipt Amount/Date extraction remained insufficiently reliable for a financial product.
 
-تا RC1.2-C Live PASS نشده، D را پاس‌شده فرض نکن.
+### Current decision — OCR FREEZE
+ADR-0013 is Accepted:
+- Browser-local OCR is **frozen** and removed from the normal user workflow.
+- Existing extracted historical data is preserved.
+- Existing OCR runtime files v2-v8 are retained for rollback/research, not primary use.
+- Normal flow is now: Upload → View Original → Manual Review → Accounting Draft → Human Approval/Link.
+- Future OCR reactivation requires a new ADR + representative Persian document benchmark + field-level confidence.
+- Preferred future direction: evaluate reliable server/provider document intelligence rather than adding more receipt-specific browser heuristics.
 
-ADR مرتبط:
-- ADR-0009 Smart Documents OCR Review Pipeline
+RC1.2-CF code merged:
+- PR #17
+- Merge: `4ef379adab06f6aef576cd6dd528974b7958083b`
+- PWA cache v22
+- Gate file: `avan-staging/RC1_2_CF_GATE.md`
+
+**Status: awaiting Live Gate.**
+Pass phrase: `Gate RC1.2-CF پاس شد`
+
+Relevant ADRs:
+- ADR-0009 Smart Documents Preserve Originals + Human Review
+- ADR-0013 Freeze Browser-local OCR
 
 ---
 
-## 9) Print / Export — AFTER C
+## 9) Print / Export Center
 
-### RC1.2-D — Print & Export Center
+RC1.2-D is implemented and merged to Staging.
 
-نیاز تاییدشده کاربر:
-- گزارش‌ها چاپ/ذخیره ندارند.
-- اسناد حسابداری چاپ/ذخیره ندارند.
-- فاکتورها چاپ/ذخیره ندارند.
-- اسناد هوشمند چاپ/ذخیره اصل فایل ندارند.
+Capabilities:
+- Shared print/export engine; no separate incompatible implementation per module.
+- Reports:
+  - Print / Save as PDF through RTL A4 print window.
+  - CSV export with UTF-8 BOM for Excel/Numbers.
+  - table-based reports → rows/columns.
+  - KPI-only reports → metric/value CSV.
+- Invoice detail:
+  - `چاپ / ذخیره PDF` in read-only detail modal.
+- Journal detail:
+  - `چاپ / ذخیره PDF` in read-only detail modal.
+- Invoice/Journal list pages:
+  - print current list / PDF.
+- Smart Document Viewer:
+  - download original file.
+  - print original image.
+  - PDF original opens in signed original tab for browser Print/Save PDF.
+- Print output:
+  - A4
+  - RTL
+  - Vazirmatn + fallback
+  - stable tables
+  - repeated table header
+  - page-break controls
+  - UI buttons/actions removed from print output.
 
-هدف:
-- shared Print Template System.
-- Reports: Print/PDF + CSV/Excel.
-- Invoice: professional A4 PDF/Print.
-- Journal: professional A4 print/PDF.
-- Smart documents: view/download/print original.
-- RTL, Persian font, page breaks, page number, active currency.
+Implementation files:
+- `avan-staging/rc12-print-export.js`
+- `avan-staging/rc12-print-export.css`
+- `avan-staging/RC1_2_D_GATE.md`
 
-ADR مرتبط:
+Merge:
+- PR #18
+- `2e8e8fe59765f824910187d5634d5f0d94daf0b1`
+- PWA cache v23
+
+**Status: awaiting Live Gate.**
+Pass phrase: `Gate RC1.2-D پاس شد`
+
+ADR:
 - ADR-0008 Unified Print and Export System
 
 ---
 
-## 10) Professional Document Templates — AFTER D
+## 10) Professional Document Templates — NEXT AFTER D PASS
 
 ### RC1.2-E
-- قالب A4 حرفه‌ای.
-- نام/لوگو/اطلاعات شرکت.
-- مشخصات فروشنده/خریدار در حد نیاز.
-- اطلاعات مالیاتی مورد نیاز.
-- page headers/footers.
+هدف:
+- professional A4 templates on top of the shared D engine.
+- Company name/logo/contact/tax identity.
+- seller/buyer information where appropriate.
+- official invoice/journal header/footer.
+- page number / document metadata.
+- company identity centralized, not duplicated.
 
-این مرحله به Company Settings آینده متصل است.
+This stage connects to Company Settings / Company Profile.
+
+Do not mark E started/passed until D Live Gate is confirmed unless the user explicitly asks to bypass Gate discipline.
 
 ---
 
 ## 11) Mobile / iPhone
 
-فونت قدیمی IRAN fallback مشکل داشت؛ Vazirmatn در RC1.2-A اضافه شد.
-
-بعد از Print/OCR:
+After D/E:
 ### RC1.2-F — Mobile/iPhone final UX regression
 - Safari/iPhone typography.
-- forms.
-- modal.
-- bottom nav.
+- forms/modal/bottom nav.
 - wide tables.
 - document viewer.
 - print/share/download flows.
@@ -288,9 +309,9 @@ ADR مرتبط:
 
 ---
 
-## 12) Product Vision — ماژول‌های آینده تاییدشده
+## 12) Product Vision — official future roadmap
 
-کاربر تاکید کرده آوان باید یکی از بهترین و هوشمندترین محصولات بازار باشد و قابلیت‌های زیر بخشی از Roadmap رسمی هستند:
+User explicitly requires Avan to become one of the best and smartest products in its category; the following remain official roadmap, not optional ideas.
 
 ### Finance Intelligence
 - CFO Autopilot
@@ -304,8 +325,8 @@ ADR مرتبط:
 - duplicate detection
 - unusual amount
 - integrity checks
-- anomalous behavior/pattern
-- period/control risk
+- anomaly/pattern detection
+- period/control risks
 - explainable evidence
 
 ### Collection Agent
@@ -323,7 +344,7 @@ ADR مرتبط:
 - draft adjustments with human approval
 
 ### AI Accounting
-- document OCR
+- future reliable document OCR / structured extraction
 - document classification
 - party recognition
 - account suggestion
@@ -331,105 +352,88 @@ ADR مرتبط:
 - accounting draft
 - human-controlled posting
 
-AI architecture ADR:
-- ADR-0005 Explainable, Ledger-grounded, Human-controlled AI
-
 ### Voice AI
-- Persian speech-to-text.
-- voice commands to create Draft transactions/invoices/reports.
-- voice management questions.
-- voice response.
-- optional user-voice cloning only with explicit opt-in/consent and never as financial authentication.
-
-ADR مرتبط:
-- ADR-0010 Voice AI Consent and Safety
+- Persian speech-to-text
+- voice commands for Draft transactions/invoices/reports
+- management voice questions
+- voice response
+- optional user-voice cloning only with explicit opt-in/consent; never financial authentication
 
 ### Inventory
-- Stock Ledger / movement-based architecture.
-- products/services.
-- warehouses.
-- receipts/issues/transfers/adjustments/returns.
-- real-time and historical stock.
-- reorder alerts.
-- costing.
-- accounting integration.
-
-ADR مرتبط:
-- ADR-0006 Inventory Stock Ledger
+- Stock Ledger / movement-based architecture
+- products/services
+- warehouses
+- receipts/issues/transfers/adjustments/returns
+- historical/realtime stock
+- reorder alerts
+- costing
+- accounting integration
 
 ### Sales / Purchase
-- quote/proforma.
-- order.
-- purchase/sales invoices.
-- return/discount/settlement.
-- AR/AP + inventory + tax + Ledger integration.
+- quote/proforma
+- order
+- purchase/sales invoices
+- returns/discount/settlement
+- AR/AP + inventory + tax + Ledger integration
 
 ### Tax
-- VAT/tax profiles.
-- product/party mapping.
-- electronic invoice / Iranian taxpayer-system requirements according to current law when implemented.
-- pre-validation, status tracking, audit, error/retry.
-- rules must be versioned/configurable.
+- VAT/tax profiles
+- product/party mapping
+- electronic invoice / Iranian taxpayer-system requirements using current law at implementation time
+- pre-validation/status/audit/retry
+- rules versioned/configurable
 
-ADR مرتبط:
-- ADR-0007 Versioned Tax Rules
-
-### Treasury
-- cash/bank.
-- cheques.
-- maturities.
-- bank reconciliation.
-
-### Bank AI
-- transaction import/API where feasible.
-- automatic matching.
-- internal transfer detection.
-- unmatched queue.
-- confidence score.
+### Treasury / Bank AI
+- cash/bank/cheques/maturities
+- bank reconciliation
+- transaction import/API where feasible
+- auto matching
+- internal transfer detection
+- unmatched queue + confidence
 
 ### Payroll
-- employee/payroll/benefit/deduction/insurance/tax/accounting posting.
+- employee/payroll/benefit/deduction/insurance/tax/accounting posting
 
 ### Fixed Assets
-- asset register/depreciation/disposal/accounting.
+- asset register/depreciation/disposal/accounting
 
 ### Workflow
-- approval chains.
-- role/amount/type limits.
+- approval chains
+- role/amount/type limits
 
 ### Multi-company / Branch
-- true isolation.
-- consolidated reporting later.
+- true isolation
+- consolidated reporting later
 
 ### Integrations
-- banks, POS, e-commerce, Excel/CSV, external APIs.
+- banks, POS, e-commerce, Excel/CSV, external APIs
 
 ---
 
 ## 13) Production Roadmap
 
-بعد از RC1.2-C/D/E/F:
+After RC1.2-D/E/F:
 - RC1.3-A: Auth recovery / SMTP / redirect production readiness.
 - RC1.3-B: Company profile / logo / tax identity.
 - RC1.3-C: operational controls, backup/restore strategy, audit log UX, session/recovery.
 - RC1.3-D: full regression.
 - RC1.3-RC: feature freeze, blocker/critical fixes only.
 - Production promotion.
-- custom domain + final auth/email/branding configuration بعد از تهیه دامنه.
+- custom domain + final auth/email/branding configuration after domain acquisition.
 
-پس از Core production-ready، توسعه Intelligence/Inventory/Tax/Treasury/Voice به‌صورت staged module gates ادامه یابد.
+After Core is production-ready, continue staged Intelligence/Inventory/Tax/Treasury/Voice modules.
 
 ---
 
 ## 14) Architecture Decision Registry
 
-ADR Index:
+Index:
 - `docs/adr/README.md`
 
 Template:
 - `docs/adr/ADR_TEMPLATE.md`
 
-Accepted ADRs در شروع این Registry:
+Accepted ADRs:
 - ADR-0001 Canonical Ledger = integer Toman
 - ADR-0002 Journal Lifecycle and Posted Immutability
 - ADR-0003 Workspace + RLS Security Boundary
@@ -438,17 +442,27 @@ Accepted ADRs در شروع این Registry:
 - ADR-0006 Inventory Stock Ledger
 - ADR-0007 Versioned Tax Rules
 - ADR-0008 Unified Print/Export
-- ADR-0009 Smart Documents OCR Review Pipeline
+- ADR-0009 Smart Documents Preserve Originals + Human Review
 - ADR-0010 Voice AI Consent and Safety
 - ADR-0011 Multi-workspace → Multi-company
 - ADR-0012 Project Source of Truth
+- ADR-0013 Freeze Browser-local OCR
 
-قاعده: ADR Accepted را حذف یا silently violate نکن. تغییر تصمیم بنیادی با ADR جدید و `Supersedes` انجام شود.
+Rule: Accepted ADRs are not silently violated. Fundamental changes require a new ADR and explicit supersession where applicable.
 
 ---
 
 ## 15) Immediate Next Action
 
-**همین حالا گام بعدی پروژه: RC1.2-C — اصلاح کامل Smart Document Viewer و OCR.**
+Current code is already merged for CF and D.
 
-Assistant باید این مرحله را خودش در GitHub پیاده‌سازی کند، Branch/PR/Diff را مدیریت کند و فقط Live Gate را به کاربر بسپارد، مگر اقدام Supabase غیرقابل انجام بدون دسترسی مستقیم لازم شود.
+### User Live Gate now
+1. Hard Refresh Staging.
+2. Run `avan-staging/RC1_2_CF_GATE.md`.
+3. Run `avan-staging/RC1_2_D_GATE.md`.
+
+Do not call either gate PASS until the user explicitly confirms it.
+
+If both pass, the next implementation is:
+
+**RC1.2-E — Professional A4 Templates + Company Identity foundation.**
