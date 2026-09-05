@@ -1,0 +1,68 @@
+/* RC1.3-MT-B — Company lifecycle / onboarding */
+.avan-company-portfolio-foot{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.avan-create-company-button{
+  margin-inline-start:auto;
+}
+
+.avan-rename-company-button{
+  white-space:nowrap;
+}
+
+.avan-company-onboarding h2{
+  margin:6px 0 4px;
+}
+
+.avan-company-onboarding>p{
+  margin:0 0 16px;
+}
+
+.avan-onboarding-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.avan-onboarding-wide{
+  grid-column:1/-1;
+}
+
+.avan-onboarding-note{
+  margin-top:14px;
+}
+
+.avan-company-onboarding .form-actions{
+  margin-top:16px;
+}
+
+#avanCreateCompanyStatus,
+#avanRenameCompanyStatus{
+  margin-top:12px;
+}
+
+@media(max-width:620px){
+  .avan-onboarding-grid{
+    grid-template-columns:1fr;
+  }
+
+  .avan-onboarding-wide{
+    grid-column:auto;
+  }
+
+  .avan-create-company-button{
+    width:100%;
+    margin-inline-start:0;
+  }
+
+  .avan-company-portfolio-card>.avan-rename-company-button,
+  .avan-company-portfolio-card>[data-enter-company]{
+    grid-column:1/-1;
+    width:100%;
+    min-height:44px;
+  }
+}
