@@ -1,6 +1,6 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: 2026-09-05، پس از **Live PASS شدن RC1.3-MT-P3** و Merge شدن **RC1.3-MT-C Module Boundary Cleanup** در انتظار Live Gate.
+آخرین به‌روزرسانی مرجع: 2026-09-05، پس از **Live PASS شدن RC1.3-MT-C Module Boundary Cleanup**.
 
 این فایل Source of Truth وضعیت جاری پروژه است. Gate فقط با تایید صریح کاربر PASS می‌شود.
 
@@ -25,12 +25,13 @@ Repository: `afzalpour/afzalpour.github.io`
 - RC1.3-MT-B — PASS
 - RC1.3-MT-P1.1 — PASS
 - RC1.3-MT-P2 — PASS
-- **RC1.3-MT-P3 — PASS**
+- RC1.3-MT-P3 — PASS
+- **RC1.3-MT-C — PASS**
 
 Retained but not exact Gate phrase: RC1.2-D.1 and RC1.3-A1 recovery success.
 
 Current phase:
-- **RC1.3-MT-C — MERGED / awaiting Live Gate**
+- **Operational / Security Completion**
 
 ## 3) Latest important merges
 - PR #29 ADR-0014: `8a8723ba28f0bed82b39bbc1ade93e1361ef87b8`
@@ -119,7 +120,7 @@ Security model:
 
 User explicitly confirmed: `Gate RC1.3-MT-P3 پاس شد`.
 
-## 11) MT-C — MERGED / AWAITING LIVE GATE
+## 11) MT-C — LIVE PASS
 PR #37 merge: `c6d3194d4bc309f3d7357afb02b8f59444748f57`
 Gate: `avan-staging/RC1_3_MT_C_GATE.md`
 
@@ -136,7 +137,7 @@ Implemented boundary cleanup:
 - No SQL/RLS/Ledger/Posting/Reversal/Money schema behavior changed.
 - PWA cache v41.
 
-Live Gate must verify synchronized Company switch across Dashboard/Accounts/Invoices/Documents/Reports/Currency/Profile/Access/Audit, no legacy Workspace switcher, suspended Tenant block, Company lifecycle regression, Platform/Support separation and iPhone behavior.
+User explicitly confirmed: `Gate RC1.3-MT-C پاس شد`.
 
 ## 12) Auth / Security backlog before Production
 Working:
@@ -156,10 +157,7 @@ Supported flow:
 `Upload → Private original → Internal Viewer → Manual Review → Accounting Draft → Human Approval → Ledger Link`
 
 ## 14) Immediate roadmap before Production
-### Current
-**RC1.3-MT-C — Live Gate pending**
-
-### After MT-C PASS: Operational / Security completion
+### Current: Operational / Security completion
 - backup/restore strategy and restore drill.
 - session controls.
 - leaked-password protection review.
