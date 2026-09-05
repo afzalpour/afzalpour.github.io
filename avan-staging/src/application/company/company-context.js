@@ -71,7 +71,21 @@ export function createCompanyContext({
     return rows.filter(row => row?.id);
   }
 
-  function resolveActiveId(rows) {
+  function reorderById(rows, activeId) {
+    const items = normalizeRows(rows);
+    if (!activeId) return items;
+
+    const index = items.findIndex(item => item.id === activeId);
+    if (index <= 0) return items;
+
+    return [
+      items[index],
+      ...items.slice(0, index),
+      ...items.slice(index + 1)
+    ];
+  }
+
+  function resolveFullActiveId(rows) {
     const items = normalizeRows(rows);
     const preferred = storedId();
 
@@ -90,22 +104,10 @@ export function createCompanyContext({
   }
 
   function orderWorkspaces(rows) {
-    const items = normalizeRows(rows);
-    const activeId = resolveActiveId(items);
-
-    state.activeId = activeId;
-    state.selectionRequired = items.length > 1 && !activeId;
-
-    if (!activeId) return items;
-
-    const index = items.findIndex(item => item.id === activeId);
-    if (index <= 0) return items;
-
-    return [
-      items[index],
-      ...items.slice(0, index),
-      ...items.slice(index + 1)
-    ];
+    // Compatibility facade can receive partial queries such as `limit=1`.
+    // It may reorder a known preferred Company, but it must NEVER validate,
+    // clear or invent tenant state from a partial result set.
+    return reorderById(rows, storedId());
   }
 
   async function enrich(workspace) {
@@ -139,6 +141,13 @@ export function createCompanyContext({
 
   async function refresh({ force = false } = {}) {
     if (refreshPromise && !force) return refreshPromise;
+    if (refreshPromise && force) {
+      try {
+        await refreshPromise;
+      } catch {
+        // Force refresh below gets one clean retry.
+      }
+    }
 
     refreshPromise = (async () => {
       state.loading = true;
@@ -155,13 +164,14 @@ export function createCompanyContext({
         }
 
         const rawRows = normalizeRows(await listWorkspaces());
-        const orderedRows = orderWorkspaces(rawRows);
+        const activeId = resolveFullActiveId(rawRows);
+        const orderedRows = reorderById(rawRows, activeId);
         const companies = await Promise.all(orderedRows.map(enrich));
 
         state.userId = user.id;
         state.companies = companies;
-        state.activeId = resolveActiveId(companies);
-        state.selectionRequired = companies.length > 1 && !state.activeId;
+        state.activeId = activeId;
+        state.selectionRequired = companies.length > 1 && !activeId;
         state.ready = true;
 
         return cloneState(state);
@@ -192,7 +202,13 @@ export function createCompanyContext({
   }
 
   async function ensure() {
-    if (!state.ready) await refresh();
+    const user = await client.user();
+    const userId = user?.id || null;
+
+    if (!state.ready || userId !== state.userId) {
+      await refresh({ force: true });
+    }
+
     return snapshot();
   }
 
@@ -200,9 +216,7 @@ export function createCompanyContext({
     const id = String(companyId || '').trim();
     if (!id) throw new Error('COMPANY_REQUIRED');
 
-    if (!state.ready || !state.companies.length) {
-      await refresh({ force: true });
-    }
+    await ensure();
 
     const target = state.companies.find(company => company.id === id);
     if (!target) {
