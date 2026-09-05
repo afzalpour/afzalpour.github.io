@@ -7,6 +7,11 @@ const cloud = installAvanCloud();
 const BUCKET = 'avan-branding';
 const MAX_LOGO_SIZE = 2 * 1024 * 1024;
 const LOGO_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
+const ENTITY_TYPE_FA = Object.freeze({
+  individual: 'حقیقی',
+  legal: 'حقوقی',
+  other: 'سایر'
+});
 
 let workspace = null;
 let role = '';
@@ -60,6 +65,7 @@ function profileSnapshot() {
     workspace_name: workspace?.name || '',
     display_name: p.display_name || workspace?.name || '',
     legal_name: p.legal_name || '',
+    entity_type: p.entity_type || '',
     registration_no: p.registration_no || '',
     national_id: p.national_id || '',
     economic_code: p.economic_code || '',
@@ -67,7 +73,10 @@ function profileSnapshot() {
     phone: p.phone || '',
     email: p.email || '',
     postal_code: p.postal_code || '',
+    province: p.province || '',
+    city: p.city || '',
     address: p.address || '',
+    invoice_footer: p.invoice_footer || '',
     logo_path: p.logo_path || '',
     logo_url: logoUrl || ''
   });
@@ -81,6 +90,7 @@ function stateKey() {
     p.workspace_id,
     p.display_name,
     p.legal_name,
+    p.entity_type,
     p.registration_no,
     p.national_id,
     p.economic_code,
@@ -88,7 +98,10 @@ function stateKey() {
     p.phone,
     p.email,
     p.postal_code,
+    p.province,
+    p.city,
     p.address,
+    p.invoice_footer,
     p.logo_path,
     p.logo_url
   ]);
@@ -156,18 +169,35 @@ function field(label, name, value, extra = '') {
   `;
 }
 
+function selectField(label, name, value, options) {
+  return `
+    <div class="field">
+      <label>${esc(label)}</label>
+      <select name="${esc(name)}">
+        <option value="">انتخاب نشده</option>
+        ${options.map(([key, title]) => `
+          <option value="${esc(key)}" ${key === value ? 'selected' : ''}>${esc(title)}</option>
+        `).join('')}
+      </select>
+    </div>
+  `;
+}
+
 function identitySummary(p) {
+  const location = [p.province, p.city].filter(Boolean).join('، ');
   const items = [
     p.legal_name,
+    p.entity_type ? `نوع شخصیت: ${ENTITY_TYPE_FA[p.entity_type] || p.entity_type}` : '',
     p.national_id ? `شناسه ملی: ${p.national_id}` : '',
     p.economic_code ? `کد اقتصادی: ${p.economic_code}` : '',
     p.phone ? `تلفن: ${p.phone}` : '',
+    location,
     p.address
   ].filter(Boolean);
 
   return items.length
     ? items.map(item => `<span>${esc(item)}</span>`).join('')
-    : '<span class="muted">هنوز اطلاعات تکمیلی چاپ ثبت نشده است.</span>';
+    : '<span class="muted">هنوز اطلاعات تکمیلی شرکت ثبت نشده است.</span>';
 }
 
 function settingsCardHtml() {
@@ -179,12 +209,12 @@ function settingsCardHtml() {
       <section class="section card avan-company-profile-card" data-avan-company-profile>
         <div class="section-head">
           <div>
-            <h2>هویت شرکت در چاپ</h2>
-            <span class="muted">نام، لوگو و اطلاعات رسمی برای قالب‌های A4</span>
+            <h2>مشخصات شرکت و چاپ</h2>
+            <span class="muted">هویت رسمی و تنظیمات پایه خروجی‌های شرکت</span>
           </div>
         </div>
         <div class="error-box">
-          اتصال API هویت شرکت هنوز آماده نیست. اگر Patch مرحله RC1.2-E اجرا شده است،
+          اتصال API مشخصات شرکت هنوز آماده نیست. اگر Patch مرحله RC1.3-B اجرا شده است،
           ممکن است Schema Cache سرویس Supabase هنوز تابع جدید را منتشر نکرده باشد.
         </div>
         <div class="form-actions">
@@ -200,7 +230,7 @@ function settingsCardHtml() {
       <section class="section card avan-company-profile-card" data-avan-company-profile>
         <div class="section-head">
           <div>
-            <h2>هویت شرکت در چاپ</h2>
+            <h2>مشخصات شرکت و چاپ</h2>
             <span class="muted">ویرایش این بخش در اختیار مالک و مدیر است.</span>
           </div>
         </div>
@@ -219,8 +249,8 @@ function settingsCardHtml() {
     <section class="section card avan-company-profile-card" data-avan-company-profile>
       <div class="section-head">
         <div>
-          <h2>هویت شرکت در چاپ</h2>
-          <span class="muted">این اطلاعات در گزارش‌ها، فاکتورها و اسناد چاپی نمایش داده می‌شوند.</span>
+          <h2>مشخصات شرکت و چاپ</h2>
+          <span class="muted">هویت رسمی شرکت و تنظیمات مشترک خروجی‌های A4 و فاکتور.</span>
         </div>
       </div>
 
@@ -236,6 +266,7 @@ function settingsCardHtml() {
         <div class="form-grid">
           ${field('نام نمایشی شرکت', 'display_name', p.display_name || p.workspace_name, 'maxlength="160" required')}
           ${field('نام حقوقی', 'legal_name', p.legal_name, 'maxlength="200"')}
+          ${selectField('نوع شخصیت', 'entity_type', p.entity_type, Object.entries(ENTITY_TYPE_FA))}
           ${field('شماره ثبت', 'registration_no', p.registration_no, 'maxlength="64"')}
           ${field('شناسه ملی', 'national_id', p.national_id, 'maxlength="64" inputmode="numeric"')}
           ${field('کد اقتصادی', 'economic_code', p.economic_code, 'maxlength="64" inputmode="numeric"')}
@@ -243,11 +274,19 @@ function settingsCardHtml() {
           ${field('تلفن', 'phone', p.phone, 'maxlength="64"')}
           ${field('ایمیل', 'email', p.email, 'maxlength="160" type="email"')}
           ${field('کد پستی', 'postal_code', p.postal_code, 'maxlength="32" inputmode="numeric"')}
+          ${field('استان', 'province', p.province, 'maxlength="120"')}
+          ${field('شهر', 'city', p.city, 'maxlength="120"')}
         </div>
 
         <div class="field section">
           <label>آدرس</label>
           <textarea name="address" rows="3" maxlength="600">${esc(p.address)}</textarea>
+        </div>
+
+        <div class="field section">
+          <label>متن ثابت پایین فاکتور</label>
+          <textarea name="invoice_footer" rows="3" maxlength="600" placeholder="مثلاً شرایط پرداخت، تشکر یا توضیح ثابت">${esc(p.invoice_footer)}</textarea>
+          <small>اختیاری است و فقط در چاپ جزئیات فاکتور نمایش داده می‌شود.</small>
         </div>
 
         <div class="avan-company-logo-editor section">
@@ -261,7 +300,7 @@ function settingsCardHtml() {
 
         <div class="form-actions">
           <span class="muted" id="avanCompanyProfileStatus"></span>
-          <button class="primary" id="avanCompanyProfileSave">ذخیره هویت چاپی</button>
+          <button class="primary" id="avanCompanyProfileSave">ذخیره مشخصات شرکت</button>
         </div>
       </form>
     </section>
@@ -276,13 +315,13 @@ async function retryConnection(button, status) {
     await loadProfile(true);
 
     if (patchMissing) {
-      status.textContent = 'RPC هنوز از API قابل مشاهده نیست؛ Recovery SQL باید بررسی شود.';
+      status.textContent = 'RPC هنوز از API قابل مشاهده نیست؛ Migration باید بررسی شود.';
       button.disabled = false;
       return;
     }
 
     await renderSettingsCard({ force: true, ensureLoaded: false });
-    toast('اتصال هویت شرکت برقرار شد.');
+    toast('اتصال مشخصات شرکت برقرار شد.');
   } catch (error) {
     console.warn('[Avan company profile] retry failed', error);
     status.textContent = 'بررسی اتصال انجام نشد.';
@@ -292,7 +331,7 @@ async function retryConnection(button, status) {
 
 async function saveProfile(form) {
   if (!workspace?.id || !['owner', 'manager'].includes(role)) {
-    toast('اجازه ویرایش هویت شرکت را ندارید.');
+    toast('اجازه ویرایش مشخصات شرکت را ندارید.');
     return;
   }
 
@@ -324,6 +363,7 @@ async function saveProfile(form) {
       p_profile: {
         display_name: clean(data.get('display_name')),
         legal_name: clean(data.get('legal_name')),
+        entity_type: clean(data.get('entity_type')),
         registration_no: clean(data.get('registration_no')),
         national_id: clean(data.get('national_id')),
         economic_code: clean(data.get('economic_code')),
@@ -331,7 +371,10 @@ async function saveProfile(form) {
         phone: clean(data.get('phone')),
         email: clean(data.get('email')),
         postal_code: clean(data.get('postal_code')),
+        province: clean(data.get('province')),
+        city: clean(data.get('city')),
         address: clean(data.get('address')),
+        invoice_footer: clean(data.get('invoice_footer')),
         logo_path: newPath
       }
     });
@@ -349,7 +392,7 @@ async function saveProfile(form) {
     window.dispatchEvent(new CustomEvent('avan:company-profile-updated', {
       detail: profileSnapshot()
     }));
-    toast('هویت چاپی شرکت ذخیره شد.');
+    toast('مشخصات شرکت ذخیره شد.');
     await renderSettingsCard({ force: true, ensureLoaded: false });
   } catch (error) {
     if (uploadedPath) {
@@ -368,7 +411,7 @@ async function saveProfile(form) {
           ? 'حجم لوگو باید حداکثر ۲ مگابایت باشد.'
           : 'ذخیره انجام نشد.';
     }
-    toast('ذخیره هویت چاپی انجام نشد.');
+    toast('ذخیره مشخصات شرکت انجام نشد.');
   } finally {
     if (save?.isConnected) save.disabled = false;
   }
