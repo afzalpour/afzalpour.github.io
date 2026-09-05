@@ -1,6 +1,6 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: 2026-09-05، پس از **Live PASS شدن RC1.3-MT-P2** و Merge شدن **RC1.3-MT-P3 Controlled Support Access** در انتظار Live Gate.
+آخرین به‌روزرسانی مرجع: 2026-09-05، پس از **Live PASS شدن RC1.3-MT-P3 Controlled Support Access**.
 
 این فایل Source of Truth وضعیت جاری پروژه است. Gate فقط با تایید صریح کاربر PASS می‌شود.
 
@@ -24,12 +24,13 @@ Repository: `afzalpour/afzalpour.github.io`
 - RC1.3-MT-A — PASS
 - RC1.3-MT-B — PASS
 - RC1.3-MT-P1.1 — PASS
-- **RC1.3-MT-P2 — PASS**
+- RC1.3-MT-P2 — PASS
+- **RC1.3-MT-P3 — PASS**
 
 Retained but not exact Gate phrase: RC1.2-D.1 and RC1.3-A1 recovery success.
 
 Current phase:
-- **RC1.3-MT-P3 — MERGED / awaiting Live Gate**
+- **RC1.3-MT-C — Module Boundary Cleanup**
 
 ## 3) Latest important merges
 - PR #29 ADR-0014: `8a8723ba28f0bed82b39bbc1ade93e1361ef87b8`
@@ -103,7 +104,7 @@ Implemented:
 
 User explicitly confirmed: `Gate RC1.3-MT-P2 پاس شد`.
 
-## 10) MT-P3 — MERGED / AWAITING LIVE GATE
+## 10) MT-P3 — LIVE PASS
 PR #36 merge: `626e3a62a8cbd3f06a728ad86baf08b92927fd95`
 Migration: `rc1_3_mt_p3_controlled_support_access`
 
@@ -135,8 +136,9 @@ UI:
 - Platform Admin creates/opens/revokes Support session from `مدیریت سامانه آوان`.
 - dedicated `support-viewer.html`.
 - Owner/Manager sees `دسترسی پشتیبانی آوان` in Company Settings and can revoke.
-- Gate: `avan-staging/RC1_3_MT_P3_GATE.md`.
 - PWA cache v40.
+
+User explicitly confirmed: `Gate RC1.3-MT-P3 پاس شد`.
 
 ## 11) Auth / Security backlog before Production
 Working:
@@ -157,9 +159,7 @@ Supported flow:
 
 ## 13) Immediate roadmap before Production
 ### Current
-**RC1.3-MT-P3 — Live Gate pending**
-
-### After P3 PASS: RC1.3-MT-C — Module Boundary Cleanup
+**RC1.3-MT-C — Module Boundary Cleanup**
 - inject CompanyContext into remaining legacy modules.
 - remove first-workspace assumptions.
 - progressively remove `ctx.workspace` compatibility alias.
