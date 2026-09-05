@@ -10,6 +10,25 @@ import {
 const ACTIVE_WORKSPACE_KEY =
   'avan.active_workspace_id';
 
+function isSingleWorkspaceQuery(query) {
+  return String(query || '')
+    .split('&')
+    .some(part => part === 'limit=1');
+}
+
+function scopeWorkspaceQueryToId(query, workspaceId) {
+  const parts = String(query || '')
+    .split('&')
+    .filter(Boolean)
+    .filter(part => !part.startsWith('limit='))
+    .filter(part => !part.startsWith('order='))
+    .filter(part => !part.startsWith('id=eq.'));
+
+  parts.push(`id=eq.${workspaceId}`);
+  parts.push('limit=1');
+  return parts.join('&');
+}
+
 export function installAvanCloud({
   globalObject = window,
   storage = localStorage
@@ -96,6 +115,26 @@ export function installAvanCloud({
     }
 
     await claimInvitationsForCurrentUser();
+
+    // Some legacy modules historically asked for `workspaces&limit=1`.
+    // Resolve that request through CompanyContext BEFORE the database limit is
+    // applied, otherwise the oldest Company could win even when another
+    // Company is active.
+    if (isSingleWorkspaceQuery(query)) {
+      const contextState = await companyContext.ensure();
+
+      if (contextState.selection_required) {
+        return [];
+      }
+
+      const activeId = contextState.active_company?.id || null;
+      if (activeId) {
+        return baseSelect(
+          table,
+          scopeWorkspaceQueryToId(query, activeId)
+        );
+      }
+    }
 
     // Compatibility facade: legacy modules may still ask for `workspaces` and
     // read row zero. They no longer choose the tenant themselves; the central
