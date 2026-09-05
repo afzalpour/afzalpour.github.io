@@ -50,6 +50,7 @@
 | [0012](0012-project-source-of-truth.md) | GitHub Master Prompt + Current State + ADR = Source of Truth | Accepted |
 | [0013](0013-freeze-browser-ocr.md) | Freeze OCR مرورگری تا انتخاب موتور قابل‌اعتمادتر | Accepted |
 | [0014](0014-multitenant-company-and-platform-admin.md) | Multi-tenant Company model + Platform Admin جدا از شرکت‌ها | Accepted |
+| [0015](0015-central-company-context-application-boundary.md) | CompanyContext مرکزی + Company Portfolio به‌عنوان مرز Application Tenant | Accepted |
 
 ## اصل حاکم
 
