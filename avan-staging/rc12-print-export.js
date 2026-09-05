@@ -34,14 +34,18 @@ function currentPageTitle() {
   return text(document.getElementById('pageTitle')?.textContent);
 }
 
+function companyProfile() {
+  try {
+    return window.AvanCompanyProfile?.snapshot?.() || {};
+  } catch {
+    return {};
+  }
+}
+
 function localizePrintDigits(root) {
   if (!root) return;
 
-  const walker = document.createTreeWalker(
-    root,
-    NodeFilter.SHOW_TEXT
-  );
-
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const nodes = [];
   while (walker.nextNode()) nodes.push(walker.currentNode);
 
@@ -78,6 +82,53 @@ function printableClone(source) {
   return clone;
 }
 
+function profileMetaHtml(profile) {
+  const values = [
+    ['شماره ثبت', profile.registration_no],
+    ['شناسه ملی', profile.national_id],
+    ['کد اقتصادی', profile.economic_code],
+    ['شناسه مالیاتی', profile.tax_id],
+    ['تلفن', profile.phone],
+    ['ایمیل', profile.email],
+    ['کد پستی', profile.postal_code]
+  ].filter(([, value]) => text(value));
+
+  if (!values.length) return '';
+
+  return `<div class="avan-print-company-meta">${values.map(([label, value]) => `
+    <span><b>${escapeHtml(label)}:</b> ${escapeHtml(toPersianDigits(value))}</span>
+  `).join('')}</div>`;
+}
+
+function printHeaderHtml(title, detail, now) {
+  const profile = companyProfile();
+  const displayName = text(profile.display_name || profile.workspace_name || 'آوان');
+  const legalName = text(profile.legal_name);
+  const address = text(profile.address);
+  const logo = text(profile.logo_url);
+
+  return `
+    <header class="avan-print-header">
+      <div class="avan-print-company">
+        ${logo
+          ? `<img class="avan-print-company-logo" src="${escapeHtml(logo)}" alt="لوگوی ${escapeHtml(displayName)}">`
+          : '<div class="avan-print-logo-mark">آ</div>'}
+        <div class="avan-print-company-copy">
+          <div class="avan-print-company-name">${escapeHtml(displayName)}</div>
+          ${legalName && legalName !== displayName ? `<div class="avan-print-company-legal">${escapeHtml(legalName)}</div>` : ''}
+          ${profileMetaHtml(profile)}
+          ${address ? `<div class="avan-print-company-address">${escapeHtml(toPersianDigits(address))}</div>` : ''}
+        </div>
+      </div>
+      <div class="avan-print-document-meta">
+        ${detail ? '' : `<div class="avan-print-title">${escapeHtml(toPersianDigits(title))}</div>`}
+        <div class="avan-print-meta">${escapeHtml(toPersianDigits(now))}</div>
+        <div class="avan-print-powered">تهیه‌شده با آوان</div>
+      </div>
+    </header>
+  `;
+}
+
 function printCss() {
   return `
     @page{size:A4;margin:12mm}
@@ -96,16 +147,33 @@ function printCss() {
     .avan-print-shell{max-width:190mm;margin:0 auto}
     .avan-print-header{
       display:flex;
-      align-items:flex-end;
+      align-items:flex-start;
       justify-content:space-between;
-      gap:12px;
-      padding-bottom:8px;
-      margin-bottom:12px;
+      gap:14px;
+      padding:0 0 10px;
+      margin-bottom:14px;
       border-bottom:1.5px solid #302b68;
+      page-break-inside:avoid;
     }
-    .avan-print-brand{font-size:20px;font-weight:800;color:#302b68}
-    .avan-print-title{font-size:14px;font-weight:750}
-    .avan-print-meta{font-size:9px;color:#777;white-space:nowrap}
+    .avan-print-company{display:flex;align-items:flex-start;gap:10px;min-width:0;flex:1}
+    .avan-print-company-logo,
+    .avan-print-logo-mark{
+      width:18mm;
+      height:18mm;
+      flex:0 0 18mm;
+      border-radius:5mm;
+    }
+    .avan-print-company-logo{object-fit:contain;border:1px solid #e2dbcf;padding:2mm;background:#fff}
+    .avan-print-logo-mark{display:grid;place-items:center;background:#302b68;color:#fff;font-size:23px;font-weight:850}
+    .avan-print-company-copy{min-width:0}
+    .avan-print-company-name{font-size:17px;font-weight:850;color:#29254f;line-height:1.35}
+    .avan-print-company-legal{font-size:10px;color:#6f6875;margin-top:2px}
+    .avan-print-company-meta{display:flex;flex-wrap:wrap;gap:1px 10px;margin-top:5px;font-size:8.7px;color:#554f5c}
+    .avan-print-company-address{margin-top:3px;font-size:8.7px;color:#6e6871;max-width:115mm}
+    .avan-print-document-meta{text-align:left;flex:0 0 auto;max-width:52mm}
+    .avan-print-title{font-size:13px;font-weight:800;color:#302b68}
+    .avan-print-meta{font-size:8.5px;color:#777;white-space:nowrap;margin-top:2px}
+    .avan-print-powered{font-size:8px;color:#9a938b;margin-top:5px}
     h1,h2,h3{color:#2d2938;margin:8px 0}
     h2{font-size:15px}h3{font-size:13px}
     table{width:100%;border-collapse:collapse;margin:8px 0 12px;page-break-inside:auto}
@@ -130,6 +198,9 @@ function printCss() {
     .avan-doc-viewer-stage{background:#fff!important;border:0!important;padding:0!important;overflow:visible!important;max-height:none!important;min-height:0!important}
     .avan-doc-viewer-image{max-width:100%!important;height:auto!important;width:auto!important;transform:none!important;box-shadow:none!important}
     .avan-doc-viewer-pdf-canvas{max-width:100%!important;height:auto!important;box-shadow:none!important}
+    @media print{
+      .avan-print-header{-webkit-region-break-inside:avoid;break-inside:avoid}
+    }
   `;
 }
 
@@ -167,13 +238,7 @@ function openPrintWindow(source, title) {
       </head>
       <body>
         <main class="avan-print-shell ${detail ? 'avan-detail-print' : ''}">
-          <header class="avan-print-header">
-            <div>
-              <div class="avan-print-brand">آوان</div>
-              ${detail ? '' : `<div class="avan-print-title">${escapeHtml(localizedTitle)}</div>`}
-            </div>
-            <div class="avan-print-meta">${escapeHtml(toPersianDigits(now))}</div>
-          </header>
+          ${printHeaderHtml(localizedTitle, detail, now)}
           ${clone.outerHTML}
         </main>
       </body>
@@ -187,7 +252,7 @@ function openPrintWindow(source, title) {
     } catch {
       // User can still print from the opened window.
     }
-  }, 350);
+  }, 450);
 
   return true;
 }
@@ -412,6 +477,7 @@ function install() {
     attributeFilter: ['hidden', 'class']
   });
   document.addEventListener('click', schedule, true);
+  window.addEventListener('avan:company-profile-updated', schedule);
 }
 
 if (document.readyState === 'loading') {
