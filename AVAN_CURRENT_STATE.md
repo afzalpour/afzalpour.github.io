@@ -1,6 +1,6 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: 2026-09-05، پس از **Live PASS شدن RC1.3-C1.2** و Merge شدن **RC1.3-MT-A Multi-tenant Application Architecture** برای Live Gate.
+آخرین به‌روزرسانی مرجع: 2026-09-05، پس از **Live PASS شدن RC1.3-MT-A Multi-tenant Application Architecture** و تثبیت مسیر Platform Admin / SaaS Control Plane.
 
 این فایل وضعیت جاری پروژه است و پس از هر Gate پاس‌شده یا تصمیم معماری مهم باید به‌روزرسانی شود.
 
@@ -49,15 +49,18 @@ Source of Truth:
 - RC1.3-B Company / Operational Settings — PASS
 - RC1.3-C1 Security Definer + Audit UX — PASS
 - RC1.3-C1.1 Audit Role Boundary — PASS
-- **RC1.3-C1.2 Company Context & Isolation — PASS**
+- RC1.3-C1.2 Company Context & Isolation — PASS
+- **RC1.3-MT-A Multi-tenant Application Architecture — PASS**
 
 Not explicitly marked with Gate phrase:
 - RC1.2-D.1 Persian print polish — merged and retained.
 - RC1.3-A1 — recovery email and password reset succeeded on desktop and iPhone web; sender branding remains deferred.
 
 Current phase:
-- **RC1.3-MT-A — merged on Staging, awaiting explicit Live Gate PASS.**
-- Do NOT mark MT-A passed until the user explicitly says `Gate RC1.3-MT-A پاس شد`.
+- **RC1.3-MT-B — Company Lifecycle / Onboarding**
+
+Next architectural priority after MT-B:
+- **RC1.3-MT-P1 — Platform Admin Control Plane**
 
 ---
 
@@ -102,7 +105,7 @@ Relevant ADRs:
 - ADR-0011 Multi-workspace → Multi-company
 - ADR-0013 Freeze Browser OCR
 - ADR-0014 Multi-tenant Company + Platform Admin
-- **ADR-0015 Central CompanyContext Application Boundary**
+- ADR-0015 Central CompanyContext Application Boundary
 
 ---
 
@@ -124,11 +127,22 @@ Still deferred before Production:
 ## 6) Multi-tenant Product Architecture — ADR-0014 + ADR-0015
 آوان رسماً **Multi-tenant / Multi-company SaaS** است؛ نه نرم‌افزار تک‌شرکتی.
 
-### Platform / Identity / Company planes
-- Platform Admin/System Admin متعلق به Control Plane آوان است و عضو خودکار Companyها نیست.
-- User identity جهانی است؛ یک User می‌تواند در چند Company Role متفاوت داشته باشد.
-- هر Workspace فعلی از نظر محصول یک Company / Business Context مستقل است.
-- `workspace_id` فعلاً نام فیزیکی DB باقی می‌ماند؛ تغییر نام صرفاً ظاهری فعلاً انجام نمی‌شود.
+### Three distinct authority planes
+1. **Platform Admin / System Admin** — مالک/اپراتور خود آوان؛ Control Plane کل SaaS.
+2. **Company Owner / Manager** — مدیر یک Company مشخص.
+3. **Accountant / Viewer** — نقش عملیاتی داخل یک Company مشخص.
+
+این سه سطح نباید با یکدیگر ادغام شوند.
+
+### Platform Admin principle
+Platform Admin همان نقش مالک SaaS است؛ یعنی کسی که نرم‌افزار را به چند شرکت ارائه می‌کند ولی الزاماً حسابدار هیچ‌یک از آن شرکت‌ها نیست.
+
+Platform Admin:
+- عضو خودکار Companyها نیست.
+- به‌طور پیش‌فرض Ledger/Invoices/Documents هیچ Company را نمی‌بیند.
+- Company/Tenant lifecycle، پلن، وضعیت سرویس، محدودیت‌ها، سلامت سیستم، عملیات پشتیبانی و مدیریت تجاری SaaS را کنترل می‌کند.
+- Support Access به داده Tenant در آینده فقط Explicit + Time-bounded + Reason-required + Audit-logged خواهد بود.
+- Service Role/secret هرگز وارد Browser نمی‌شود.
 
 ### Company membership and data
 - User می‌تواند Owner یک Company و Accountant/Manager Company دیگر باشد.
@@ -136,15 +150,12 @@ Still deferred before Production:
 - Company Profile متعلق به Company است، نه User.
 - Owner/Manager Company آن را ویرایش می‌کنند؛ Accountant/Viewer Read-only هستند.
 
-### Platform Admin
-- Platform Admin برای Tenant lifecycle, plans, system health, support operations است.
-- Platform Admin به‌طور پیش‌فرض Ledger/Invoices/Documents شرکت‌ها را نمی‌بیند.
-- Support Access آینده باید Explicit + Time-bounded + Reason-required + Audit-logged باشد.
-
-### Application hierarchy after ADR-0015
+### Application hierarchy
 `Auth → Company Portfolio → Active Company → Accounting / Sales / Inventory / Tax / Treasury / Reports`
 
-Company Portfolio یک سطح بالاتر از Company App است و نباید Ledger چند Company را ترکیب کند.
+Company Portfolio یک سطح بالاتر از Company App است و Ledger چند Company را ترکیب نمی‌کند.
+
+Platform Admin در آینده Shell/Route جداگانه Control Plane خواهد داشت و از Company Portfolio کاربر عادی جدا می‌ماند.
 
 ---
 
@@ -163,7 +174,7 @@ Implemented and retained:
 ### Company isolation DB hardening
 Legacy `journal_lines` Draft RLS tautology `e.workspace_id = e.workspace_id` was fixed.
 
-Composite Company constraints now enforce that a journal line and its referenced parent entities belong to the same workspace/Company:
+Composite Company constraints enforce that a journal line and referenced parent entities belong to the same Company:
 - journal line → journal entry `(id, workspace_id)`
 - journal line → account `(id, workspace_id)`
 - journal line → optional party `(id, workspace_id)`
@@ -173,65 +184,56 @@ Before and after migration:
 - account workspace mismatch = 0
 - party workspace mismatch = 0
 
-This finding is **resolved**, not pending.
+This finding is resolved.
 
 ---
 
-## 8) RC1.3-MT-A — merged, awaiting Live Gate
+## 8) RC1.3-MT-A — LIVE PASS
+User explicitly confirmed: `Gate RC1.3-MT-A پاس شد`.
+
 PR #31 merge:
 `b11f2aeb25d9315adc6969607e4b5535a598bf39`
 
 No database migration was needed in MT-A.
-No `app.js` rewrite was performed; existing Core uses a controlled compatibility facade during the transition.
+No Ledger/journal lifecycle/RLS semantics were changed.
 
 ### Central CompanyContext
-New source:
+Source:
 - `avan-staging/src/application/company/company-context.js`
 
 Rules:
-- exactly one authoritative CompanyContext per browser page.
-- active Company is validated against the complete RLS-authorized Company list.
-- a single accessible Company may auto-select.
-- when multiple Companies exist and no valid session selection exists, Company selection is required before Company-scoped legacy workspace reads proceed.
-- invalid/stale stored Company ids are rejected and cleared.
-- only active Company id is stored as a Session/UI preference; financial data is not stored locally.
+- one authoritative CompanyContext per browser page.
+- active Company validated against complete RLS-authorized Company list.
+- single accessible Company may auto-select.
+- multiple Companies with no valid Session selection require explicit Company selection.
+- stale/unauthorized stored Company ids are rejected and cleared.
+- only active Company id is stored as Session/UI preference; financial data is not stored locally.
 
 ### AvanCloud singleton
-`installAvanCloud()` now returns one page-level Cloud/Supabase client with:
-- `cloud.companyContext`
-- `ACTIVE_COMPANY_KEY` compatibility alias
-- existing `ACTIVE_WORKSPACE_KEY` retained temporarily.
-
-Parallel Supabase clients per UI module are no longer the intended architecture.
+`installAvanCloud()` now returns one page-level Cloud/Supabase client with `cloud.companyContext`.
+Parallel page-level Supabase clients are not the intended architecture.
 
 ### Compatibility facade
-Legacy Core still has some `workspaces[0]` / `ctx.workspace` semantics.
-MT-A prevents those modules from independently choosing a tenant:
-- complete CompanyContext determines the valid active Company.
-- full legacy workspace queries are reordered to active Company.
-- legacy `limit=1` workspace queries are explicitly scoped to active Company before DB limit is applied.
-- if several Companies exist but none is selected, legacy Company-scoped workspace queries raise `COMPANY_SELECTION_REQUIRED` rather than silently choosing the first Company.
-
-`ctx.workspace` is temporarily tolerated as an internal compatibility alias for Active Company; new code must not introduce new first-workspace tenant selection.
+Legacy `workspaces[0]` / `ctx.workspace` behavior is controlled by CompanyContext during transition:
+- legacy full workspace reads are ordered to active Company.
+- legacy `limit=1` reads are explicitly scoped to active Company.
+- no active selection in a multi-Company account raises `COMPANY_SELECTION_REQUIRED` rather than silently choosing the first Company.
 
 ### Company Portfolio / Shell
-- topbar retains `شرکت فعال` selector.
-- new **`شرکت‌های من`** Portfolio.
-- Portfolio shows authorized Companies, active state and User Role per Company.
-- desktop overlay + mobile/iPhone bottom-sheet behavior.
-- if Company selection is required, Portfolio is non-dismissible until selection.
+- `شرکت فعال` selector.
+- `شرکت‌های من` Portfolio.
+- authorized Companies + User Role per Company.
+- desktop overlay + mobile/iPhone bottom sheet.
+- required selection is non-dismissible.
 - Portfolio does not aggregate Company Ledgers.
 
-### Modules moved to Provider in MT-A
-- User money/display preference resolver no longer selects first Workspace independently.
-- Audit Log resolves Company via CompanyContext.
-- Company selector and Portfolio use the same Provider.
-- Company Profile and remaining legacy modules are protected through the central compatibility facade pending MT-C cleanup.
+### Modules already following Provider
+- User money/display preference resolver.
+- Audit Log.
+- Company selector / Portfolio.
+- remaining legacy modules are protected by compatibility facade pending MT-C cleanup.
 
-Gate file:
-- `avan-staging/RC1_3_MT_A_GATE.md`
-
-MT-A remains **awaiting explicit user Live PASS**.
+MT-A Live Gate passed including multi-company synchronization, session/access behavior and mobile flow.
 
 ---
 
@@ -283,12 +285,12 @@ Settings order:
 5. **گزارش فعالیت**
 6. security/operational controls
 
-Future architecture should increasingly separate `تنظیمات حساب من` from `تنظیمات شرکت فعال` rather than mixing their ownership semantics.
+Future architecture should increasingly separate `تنظیمات حساب من` from `تنظیمات شرکت فعال`.
 
 ---
 
 ## 12) Mobile / iPhone
-RC1.2-F and F.1 = Live PASS.
+RC1.2-F, F.1 and MT-A mobile flow = Live PASS.
 
 Bottom Nav:
 - خانه
@@ -304,7 +306,7 @@ Bottom Nav:
 - طرف‌حساب‌ها
 - تنظیمات
 
-MT-A adds mobile-safe Company Portfolio / Company switching. This new MT-A mobile behavior still awaits Live Gate.
+MT-A adds mobile-safe Company Portfolio / Company switching.
 
 ---
 
@@ -319,37 +321,57 @@ Do not restart browser-local OCR tuning without a new ADR/benchmark decision.
 ---
 
 ## 14) Immediate roadmap before Production
-### Current: RC1.3-MT-A — awaiting Live Gate
-Validate:
-- Company Portfolio
-- one active Company at a time
-- synchronized Company switch across Journals/Invoices/Documents/Accounts/Parties/Reports/Profile/Audit/Preferences
-- session access validation
-- desktop + iPhone
-- core regression
+### Current: RC1.3-MT-B — Company Lifecycle / Onboarding
+Purpose: make a Company a real SaaS tenant lifecycle, not an implicit bootstrap Workspace.
 
-### After MT-A PASS: RC1.3-MT-B — Company Lifecycle / Onboarding
+Targets:
 - explicit Create Company flow
 - Company rename/display identity
 - Owner assignment
 - initial Company Profile setup
 - initial fiscal/company setup
-- remove bootstrap naming ambiguity from UX
+- remove bootstrap naming ambiguity
 - Company Portfolio becomes entry point for Create/Enter Company lifecycle
+- lifecycle primitives needed later by Platform Admin are designed so Control Plane can use them safely
+
+### Next priority: RC1.3-MT-P1 — Platform Admin Control Plane Skeleton
+This is the operator/admin experience for the owner of Avan SaaS, not Company accounting admin.
+
+Targets:
+- separate `platform_admin/system_admin` data model outside `workspace_members`
+- separate protected Platform Admin route/shell
+- Tenant/Company registry
+- Company status: active / suspended / onboarding / archived as appropriate
+- identify Company owner and operational metadata without reading Company Ledger
+- high-level user/company counts and system health
+- platform-level audit events
+- no default tenant Ledger/Invoice/Document access
+- explicit authorization boundary between Control Plane and Tenant Plane
+
+### RC1.3-MT-P2 — SaaS Operations
+After P1 foundation:
+- Plans/subscriptions/feature limits
+- tenant activation/suspension controls
+- onboarding/support status
+- operational limits/quotas where needed
+- controlled ownership/account recovery operations
+- system-wide operational reporting that uses metadata, not tenant Ledger content
+
+### RC1.3-MT-P3 — Controlled Support Access
+If support access to tenant data is required:
+- explicit support session
+- reason required
+- short time limit
+- least privilege/read-only by default
+- complete audit trail
+- visible/revocable access semantics
+- never implicit access merely because user is Platform Admin
 
 ### RC1.3-MT-C — Module Boundary Cleanup
-- progressively inject CompanyContext directly into remaining legacy modules
+- directly inject CompanyContext into remaining legacy modules
 - remove first-workspace assumptions
-- reduce/remove `ctx.workspace` compatibility alias
-- move terminology in business/application code toward Company while retaining physical DB `workspace_id` until a justified migration exists
-
-### Platform Control Plane
-Separate phase under ADR-0014:
-- Platform Admin data model separate from Company membership
-- Tenant registry/status
-- plans/subscription/system health
-- no default tenant Ledger access
-- audited support access design
+- progressively remove `ctx.workspace` compatibility alias
+- retain physical DB `workspace_id` until a justified migration exists
 
 ### Operational/Security completion
 - backup/restore strategy
@@ -358,6 +380,7 @@ Separate phase under ADR-0014:
 - remaining SECURITY DEFINER dependency-by-dependency hardening
 
 ### RC1.3-D — Full Regression
+- Platform Admin vs Company Role separation
 - multi-company/two-user RLS
 - CompanyContext/Portfolio
 - Draft/Posted/Reversed immutability
