@@ -30,7 +30,8 @@ function ensureEntry() {
     button.type = 'button';
     button.id = 'avanPlatformAdminEntry';
     button.className = 'ghost small avan-platform-admin-entry';
-    button.textContent = 'مدیریت کل آوان';
+    button.textContent = 'مدیریت سامانه آوان';
+    button.title = 'کنترل کل پلتفرم و شرکت‌های مشتری؛ مستقل از مدیریت مالی شرکت فعال';
     button.onclick = openControlPlane;
     topbar.append(button);
   }
@@ -42,7 +43,7 @@ function ensureEntry() {
     button.type = 'button';
     button.id = 'avanPlatformAdminPortfolioEntry';
     button.className = 'ghost avan-platform-admin-portfolio-entry';
-    button.textContent = 'کنترل‌پنل ادمین آوان';
+    button.textContent = 'مدیریت سامانه آوان';
     button.onclick = openControlPlane;
     foot.append(button);
   }
@@ -110,17 +111,11 @@ function install() {
       ) {
         authShellChanged = true;
       }
-
-      if (mutation.type === 'childList') {
-        shouldEnsure = true;
-      }
+      if (mutation.type === 'childList') shouldEnsure = true;
     }
 
-    if (authShellChanged) {
-      scheduleRevalidate(true);
-    } else if (shouldEnsure) {
-      ensureEntry();
-    }
+    if (authShellChanged) scheduleRevalidate(true);
+    else if (shouldEnsure) ensureEntry();
   });
 
   observer.observe(document.body, {
@@ -132,7 +127,6 @@ function install() {
 
   window.addEventListener('pageshow', () => scheduleRevalidate(true));
   window.addEventListener('focus', () => scheduleRevalidate(false));
-
   void revalidateAuthorization({ force: true });
 }
 
