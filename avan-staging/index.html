@@ -25,6 +25,7 @@
   <link rel="stylesheet" href="rc12-print-export.css" />
   <link rel="stylesheet" href="rc12-company-profile.css" />
   <link rel="stylesheet" href="rc12-mobile-final.css" />
+  <link rel="stylesheet" href="rc12-mobile-navigation.css" />
 </head>
 <body>
   <section class="auth-shell" id="authShell">
@@ -76,7 +77,7 @@
     </aside>
   </div>
   <nav class="bottom-nav" id="bottomNav" hidden>
-    <button data-page="dashboard" class="active"><span>⌂</span>خانه</button><button data-page="accounts"><span>▦</span>حساب‌ها</button><button data-action="quick" class="fab"><span>＋</span>ثبت</button><button data-page="reports"><span>▥</span>گزارش</button><button data-page="settings"><span>⚙</span>تنظیمات</button>
+    <button data-page="dashboard" class="active"><span>⌂</span>خانه</button><button data-page="accounts"><span>▦</span>حساب‌ها</button><button data-action="quick" class="fab"><span>＋</span>ثبت</button><button data-page="reports"><span>▥</span>گزارش</button><button type="button" id="avanMobileMore"><span>•••</span>بیشتر</button>
   </nav>
   <div class="modal-backdrop" id="modalBackdrop" hidden><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
   <div class="toast" id="toast" aria-live="polite"></div>
@@ -92,4 +93,5 @@
 <script type="module" src="rc12-documents.js"></script>
 <script type="module" src="rc12-company-profile.js"></script>
 <script type="module" src="rc12-print-export.js"></script>
+<script type="module" src="rc12-mobile-navigation.js"></script>
 </body></html>
