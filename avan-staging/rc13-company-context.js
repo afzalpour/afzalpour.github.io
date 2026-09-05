@@ -2,8 +2,8 @@
 
 import { installAvanCloud } from './src/infrastructure/supabase/avan-cloud-bootstrap.js';
 
-const cloud = window.AvanCloud || installAvanCloud();
-const ACTIVE_KEY = cloud.ACTIVE_WORKSPACE_KEY || 'avan.active_workspace_id';
+const cloud = installAvanCloud();
+const companyContext = cloud.companyContext;
 
 const ROLE_FA = Object.freeze({
   owner: 'مالک',
@@ -14,8 +14,9 @@ const ROLE_FA = Object.freeze({
 });
 
 let companies = [];
+let current = null;
+let selectionRequired = false;
 let loading = false;
-let loadedSignature = '';
 let scheduled = null;
 
 function esc(value) {
@@ -32,68 +33,23 @@ function roleLabel(role) {
   return ROLE_FA[role] || String(role || '—');
 }
 
-function activeCompany() {
-  return companies[0] || null;
-}
-
-async function enrichCompany(workspace) {
-  let role = '';
-  let profile = null;
-
-  try {
-    role = await cloud.rpc('workspace_role', { wid: workspace.id });
-  } catch (error) {
-    console.warn('[Avan company context] role unavailable', error);
-  }
-
-  try {
-    profile = await cloud.rpc('get_workspace_print_profile', { wid: workspace.id });
-  } catch {
-    // Company profile is optional for context rendering; workspace name is fallback.
-  }
-
-  return {
-    ...workspace,
-    role,
-    display_name: String(
-      profile?.display_name || workspace.name || 'شرکت بدون نام'
-    ).trim()
-  };
-}
-
-async function loadCompanies(force = false) {
+async function loadState(force = false) {
   if (loading) return;
   loading = true;
 
   try {
-    const user = await cloud.user();
-    if (!user?.id) {
-      companies = [];
-      loadedSignature = '';
-      return;
-    }
-
-    const rows = await cloud.select(
-      'workspaces',
-      'select=id,name,mode,base_currency,created_at&order=created_at.asc'
-    ) || [];
-
-    const signature = rows.map(row => `${row.id}:${row.name || ''}`).join('|');
-    if (!force && signature === loadedSignature && companies.length === rows.length) {
-      return;
-    }
-
-    companies = await Promise.all(rows.map(enrichCompany));
-    loadedSignature = signature;
+    const state = await companyContext.refresh({ force });
+    companies = state.companies || [];
+    current = state.active_company || null;
+    selectionRequired = Boolean(state.selection_required);
   } catch (error) {
-    console.warn('[Avan company context] load failed', error);
+    console.warn('[Avan company shell] context load failed', error);
   } finally {
     loading = false;
   }
 }
 
 function contextHtml() {
-  const current = activeCompany();
   if (!current) return '';
 
   return `
@@ -107,8 +63,22 @@ function contextHtml() {
         `).join('')}
       </select>
       <span class="badge avan-company-role">${esc(roleLabel(current.role))}</span>
+      <button type="button" class="ghost small avan-company-portfolio-button" id="avanOpenCompanyPortfolio">
+        شرکت‌های من
+      </button>
     </div>
   `;
+}
+
+async function chooseCompany(companyId) {
+  try {
+    await companyContext.selectCompany(companyId);
+    location.reload();
+  } catch (error) {
+    console.warn('[Avan company shell] company selection failed', error);
+    const status = document.getElementById('avanCompanyPortfolioStatus');
+    if (status) status.textContent = 'ورود به این شرکت انجام نشد. دسترسی را دوباره بررسی کنید.';
+  }
 }
 
 function renderTopbar() {
@@ -117,7 +87,6 @@ function renderTopbar() {
   if (!topbar || !appShell || appShell.hidden) return;
 
   let host = document.getElementById('avanCompanyContextHost');
-  const current = activeCompany();
 
   if (!current) {
     host?.remove();
@@ -145,17 +114,126 @@ function renderTopbar() {
     select.dataset.bound = '1';
     select.onchange = () => {
       const nextId = select.value;
-      if (!nextId || nextId === current.id) return;
-
-      try {
-        window.sessionStorage?.setItem(ACTIVE_KEY, nextId);
-      } catch {
-        // Session preference is optional and contains no accounting data.
-      }
-
-      location.reload();
+      if (!nextId || nextId === current?.id) return;
+      chooseCompany(nextId);
     };
   }
+
+  const portfolioButton = host.querySelector('#avanOpenCompanyPortfolio');
+  if (portfolioButton && !portfolioButton.dataset.bound) {
+    portfolioButton.dataset.bound = '1';
+    portfolioButton.onclick = () => openPortfolio({ required: false });
+  }
+}
+
+function portfolioCompanyHtml(company) {
+  const active = company.id === current?.id;
+  const secondary = company.legal_name || (
+    company.mode === 'personal'
+      ? 'شرکت / کسب‌وکار شخصی'
+      : 'شرکت عضو آوان'
+  );
+
+  return `
+    <article class="avan-company-portfolio-card ${active ? 'active' : ''}">
+      <div class="avan-company-portfolio-mark">${esc((company.display_name || 'آ').slice(0, 1))}</div>
+      <div class="avan-company-portfolio-copy">
+        <div class="avan-company-portfolio-title">
+          <strong>${esc(company.display_name || 'شرکت بدون نام')}</strong>
+          ${active ? '<span class="badge posted">فعال</span>' : ''}
+        </div>
+        <span>${esc(secondary)}</span>
+        <small>نقش شما: ${esc(roleLabel(company.role))}</small>
+      </div>
+      <button type="button" class="${active ? 'ghost' : 'primary'}" data-enter-company="${esc(company.id)}">
+        ${active ? 'بازگشت به شرکت' : 'ورود به شرکت'}
+      </button>
+    </article>
+  `;
+}
+
+function portfolioHtml(required) {
+  return `
+    <div class="avan-company-portfolio-panel" role="dialog" aria-modal="true" aria-labelledby="avanCompanyPortfolioTitle">
+      <div class="avan-company-portfolio-head">
+        <div>
+          <span class="eyebrow">آوان · Company Portfolio</span>
+          <h2 id="avanCompanyPortfolioTitle">شرکت‌های من</h2>
+          <p>هر شرکت یک محیط مالی مستقل است. نقش، اسناد، گزارش‌ها و تنظیمات در Context همان شرکت اعمال می‌شوند.</p>
+        </div>
+        ${!required && current ? '<button type="button" class="ghost" id="avanCloseCompanyPortfolio" aria-label="بستن">بستن</button>' : ''}
+      </div>
+
+      <div class="avan-company-portfolio-list">
+        ${companies.length
+          ? companies.map(portfolioCompanyHtml).join('')
+          : '<div class="empty">هنوز شرکتی برای این حساب در دسترس نیست.</div>'}
+      </div>
+
+      <div class="avan-company-portfolio-foot">
+        <span class="muted" id="avanCompanyPortfolioStatus">
+          ${required
+            ? 'برای ادامه یک شرکت را انتخاب کنید.'
+            : 'ایجاد و مدیریت شرکت جدید در مرحله MT-B اضافه می‌شود.'}
+        </span>
+      </div>
+    </div>
+  `;
+}
+
+function closePortfolio() {
+  document.getElementById('avanCompanyPortfolio')?.remove();
+  document.body.classList.remove('avan-company-portfolio-open');
+}
+
+function bindPortfolio(required) {
+  const overlay = document.getElementById('avanCompanyPortfolio');
+  if (!overlay) return;
+
+  overlay.querySelectorAll('[data-enter-company]').forEach(button => {
+    button.onclick = () => chooseCompany(button.dataset.enterCompany);
+  });
+
+  const close = document.getElementById('avanCloseCompanyPortfolio');
+  if (close) close.onclick = closePortfolio;
+
+  overlay.onclick = event => {
+    if (!required && event.target === overlay) closePortfolio();
+  };
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !required && document.getElementById('avanCompanyPortfolio')) {
+      closePortfolio();
+    }
+  }, { once: true });
+}
+
+function openPortfolio({ required = false } = {}) {
+  let overlay = document.getElementById('avanCompanyPortfolio');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'avanCompanyPortfolio';
+    overlay.className = 'avan-company-portfolio-overlay';
+    document.body.append(overlay);
+  }
+
+  overlay.dataset.required = required ? 'true' : 'false';
+  overlay.innerHTML = portfolioHtml(required);
+  document.body.classList.add('avan-company-portfolio-open');
+  bindPortfolio(required);
+
+  const first = overlay.querySelector('[data-enter-company]');
+  first?.focus();
+}
+
+function syncRequiredPortfolio() {
+  if (selectionRequired && companies.length > 1) {
+    openPortfolio({ required: true });
+    return;
+  }
+
+  const overlay = document.getElementById('avanCompanyPortfolio');
+  if (overlay?.dataset.required === 'true') closePortfolio();
 }
 
 function findCardByTitle(content, title) {
@@ -192,7 +270,6 @@ function arrangeSettings() {
     else if (account) moveAfter(currency, account);
   }
 
-  const current = activeCompany();
   if (current) {
     const grid = content.querySelector('.grid4');
     const firstKpi = grid?.querySelector('.card');
@@ -216,8 +293,9 @@ function arrangeSettings() {
 }
 
 async function refresh(force = false) {
-  await loadCompanies(force);
+  await loadState(force);
   renderTopbar();
+  syncRequiredPortfolio();
   arrangeSettings();
 }
 
@@ -257,7 +335,8 @@ function install() {
   }
 
   window.addEventListener('avan:company-profile-updated', () => schedule(true));
-  window.addEventListener('avan:workspace-changed', () => schedule(true));
+  window.addEventListener('avan:company-context-changed', () => schedule(true));
+  window.addEventListener('avan:company-context-cleared', () => schedule(true));
 
   schedule(true);
 }
@@ -268,11 +347,10 @@ if (document.readyState === 'loading') {
   install();
 }
 
-window.AvanCompanyContext = Object.freeze({
-  active: () => ({ ...(activeCompany() || {}) }),
-  list: () => companies.map(company => ({ ...company })),
+window.AvanCompanyShell = Object.freeze({
+  openPortfolio: () => openPortfolio({ required: false }),
   refresh: async () => {
     await refresh(true);
-    return companies.map(company => ({ ...company }));
+    return companyContext.snapshot();
   }
 });
