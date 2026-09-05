@@ -8,6 +8,12 @@ const PRINTABLE_PAGES = new Set([
   'اسناد حسابداری'
 ]);
 
+const ENTITY_TYPE_FA = Object.freeze({
+  individual: 'حقیقی',
+  legal: 'حقوقی',
+  other: 'سایر'
+});
+
 let scheduled = null;
 
 function text(value) {
@@ -83,7 +89,9 @@ function printableClone(source) {
 }
 
 function profileMetaHtml(profile) {
+  const entityType = ENTITY_TYPE_FA[text(profile.entity_type)] || '';
   const values = [
+    ['نوع شخصیت', entityType],
     ['شماره ثبت', profile.registration_no],
     ['شناسه ملی', profile.national_id],
     ['کد اقتصادی', profile.economic_code],
@@ -100,11 +108,24 @@ function profileMetaHtml(profile) {
   `).join('')}</div>`;
 }
 
+function companyAddressHtml(profile) {
+  const parts = [
+    text(profile.province),
+    text(profile.city),
+    text(profile.address)
+  ].filter(Boolean);
+
+  if (!parts.length) return '';
+
+  return `<div class="avan-print-company-address">${escapeHtml(
+    toPersianDigits(parts.join('، '))
+  )}</div>`;
+}
+
 function printHeaderHtml(title, detail, now) {
   const profile = companyProfile();
   const displayName = text(profile.display_name || profile.workspace_name || 'آوان');
   const legalName = text(profile.legal_name);
-  const address = text(profile.address);
   const logo = text(profile.logo_url);
 
   return `
@@ -117,7 +138,7 @@ function printHeaderHtml(title, detail, now) {
           <div class="avan-print-company-name">${escapeHtml(displayName)}</div>
           ${legalName && legalName !== displayName ? `<div class="avan-print-company-legal">${escapeHtml(legalName)}</div>` : ''}
           ${profileMetaHtml(profile)}
-          ${address ? `<div class="avan-print-company-address">${escapeHtml(toPersianDigits(address))}</div>` : ''}
+          ${companyAddressHtml(profile)}
         </div>
       </div>
       <div class="avan-print-document-meta">
@@ -127,6 +148,16 @@ function printHeaderHtml(title, detail, now) {
       </div>
     </header>
   `;
+}
+
+function printFooterHtml(title) {
+  if (!/^فاکتور/.test(text(title))) return '';
+
+  const raw = String(companyProfile().invoice_footer || '').trim();
+  if (!raw) return '';
+
+  const safe = escapeHtml(toPersianDigits(raw)).replace(/\r?\n/g, '<br>');
+  return `<footer class="avan-print-invoice-footer">${safe}</footer>`;
 }
 
 function printCss() {
@@ -174,6 +205,16 @@ function printCss() {
     .avan-print-title{font-size:13px;font-weight:800;color:#302b68}
     .avan-print-meta{font-size:8.5px;color:#777;white-space:nowrap;margin-top:2px}
     .avan-print-powered{font-size:8px;color:#9a938b;margin-top:5px}
+    .avan-print-invoice-footer{
+      margin-top:14px;
+      padding-top:9px;
+      border-top:1px solid #d8d1c6;
+      color:#625b67;
+      font-size:9px;
+      line-height:1.9;
+      page-break-inside:avoid;
+      break-inside:avoid;
+    }
     h1,h2,h3{color:#2d2938;margin:8px 0}
     h2{font-size:15px}h3{font-size:13px}
     table{width:100%;border-collapse:collapse;margin:8px 0 12px;page-break-inside:auto}
@@ -240,6 +281,7 @@ function openPrintWindow(source, title) {
         <main class="avan-print-shell ${detail ? 'avan-detail-print' : ''}">
           ${printHeaderHtml(localizedTitle, detail, now)}
           ${clone.outerHTML}
+          ${printFooterHtml(localizedTitle)}
         </main>
       </body>
     </html>`);
