@@ -1,0 +1,209 @@
+/* Avan RC1.2-F.1 — complete mobile navigation
+   Mobile-only navigation sheet. Presentation layer only. */
+
+.avan-mobile-more-layer{
+  display:none;
+}
+
+@media(max-width:900px){
+  body.avan-mobile-more-open{
+    overflow:hidden;
+  }
+
+  #avanMobileMore.active{
+    color:var(--avan-purple-deep,#302b68);
+    font-weight:700;
+  }
+
+  #avanMobileMore>span{
+    font-size:18px;
+    line-height:1;
+    letter-spacing:1px;
+  }
+
+  .avan-mobile-more-layer{
+    position:fixed;
+    inset:0;
+    z-index:310;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    padding:
+      18px
+      max(8px,env(safe-area-inset-right))
+      0
+      max(8px,env(safe-area-inset-left));
+    background:rgba(23,20,31,.34);
+    backdrop-filter:blur(5px);
+    -webkit-backdrop-filter:blur(5px);
+    opacity:0;
+    transition:opacity .18s ease;
+    overscroll-behavior:contain;
+  }
+
+  .avan-mobile-more-layer.is-open{
+    opacity:1;
+  }
+
+  .avan-mobile-more-panel{
+    width:min(620px,100%);
+    max-height:min(76dvh,650px);
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:
+      8px
+      14px
+      calc(16px + env(safe-area-inset-bottom));
+    border:1px solid rgba(190,174,151,.54);
+    border-bottom:0;
+    border-radius:24px 24px 0 0;
+    background:
+      radial-gradient(circle at 88% 0%,rgba(75,70,152,.08),transparent 15rem),
+      linear-gradient(160deg,#fffefa 0%,#f9f4eb 100%);
+    box-shadow:0 -20px 60px -30px rgba(30,24,52,.62);
+    transform:translateY(24px);
+    transition:transform .18s ease;
+  }
+
+  .avan-mobile-more-layer.is-open .avan-mobile-more-panel{
+    transform:translateY(0);
+  }
+
+  .avan-mobile-more-handle{
+    width:42px;
+    height:5px;
+    margin:1px auto 10px;
+    border-radius:999px;
+    background:#d8d0c5;
+  }
+
+  .avan-mobile-more-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    padding:3px 2px 12px;
+    border-bottom:1px solid rgba(190,174,151,.34);
+  }
+
+  .avan-mobile-more-head strong,
+  .avan-mobile-more-head span{
+    display:block;
+  }
+
+  .avan-mobile-more-head strong{
+    color:#2b2736;
+    font-size:17px;
+    font-weight:850;
+  }
+
+  .avan-mobile-more-head span{
+    margin-top:3px;
+    color:#81786d;
+    font-size:11px;
+  }
+
+  .avan-mobile-more-close{
+    width:42px;
+    height:42px;
+    min-width:42px;
+    min-height:42px;
+    padding:0;
+    border:1px solid rgba(190,174,151,.46);
+    border-radius:12px;
+    background:rgba(255,255,255,.72);
+    color:#5d5663;
+    font-size:24px;
+    line-height:1;
+  }
+
+  .avan-mobile-more-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:7px;
+    padding-top:12px;
+  }
+
+  .avan-mobile-more-item{
+    width:100%;
+    min-height:62px;
+    display:grid;
+    grid-template-columns:46px minmax(0,1fr) auto;
+    align-items:center;
+    gap:11px;
+    padding:9px 10px;
+    border:1px solid rgba(192,178,158,.38);
+    border-radius:14px;
+    background:rgba(255,253,249,.82);
+    color:#2d2938;
+    text-align:right;
+    touch-action:manipulation;
+  }
+
+  .avan-mobile-more-item:active{
+    background:#f3eee6;
+    transform:scale(.992);
+  }
+
+  .avan-mobile-more-item:focus-visible{
+    outline:none;
+    border-color:rgba(75,70,152,.55);
+    box-shadow:0 0 0 4px rgba(75,70,152,.10);
+  }
+
+  .avan-mobile-more-icon{
+    width:44px;
+    height:44px;
+    display:grid;
+    place-items:center;
+    border-radius:12px;
+    background:linear-gradient(145deg,#eeebfb,#f6eddc);
+    color:var(--avan-purple-deep,#302b68);
+    font-size:19px;
+    font-weight:800;
+  }
+
+  .avan-mobile-more-copy{
+    min-width:0;
+  }
+
+  .avan-mobile-more-copy b,
+  .avan-mobile-more-copy small{
+    display:block;
+  }
+
+  .avan-mobile-more-copy b{
+    font-size:14px;
+    font-weight:800;
+  }
+
+  .avan-mobile-more-copy small{
+    margin-top:3px;
+    color:#857d72;
+    font-size:10.5px;
+    white-space:normal;
+  }
+
+  .avan-mobile-more-chevron{
+    color:#a0988c;
+    font-size:24px;
+  }
+}
+
+@media(max-width:420px){
+  .avan-mobile-more-panel{
+    padding-inline:10px;
+    border-radius:21px 21px 0 0;
+  }
+
+  .avan-mobile-more-item{
+    min-height:60px;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .avan-mobile-more-layer,
+  .avan-mobile-more-panel{
+    transition:none!important;
+  }
+}
