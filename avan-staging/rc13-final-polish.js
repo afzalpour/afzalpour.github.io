@@ -107,12 +107,30 @@ function ensureDetailUnitsAndTotals(){
   ensureJournalTotals(modal);
 }
 
+function installSignupPasswordGuard(){
+  const form=document.getElementById('authForm');
+  if(!form||form.dataset.avanPasswordGuard)return;
+  form.dataset.avanPasswordGuard='1';
+  form.addEventListener('submit',event=>{
+    const signupActive=document.getElementById('signupTab')?.classList.contains('active');
+    if(!signupActive)return;
+    const password=document.getElementById('authPassword')?.value||'';
+    const strong=password.length>=10&&/[A-Za-zآ-ی]/.test(password)&&/[0-9۰-۹]/.test(password);
+    if(strong)return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const status=document.getElementById('authStatus');
+    if(status)status.innerHTML='<span class="error-box" style="display:block">برای حساب جدید، رمز حداقل ۱۰ کاراکتر و شامل حرف و عدد انتخاب کنید.</span>';
+  },true);
+}
+
 function run(){fixPortfolioActiveCard();ensurePageUnits();ensureDetailUnitsAndTotals()}
 function schedule(){if(scheduled)clearTimeout(scheduled);scheduled=setTimeout(()=>{scheduled=null;run()},60)}
 function install(){
   const observer=new MutationObserver(schedule);observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']});
   document.addEventListener('avan:money-unit-changed',schedule);
   window.addEventListener('avan:company-context-changed',schedule);
+  installSignupPasswordGuard();
   run();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
