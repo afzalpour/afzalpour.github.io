@@ -1,6 +1,6 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: 2026-09-05، پس از Live PASS شدن **RC1.2-E** و آماده‌سازی **RC1.2-F Mobile/iPhone Final UX Regression** برای Gate بعدی.
+آخرین به‌روزرسانی مرجع: 2026-09-05، پس از Live PASS شدن **RC1.2-F Mobile/iPhone Final UX** و شروع **RC1.2-F.1 Complete Mobile Navigation** برای رفع مسیرهای پنهان موبایل.
 
 این فایل وضعیت جاری پروژه است و پس از هر Gate پاس‌شده یا تصمیم معماری مهم باید به‌روزرسانی شود.
 
@@ -47,13 +47,19 @@ Source of Truth:
 - RC1.2-B Premium visual polish + Persian cleanup + account tree colors — PASS
 - RC1.2-CF OCR Freeze + reliable manual Smart Document flow — PASS
 - RC1.2-D Unified Print & Export Center — PASS
-- **RC1.2-E Professional A4 + Company Print Identity — PASS**
+- RC1.2-E Professional A4 + Company Print Identity — PASS
+- **RC1.2-F Mobile / iPhone Final UX Regression — PASS**
 
 Still not explicitly marked PASS by user:
 - RC1.2-D.1 Persian print polish — merged and retained; do not retroactively mark PASS without explicit confirmation.
 
 Current Gate:
-- **RC1.2-F Mobile / iPhone Final UX Regression — implementation ready for Staging Live Gate.**
+- **RC1.2-F.1 Complete Mobile Navigation — implementation in progress / awaiting Staging Live Gate after merge.**
+
+Reason for F.1:
+- User confirmed F PASS but reported that on iPhone/mobile web `طرف‌حساب‌ها` and `اسناد حسابداری` were not available.
+- Inspection showed a broader navigation gap: because desktop Sidebar is hidden on mobile, `فاکتورها` and `اسناد هوشمند` also had no direct mobile destination.
+- F.1 fixes the complete navigation model rather than patching only two links.
 
 ---
 
@@ -64,20 +70,19 @@ Current Gate:
 - RC1.2-D Print/Export: `2e8e8fe59765f824910187d5634d5f0d94daf0b1`
 - RC1.2-D.1 Print polish: `307a65f96293fc89b621ed68bf1078f0474d921b`
 - RC1.2-E Company Print Identity: `106e1b1e0ada840b2a6ae5f397f9b388c4980496`
-- RC1.2-E.1 Schema-cache recovery UI: PR #21; superseded by E.2 stability fix.
-- RC1.2-E.2 Company Profile UI stability: merge `99f291805f6bdb75ff7184787c687451b761d90d`.
+- RC1.2-E.2 Company Profile UI stability: `99f291805f6bdb75ff7184787c687451b761d90d`
+- **RC1.2-F Mobile/iPhone final UX: `6123ac86a178556f74c228fc592c28769d5fbda3`**
 
-Supabase E migration:
-- `workspace_print_profiles` created.
-- `get_workspace_print_profile(uuid)` created.
-- `set_workspace_print_profile(uuid,jsonb)` created.
-- private `avan-branding` bucket created.
+Supabase E migration was applied directly through the connected Supabase project and verified:
+- `workspace_print_profiles` exists.
+- `get_workspace_print_profile(uuid)` exists.
+- `set_workspace_print_profile(uuid,jsonb)` exists.
+- private `avan-branding` bucket exists.
 - PostgREST schema reloaded.
-- existence verified directly in Supabase.
 - RPC EXECUTE verified: `anon=false`, `authenticated=true`.
 
-PWA staging cache before F: v27.
-RC1.2-F bumps staging cache to **v28**.
+PWA staging cache after F: **v28**.
+F.1 bumps staging cache to **v29**.
 
 ---
 
@@ -129,6 +134,9 @@ Still unresolved before Production:
 - Final Auth redirect URLs.
 - Custom domain configuration when domain exists.
 
+Next major phase after F.1 PASS:
+- **RC1.3-A Production-ready Auth**.
+
 ---
 
 ## 7) UX / Visual System
@@ -142,7 +150,31 @@ Current direction:
 - Professional tables/forms/modals/mobile nav.
 - Deterministic account-tree branch colors with UI toggle.
 
-RC1.2-F mobile layer is presentation-only and exists to prevent later CSS layers from overriding iPhone Safe Area/mobile hardening.
+RC1.2-F mobile layer:
+- iPhone Safe Area restored after later CSS overrides.
+- `100dvh` used for Safari dynamic viewport behavior.
+- mobile form controls use 16px to avoid Safari focus zoom.
+- larger touch targets.
+- Bottom Nav protected from Home Indicator.
+- wide financial tables scroll horizontally.
+- modal, Smart Document Viewer and Company Profile mobile layouts hardened.
+
+### RC1.2-F.1 mobile navigation architecture
+Keep Bottom Nav at five destinations to avoid overcrowding on iPhone:
+- خانه
+- حساب‌ها
+- ثبت
+- گزارش
+- بیشتر
+
+`بیشتر` opens a mobile bottom sheet containing:
+- فاکتورها
+- اسناد حسابداری
+- اسناد هوشمند
+- طرف‌حساب‌ها
+- تنظیمات
+
+F.1 deliberately reuses the existing trusted Sidebar `data-page` navigation instead of duplicating page-routing logic or modifying `app.js`.
 
 ---
 
@@ -200,47 +232,48 @@ Architecture:
 - table: `public.workspace_print_profiles`
 - read RPC: `get_workspace_print_profile`
 - write RPC: `set_workspace_print_profile`
-- Owner/Manager edit; authenticated workspace members can consume output subject to function checks.
+- Owner/Manager edit; authenticated workspace members consume output subject to function checks.
 - browser does not store company identity in LocalStorage.
+- private logo bucket: `avan-branding`.
 
-Logo:
-- private bucket `avan-branding`
-- JPG/PNG/WEBP, max 2MB
-- workspace-scoped path
-- signed URL for display/print
-
-E had a frontend MutationObserver regression during recovery work; fixed by RC1.2-E.2 using idempotent rendering and removing the second recovery observer. User confirmed page stability and later confirmed Gate E PASS.
-
----
-
-## 11) RC1.2-F — Current Development / Live Gate
-
-Goal: final Mobile/iPhone UX regression before Production-readiness work.
-
-Implementation:
-- new final presentation layer: `avan-staging/rc12-mobile-final.css`
-- restores iPhone Safe Area after later Design System overrides.
-- uses `100dvh` for Safari dynamic viewport handling.
-- prevents Safari focus zoom by using 16px mobile form controls.
-- strengthens touch targets.
-- protects floating Bottom Nav from Home Indicator.
-- keeps wide financial tables horizontally scrollable without page-wide overflow.
-- hardens modal viewport/scroll behavior.
-- hardens Smart Document Viewer sizing/pan behavior.
-- hardens Company Profile mobile layout.
-- no Ledger/RLS/backend changes.
-
-Gate file:
-- `avan-staging/RC1_2_F_GATE.md`
-
-Expected pass phrase:
-- `Gate RC1.2-F پاس شد`
-
-Do not mark F PASS before explicit user confirmation.
+E recovery history:
+- E.1 introduced a MutationObserver UI loop.
+- E.2 removed the second observer and made rendering idempotent.
+- Database inspection later proved the E migration had never actually been applied; assistant applied it directly through Supabase and verified table/RPC/bucket state.
+- User explicitly confirmed Gate E PASS.
 
 ---
 
-## 12) After RC1.2-F
+## 11) RC1.2-F.1 — Current Gate
+
+Branch:
+- `rc1.2-f1-mobile-navigation`
+
+Files:
+- `avan-staging/rc12-mobile-navigation.js`
+- `avan-staging/rc12-mobile-navigation.css`
+- `avan-staging/index.html`
+- `avan-staging/sw.js`
+- `avan-staging/RC1_2_F1_GATE.md`
+
+Implementation rules:
+- no `app.js` changes.
+- no Ledger/RLS/RPC/database changes.
+- More sheet is mobile-only.
+- navigation targets the existing hidden Sidebar page buttons.
+- More item shows Active state when current page is invoices/journal/documents/parties/settings.
+- close via ×, backdrop or Escape.
+- Safe Area-aware bottom sheet.
+- PWA cache v29.
+
+Expected PASS phrase:
+- `Gate RC1.2-F.1 پاس شد`
+
+Do not mark F.1 PASS before explicit user confirmation.
+
+---
+
+## 12) After RC1.2-F.1 PASS
 
 ### RC1.3-A — Production-ready Auth
 - password recovery email
@@ -267,7 +300,7 @@ Do not mark F PASS before explicit user confirmation.
 - Smart Documents manual flow
 - print/export
 - company identity
-- mobile/iPhone
+- mobile/iPhone/navigation
 
 ### RC1.3-RC
 - feature freeze
