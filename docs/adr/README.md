@@ -48,6 +48,7 @@
 | [0010](0010-voice-ai-consent-and-safety.md) | Voice AI اختیاری؛ Voice cloning هرگز احراز هویت نیست | Accepted |
 | [0011](0011-multi-workspace-multi-company.md) | حفظ Multi-workspace و توسعه به Multi-company | Accepted |
 | [0012](0012-project-source-of-truth.md) | GitHub Master Prompt + Current State + ADR = Source of Truth | Accepted |
+| [0013](0013-freeze-browser-ocr.md) | Freeze OCR مرورگری تا انتخاب موتور قابل‌اعتمادتر | Accepted |
 
 ## اصل حاکم
 
