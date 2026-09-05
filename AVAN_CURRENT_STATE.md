@@ -1,6 +1,6 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: 2026-09-05، پس از Live PASS شدن **RC1.3-C1.1 Audit Role Boundary** و پذیرش **ADR-0014 Multi-tenant Company + Platform Admin**.
+آخرین به‌روزرسانی مرجع: 2026-09-05، پس از **Live PASS شدن RC1.3-C1.2** و Merge شدن **RC1.3-MT-A Multi-tenant Application Architecture** برای Live Gate.
 
 این فایل وضعیت جاری پروژه است و پس از هر Gate پاس‌شده یا تصمیم معماری مهم باید به‌روزرسانی شود.
 
@@ -47,15 +47,17 @@ Source of Truth:
 - RC1.2-F Mobile/iPhone Final UX — PASS
 - RC1.2-F.1 Complete Mobile Navigation — PASS
 - RC1.3-B Company / Operational Settings — PASS
-- **RC1.3-C1 Security Definer + Audit UX — PASS**
-- **RC1.3-C1.1 Audit Role Boundary — PASS**
+- RC1.3-C1 Security Definer + Audit UX — PASS
+- RC1.3-C1.1 Audit Role Boundary — PASS
+- **RC1.3-C1.2 Company Context & Isolation — PASS**
 
 Not explicitly marked with Gate phrase:
 - RC1.2-D.1 Persian print polish — merged and retained.
 - RC1.3-A1 — recovery email and password reset succeeded on desktop and iPhone web; sender branding remains deferred.
 
 Current phase:
-- **RC1.3-C1.2 Company Context & Settings UX** per ADR-0014.
+- **RC1.3-MT-A — merged on Staging, awaiting explicit Live Gate PASS.**
+- Do NOT mark MT-A passed until the user explicitly says `Gate RC1.3-MT-A پاس شد`.
 
 ---
 
@@ -68,15 +70,18 @@ Current phase:
 - RC1.3-A1 Auth Recovery Hardening: `8807f117918dd4e25d31f8c758c3d591b3e8681d`
 - RC1.3-B Company / Operational Settings: `96915960a12575364cde0ad081e1ede6059fe1e1` (PR #26)
 - RC1.3-C1 Security Definer + Audit UX: `2245b0c59ff7ac80f1de4424f7d231d453610f24` (PR #27)
-- **RC1.3-C1.1 Audit Role Boundary: `d8b31318e3bcc7f53730403fbcca726704a52bfe` (PR #28)**
+- RC1.3-C1.1 Audit Role Boundary: `d8b31318e3bcc7f53730403fbcca726704a52bfe` (PR #28)
+- ADR-0014 Multi-tenant Company + Platform Admin: `8a8723ba28f0bed82b39bbc1ade93e1361ef87b8` (PR #29)
+- RC1.3-C1.2 Company Context & Isolation: `952fa37ba874da5f06630a23d1f80a8b012f3186` (PR #30)
+- **RC1.3-MT-A Central CompanyContext + Company Portfolio: `b11f2aeb25d9315adc6969607e4b5535a598bf39` (PR #31)**
 
-PWA staging cache after C1.1: **v33**.
+PWA staging cache after MT-A: **v35**.
 
 ---
 
 ## 4) Core Financial Invariants
 - PostgreSQL/Supabase = financial Source of Truth.
-- Financial data is not stored in LocalStorage.
+- Financial data is not stored in LocalStorage/SessionStorage.
 - Auth + Workspace/Company-based RLS active.
 - Journal lifecycle: `Draft → Posted → Reversed`.
 - Posted journal and lines are immutable.
@@ -85,6 +90,8 @@ PWA staging cache after C1.1: **v33**.
 - Rial/Toman is presentation/input preference only.
 - Browser never receives Service Role.
 - orphan journal lines must remain zero.
+- same-Company authorized users share the Company ledger; documents are not private to their creator.
+- Cross-company leakage is a Blocker/Critical defect.
 
 Relevant ADRs:
 - ADR-0001 Canonical Toman
@@ -94,7 +101,8 @@ Relevant ADRs:
 - ADR-0008 Unified Print/Export
 - ADR-0011 Multi-workspace → Multi-company
 - ADR-0013 Freeze Browser OCR
-- **ADR-0014 Multi-tenant Company + Platform Admin**
+- ADR-0014 Multi-tenant Company + Platform Admin
+- **ADR-0015 Central CompanyContext Application Boundary**
 
 ---
 
@@ -113,38 +121,121 @@ Still deferred before Production:
 
 ---
 
-## 6) Company / Multi-tenant Architecture — ADR-0014
+## 6) Multi-tenant Product Architecture — ADR-0014 + ADR-0015
 آوان رسماً **Multi-tenant / Multi-company SaaS** است؛ نه نرم‌افزار تک‌شرکتی.
 
-### Company boundary
-- هر Workspace مسیر محصولی یک Company / Business Context مستقل است.
-- User می‌تواند عضو چند Company باشد و در هر Company Role متفاوت داشته باشد.
-- User می‌تواند Owner شرکت خودش و Accountant/Manager شرکت دیگری باشد.
-- Journal / Invoice / Document به Company تعلق دارند، نه سازنده سند.
-- اعضای مجاز همان Company دفتر مالی مشترک Company را می‌بینند.
-- Cross-company leakage = Blocker/Critical defect.
+### Platform / Identity / Company planes
+- Platform Admin/System Admin متعلق به Control Plane آوان است و عضو خودکار Companyها نیست.
+- User identity جهانی است؛ یک User می‌تواند در چند Company Role متفاوت داشته باشد.
+- هر Workspace فعلی از نظر محصول یک Company / Business Context مستقل است.
+- `workspace_id` فعلاً نام فیزیکی DB باقی می‌ماند؛ تغییر نام صرفاً ظاهری فعلاً انجام نمی‌شود.
 
-### Company Profile
-- `workspace_print_profiles` متعلق به Company است، نه User.
-- Owner/Manager Company می‌توانند آن را ویرایش کنند.
-- Accountant/Viewer در Company دیگر Read-only هستند.
-- همان User اگر در Company خودش Owner باشد، مشخصات Company خودش را ویرایش می‌کند.
-- Per-user company identity داخل یک Company ممنوع است.
+### Company membership and data
+- User می‌تواند Owner یک Company و Accountant/Manager Company دیگر باشد.
+- Journal / Invoice / Document / Account / Party / Report به Company تعلق دارند، نه سازنده سند.
+- Company Profile متعلق به Company است، نه User.
+- Owner/Manager Company آن را ویرایش می‌کنند؛ Accountant/Viewer Read-only هستند.
 
 ### Platform Admin
-- `platform_admin/system_admin` سطح Control Plane آوان است و عضو خودکار Companyها نیست.
 - Platform Admin برای Tenant lifecycle, plans, system health, support operations است.
 - Platform Admin به‌طور پیش‌فرض Ledger/Invoices/Documents شرکت‌ها را نمی‌بیند.
 - Support Access آینده باید Explicit + Time-bounded + Reason-required + Audit-logged باشد.
 
-### Current UX defect found
-- `avan-cloud-bootstrap.js` در سناریوی عضویت کاری، Workspace شخصی Owned را suppress می‌کند.
-- داده واقعی نشان داد User دوم هم‌زمان Accountant یک Workspace و Owner یک Workspace دیگر است، اما UX می‌تواند Workspace Owned را پنهان کند.
-- این suppression باید در C1.2 حذف/بازطراحی شود و `شرکت فعال` صریح شود.
+### Application hierarchy after ADR-0015
+`Auth → Company Portfolio → Active Company → Accounting / Sales / Inventory / Tax / Treasury / Reports`
+
+Company Portfolio یک سطح بالاتر از Company App است و نباید Ledger چند Company را ترکیب کند.
 
 ---
 
-## 7) Company Print Identity / Operational Profile
+## 7) RC1.3-C1.2 — LIVE PASS
+User explicitly confirmed: `Gate RC1.3-C1.2 پاس شد`.
+
+Implemented and retained:
+- owned/personal Company context is no longer suppressed merely because User is a member of another Company.
+- explicit `شرکت فعال` selector.
+- Role shown for the active Company.
+- Settings order improved.
+- Company Profile editability follows Role of active Company.
+- same-company shared Ledger behavior retained intentionally.
+- cross-company isolation Gate passed.
+
+### Company isolation DB hardening
+Legacy `journal_lines` Draft RLS tautology `e.workspace_id = e.workspace_id` was fixed.
+
+Composite Company constraints now enforce that a journal line and its referenced parent entities belong to the same workspace/Company:
+- journal line → journal entry `(id, workspace_id)`
+- journal line → account `(id, workspace_id)`
+- journal line → optional party `(id, workspace_id)`
+
+Before and after migration:
+- journal workspace mismatch = 0
+- account workspace mismatch = 0
+- party workspace mismatch = 0
+
+This finding is **resolved**, not pending.
+
+---
+
+## 8) RC1.3-MT-A — merged, awaiting Live Gate
+PR #31 merge:
+`b11f2aeb25d9315adc6969607e4b5535a598bf39`
+
+No database migration was needed in MT-A.
+No `app.js` rewrite was performed; existing Core uses a controlled compatibility facade during the transition.
+
+### Central CompanyContext
+New source:
+- `avan-staging/src/application/company/company-context.js`
+
+Rules:
+- exactly one authoritative CompanyContext per browser page.
+- active Company is validated against the complete RLS-authorized Company list.
+- a single accessible Company may auto-select.
+- when multiple Companies exist and no valid session selection exists, Company selection is required before Company-scoped legacy workspace reads proceed.
+- invalid/stale stored Company ids are rejected and cleared.
+- only active Company id is stored as a Session/UI preference; financial data is not stored locally.
+
+### AvanCloud singleton
+`installAvanCloud()` now returns one page-level Cloud/Supabase client with:
+- `cloud.companyContext`
+- `ACTIVE_COMPANY_KEY` compatibility alias
+- existing `ACTIVE_WORKSPACE_KEY` retained temporarily.
+
+Parallel Supabase clients per UI module are no longer the intended architecture.
+
+### Compatibility facade
+Legacy Core still has some `workspaces[0]` / `ctx.workspace` semantics.
+MT-A prevents those modules from independently choosing a tenant:
+- complete CompanyContext determines the valid active Company.
+- full legacy workspace queries are reordered to active Company.
+- legacy `limit=1` workspace queries are explicitly scoped to active Company before DB limit is applied.
+- if several Companies exist but none is selected, legacy Company-scoped workspace queries raise `COMPANY_SELECTION_REQUIRED` rather than silently choosing the first Company.
+
+`ctx.workspace` is temporarily tolerated as an internal compatibility alias for Active Company; new code must not introduce new first-workspace tenant selection.
+
+### Company Portfolio / Shell
+- topbar retains `شرکت فعال` selector.
+- new **`شرکت‌های من`** Portfolio.
+- Portfolio shows authorized Companies, active state and User Role per Company.
+- desktop overlay + mobile/iPhone bottom-sheet behavior.
+- if Company selection is required, Portfolio is non-dismissible until selection.
+- Portfolio does not aggregate Company Ledgers.
+
+### Modules moved to Provider in MT-A
+- User money/display preference resolver no longer selects first Workspace independently.
+- Audit Log resolves Company via CompanyContext.
+- Company selector and Portfolio use the same Provider.
+- Company Profile and remaining legacy modules are protected through the central compatibility facade pending MT-C cleanup.
+
+Gate file:
+- `avan-staging/RC1_3_MT_A_GATE.md`
+
+MT-A remains **awaiting explicit user Live PASS**.
+
+---
+
+## 9) Company Print Identity / Operational Profile
 Source of truth:
 - `public.workspace_print_profiles`
 - `get_workspace_print_profile(wid)`
@@ -164,7 +255,7 @@ RC1.3-B = Live PASS.
 
 ---
 
-## 8) Audit / Security — RC1.3-C1 + C1.1
+## 10) Audit / Security — RC1.3-C1 + C1.1
 ### C1
 - all 43 public SECURITY DEFINER functions: PUBLIC execute=0, anon execute=0, authenticated preserved.
 - Audit Log UX added.
@@ -177,35 +268,26 @@ RC1.3-B = Live PASS.
 - Accountant/Viewer do not see admin/access events.
 - Live two-user Gate passed.
 
-Security Advisor still warns that many SECURITY DEFINER functions are callable by authenticated users; some are intentionally browser RPCs. Further reduction must be dependency-by-dependency, not bulk.
+Security Advisor still warns that many SECURITY DEFINER functions are callable by authenticated users; some are intentional browser RPCs. Further reduction must be dependency-by-dependency, not bulk.
 
 Leaked Password Protection remains disabled and is pending Auth operational hardening where plan support allows.
 
 ---
 
-## 9) RLS finding pending targeted fix
-During Company/Document visibility review, current policies correctly scope SELECT on `journal_entries`, `invoices`, `invoice_lines`, `documents` and `journal_lines` by `has_workspace_access(workspace_id)`.
-
-However `journal_lines` draft INSERT/UPDATE/DELETE policy expressions contain a suspicious tautology:
-`e.workspace_id = e.workspace_id`
-instead of an explicit parent-line workspace equality.
-
-This must be corrected in a targeted migration and Gate during C1.2/C security hardening. Do not change unrelated Ledger semantics.
-
----
-
-## 10) Settings UX target order — ADR-0014
-Settings should render in this order:
-1. **حساب کاربری** — personal user/password/session
-2. **شرکت فعال / مشخصات شرکت و چاپ**
+## 11) Settings UX target
+Settings order:
+1. **حساب کاربری** — global User identity/password/session
+2. **مشخصات شرکت و چاپ** — active Company
 3. **کاربران و دسترسی‌ها** — Company admins only
-4. financial/display/operational Company settings
+4. Company financial/display/operational settings
 5. **گزارش فعالیت**
 6. security/operational controls
 
+Future architecture should increasingly separate `تنظیمات حساب من` from `تنظیمات شرکت فعال` rather than mixing their ownership semantics.
+
 ---
 
-## 11) Mobile / iPhone
+## 12) Mobile / iPhone
 RC1.2-F and F.1 = Live PASS.
 
 Bottom Nav:
@@ -222,47 +304,62 @@ Bottom Nav:
 - طرف‌حساب‌ها
 - تنظیمات
 
+MT-A adds mobile-safe Company Portfolio / Company switching. This new MT-A mobile behavior still awaits Live Gate.
+
 ---
 
-## 12) Smart Documents / OCR
+## 13) Smart Documents / OCR
 Browser-local OCR is Frozen under ADR-0013.
 
 Supported workflow:
 `Upload → Private original → Internal Viewer → Manual Review → Accounting Draft → Human Approval → Ledger Link`
 
+Do not restart browser-local OCR tuning without a new ADR/benchmark decision.
+
 ---
 
-## 13) Immediate roadmap before Production
-### RC1.3-C1.2 — Company Context & Settings UX
-- stop suppressing Owned personal/company workspace
-- explicit `شرکت فعال` selector
-- show Role in active Company
-- Settings reorder per ADR-0014
-- Company profile editable based on role of active Company
-- same-company shared financial document behavior retained
-- cross-company isolation Gate
-- targeted `journal_lines` RLS parent-workspace fix
+## 14) Immediate roadmap before Production
+### Current: RC1.3-MT-A — awaiting Live Gate
+Validate:
+- Company Portfolio
+- one active Company at a time
+- synchronized Company switch across Journals/Invoices/Documents/Accounts/Parties/Reports/Profile/Audit/Preferences
+- session access validation
+- desktop + iPhone
+- core regression
 
-### RC1.3-C1.3 — Company Creation / Rename
+### After MT-A PASS: RC1.3-MT-B — Company Lifecycle / Onboarding
 - explicit Create Company flow
+- Company rename/display identity
 - Owner assignment
-- company rename/profile initialization
-- remove bootstrap naming ambiguity
+- initial Company Profile setup
+- initial fiscal/company setup
+- remove bootstrap naming ambiguity from UX
+- Company Portfolio becomes entry point for Create/Enter Company lifecycle
 
-### RC1.3-C2 — Platform Control Plane Skeleton
-- Platform Admin data model separate from `workspace_members`
-- Company/Tenant registry/status
+### RC1.3-MT-C — Module Boundary Cleanup
+- progressively inject CompanyContext directly into remaining legacy modules
+- remove first-workspace assumptions
+- reduce/remove `ctx.workspace` compatibility alias
+- move terminology in business/application code toward Company while retaining physical DB `workspace_id` until a justified migration exists
+
+### Platform Control Plane
+Separate phase under ADR-0014:
+- Platform Admin data model separate from Company membership
+- Tenant registry/status
+- plans/subscription/system health
 - no default tenant Ledger access
-- audited support-access design
+- audited support access design
 
-### RC1.3-C3 — Backup / Restore / Session / Operational Controls
-- backup strategy
-- restore procedure
+### Operational/Security completion
+- backup/restore strategy
 - session controls
-- operational safety checks
+- leaked-password protection review
+- remaining SECURITY DEFINER dependency-by-dependency hardening
 
 ### RC1.3-D — Full Regression
 - multi-company/two-user RLS
+- CompanyContext/Portfolio
 - Draft/Posted/Reversed immutability
 - invoices/reports/currency/fiscal periods
 - orphan lines zero
@@ -281,7 +378,7 @@ Then:
 
 ---
 
-## 14) Official Product Direction
+## 15) Official Product Direction
 آوان = حسابداری + انبار + فروش + مالیات + خزانه + اتوماسیون + AI + Voice + تصمیم‌یار مدیریتی.
 
 Future pillars:
