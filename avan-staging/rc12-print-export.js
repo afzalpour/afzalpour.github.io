@@ -16,6 +16,10 @@ function text(value) {
     .trim();
 }
 
+function toPersianDigits(value) {
+  return String(value ?? '').replace(/[0-9]/g, digit => '۰۱۲۳۴۵۶۷۸۹'[Number(digit)]);
+}
+
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, char => ({
     '&': '&amp;',
@@ -28,6 +32,22 @@ function escapeHtml(value) {
 
 function currentPageTitle() {
   return text(document.getElementById('pageTitle')?.textContent);
+}
+
+function localizePrintDigits(root) {
+  if (!root) return;
+
+  const walker = document.createTreeWalker(
+    root,
+    NodeFilter.SHOW_TEXT
+  );
+
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+
+  nodes.forEach(node => {
+    node.nodeValue = toPersianDigits(node.nodeValue);
+  });
 }
 
 function printableClone(source) {
@@ -50,10 +70,11 @@ function printableClone(source) {
 
   clone.querySelectorAll('input,select,textarea').forEach(control => {
     const replacement = document.createElement('span');
-    replacement.textContent = control.value || '—';
+    replacement.textContent = toPersianDigits(control.value || '—');
     control.replaceWith(replacement);
   });
 
+  localizePrintDigits(clone);
   return clone;
 }
 
@@ -91,7 +112,9 @@ function printCss() {
     thead{display:table-header-group}
     tr{page-break-inside:avoid;page-break-after:auto}
     th,td{border:1px solid #d8d1c6;padding:5px 6px;text-align:right;vertical-align:top}
-    th{background:#f3eee6;font-weight:750}
+    th{background:#f3eee6;font-weight:750;text-align:center;vertical-align:middle}
+    .avan-detail-print table th,
+    .avan-detail-print table td{text-align:center;vertical-align:middle}
     td.num,.num{font-variant-numeric:tabular-nums;white-space:nowrap}
     .grid4,.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}
     .card{border:1px solid #ddd4c8;border-radius:8px;padding:9px;background:#fff;page-break-inside:avoid}
@@ -129,24 +152,27 @@ function openPrintWindow(source, title) {
     timeStyle: 'short'
   }).format(new Date());
 
+  const detail = /^(فاکتور|سند\s)/.test(text(title));
+  const localizedTitle = toPersianDigits(title);
+
   popup.document.open();
   popup.document.write(`<!doctype html>
     <html lang="fa" dir="rtl">
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
-        <title>${escapeHtml(title)}</title>
+        <title>${escapeHtml(localizedTitle)}</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vazirmatn@33.0.3/Vazirmatn-Variable-font-face.css">
         <style>${printCss()}</style>
       </head>
       <body>
-        <main class="avan-print-shell">
+        <main class="avan-print-shell ${detail ? 'avan-detail-print' : ''}">
           <header class="avan-print-header">
             <div>
               <div class="avan-print-brand">آوان</div>
-              <div class="avan-print-title">${escapeHtml(title)}</div>
+              ${detail ? '' : `<div class="avan-print-title">${escapeHtml(localizedTitle)}</div>`}
             </div>
-            <div class="avan-print-meta">${escapeHtml(now)}</div>
+            <div class="avan-print-meta">${escapeHtml(toPersianDigits(now))}</div>
           </header>
           ${clone.outerHTML}
         </main>
