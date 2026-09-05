@@ -1,6 +1,6 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: 2026-09-05، پس از موفقیت Live جریان بازیابی رمز RC1.3-A1 و Merge شدن **RC1.3-B Company / Operational Settings** برای Live Gate.
+آخرین به‌روزرسانی مرجع: 2026-09-05، پس از Live PASS شدن **RC1.3-B Company / Operational Settings** و ورود پروژه به **RC1.3-C Operational / Security Controls**.
 
 این فایل وضعیت جاری پروژه است و پس از هر Gate پاس‌شده یا تصمیم معماری مهم باید به‌روزرسانی شود.
 
@@ -46,13 +46,14 @@ Source of Truth:
 - RC1.2-E Professional A4 + Company Print Identity — PASS
 - RC1.2-F Mobile/iPhone Final UX — PASS
 - RC1.2-F.1 Complete Mobile Navigation — PASS
+- **RC1.3-B Company / Operational Settings — PASS**
 
 Not explicitly marked with Gate phrase:
 - RC1.2-D.1 Persian print polish — merged and retained.
 - RC1.3-A1 — user explicitly confirmed recovery email arrived and password reset succeeded on desktop and iPhone web; functional Live success is confirmed, but sender branding remains deferred. Do not invent a formal Gate phrase retroactively.
 
 Current phase:
-- **RC1.3-B merged; awaiting Live Gate.**
+- **RC1.3-C Operational / Security Controls.**
 
 ---
 
@@ -124,7 +125,7 @@ Existing fields:
 - phone/email/postal code/address
 - private logo
 
-### RC1.3-B — MERGED, LIVE GATE PENDING
+### RC1.3-B — LIVE PASS
 Adds:
 - `entity_type`: `individual | legal | other` → حقیقی / حقوقی / سایر
 - `province`
@@ -148,7 +149,7 @@ Supabase migration applied directly and verified:
 
 Gate file:
 - `avan-staging/RC1_3_B_GATE.md`
-- PASS phrase: `Gate RC1.3-B پاس شد`
+- User explicitly confirmed: `Gate RC1.3-B پاس شد`
 
 ---
 
@@ -183,29 +184,30 @@ Do not restart ad-hoc local OCR tuning. Revisit only with a stronger Document AI
 
 ---
 
-## 9) Security / Operational findings for RC1.3-C
-Supabase Security Advisor on 2026-09-05 identified legacy hardening items that are NOT part of RC1.3-B and must be handled separately with regression testing:
+## 9) Current phase — RC1.3-C Operational / Security Controls
+Supabase Security Advisor on 2026-09-05 identified legacy hardening items that must be handled with targeted regression testing:
 
-- Multiple existing `SECURITY DEFINER` functions in `public` still appear executable by `anon`/PUBLIC, including financial/reporting RPC surfaces. Many may have internal auth/workspace checks, but grants must be reviewed and narrowed intentionally rather than changed wholesale inside an unrelated release.
+- Multiple existing `SECURITY DEFINER` functions in `public` still appear executable by `anon`/PUBLIC, including financial/reporting RPC surfaces. Many may have internal auth/workspace checks, but grants must be reviewed and narrowed intentionally rather than changed wholesale.
 - `Leaked Password Protection` is disabled in Supabase Auth.
 - `workspace_print_profiles` has RLS enabled with no direct row policies by design because table privileges are revoked and access is through controlled RPCs; do not add permissive policies just to silence the advisor.
-- Performance advisor reports several unindexed FKs and some policy/init-plan inefficiencies; review in operational/performance hardening, not opportunistically.
+- Performance advisor reports several unindexed FKs and some policy/init-plan inefficiencies; review selectively in operational/performance hardening.
 
-RC1.3-C should include a dedicated SECURITY DEFINER privilege inventory and Live regression before changing legacy grants.
-
----
-
-## 10) Next roadmap
-After **RC1.3-B Live PASS**:
-
-### RC1.3-C — Operational / Security Controls
+RC1.3-C scope:
 - backup/restore strategy
 - usable Audit Log UX
 - user-friendly operational errors
 - session/recovery controls
-- SECURITY DEFINER EXECUTE-grant hardening
+- SECURITY DEFINER EXECUTE-grant inventory and hardening
 - leaked-password protection review/enablement where supported
 - targeted operational/performance fixes with regression coverage
+
+Hard rule:
+- do not bulk-revoke or change grants without mapping each browser/RPC dependency and running the relevant two-user/RLS/financial regression.
+
+---
+
+## 10) Next roadmap
+After **RC1.3-C Live PASS**:
 
 ### RC1.3-D — Full Regression
 - two-user / workspace RLS
