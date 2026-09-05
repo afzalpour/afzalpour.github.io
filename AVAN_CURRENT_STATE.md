@@ -1,6 +1,6 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: 2026-09-05، پس از **Live PASS شدن RC1.3-MT-P3 Controlled Support Access**.
+آخرین به‌روزرسانی مرجع: 2026-09-05، پس از **Live PASS شدن RC1.3-MT-P3** و Merge شدن **RC1.3-MT-C Module Boundary Cleanup** در انتظار Live Gate.
 
 این فایل Source of Truth وضعیت جاری پروژه است. Gate فقط با تایید صریح کاربر PASS می‌شود.
 
@@ -30,7 +30,7 @@ Repository: `afzalpour/afzalpour.github.io`
 Retained but not exact Gate phrase: RC1.2-D.1 and RC1.3-A1 recovery success.
 
 Current phase:
-- **RC1.3-MT-C — Module Boundary Cleanup**
+- **RC1.3-MT-C — MERGED / awaiting Live Gate**
 
 ## 3) Latest important merges
 - PR #29 ADR-0014: `8a8723ba28f0bed82b39bbc1ade93e1361ef87b8`
@@ -40,9 +40,10 @@ Current phase:
 - PR #33 MT-P1: `1b2106a28e8fa938c6d86fab8987f550943b72bc`
 - PR #34 MT-P1.1: `958f66e73df19eff9b604f7fa8db24b1efbf794e`
 - PR #35 MT-P2: `c5473896cc6e90d9891e0da9a87fee2e59b5b492`
-- **PR #36 MT-P3: `626e3a62a8cbd3f06a728ad86baf08b92927fd95`**
+- PR #36 MT-P3: `626e3a62a8cbd3f06a728ad86baf08b92927fd95`
+- **PR #37 MT-C: `c6d3194d4bc309f3d7357afb02b8f59444748f57`**
 
-PWA staging cache after MT-P3: **v40**.
+PWA staging cache after MT-C: **v41**.
 
 ## 4) Core invariants
 - PostgreSQL/Supabase = financial Source of Truth.
@@ -110,37 +111,34 @@ Migration: `rc1_3_mt_p3_controlled_support_access`
 
 Security model:
 - `private.platform_support_sessions` with RLS and no direct Browser grant/policy.
-- actor-bound + tenant-bound + reason-required.
-- duration 5–60 minutes.
-- access mode fixed to `read_only`.
-- archived Tenant cannot receive new Support session.
-- Support Session does **not** add `workspace_members` membership and does not open ordinary Company RLS.
-- dedicated allowlisted `platform_support_read` only.
-- no Support create/update/delete/post/reverse/upload/private-file-download endpoint.
-- reads are limited and column-reduced; no OCR raw text/file path in Support Viewer.
-- every Support read is Platform Audit logged.
-- create/revoke is also visible in Company Audit.
+- actor-bound + tenant-bound + reason-required; duration 5–60 minutes; fixed `read_only`.
+- Support Session does not add Company membership and does not open ordinary Company RLS.
+- dedicated allowlisted Support read only; no write/post/reverse/upload/private-file-download endpoint.
+- every Support read is Platform Audit logged; create/revoke also visible in Company Audit.
 - Platform Admin and Company Owner/Manager can revoke immediately.
-
-Public P3 wrappers are SECURITY INVOKER; anon EXECUTE=false.
-
-Backend verification:
-- Platform Admin with zero membership: ordinary accounts rows = 0.
-- dedicated Support read: `read_only=true`, limited rows returned.
-- Platform revoke → active=false.
-- Company Owner saw active session and revoked → active=false.
-- all verification tests rolled back; active test sessions = 0.
-- public P3 SECURITY DEFINER wrappers = 0; anon executable = 0.
-
-UI:
-- Platform Admin creates/opens/revokes Support session from `مدیریت سامانه آوان`.
-- dedicated `support-viewer.html`.
-- Owner/Manager sees `دسترسی پشتیبانی آوان` in Company Settings and can revoke.
-- PWA cache v40.
 
 User explicitly confirmed: `Gate RC1.3-MT-P3 پاس شد`.
 
-## 11) Auth / Security backlog before Production
+## 11) MT-C — MERGED / AWAITING LIVE GATE
+PR #37 merge: `c6d3194d4bc309f3d7357afb02b8f59444748f57`
+Gate: `avan-staging/RC1_3_MT_C_GATE.md`
+
+Implemented boundary cleanup:
+- Added explicit `CompanyBoundary` on top of the accepted central `CompanyContext`.
+- `CompanyBoundary` exposes `requireActiveCompany`, `activeCompany`, `listCompanies`.
+- Legacy business-module `select('workspaces', ...)` is now **active-Company-only projection**; it can no longer enumerate Companies and choose the first row.
+- Multi-company without a valid selection returns `COMPANY_SELECTION_REQUIRED`.
+- No Company returns `COMPANY_REQUIRED`, so the old Core path cannot silently bootstrap an implicit Tenant.
+- Runtime guard removes the deprecated Workspace switcher; Product selector is `شرکت فعال / شرکت‌های من` only.
+- Currency, Company Profile, users/access and monolithic Core legacy reads are constrained to the same already-resolved Active Company.
+- Existing `ctx.workspace` inside the monolithic Core is retained only as a temporary naming alias for the Active Company; it is no longer a tenant resolver.
+- physical DB `workspace_id` remains unchanged per ADR-0015.
+- No SQL/RLS/Ledger/Posting/Reversal/Money schema behavior changed.
+- PWA cache v41.
+
+Live Gate must verify synchronized Company switch across Dashboard/Accounts/Invoices/Documents/Reports/Currency/Profile/Access/Audit, no legacy Workspace switcher, suspended Tenant block, Company lifecycle regression, Platform/Support separation and iPhone behavior.
+
+## 12) Auth / Security backlog before Production
 Working:
 - owner-managed eligible other-user password change via secure Edge Function.
 - self password change + reauth.
@@ -152,20 +150,16 @@ Remaining:
 - custom SMTP/sender branding and final custom-domain redirects when a domain exists.
 - private Control Plane tables intentionally have RLS with no direct browser policies/grants.
 
-## 12) Smart Documents
+## 13) Smart Documents
 Browser-local OCR frozen under ADR-0013.
 Supported flow:
 `Upload → Private original → Internal Viewer → Manual Review → Accounting Draft → Human Approval → Ledger Link`
 
-## 13) Immediate roadmap before Production
+## 14) Immediate roadmap before Production
 ### Current
-**RC1.3-MT-C — Module Boundary Cleanup**
-- inject CompanyContext into remaining legacy modules.
-- remove first-workspace assumptions.
-- progressively remove `ctx.workspace` compatibility alias.
-- keep physical `workspace_id` until justified migration.
+**RC1.3-MT-C — Live Gate pending**
 
-### Operational / Security completion
+### After MT-C PASS: Operational / Security completion
 - backup/restore strategy and restore drill.
 - session controls.
 - leaked-password protection review.
@@ -191,7 +185,7 @@ Then:
 - approved Staging → Production/root promotion.
 - custom domain + production SMTP/sender branding when domain exists.
 
-## 14) Product roadmap after first Production release
+## 15) Product roadmap after first Production release
 The complete Avan vision is multi-release, not one RC:
 - Inventory Stock Ledger / multi-warehouse / costing.
 - Sales & Purchase lifecycle.
