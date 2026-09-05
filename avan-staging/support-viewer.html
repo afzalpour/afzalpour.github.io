@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>آوان — Support Viewer</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vazirmatn@33.0.3/Vazirmatn-Variable-font-face.css" />
+<link rel="stylesheet" href="support-viewer.css" />
+</head>
+<body>
+<header class="sv-top"><div><span>آوان · Controlled Support</span><h1 id="svTitle">Support Viewer</h1><p id="svMeta">در حال بررسی Session…</p></div><div><button id="svRefresh">به‌روزرسانی</button><a href="platform-admin.html">بازگشت به مدیریت سامانه</a></div></header>
+<main>
+<section id="svState" class="sv-state">در حال بررسی دسترسی…</section>
+<section id="svContent" hidden>
+<nav class="sv-tabs" id="svTabs">
+<button data-resource="overview" class="active">خلاصه</button><button data-resource="accounts">حساب‌ها</button><button data-resource="parties">طرف‌حساب‌ها</button><button data-resource="journals">اسناد</button><button data-resource="invoices">فاکتورها</button><button data-resource="documents">اسناد هوشمند</button><button data-resource="fiscal_years">سال مالی</button>
+</nav>
+<section class="sv-panel"><div class="sv-readonly">فقط‌خواندنی · بدون امکان ثبت، ویرایش، حذف، Posting یا دانلود فایل خصوصی</div><div id="svData"></div></section>
+</section>
+</main>
+<script src="config.js"></script><script type="module" src="support-viewer.js"></script>
+</body></html>
