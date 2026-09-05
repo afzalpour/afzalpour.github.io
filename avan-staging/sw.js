@@ -1,9 +1,11 @@
 const CACHE_PREFIX='avan-staging-rc1-';
-const CACHE='avan-staging-rc1-v36';
+const CACHE='avan-staging-rc1-v37';
 const ASSETS=[
 './',
 './index.html',
+'./platform-admin.html',
 './styles.css',
+'./platform-admin.css',
 './rc11-money.css',
 './rc11-access.css',
 './rc11-refinements.css',
@@ -19,6 +21,7 @@ const ASSETS=[
 './rc13-company-lifecycle.css',
 './config.js',
 './app.js',
+'./platform-admin.js',
 './rc11-money.js',
 './rc11-user-preferences.js',
 './rc11-currency.js',
@@ -34,6 +37,7 @@ const ASSETS=[
 './rc13-operational-audit.js',
 './rc13-company-context.js',
 './rc13-company-lifecycle.js',
+'./rc13-platform-admin-entry.js',
 './manifest.webmanifest',
 './avan-icon-192.png',
 './avan-icon-512.png',
