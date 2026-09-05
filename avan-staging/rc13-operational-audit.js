@@ -7,6 +7,7 @@ const content = document.getElementById('content');
 const pageTitle = document.getElementById('pageTitle');
 
 let workspace = null;
+let workspaceRole = '';
 let currentUser = null;
 let rows = [];
 let loading = false;
@@ -58,6 +59,10 @@ function esc(value) {
 
 function isSettingsPage() {
   return String(pageTitle?.textContent || '').trim() === 'تنظیمات';
+}
+
+function isAuditAdminRole() {
+  return workspaceRole === 'owner' || workspaceRole === 'manager';
 }
 
 function formatDate(value) {
@@ -120,6 +125,7 @@ function cardShell() {
         <div>
           <h2>گزارش فعالیت</h2>
           <span class="muted">آخرین رویدادهای ثبت‌شده در فضای مالی، فقط به‌صورت خواندنی</span>
+          <small class="muted" id="avanAuditScopeNote"></small>
         </div>
         <button type="button" class="ghost" id="avanAuditRefresh">به‌روزرسانی</button>
       </div>
@@ -129,7 +135,6 @@ function cardShell() {
           <option value="all">همه فعالیت‌ها</option>
           <option value="accounting">حسابداری و دوره مالی</option>
           <option value="documents">اسناد هوشمند</option>
-          <option value="access">کاربران و دسترسی</option>
           <option value="settings">تنظیمات</option>
         </select>
         <span class="muted" id="avanAuditStatus"></span>
@@ -139,6 +144,33 @@ function cardShell() {
       </div>
     </section>
   `;
+}
+
+function applyRoleVisibility() {
+  const filter = document.getElementById('avanAuditFilter');
+  const note = document.getElementById('avanAuditScopeNote');
+  if (!filter) return;
+
+  let accessOption = filter.querySelector('option[value="access"]');
+
+  if (isAuditAdminRole()) {
+    if (!accessOption) {
+      filter.insertAdjacentHTML(
+        'beforeend',
+        '<option value="access">کاربران و دسترسی</option>'
+      );
+    }
+    if (note) {
+      note.textContent = 'مالک و مدیر: رویدادهای مدیریتی و دسترسی نیز قابل مشاهده‌اند.';
+    }
+    return;
+  }
+
+  if (accessOption) accessOption.remove();
+  if (filter.value === 'access') filter.value = 'all';
+  if (note) {
+    note.textContent = 'رویدادهای کاربران، دعوت‌ها و تغییرات دسترسی فقط برای مالک یا مدیر قابل مشاهده‌اند.';
+  }
 }
 
 function paint(category = 'all') {
@@ -168,6 +200,11 @@ async function resolveContext() {
 
   workspace = workspaces?.[0] || null;
   if (!workspace?.id) throw new Error('WORKSPACE_REQUIRED');
+
+  workspaceRole = await cloud.rpc(
+    'workspace_role',
+    { wid: workspace.id }
+  ) || '';
 }
 
 async function loadAudit({ forceContext = false } = {}) {
@@ -180,9 +217,11 @@ async function loadAudit({ forceContext = false } = {}) {
   if (status) status.textContent = 'در حال به‌روزرسانی…';
 
   try {
-    if (forceContext || !workspace?.id || !currentUser?.id) {
+    if (forceContext || !workspace?.id || !currentUser?.id || !workspaceRole) {
       await resolveContext();
     }
+
+    applyRoleVisibility();
 
     rows = await cloud.select(
       'audit_logs',
@@ -241,6 +280,7 @@ if (content) {
 
 window.addEventListener('avan:workspace-changed', () => {
   workspace = null;
+  workspaceRole = '';
   rows = [];
   scheduleEnsure();
 });
