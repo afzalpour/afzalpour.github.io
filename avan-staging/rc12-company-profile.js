@@ -33,7 +33,12 @@ function clean(value) {
 
 function isPatchMissing(error) {
   const message = String(error?.message || error || '');
-  return error?.status === 404 || message.includes('get_workspace_print_profile');
+  const code = String(error?.code || '');
+  return (
+    error?.status === 404 ||
+    code === 'PGRST202' ||
+    message.includes('get_workspace_print_profile')
+  );
 }
 
 function extension(file) {
@@ -68,6 +73,27 @@ function profileSnapshot() {
   });
 }
 
+function stateKey() {
+  const p = profileSnapshot();
+  return JSON.stringify([
+    patchMissing,
+    role,
+    p.workspace_id,
+    p.display_name,
+    p.legal_name,
+    p.registration_no,
+    p.national_id,
+    p.economic_code,
+    p.tax_id,
+    p.phone,
+    p.email,
+    p.postal_code,
+    p.address,
+    p.logo_path,
+    p.logo_url
+  ]);
+}
+
 async function resolveWorkspace() {
   const user = await cloud.user();
   if (!user?.id) throw new Error('AUTH_REQUIRED');
@@ -94,7 +120,8 @@ async function signedLogo(path) {
 }
 
 async function loadProfile(force = false) {
-  if (loadPromise && !force) return loadPromise;
+  if (loadPromise) return loadPromise;
+  if (profile && !force) return profileSnapshot();
 
   loadPromise = (async () => {
     try {
@@ -111,7 +138,6 @@ async function loadProfile(force = false) {
       }
 
       logoUrl = await signedLogo(profile?.logo_path);
-      window.dispatchEvent(new CustomEvent('avan:company-profile-updated'));
       return profileSnapshot();
     } finally {
       loadPromise = null;
@@ -158,8 +184,12 @@ function settingsCardHtml() {
           </div>
         </div>
         <div class="error-box">
-          Patch مرحله RC1.2-E هنوز روی Supabase اجرا نشده است.
-          پس از اجرای فایل <b>RC1_2_E_COMPANY_PROFILE_PATCH.sql</b> این بخش فعال می‌شود.
+          اتصال API هویت شرکت هنوز آماده نیست. اگر Patch مرحله RC1.2-E اجرا شده است،
+          ممکن است Schema Cache سرویس Supabase هنوز تابع جدید را منتشر نکرده باشد.
+        </div>
+        <div class="form-actions">
+          <span class="muted" id="avanCompanyRetryStatus"></span>
+          <button type="button" class="primary" id="avanCompanyRetry">بررسی مجدد اتصال</button>
         </div>
       </section>
     `;
@@ -195,7 +225,7 @@ function settingsCardHtml() {
       </div>
 
       <div class="avan-company-profile-preview">
-        ${p.logo_url ? `<img src="${esc(p.logo_url)}" alt="لوگوی شرکت" id="avanCompanyLogoPreview">` : '<div class="avan-company-logo-fallback" id="avanCompanyLogoFallback">آ</div>'}
+        ${p.logo_url ? `<img src="${esc(p.logo_url)}" alt="لوگوی شرکت">` : '<div class="avan-company-logo-fallback">آ</div>'}
         <div>
           <strong>${esc(p.display_name || p.workspace_name || 'آوان')}</strong>
           <div class="avan-company-profile-summary">${identitySummary(p)}</div>
@@ -238,6 +268,28 @@ function settingsCardHtml() {
   `;
 }
 
+async function retryConnection(button, status) {
+  button.disabled = true;
+  status.textContent = 'در حال بررسی…';
+
+  try {
+    await loadProfile(true);
+
+    if (patchMissing) {
+      status.textContent = 'RPC هنوز از API قابل مشاهده نیست؛ Recovery SQL باید بررسی شود.';
+      button.disabled = false;
+      return;
+    }
+
+    await renderSettingsCard({ force: true, ensureLoaded: false });
+    toast('اتصال هویت شرکت برقرار شد.');
+  } catch (error) {
+    console.warn('[Avan company profile] retry failed', error);
+    status.textContent = 'بررسی اتصال انجام نشد.';
+    button.disabled = false;
+  }
+}
+
 async function saveProfile(form) {
   if (!workspace?.id || !['owner', 'manager'].includes(role)) {
     toast('اجازه ویرایش هویت شرکت را ندارید.');
@@ -267,24 +319,23 @@ async function saveProfile(form) {
     }
 
     const data = new FormData(form);
-    const payload = {
-      display_name: clean(data.get('display_name')),
-      legal_name: clean(data.get('legal_name')),
-      registration_no: clean(data.get('registration_no')),
-      national_id: clean(data.get('national_id')),
-      economic_code: clean(data.get('economic_code')),
-      tax_id: clean(data.get('tax_id')),
-      phone: clean(data.get('phone')),
-      email: clean(data.get('email')),
-      postal_code: clean(data.get('postal_code')),
-      address: clean(data.get('address')),
-      logo_path: newPath
-    };
-
     profile = await cloud.rpc('set_workspace_print_profile', {
       wid: workspace.id,
-      p_profile: payload
+      p_profile: {
+        display_name: clean(data.get('display_name')),
+        legal_name: clean(data.get('legal_name')),
+        registration_no: clean(data.get('registration_no')),
+        national_id: clean(data.get('national_id')),
+        economic_code: clean(data.get('economic_code')),
+        tax_id: clean(data.get('tax_id')),
+        phone: clean(data.get('phone')),
+        email: clean(data.get('email')),
+        postal_code: clean(data.get('postal_code')),
+        address: clean(data.get('address')),
+        logo_path: newPath
+      }
     });
+    patchMissing = false;
 
     if (oldPath && oldPath !== newPath) {
       try {
@@ -295,9 +346,11 @@ async function saveProfile(form) {
     }
 
     logoUrl = await signedLogo(profile?.logo_path);
-    window.dispatchEvent(new CustomEvent('avan:company-profile-updated'));
+    window.dispatchEvent(new CustomEvent('avan:company-profile-updated', {
+      detail: profileSnapshot()
+    }));
     toast('هویت چاپی شرکت ذخیره شد.');
-    renderSettingsCard(true);
+    await renderSettingsCard({ force: true, ensureLoaded: false });
   } catch (error) {
     if (uploadedPath) {
       try {
@@ -321,31 +374,52 @@ async function saveProfile(form) {
   }
 }
 
-async function renderSettingsCard(force = false) {
-  if (document.getElementById('pageTitle')?.textContent?.trim() !== 'تنظیمات') return;
-
-  const content = document.getElementById('content');
-  if (!content) return;
-
-  if (!profile || force) {
-    try {
-      await loadProfile(force);
-    } catch (error) {
-      console.warn('[Avan company profile] load failed', error);
-      return;
-    }
-  }
-
-  content.querySelector('[data-avan-company-profile]')?.remove();
-  content.insertAdjacentHTML('beforeend', settingsCardHtml());
-
-  const form = document.getElementById('avanCompanyProfileForm');
+function bindCard(card) {
+  const form = card.querySelector('#avanCompanyProfileForm');
   if (form) {
     form.onsubmit = event => {
       event.preventDefault();
       saveProfile(form);
     };
   }
+
+  const retry = card.querySelector('#avanCompanyRetry');
+  const retryStatus = card.querySelector('#avanCompanyRetryStatus');
+  if (retry && retryStatus) {
+    retry.onclick = () => retryConnection(retry, retryStatus);
+  }
+}
+
+async function renderSettingsCard({ force = false, ensureLoaded = true } = {}) {
+  if (document.getElementById('pageTitle')?.textContent?.trim() !== 'تنظیمات') return;
+
+  const content = document.getElementById('content');
+  if (!content) return;
+
+  if (ensureLoaded && !profile) {
+    try {
+      await loadProfile(false);
+    } catch (error) {
+      console.warn('[Avan company profile] load failed', error);
+      return;
+    }
+  }
+
+  const key = stateKey();
+  const existing = content.querySelector('[data-avan-company-profile]');
+  if (!force && existing?.dataset.avanCompanyState === key) return;
+
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = settingsCardHtml().trim();
+  const nextCard = wrapper.firstElementChild;
+  if (!nextCard) return;
+
+  nextCard.dataset.avanCompanyState = key;
+
+  if (existing) existing.replaceWith(nextCard);
+  else content.appendChild(nextCard);
+
+  bindCard(nextCard);
 }
 
 async function backgroundLoad() {
@@ -356,13 +430,13 @@ async function backgroundLoad() {
   try {
     await loadProfile(false);
   } catch {
-    // Auth/bootstrap may still be settling. Later mutations will retry.
+    // App bootstrap can still be settling; page changes will retry safely.
   }
 }
 
 function apply() {
   backgroundLoad();
-  renderSettingsCard(false);
+  renderSettingsCard();
 }
 
 function schedule() {
@@ -370,18 +444,34 @@ function schedule() {
   scheduled = setTimeout(() => {
     scheduled = null;
     apply();
-  }, 120);
+  }, 100);
 }
 
 function install() {
-  apply();
-  new MutationObserver(schedule).observe(document.body, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ['hidden']
-  });
-  window.addEventListener('avan:company-profile-updated', schedule);
+  const content = document.getElementById('content');
+  const pageTitle = document.getElementById('pageTitle');
+  const appShell = document.getElementById('appShell');
+
+  if (content) {
+    new MutationObserver(schedule).observe(content, { childList: true });
+  }
+
+  if (pageTitle) {
+    new MutationObserver(schedule).observe(pageTitle, {
+      childList: true,
+      characterData: true,
+      subtree: true
+    });
+  }
+
+  if (appShell) {
+    new MutationObserver(schedule).observe(appShell, {
+      attributes: true,
+      attributeFilter: ['hidden']
+    });
+  }
+
+  schedule();
 }
 
 if (document.readyState === 'loading') {
@@ -392,5 +482,9 @@ if (document.readyState === 'loading') {
 
 window.AvanCompanyProfile = Object.freeze({
   snapshot: profileSnapshot,
-  refresh: () => loadProfile(true)
+  refresh: async () => {
+    await loadProfile(true);
+    await renderSettingsCard({ force: true, ensureLoaded: false });
+    return profileSnapshot();
+  }
 });
