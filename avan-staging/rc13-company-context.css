@@ -1,0 +1,85 @@
+/* RC1.3-C1.2 — explicit Company context per ADR-0014 */
+
+/* Legacy workspace selector remains functional in older code but is hidden in
+   favor of the Company-aware selector below. */
+#avanWorkspaceSwitcherHost{
+  display:none!important;
+}
+
+.avan-company-context{
+  margin-inline-start:auto;
+  min-width:0;
+}
+
+.avan-company-context-inner{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+
+.avan-company-context-label{
+  color:var(--muted);
+  font-size:11px;
+  white-space:nowrap;
+}
+
+#avanActiveCompanySelect{
+  min-width:210px;
+  max-width:330px;
+  min-height:40px;
+  padding:8px 10px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:var(--surface);
+  color:var(--text);
+  font:inherit;
+  font-size:12.5px;
+  text-overflow:ellipsis;
+}
+
+.avan-company-role{
+  flex:0 0 auto;
+  white-space:nowrap;
+}
+
+@media(max-width:900px){
+  .avan-company-context{
+    width:100%;
+    margin-inline-start:0;
+    margin-top:8px;
+  }
+
+  .avan-company-context-inner{
+    width:100%;
+  }
+
+  #avanActiveCompanySelect{
+    flex:1;
+    min-width:0;
+    max-width:none;
+    font-size:16px;
+  }
+}
+
+@media(max-width:520px){
+  .avan-company-context-inner{
+    display:grid;
+    grid-template-columns:auto 1fr auto;
+    gap:6px;
+  }
+
+  .avan-company-context-label{
+    grid-column:1/-1;
+  }
+
+  #avanActiveCompanySelect{
+    grid-column:1/3;
+    width:100%;
+  }
+
+  .avan-company-role{
+    grid-column:3;
+    align-self:center;
+  }
+}
