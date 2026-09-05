@@ -1,6 +1,6 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: 2026-09-05، پس از Live PASS شدن **RC1.3-B Company / Operational Settings** و ورود پروژه به **RC1.3-C Operational / Security Controls**.
+آخرین به‌روزرسانی مرجع: 2026-09-05، پس از Live PASS شدن **RC1.3-C1.1 Audit Role Boundary** و پذیرش **ADR-0014 Multi-tenant Company + Platform Admin**.
 
 این فایل وضعیت جاری پروژه است و پس از هر Gate پاس‌شده یا تصمیم معماری مهم باید به‌روزرسانی شود.
 
@@ -46,14 +46,16 @@ Source of Truth:
 - RC1.2-E Professional A4 + Company Print Identity — PASS
 - RC1.2-F Mobile/iPhone Final UX — PASS
 - RC1.2-F.1 Complete Mobile Navigation — PASS
-- **RC1.3-B Company / Operational Settings — PASS**
+- RC1.3-B Company / Operational Settings — PASS
+- **RC1.3-C1 Security Definer + Audit UX — PASS**
+- **RC1.3-C1.1 Audit Role Boundary — PASS**
 
 Not explicitly marked with Gate phrase:
 - RC1.2-D.1 Persian print polish — merged and retained.
-- RC1.3-A1 — user explicitly confirmed recovery email arrived and password reset succeeded on desktop and iPhone web; functional Live success is confirmed, but sender branding remains deferred. Do not invent a formal Gate phrase retroactively.
+- RC1.3-A1 — recovery email and password reset succeeded on desktop and iPhone web; sender branding remains deferred.
 
 Current phase:
-- **RC1.3-C Operational / Security Controls.**
+- **RC1.3-C1.2 Company Context & Settings UX** per ADR-0014.
 
 ---
 
@@ -64,16 +66,18 @@ Current phase:
 - RC1.2-F Mobile/iPhone final UX: `6123ac86a178556f74c228fc592c28769d5fbda3`
 - RC1.2-F.1 Complete Mobile Navigation: `00d15b061983d5f1afdf4e9de165a292dac404b1`
 - RC1.3-A1 Auth Recovery Hardening: `8807f117918dd4e25d31f8c758c3d591b3e8681d`
-- **RC1.3-B Company / Operational Settings: `96915960a12575364cde0ad081e1ede6059fe1e1` (PR #26)**
+- RC1.3-B Company / Operational Settings: `96915960a12575364cde0ad081e1ede6059fe1e1` (PR #26)
+- RC1.3-C1 Security Definer + Audit UX: `2245b0c59ff7ac80f1de4424f7d231d453610f24` (PR #27)
+- **RC1.3-C1.1 Audit Role Boundary: `d8b31318e3bcc7f53730403fbcca726704a52bfe` (PR #28)**
 
-PWA staging cache after RC1.3-B: **v31**.
+PWA staging cache after C1.1: **v33**.
 
 ---
 
 ## 4) Core Financial Invariants
 - PostgreSQL/Supabase = financial Source of Truth.
 - Financial data is not stored in LocalStorage.
-- Auth + Workspace-based RLS active.
+- Auth + Workspace/Company-based RLS active.
 - Journal lifecycle: `Draft → Posted → Reversed`.
 - Posted journal and lines are immutable.
 - Corrections use Reversal/controlled workflow.
@@ -88,7 +92,9 @@ Relevant ADRs:
 - ADR-0003 Workspace/RLS boundary
 - ADR-0007 Versioned Tax Rules
 - ADR-0008 Unified Print/Export
+- ADR-0011 Multi-workspace → Multi-company
 - ADR-0013 Freeze Browser OCR
+- **ADR-0014 Multi-tenant Company + Platform Admin**
 
 ---
 
@@ -96,65 +102,111 @@ Relevant ADRs:
 Working:
 - Owner changes eligible other-user password via secure Edge Function.
 - User changes own password after re-authentication.
-- Forgot-password request hardened with generic anti-enumeration response, email validation, 60s cooldown, rate-limit handling and expired/invalid callback handling.
-- Recovery email delivery and password reset were Live-confirmed by user on desktop and iPhone web.
+- Forgot-password request hardened with generic anti-enumeration response, email validation, cooldown, rate-limit handling and expired/invalid callback handling.
+- Recovery email delivery and password reset Live-confirmed on desktop and iPhone web.
 
 Still deferred before Production:
 - Current sender appears as Supabase because default Supabase SMTP is used.
-- Custom sender branding (`آوان <no-reply@...>`) requires custom SMTP and verified sending identity/domain.
+- Custom sender branding requires custom SMTP and verified sending identity/domain.
 - Final custom-domain redirect configuration when a domain exists.
-- Professional branded Auth templates can be finalized alongside custom SMTP/domain.
-
-Do not use Gmail as the production transactional SMTP workaround.
+- Professional Auth templates finalized with custom SMTP/domain.
 
 ---
 
-## 6) Company Print Identity / Operational Profile
-Source of truth remains:
-- `public.workspace_print_profiles`
-- read RPC `get_workspace_print_profile(wid)`
-- write RPC `set_workspace_print_profile(wid,p_profile)`
-- private logo bucket `avan-branding`
+## 6) Company / Multi-tenant Architecture — ADR-0014
+آوان رسماً **Multi-tenant / Multi-company SaaS** است؛ نه نرم‌افزار تک‌شرکتی.
 
-Existing fields:
+### Company boundary
+- هر Workspace مسیر محصولی یک Company / Business Context مستقل است.
+- User می‌تواند عضو چند Company باشد و در هر Company Role متفاوت داشته باشد.
+- User می‌تواند Owner شرکت خودش و Accountant/Manager شرکت دیگری باشد.
+- Journal / Invoice / Document به Company تعلق دارند، نه سازنده سند.
+- اعضای مجاز همان Company دفتر مالی مشترک Company را می‌بینند.
+- Cross-company leakage = Blocker/Critical defect.
+
+### Company Profile
+- `workspace_print_profiles` متعلق به Company است، نه User.
+- Owner/Manager Company می‌توانند آن را ویرایش کنند.
+- Accountant/Viewer در Company دیگر Read-only هستند.
+- همان User اگر در Company خودش Owner باشد، مشخصات Company خودش را ویرایش می‌کند.
+- Per-user company identity داخل یک Company ممنوع است.
+
+### Platform Admin
+- `platform_admin/system_admin` سطح Control Plane آوان است و عضو خودکار Companyها نیست.
+- Platform Admin برای Tenant lifecycle, plans, system health, support operations است.
+- Platform Admin به‌طور پیش‌فرض Ledger/Invoices/Documents شرکت‌ها را نمی‌بیند.
+- Support Access آینده باید Explicit + Time-bounded + Reason-required + Audit-logged باشد.
+
+### Current UX defect found
+- `avan-cloud-bootstrap.js` در سناریوی عضویت کاری، Workspace شخصی Owned را suppress می‌کند.
+- داده واقعی نشان داد User دوم هم‌زمان Accountant یک Workspace و Owner یک Workspace دیگر است، اما UX می‌تواند Workspace Owned را پنهان کند.
+- این suppression باید در C1.2 حذف/بازطراحی شود و `شرکت فعال` صریح شود.
+
+---
+
+## 7) Company Print Identity / Operational Profile
+Source of truth:
+- `public.workspace_print_profiles`
+- `get_workspace_print_profile(wid)`
+- `set_workspace_print_profile(wid,p_profile)`
+- private bucket `avan-branding`
+
+Fields:
 - display/legal name
-- registration number
-- national ID
-- economic code
-- tax ID
-- phone/email/postal code/address
+- entity type
+- registration/national/economic/tax IDs
+- phone/email/postal code
+- province/city/address
+- invoice footer
 - private logo
 
-### RC1.3-B — LIVE PASS
-Adds:
-- `entity_type`: `individual | legal | other` → حقیقی / حقوقی / سایر
-- `province`
-- `city`
-- optional `invoice_footer`
-
-Behavior:
-- Settings card title: `مشخصات شرکت و چاپ`
-- Owner/Manager edit; other workspace users read-only.
-- Print header can show entity type and province/city/address.
-- `invoice_footer` is printed only on invoice detail print, never journal/report.
-- Existing print digit localization, centered invoice/journal tables and logo behavior retained.
-- No `app.js` change.
-- No Ledger, journal lifecycle, invoice posting, numbering, canonical money or financial-RLS change.
-- No VAT/tax rates or Iranian taxpayer-system rules hard-coded; ADR-0007 remains authoritative.
-
-Supabase migration applied directly and verified:
-- migration: `20260905102441 rc1_3_b_company_operational_profile`
-- columns `entity_type`, `province`, `city`, `invoice_footer` exist.
-- company profile RPC privileges verified: `anon=false`, `authenticated=true`.
-
-Gate file:
-- `avan-staging/RC1_3_B_GATE.md`
-- User explicitly confirmed: `Gate RC1.3-B پاس شد`
+RC1.3-B = Live PASS.
 
 ---
 
-## 7) Mobile / iPhone
-RC1.2-F and F.1 are Live PASS.
+## 8) Audit / Security — RC1.3-C1 + C1.1
+### C1
+- all 43 public SECURITY DEFINER functions: PUBLIC execute=0, anon execute=0, authenticated preserved.
+- Audit Log UX added.
+
+### C1.1
+- `audit_logs` broad privileges removed from anon/authenticated.
+- authenticated can SELECT only safe columns used by UI.
+- `before_json/after_json` unavailable to browser users.
+- Owner/Manager see admin/access audit events.
+- Accountant/Viewer do not see admin/access events.
+- Live two-user Gate passed.
+
+Security Advisor still warns that many SECURITY DEFINER functions are callable by authenticated users; some are intentionally browser RPCs. Further reduction must be dependency-by-dependency, not bulk.
+
+Leaked Password Protection remains disabled and is pending Auth operational hardening where plan support allows.
+
+---
+
+## 9) RLS finding pending targeted fix
+During Company/Document visibility review, current policies correctly scope SELECT on `journal_entries`, `invoices`, `invoice_lines`, `documents` and `journal_lines` by `has_workspace_access(workspace_id)`.
+
+However `journal_lines` draft INSERT/UPDATE/DELETE policy expressions contain a suspicious tautology:
+`e.workspace_id = e.workspace_id`
+instead of an explicit parent-line workspace equality.
+
+This must be corrected in a targeted migration and Gate during C1.2/C security hardening. Do not change unrelated Ledger semantics.
+
+---
+
+## 10) Settings UX target order — ADR-0014
+Settings should render in this order:
+1. **حساب کاربری** — personal user/password/session
+2. **شرکت فعال / مشخصات شرکت و چاپ**
+3. **کاربران و دسترسی‌ها** — Company admins only
+4. financial/display/operational Company settings
+5. **گزارش فعالیت**
+6. security/operational controls
+
+---
+
+## 11) Mobile / iPhone
+RC1.2-F and F.1 = Live PASS.
 
 Bottom Nav:
 - خانه
@@ -163,58 +215,57 @@ Bottom Nav:
 - گزارش
 - بیشتر
 
-`بیشتر` sheet exposes:
+`بیشتر`:
 - فاکتورها
 - اسناد حسابداری
 - اسناد هوشمند
 - طرف‌حساب‌ها
 - تنظیمات
 
-Safe Area, 100dvh modal behavior, Safari input sizing, wide table scrolling and mobile company settings are retained.
-
 ---
 
-## 8) Smart Documents / OCR
-Browser-local OCR is **Frozen** under ADR-0013.
+## 12) Smart Documents / OCR
+Browser-local OCR is Frozen under ADR-0013.
 
 Supported workflow:
 `Upload → Private original → Internal Viewer → Manual Review → Accounting Draft → Human Approval → Ledger Link`
 
-Do not restart ad-hoc local OCR tuning. Revisit only with a stronger Document AI/OCR provider and representative Persian benchmark set.
-
 ---
 
-## 9) Current phase — RC1.3-C Operational / Security Controls
-Supabase Security Advisor on 2026-09-05 identified legacy hardening items that must be handled with targeted regression testing:
+## 13) Immediate roadmap before Production
+### RC1.3-C1.2 — Company Context & Settings UX
+- stop suppressing Owned personal/company workspace
+- explicit `شرکت فعال` selector
+- show Role in active Company
+- Settings reorder per ADR-0014
+- Company profile editable based on role of active Company
+- same-company shared financial document behavior retained
+- cross-company isolation Gate
+- targeted `journal_lines` RLS parent-workspace fix
 
-- Multiple existing `SECURITY DEFINER` functions in `public` still appear executable by `anon`/PUBLIC, including financial/reporting RPC surfaces. Many may have internal auth/workspace checks, but grants must be reviewed and narrowed intentionally rather than changed wholesale.
-- `Leaked Password Protection` is disabled in Supabase Auth.
-- `workspace_print_profiles` has RLS enabled with no direct row policies by design because table privileges are revoked and access is through controlled RPCs; do not add permissive policies just to silence the advisor.
-- Performance advisor reports several unindexed FKs and some policy/init-plan inefficiencies; review selectively in operational/performance hardening.
+### RC1.3-C1.3 — Company Creation / Rename
+- explicit Create Company flow
+- Owner assignment
+- company rename/profile initialization
+- remove bootstrap naming ambiguity
 
-RC1.3-C scope:
-- backup/restore strategy
-- usable Audit Log UX
-- user-friendly operational errors
-- session/recovery controls
-- SECURITY DEFINER EXECUTE-grant inventory and hardening
-- leaked-password protection review/enablement where supported
-- targeted operational/performance fixes with regression coverage
+### RC1.3-C2 — Platform Control Plane Skeleton
+- Platform Admin data model separate from `workspace_members`
+- Company/Tenant registry/status
+- no default tenant Ledger access
+- audited support-access design
 
-Hard rule:
-- do not bulk-revoke or change grants without mapping each browser/RPC dependency and running the relevant two-user/RLS/financial regression.
-
----
-
-## 10) Next roadmap
-After **RC1.3-C Live PASS**:
+### RC1.3-C3 — Backup / Restore / Session / Operational Controls
+- backup strategy
+- restore procedure
+- session controls
+- operational safety checks
 
 ### RC1.3-D — Full Regression
-- two-user / workspace RLS
-- journal Draft/Posted/Reversed immutability
-- invoices/reports
-- currency and fiscal periods
-- integrity / orphan lines zero
+- multi-company/two-user RLS
+- Draft/Posted/Reversed immutability
+- invoices/reports/currency/fiscal periods
+- orphan lines zero
 - Smart Documents manual flow
 - print/export/company identity
 - mobile/iPhone/navigation
@@ -230,10 +281,10 @@ Then:
 
 ---
 
-## 11) Official Future Product Direction
+## 14) Official Product Direction
 آوان = حسابداری + انبار + فروش + مالیات + خزانه + اتوماسیون + AI + Voice + تصمیم‌یار مدیریتی.
 
-Future pillars remain:
+Future pillars:
 - CFO Autopilot / explainable KPIs / cash forecast / scenarios
 - Continuous Audit / Collections / Close Autopilot
 - stronger server/provider Document AI with human-controlled posting
