@@ -1,6 +1,6 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: 2026-09-05، پس از Live PASS شدن **RC1.2-CF** و **RC1.2-D** و Merge شدن **RC1.2-D.1** و **RC1.2-E** برای Gate بعدی.
+آخرین به‌روزرسانی مرجع: 2026-09-05، پس از Live PASS شدن **RC1.2-E** و آماده‌سازی **RC1.2-F Mobile/iPhone Final UX Regression** برای Gate بعدی.
 
 این فایل وضعیت جاری پروژه است و پس از هر Gate پاس‌شده یا تصمیم معماری مهم باید به‌روزرسانی شود.
 
@@ -15,17 +15,12 @@
 
 ## 1) Repository / Release Workflow
 
-Repository:
-- `afzalpour/afzalpour.github.io`
+Repository: `afzalpour/afzalpour.github.io`
 
-ساختار:
 - Root = Production/current public root.
 - `avan-staging/` = Staging development + Gate environment.
 - `docs/adr/` = Architecture Decision Records.
-
-Workflow:
-- Staging first.
-- Branch → PR → Diff review → Merge → Live Gate.
+- Workflow: Branch → PR → Diff review → Merge → Live Gate.
 - هیچ Gate تا تایید صریح کاربر PASS محسوب نمی‌شود.
 - Production/root promotion فقط پس از Regression و RC freeze.
 
@@ -50,24 +45,39 @@ Source of Truth:
 - Owner changing another user password — Live confirmed
 - RC1.1-F UX Cleanup — PASS
 - RC1.2-B Premium visual polish + Persian cleanup + account tree colors — PASS
-- **RC1.2-CF OCR Freeze + reliable manual Smart Document flow — PASS**
-- **RC1.2-D Unified Print & Export Center — PASS**
+- RC1.2-CF OCR Freeze + reliable manual Smart Document flow — PASS
+- RC1.2-D Unified Print & Export Center — PASS
+- **RC1.2-E Professional A4 + Company Print Identity — PASS**
 
-Pending Live Gate:
-- **RC1.2-D.1 Persian print polish — MERGED, not yet PASS**
-- **RC1.2-E Professional A4 + Company Print Identity — MERGED, not yet PASS**
+Still not explicitly marked PASS by user:
+- RC1.2-D.1 Persian print polish — merged and retained; do not retroactively mark PASS without explicit confirmation.
+
+Current Gate:
+- **RC1.2-F Mobile / iPhone Final UX Regression — implementation ready for Staging Live Gate.**
 
 ---
 
-## 3) Latest Important Merges
+## 3) Latest Important Merges / Fixes
 
 - RC1.2-B: `bafdfe4b49b8a4d9b44305997abf452a3490fd80`
 - RC1.2-CF OCR Freeze: `4ef379adab06f6aef576cd6dd528974b7958083b`
 - RC1.2-D Print/Export: `2e8e8fe59765f824910187d5634d5f0d94daf0b1`
 - RC1.2-D.1 Print polish: `307a65f96293fc89b621ed68bf1078f0474d921b`
 - RC1.2-E Company Print Identity: `106e1b1e0ada840b2a6ae5f397f9b388c4980496`
+- RC1.2-E.1 Schema-cache recovery UI: PR #21; superseded by E.2 stability fix.
+- RC1.2-E.2 Company Profile UI stability: merge `99f291805f6bdb75ff7184787c687451b761d90d`.
 
-PWA staging cache after E: **v25**.
+Supabase E migration:
+- `workspace_print_profiles` created.
+- `get_workspace_print_profile(uuid)` created.
+- `set_workspace_print_profile(uuid,jsonb)` created.
+- private `avan-branding` bucket created.
+- PostgREST schema reloaded.
+- existence verified directly in Supabase.
+- RPC EXECUTE verified: `anon=false`, `authenticated=true`.
+
+PWA staging cache before F: v27.
+RC1.2-F bumps staging cache to **v28**.
 
 ---
 
@@ -99,12 +109,12 @@ Roles:
 - accountant = حسابدار
 - viewer = legacy/read-only when applicable
 
-- Direct sensitive membership mutation from browser is blocked.
-- SECURITY DEFINER RPCs handle member administration.
+- Sensitive membership mutation from browser is blocked.
+- Secure RPC/Edge paths enforce administration.
 - Last active Owner protected.
 - Multi-workspace preserved.
 - `avan.active_workspace_id` is session UI preference only.
-- Default personal workspace may be suppressed from operational context for a shared non-owner user without deleting data.
+- Default personal workspace may be suppressed from shared operational context without deleting data.
 
 ---
 
@@ -123,7 +133,7 @@ Still unresolved before Production:
 
 ## 7) UX / Visual System
 
-Current visual direction:
+Current direction:
 - Professional dark finance sidebar.
 - Warm ivory/premium canvas.
 - Vazirmatn web font + system fallbacks.
@@ -132,157 +142,144 @@ Current visual direction:
 - Professional tables/forms/modals/mobile nav.
 - Deterministic account-tree branch colors with UI toggle.
 
-RC1.2-B Persianized technical copy in Reports/Settings.
+RC1.2-F mobile layer is presentation-only and exists to prevent later CSS layers from overriding iPhone Safe Area/mobile hardening.
 
 ---
 
 ## 8) Smart Documents / OCR
 
-### Current decision
-Browser-local OCR is **Frozen** after repeated live failure on real Persian receipts despite multiple receipt-specific Tesseract pipelines.
+Browser-local OCR is **Frozen** after repeated live failure on real Persian receipts.
 
-ADR:
+Relevant ADRs:
 - ADR-0009 Preserve originals + Human Review
-- **ADR-0013 Freeze browser OCR**
+- ADR-0013 Freeze browser OCR
 
-Current supported workflow:
+Supported workflow:
 `Upload → Private original → Internal Viewer → Manual Review → Accounting Draft → Human Approval → Ledger Link`
 
 Viewer:
-- Images: correct aspect, browser orientation handling, zoom, rotate.
-- PDF: internal PDF.js canvas renderer, page navigation, zoom, rotate.
-- Original remains private and uses temporary signed URL.
+- Images: aspect-ratio safe, orientation handling, zoom, rotate.
+- PDF: internal PDF.js renderer, page navigation, zoom, rotate.
+- Originals stay private via temporary signed URLs.
 - Original file can be viewed/downloaded/printed.
 
-OCR must not be revived with further ad-hoc Tesseract tuning. Revisit only with a stronger OCR/document-AI engine and representative benchmark set.
+Do not restart ad-hoc Tesseract tuning. Revisit only with a stronger Document AI/OCR engine and representative benchmark set.
 
 ---
 
 ## 9) Print / Export
 
-### RC1.2-D — LIVE PASS
-Shared Print/Export Engine:
+RC1.2-D — LIVE PASS:
 - Reports: Print / Save PDF + CSV.
 - Invoice: detail Print/PDF + list print.
 - Journal: detail Print/PDF + list print.
 - Smart documents: download/print original.
-- RTL A4 print layout.
+- RTL A4 shared print engine.
 
-ADR:
-- ADR-0008 Unified Print/Export System.
+RC1.2-D.1 retained behavior:
+- print digits localized to Persian without mutating source values.
+- invoice/journal detail table cells and headers centered.
+- duplicate invoice/journal title beneath print identity removed.
 
-### RC1.2-D.1 — MERGED, AWAITING LIVE GATE
-User feedback after D:
-- Printed invoice/journal digits were Latin.
-- Detail tables needed centered columns.
-- Repeated detail title under the Avan print brand was unnecessary.
-
-Implemented D.1:
-- Print-window text is localized to Persian digits without mutating source values.
-- Invoice/journal detail table cells and headers are centered.
-- Repeated `فاکتور ...` / `سند ...` title is removed from underneath print identity; document body title remains.
-- Cache v24 (subsequently v25 in E).
-
-Gate file:
-- `avan-staging/RC1_2_D1_GATE.md`
+ADR: ADR-0008 Unified Print/Export System.
 
 ---
 
-## 10) RC1.2-E — Professional A4 + Company Print Identity
+## 10) RC1.2-E — Company Print Identity — LIVE PASS
 
-Status: **MERGED TO STAGING, AWAITING SQL PATCH + LIVE GATE**
-
-Files:
-- `avan-staging/RC1_2_E_COMPANY_PROFILE_PATCH.sql`
-- `avan-staging/RC1_2_E_GATE.md`
-- `avan-staging/rc12-company-profile.js`
-- `avan-staging/rc12-company-profile.css`
-- shared print engine updated
-
-Architecture:
-- `workspace_print_profiles` is a dedicated Cloud table.
-- Profile is Workspace-scoped.
-- Browser does not persist company identity in LocalStorage.
-- Read/write is via SECURITY DEFINER RPCs.
-- Owner/Manager edit; other members read for output.
-
-Profile fields:
-- display name
-- legal name
+Cloud-backed Workspace profile:
+- display/legal name
 - registration number
 - national ID
 - economic code
 - tax ID
-- phone
-- email
-- postal code
-- address
+- phone/email/postal code/address
 - private logo path
 
+Architecture:
+- table: `public.workspace_print_profiles`
+- read RPC: `get_workspace_print_profile`
+- write RPC: `set_workspace_print_profile`
+- Owner/Manager edit; authenticated workspace members can consume output subject to function checks.
+- browser does not store company identity in LocalStorage.
+
 Logo:
-- private Supabase Storage bucket: `avan-branding`
+- private bucket `avan-branding`
 - JPG/PNG/WEBP, max 2MB
 - workspace-scoped path
 - signed URL for display/print
-- Owner/Manager mutation policy
 
-Print identity:
-- shared A4 Header applies to reports/invoices/journals.
-- company logo or Avan fallback mark.
-- company official details.
-- Persian digits retained.
-- detail table centering retained.
-- no duplicate invoice/journal title beneath identity header.
-
-### Manual prerequisite for E
-Assistant currently has no direct Supabase execution connector in this session.
-User must run once in Supabase SQL Editor:
-
-`avan-staging/RC1_2_E_COMPANY_PROFILE_PATCH.sql`
-
-Then Hard Refresh and run Gate E.
+E had a frontend MutationObserver regression during recovery work; fixed by RC1.2-E.2 using idempotent rendering and removing the second recovery observer. User confirmed page stability and later confirmed Gate E PASS.
 
 ---
 
-## 11) Immediate Next Gate
+## 11) RC1.2-F — Current Development / Live Gate
 
-1. Run `RC1_2_E_COMPANY_PROFILE_PATCH.sql` once in Supabase.
-2. Hard Refresh Staging.
-3. Test `RC1_2_D1_GATE.md`.
-4. Test `RC1_2_E_GATE.md`.
+Goal: final Mobile/iPhone UX regression before Production-readiness work.
 
-Expected pass phrases:
-- `Gate RC1.2-D.1 پاس شد`
-- `Gate RC1.2-E پاس شد`
+Implementation:
+- new final presentation layer: `avan-staging/rc12-mobile-final.css`
+- restores iPhone Safe Area after later Design System overrides.
+- uses `100dvh` for Safari dynamic viewport handling.
+- prevents Safari focus zoom by using 16px mobile form controls.
+- strengthens touch targets.
+- protects floating Bottom Nav from Home Indicator.
+- keeps wide financial tables horizontally scrollable without page-wide overflow.
+- hardens modal viewport/scroll behavior.
+- hardens Smart Document Viewer sizing/pan behavior.
+- hardens Company Profile mobile layout.
+- no Ledger/RLS/backend changes.
 
-Do not mark either as PASS before user confirms.
+Gate file:
+- `avan-staging/RC1_2_F_GATE.md`
+
+Expected pass phrase:
+- `Gate RC1.2-F پاس شد`
+
+Do not mark F PASS before explicit user confirmation.
 
 ---
 
-## 12) Next Development After E PASS
+## 12) After RC1.2-F
 
-### RC1.2-F — Mobile / iPhone Final UX Regression
-- Safari/iPhone typography.
-- forms/modals.
-- bottom navigation / safe area.
-- wide financial tables.
-- Smart Document Viewer.
-- print/share/download flows.
-- Company Profile settings on mobile.
+### RC1.3-A — Production-ready Auth
+- password recovery email
+- SMTP
+- redirect URLs
+- email templates
+- domain-dependent finalization later
 
-After F:
-- RC1.3-A Auth recovery / SMTP / redirects.
-- RC1.3-B remaining company/tax operational settings if needed.
-- RC1.3-C backup/restore strategy, Audit Log UX, operational controls.
-- RC1.3-D full regression.
-- RC1.3-RC feature freeze.
-- Production promotion.
+### RC1.3-B — Company / operational settings completion
+- remaining company/tax operational metadata only where required by upcoming modules/outputs
+
+### RC1.3-C — Operational controls
+- backup/restore strategy
+- usable Audit Log UX
+- user-friendly operational errors
+- session/recovery controls
+
+### RC1.3-D — Full regression
+- RLS
+- journals/invoices/reports
+- currency
+- fiscal periods
+- integrity
+- Smart Documents manual flow
+- print/export
+- company identity
+- mobile/iPhone
+
+### RC1.3-RC
+- feature freeze
+- Blocker/Critical fixes only
+
+Then: approved Staging → Production/root promotion.
 
 ---
 
 ## 13) Official Future Product Roadmap
 
-The following remain official product scope, not abandoned ideas:
+This scope remains official and must not be lost during stabilization.
 
 ### Intelligence
 - CFO Autopilot

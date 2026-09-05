@@ -1,0 +1,299 @@
+/* Avan RC1.2-F — final mobile / iPhone hardening
+   Presentation only. No financial/domain behavior. */
+
+html{
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+}
+
+@media(max-width:900px){
+  :root{
+    --avan-mobile-edge-start:max(10px,env(safe-area-inset-left));
+    --avan-mobile-edge-end:max(10px,env(safe-area-inset-right));
+  }
+
+  html,
+  body,
+  .app-shell,
+  .main{
+    min-height:100vh;
+    min-height:100dvh;
+  }
+
+  body{
+    overflow-x:hidden;
+  }
+
+  /* Loaded after the RC1.2 design system so iPhone safe areas are not overwritten. */
+  .topbar{
+    padding-top:calc(11px + env(safe-area-inset-top))!important;
+    padding-inline-start:calc(14px + env(safe-area-inset-left))!important;
+    padding-inline-end:calc(14px + env(safe-area-inset-right))!important;
+    min-height:calc(67px + env(safe-area-inset-top));
+  }
+
+  .content{
+    padding-top:18px!important;
+    padding-inline-start:calc(12px + env(safe-area-inset-left))!important;
+    padding-inline-end:calc(12px + env(safe-area-inset-right))!important;
+    padding-bottom:calc(118px + env(safe-area-inset-bottom))!important;
+  }
+
+  /* Prevent Safari focus-zoom while preserving readable controls. */
+  input,
+  select,
+  textarea{
+    font-size:16px!important;
+  }
+
+  input,
+  select,
+  textarea,
+  button{
+    max-width:100%;
+  }
+
+  textarea{
+    line-height:1.75;
+  }
+
+  .primary,
+  .ghost,
+  .danger,
+  .good-btn{
+    min-height:44px;
+  }
+
+  .small{
+    min-height:40px;
+  }
+
+  .filters,
+  .row-actions,
+  .form-actions,
+  .section-head{
+    row-gap:8px;
+  }
+
+  .form-actions{
+    flex-wrap:wrap;
+  }
+
+  .form-actions>.muted,
+  .form-actions>[id$="Status"]{
+    flex:1 1 100%;
+  }
+
+  /* Native-like floating bottom navigation without colliding with the home indicator. */
+  .bottom-nav{
+    inset-inline-start:max(8px,env(safe-area-inset-left))!important;
+    inset-inline-end:max(8px,env(safe-area-inset-right))!important;
+    bottom:max(7px,env(safe-area-inset-bottom))!important;
+    padding:6px 4px!important;
+    min-height:64px;
+  }
+
+  .bottom-nav button{
+    min-width:0;
+    min-height:48px;
+    touch-action:manipulation;
+  }
+
+  .bottom-nav .fab span{
+    width:46px!important;
+    height:46px!important;
+  }
+
+  /* Finance tables stay structurally intact and scroll horizontally on narrow screens. */
+  table{
+    width:100%;
+    max-width:100%;
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-inline:contain;
+    scrollbar-gutter:stable;
+  }
+
+  th,
+  td{
+    min-width:max-content;
+  }
+
+  .num{
+    white-space:nowrap;
+  }
+
+  /* Modal viewport uses dynamic viewport height for Safari address-bar/keyboard changes. */
+  .modal-backdrop{
+    padding-top:max(8px,env(safe-area-inset-top));
+    padding-inline-start:max(8px,env(safe-area-inset-left));
+    padding-inline-end:max(8px,env(safe-area-inset-right));
+    padding-bottom:max(8px,env(safe-area-inset-bottom));
+    overscroll-behavior:contain;
+  }
+
+  .modal{
+    width:min(680px,calc(100vw - 16px));
+    max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  /* Smart Document Viewer */
+  .modal.avan-doc-viewer-modal{
+    width:calc(100vw - 12px)!important;
+    max-height:calc(100dvh - 12px - env(safe-area-inset-top) - env(safe-area-inset-bottom))!important;
+  }
+
+  .avan-doc-viewer{
+    min-height:0!important;
+    height:calc(100dvh - 44px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+
+  .avan-doc-viewer-toolbar{
+    flex:0 0 auto;
+  }
+
+  .avan-doc-viewer-stage{
+    min-height:0!important;
+    max-height:none!important;
+    flex:1 1 auto;
+    touch-action:pan-x pan-y;
+  }
+
+  /* Company identity */
+  .avan-company-profile-preview{
+    min-width:0;
+  }
+
+  .avan-company-profile-preview>div:last-child{
+    min-width:0;
+  }
+
+  .avan-company-profile-summary{
+    overflow-wrap:anywhere;
+  }
+
+  .avan-company-logo-editor input[type="file"]{
+    width:100%;
+  }
+}
+
+@media(max-width:520px){
+  .content{
+    padding-inline-start:calc(10px + env(safe-area-inset-left))!important;
+    padding-inline-end:calc(10px + env(safe-area-inset-right))!important;
+  }
+
+  .topbar h1{
+    font-size:19px!important;
+  }
+
+  .eyebrow{
+    max-width:72vw;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  .section-head{
+    align-items:flex-start!important;
+    flex-wrap:wrap;
+  }
+
+  .section-head>.row-actions,
+  .row-actions{
+    width:100%;
+  }
+
+  .row-actions>.primary,
+  .row-actions>.ghost,
+  .row-actions>.danger,
+  .row-actions>.good-btn,
+  .form-actions>.primary,
+  .form-actions>.ghost,
+  .form-actions>.danger,
+  .form-actions>.good-btn{
+    flex:1 1 132px;
+  }
+
+  .modal{
+    width:100%;
+    border-radius:16px;
+    padding:14px!important;
+  }
+
+  .journal-line,
+  .invoice-line{
+    gap:10px;
+  }
+
+  .journal-line .field,
+  .invoice-line .field{
+    min-width:0;
+  }
+
+  .tabs{
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-inline:contain;
+    scrollbar-width:none;
+  }
+
+  .tabs::-webkit-scrollbar{
+    display:none;
+  }
+
+  .avan-doc-viewer-head{
+    gap:8px;
+  }
+
+  .avan-doc-viewer-name{
+    max-width:68vw!important;
+  }
+
+  .avan-doc-viewer-toolbar{
+    gap:6px;
+    padding:6px;
+  }
+
+  .avan-doc-viewer-toolbar>button{
+    min-height:42px;
+  }
+
+  .avan-doc-page-controls{
+    gap:6px;
+  }
+
+  .avan-company-profile-preview{
+    align-items:center!important;
+    gap:10px;
+    padding:11px;
+  }
+
+  .avan-company-profile-preview img,
+  .avan-company-logo-fallback{
+    width:54px;
+    height:54px;
+    flex-basis:54px;
+    border-radius:13px;
+  }
+
+  .avan-company-profile-preview strong{
+    font-size:15px;
+  }
+
+  .avan-company-profile-summary{
+    font-size:11px;
+  }
+}
+
+@media(hover:none) and (pointer:coarse){
+  .primary:hover,
+  .ghost:hover,
+  .good-btn:hover,
+  .danger:hover,
+  .grid4>.card:hover{
+    transform:none!important;
+  }
+}
