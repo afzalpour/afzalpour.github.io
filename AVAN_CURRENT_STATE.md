@@ -1,16 +1,27 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: 2026-09-06، پس از **RC1.3 Final Accounting Polish + Operational/Security Hardening**، بسته‌شدن exposure عمومی `SECURITY DEFINER`ها و PASS شدن **Free Transactional Recovery Rehearsal**.
+آخرین به‌روزرسانی مرجع: **2026-09-06 — پس از PASS صریح RC1.3-D و ورود به RC1.3-RC / Feature Freeze**.
 
-این فایل Source of Truth وضعیت جاری پروژه است. Gateهای Live فقط با تایید صریح کاربر PASS می‌شوند.
+این فایل Source of Truth وضعیت جاری پروژه است. Gateهای Live فقط با تأیید صریح کاربر PASS می‌شوند.
 
-## 1) Repository / Release
+---
+
+## 1) Repository / Release model
 Repository: `afzalpour/afzalpour.github.io`
-- Root = Production
-- `avan-staging/` = Staging + Live Gate
-- Workflow: Branch → PR → Diff review → Merge → User Live Gate
-- Production promotion فقط پس از Full Regression و RC freeze.
-- Project cost policy: **zero-charge paths only**؛ هیچ Paid Supabase branch/project/feature نباید بدون تغییر صریح این سیاست وارد مسیر پروژه شود.
+
+- repository root = **Production**.
+- `avan-staging/` = **Staging / accepted RC candidate**.
+- Supabase financial Source of Truth = project `Avan-production` (`dkyqsxnllvxypigxpygo`).
+- Production promotion فقط با تصمیم صریح جداگانه انجام می‌شود؛ PASS شدن RC1.3-D به‌تنهایی مجوز تغییر root نیست.
+- Project cost policy: **zero-charge paths only**.
+  - هیچ Paid Supabase branch/project/feature نباید بدون تغییر صریح این سیاست وارد مسیر پروژه شود.
+  - Built-in Leaked Password Protection و true isolated hosted restore در وضعیت فعلی به‌عنوان محدودیت provider/free-tier مستند می‌شوند، نه اینکه به‌زور PASS اعلام شوند.
+
+Current PWA baselines:
+- accepted Staging cache: **`avan-staging-rc1-v49`**.
+- current Production root cache before RC promotion: **`avan-prod-core-1-0-v11`**.
+
+---
 
 ## 2) Explicit Live PASS history
 - B-4 Live — PASS
@@ -27,248 +38,309 @@ Repository: `afzalpour/afzalpour.github.io`
 - RC1.3-MT-P1.1 — PASS
 - RC1.3-MT-P2 — PASS
 - RC1.3-MT-P3 — PASS
-- **RC1.3-MT-C — PASS**
+- RC1.3-MT-C — PASS
+- **RC1.3-D Full Regression — PASS** (`Gate RC1.3-D پاس شد`, user-confirmed 2026-09-06)
+- **RC1.3 Final Accounting Polish visual gate — PASS**, closed by the same completed RC1.3-D Live checks.
 
 Retained but not exact Gate phrase: RC1.2-D.1 and RC1.3-A1 recovery success.
 
-Current status:
-- **RC1.3-FINAL-POLISH — MERGED / awaiting user Live Gate**
-- **Operational / Security free-scope hardening — COMPLETE**
-- **Free Transactional Recovery Rehearsal — PASS**
-- **Full external dump + Storage isolated restore — OPEN (no genuinely free isolated target currently available)**
-- **RC1.3-D Full Regression — NEXT / starting**
+### Current status
+- **RC1.3-D = PASS**.
+- **Final Accounting Polish = PASS**.
+- **Operational / Security free-scope hardening = COMPLETE**.
+- **Free Transactional Recovery Rehearsal = PASS**.
+- **Full external logical dump + Storage isolated restore = OPEN / NOT FULL PASS**.
+- **Current phase = RC1.3-RC / FEATURE FREEZE**.
+- Freeze rule: **no new features; Blocker/Critical fixes only** until first Production release smoke is accepted.
 
-## 3) Latest important merges / hardening commits
-- PR #29 ADR-0014: `8a8723ba28f0bed82b39bbc1ade93e1361ef87b8`
-- PR #30 C1.2: `952fa37ba874da5f06630a23d1f80a8b012f3186`
-- PR #31 MT-A: `b11f2aeb25d9315adc6969607e4b5535a598bf39`
-- PR #32 MT-B: `d71cdd4f672e8283ec861b6ff230ce7b6d192e6f`
-- PR #33 MT-P1: `1b2106a28e8fa938c6d86fab8987f550943b72bc`
-- PR #34 MT-P1.1: `958f66e73df19eff9b604f7fa8db24b1efbf794e`
-- PR #35 MT-P2: `c5473896cc6e90d9891e0da9a87fee2e59b5b492`
-- PR #36 MT-P3: `626e3a62a8cbd3f06a728ad86baf08b92927fd95`
-- PR #37 MT-C: `c6d3194d4bc309f3d7357afb02b8f59444748f57`
-- PR #38 Final Polish + Operational/Security Hardening: `3b4ff1be18bcfdcfe54e4c77f09ac79ac907181e`
-- Workspace access helper Invoker hardening: `5ebf73dc735e718dd78d3d9d3693b2481c4c782c`
-- Public RPC / private privileged boundary hardening: `3dc35795ece1015cf41eb731cf1c790f885e235e`
-- Free transactional recovery rehearsal SQL: `73ef37ce13dd6c1789459e9b26a8c9c438c77f5f`
-- Backup/Restore runbook evidence update: `b574b20b2c29ec28d64500e6d7add8bf9cf5ad73`
+Promotion gate:
+- `avan-staging/RC1_3_RC_PROMOTION_GATE.md`
 
-PWA staging cache: **v43**.
+---
 
-## 4) Core invariants
+## 3) Core architecture / invariants
 - PostgreSQL/Supabase = financial Source of Truth.
-- Browser never receives Service Role.
+- Browser never receives Service Role / secret key.
 - Company/RLS boundary mandatory; cross-company leakage = Blocker/Critical.
-- Journal lifecycle: `Draft → Posted → Reversed`; Posted immutable.
-- Canonical Ledger storage = integer Toman; Rial/Toman presentation only.
+- Avan is Multi-tenant / Multi-company SaaS.
+- Journal lifecycle: `Draft → Posted → Reversed`; Posted entries/lines are immutable.
+- Canonical Ledger storage = integer **Toman**; Rial/Toman is presentation only.
+- Journal debit and credit totals must remain equal for Posted/Reversed.
 - orphan journal lines must remain zero.
 - same-Company authorized users share the Company ledger.
-- Local/Session storage contains only auth/security/UI preferences, not financial data.
+- Local/Session storage contains only auth/security/UI state; no financial source data.
+- Standard chart headings are structural/raw/non-postable; balances are Ledger-derived, not stored on headings.
 
-## 5) Multi-tenant authority model
-آوان = Multi-tenant / Multi-company SaaS.
+---
 
+## 4) Authority model
 Distinct authority contexts:
-1. **Platform Owner / Platform Admin** — مدیریت SaaS آوان.
-2. **Company Owner / Manager** — مدیریت مالی/تنظیمات همان Company.
-3. **Accountant / Viewer** — نقش عملیاتی همان Company.
-4. **Temporary Support Session** — دسترسی پشتیبانی موقت و فقط‌خواندنی؛ Company membership نیست.
+1. **Platform Owner / Platform Admin** — SaaS control plane.
+2. **Company Owner / Manager / Financial Manager** — Company-local management.
+3. **Accountant / Viewer** — Company-local operating roles.
+4. **Temporary Support Session** — time-limited read-only support boundary; not Company membership.
 
-Platform Admin عضو خودکار Companyها نیست و Ledger شرکت‌ها را به‌طور پیش‌فرض نمی‌بیند.
-Company Owner بودن هیچ Platform Admin permission ایجاد نمی‌کند.
+Rules:
+- Platform Admin is not automatically a Company member and does not receive ordinary Ledger access.
+- Company Owner does not receive Platform Admin permissions.
+- Support Session does not open ordinary Company RLS and cannot post/edit/delete financial data.
 
-## 6) MT-A — LIVE PASS
-- Central CompanyContext.
-- Company Portfolio / explicit active Company.
-- no independent first-workspace selection.
-- AvanCloud page-level singleton.
-- desktop + iPhone Company switching accepted.
+---
 
-## 7) MT-B — LIVE PASS
-Migration: `rc1_3_mt_b_company_lifecycle`
-- explicit `create_avan_company`.
+## 5) Multi-company / tenant lifecycle — LIVE PASS
+Implemented and accepted:
+- central `CompanyContext` + explicit active Company.
+- Company Portfolio (`شرکت‌های من`).
+- explicit Company selection; no hidden first-workspace tenant choice.
+- `CompanyBoundary` over legacy Core reads.
+- legacy `select('workspaces',...)` is active-Company-only projection.
+- create Company RPC initializes tenant atomically.
 - creator becomes Owner.
-- atomic tenant initialization: workspace/member/money/fiscal year/chart/account roles/cash-bank/profile/audit.
-- Company Portfolio create/rename UX.
+- suspend/reactivate/archive lifecycle enforced at DB access boundary.
+- member limit enforced in DB.
+- Platform Admin / Company Admin separation.
+- controlled read-only Support sessions.
 
-## 8) MT-P1/P1.1 — LIVE PASS
-Private Control Plane:
+Company Portfolio polish accepted in final RC:
+- active Company shows `شرکت انتخاب‌شده`.
+- old misplaced active-card return action removed.
+- owner/admin Company cards have stable action layout for `تغییر نام` + `ورود به شرکت`.
+
+---
+
+## 6) Standard chart of accounts
+Current standard chart:
+- exactly **52 system level-2 (`معین`) headings per Company**.
+- all standard level-2 headings non-postable/raw.
+- categories cover Assets / Liabilities / Equity / Income / Expenses.
+- contra-account normal-balance exceptions validated.
+- existing/custom account codes are preserved.
+- `private.ensure_standard_account_chart(...)` is used by Company onboarding.
+
+Latest verification:
+- Workspaces = 6.
+- Accounts = 393.
+- Companies with incorrect 52-heading standard chart = 0.
+
+---
+
+## 7) Journal / invoice integrity
+Journal lifecycle regression:
+- Draft → Posted → Reversed: PASS.
+- original/reversal entries balanced.
+- Posted immutability protections PASS.
+
+Invoice lifecycle regression:
+- Draft → Posted → Reversed: PASS.
+- RC1.3-D fixed invoice reversal-link integrity.
+- trigger now authoritatively links reversed invoice to its posted reversal journal.
+- historical reversed invoices were backfilled safely where deterministic.
+
+Final baseline 2026-09-06:
+- Journal entries = **30**.
+- Journal lines = **67**.
+- Invoices = **11**.
+- Ledger debit = credit = **201581351** canonical Toman.
+- orphan journal lines = **0**.
+- unbalanced Posted/Reversed journals = **0**.
+- reversed invoices with missing/invalid reversal link = **0**.
+
+Important migration evidence:
+- `avan-staging/APPLIED_RC13_D_INVOICE_REVERSAL_INTEGRITY_FIX.sql`
+- fix commit: `99c3ee7b7d21a8de003026081e350d41a852af89`
+
+---
+
+## 8) Final Accounting / UX polish — LIVE PASS
+Accepted behavior:
+- journal detail shows debit/credit `جمع کل`.
+- balanced document shows explicit balanced state.
+- print/PDF output carries Company identity and money unit.
+- money unit text normalized to `واحد مبالغ: تومان/ریال`.
+- journal/invoice list alignment polished.
+- printed list removes useless `اقدام` column.
+- journal/invoice technical implementation subtitles removed from user/print output.
+- list print/PDF works.
+- single journal print/PDF works.
+- single invoice print/PDF works.
+- Toman/Rial display/print unit follows active Company preference.
+- iPhone/mobile gate accepted within final RC1.3-D PASS.
+
+Desktop detail-print recovery is deterministic and still uses the shared RC1.2 print engine as the single print implementation.
+
+---
+
+## 9) Auth / Session status in accepted RC
+Working/accepted:
+- existing-user login.
+- signup / password recovery strength guard: minimum 12 chars + letter + number + symbol + local common-password denylist.
+- recovery flow.
+- application session guard: 60-minute inactivity + 12-hour maximum browser session + clock-skew protection.
+
+### RC blocker history
+A later attempt to automatically recover from a missing/revoked Supabase `session_id` caused the app to remain in a startup wait state on desktop and iPhone.
+
+This was treated as an **RC Blocker** and fully rolled back before final PASS.
+
+Stable rollback commits:
+- `38500077cc2fb9c3a055c4d53f4f69e0f20ac21e` — restored stable `supabase-auth.js`.
+- `c8f1f13004d1e4a41bb4bf4c73b298f847026140` — restored stable `rc13-session-security.js`.
+
+Accepted RC therefore does **not** include the experimental revoked-session auto-recovery behavior.
+
+---
+
+## 10) SECURITY DEFINER / RLS hardening
+Completed:
+- `public.has_workspace_access` and `public.workspace_role` are SECURITY INVOKER.
+- browser-facing privileged command RPCs retain public signatures as SECURITY INVOKER wrappers.
+- privileged implementation functions live in `private` where required for atomic accounting/tenant operations.
+- direct unsafe broad browser execution remains revoked.
+- critical public tables have RLS enabled.
+
+Final RC verification:
+- critical public tables without RLS = **0**.
+- `public` SECURITY DEFINER functions executable by `authenticated` = **0**.
+
+Security Advisor:
+- no new public authenticated SECURITY DEFINER warning.
+- INFO-only `RLS enabled/no policy` notices remain for private control-plane tables and `public.workspace_invitations`; these are intentional deny-by-default / controlled-RPC boundaries.
+- only WARN remains `auth_leaked_password_protection`.
+
+---
+
+## 11) Leaked Password Protection — documented Free-tier limitation
+Supabase built-in leaked-password screening remains disabled on the current plan.
+
+Project policy:
+- no paid upgrade is part of the current release path.
+- application-level password-strength/common-password controls remain compensation.
+- this control is not falsely marked fixed.
+- provider controls may only be reassessed if the user explicitly changes the zero-charge policy in the future.
+
+---
+
+## 12) Backup / Restore
+Runbook:
+- `avan-staging/BACKUP_RESTORE_RUNBOOK.md`
+
+### Free Transactional Recovery Rehearsal — PASS
+Reusable SQL:
+- `avan-staging/FREE_TRANSACTIONAL_RECOVERY_REHEARSAL.sql`
+
+Evidence from rehearsal:
+- public/private base tables copied to TEMP recovery set: 26.
+- rows copied at rehearsal point: 841.
+- deterministic count/content-hash validation: 26/26 PASS.
+- recovered-copy accounting integrity: PASS.
+- RLS tenant isolation: PASS.
+- permanent Production data was not modified.
+
+### Full external disaster restore — OPEN
+Not completed:
+- materialized external logical DB dump + Storage bytes restored into a genuinely isolated target.
+
+Reason:
+- no genuinely free isolated target is currently available in the connected environment.
+
+Rules:
+- never run a restore drill against `Avan-production` itself.
+- never use a paid Supabase branch/project workaround under current policy.
+- do not label this full disaster-recovery gate PASS until it is actually executed.
+
+---
+
+## 13) Platform Admin / Support
+Private Control Plane includes:
 - `private.platform_admins`
 - `private.platform_tenants`
 - `private.platform_audit_logs`
+- `private.platform_support_sessions`
 
-Separate Platform route/shell. Normal Company Owner direct Platform access rejected. P1.1 fixed authorization re-check after session/user switching.
+Accepted behavior:
+- Platform Admin management is separate from normal Company Ledger authority.
+- Support access is actor-bound, Company-bound, reason-required, time-limited and read-only.
+- Support does not create Company membership.
+- dedicated allowlisted Support viewer only exposes read-only resources.
+- support reads/create/revoke are audit logged.
 
-## 9) MT-P2 — LIVE PASS
-Migrations:
-- `rc1_3_mt_p2_saas_operations`
-- `rc1_3_mt_p2_member_limit_enforcement`
+---
 
-Implemented:
-- Tenant status: onboarding/active/suspended/archived.
-- Plan: trial/core/pro/enterprise/custom.
-- member limit, onboarding state, support state, reason/audit.
-- suspension/archival enforced at DB boundary: `has_workspace_access=false`, `workspace_role=NULL`.
-- blocked Tenant remains visible in Portfolio but cannot be entered.
-- DB-enforced member limit.
-- Platform Admin and Company Admin remain independent.
+## 14) Smart Documents
+Browser-local OCR path is frozen under ADR-0013.
 
-User explicitly confirmed: `Gate RC1.3-MT-P2 پاس شد`.
-
-## 10) MT-P3 — LIVE PASS
-PR #36 merge: `626e3a62a8cbd3f06a728ad86baf08b92927fd95`
-Migration: `rc1_3_mt_p3_controlled_support_access`
-
-Security model:
-- `private.platform_support_sessions` with RLS and no direct Browser grant/policy.
-- actor-bound + tenant-bound + reason-required; duration 5–60 minutes; fixed `read_only`.
-- Support Session does not add Company membership and does not open ordinary Company RLS.
-- dedicated allowlisted Support read only; no write/post/reverse/upload/private-file-download endpoint.
-- every Support read is Platform Audit logged; create/revoke also visible in Company Audit.
-- Platform Admin and Company Owner/Manager can revoke immediately.
-
-User explicitly confirmed: `Gate RC1.3-MT-P3 پاس شد`.
-
-## 11) MT-C — LIVE PASS
-PR #37 merge: `c6d3194d4bc309f3d7357afb02b8f59444748f57`
-Gate: `avan-staging/RC1_3_MT_C_GATE.md`
-
-Implemented boundary cleanup:
-- Added explicit `CompanyBoundary` on top of central `CompanyContext`.
-- Legacy `select('workspaces', ...)` is active-Company-only projection.
-- Multi-company without valid selection returns `COMPANY_SELECTION_REQUIRED`.
-- No Company returns `COMPANY_REQUIRED`; old Core cannot silently bootstrap Tenant.
-- deprecated Workspace switcher removed/guarded; Product selector is `شرکت فعال / شرکت‌های من` only.
-- Currency/Profile/Access/Core legacy reads use same Active Company boundary.
-- physical `workspace_id` remains per ADR-0015.
-
-User explicitly confirmed: `Gate RC1.3-MT-C پاس شد`.
-
-## 12) Final Accounting Polish — MERGED / AWAITING USER LIVE GATE
-PR #38 merge: `3b4ff1be18bcfdcfe54e4c77f09ac79ac907181e`
-Gate: `avan-staging/RC1_3_FINAL_POLISH_OPS_GATE.md`
-PWA cache: v43.
-
-Implemented:
-- Active Company card in `شرکت‌های من` no longer shows misplaced `بازگشت به شرکت`; it shows non-action `شرکت انتخاب‌شده`.
-- Journal detail now gets debit/credit `جمع کل` and explicit balanced/unbalanced indicator.
-- financial pages/details annotate output with current Toman/Rial unit; cloned print/PDF/CSV output carries unit text/headers.
-- standard default account chart expanded through app level 2 (`معین`) across Assets/Liabilities/Equity/Income/Expenses.
-- Standard headings are non-postable/raw and create no balances.
-- Existing/custom account codes are not overwritten.
-- same standard chart is automatically added to future `create_avan_company` tenants.
-
-Current DB verification after final chart corrections:
-- workspaces = 6.
-- accounts = 393.
-- every Company = exactly **52** system level-2 headings.
-- journals = 29.
-- journal lines = 65.
-- account roles = 48; broken account roles = 0.
-- financial accounts = 12.
-- invoices = 11.
-- total debit = total credit = **201101351** canonical Toman.
-- orphan lines = 0.
-- unbalanced Posted/Reversed = 0.
-
-Do not mark Final Polish PASS until user explicitly confirms the Live Gate.
-
-## 13) Operational / Security Completion — FREE-SCOPE HARDENING COMPLETE
-### Completed / hardened
-- `BACKUP_RESTORE_RUNBOOK.md` contains DB + Storage + configuration backup set and isolated restore validation checklist.
-- Free-plan application session guard: **60-minute inactivity logout** and **12-hour maximum browser session** with clock rollback/drift protection.
-- new Signup/password-recovery compensating password policy: minimum **12 chars**, letter + number + symbol, plus local common-password denylist.
-- `public.has_workspace_access` and `public.workspace_role` are SECURITY INVOKER.
-- 20 browser-facing privileged RPCs keep their public API signatures as SECURITY INVOKER wrappers while privileged implementations live in `private`.
-- current count of `public` SECURITY DEFINER functions executable by `authenticated` = **0**.
-- direct browser EXECUTE remains revoked from legacy `bootstrap_avan_workspace` and `create_workspace`.
-- Security Advisor has no remaining authenticated-public-SECURITY-DEFINER warning.
-- Current accounting regression after hardening: debit=credit=201101351; orphan lines=0; unbalanced Posted/Reversed=0.
-
-### Free transactional recovery rehearsal — PASS
-Reusable SQL: `avan-staging/FREE_TRANSACTIONAL_RECOVERY_REHEARSAL.sql`
-- public/private tables copied to transaction-scoped TEMP recovery set: **26**.
-- rows copied: **841**.
-- count + deterministic content-hash matches: **26/26**; failures=0.
-- recovered-copy accounting integrity: PASS.
-- every Company has 52 standard level-2 system headings.
-- RLS authenticated tenant-isolation: PASS; unrelated Company and unrelated accounts return 0 rows.
-- permanent Production rows were not modified; TEMP recovery copies were discarded by transaction/session end.
-
-### Tracked free-tier limitations — not falsely marked complete
-Current Supabase organization plan = **Free**.
-- Built-in Supabase **Leaked Password Protection remains disabled** because the provider feature is Pro+; Avan keeps the application-level strength/denylist compensating control.
-- Advanced hosted Auth session controls are unavailable on the current plan; Avan uses the application session guard above.
-- A **full external logical-dump + Storage-byte restore into an isolated target has not been executed** because no genuinely free isolated target is currently available.
-- The paid Supabase branch path was rejected under the project zero-charge policy.
-
-Therefore:
-- **free-scope Operational/Security hardening = complete**;
-- **transactional recovery rehearsal = PASS**;
-- **full external disaster-recovery restore gate = OPEN** and must remain accurately labeled until a free path exists.
-
-## 14) Auth / Security status before Production
-Working:
-- owner-managed eligible other-user password change via secure Edge Function.
-- self password change + reauth.
-- recovery email/reset Live-confirmed desktop+iPhone.
-- application inactivity/max-session guard installed on staging.
-- 12-character password strength + local weak-password denylist for new/recovered passwords.
-- public authenticated SECURITY DEFINER exposure = 0 for hardened command RPC boundary.
-
-Remaining tracked constraints:
-- provider leaked-password protection is paid-only and is not a release dependency under the zero-charge policy.
-- full external backup+restore remains OPEN until a genuinely free isolated target exists.
-- custom SMTP/sender branding and final custom-domain redirects wait for a domain/zero-charge suitable configuration.
-
-## 15) Smart Documents
-Browser-local OCR frozen under ADR-0013.
 Supported flow:
 `Upload → Private original → Internal Viewer → Manual Review → Accounting Draft → Human Approval → Ledger Link`
 
-## 16) Immediate roadmap before Production
-### Current
-1. User Live Gate: **RC1.3-FINAL-POLISH** — still awaiting explicit user PASS.
-2. **RC1.3-D — Full Regression** — start now in parallel with the pending Live Gate.
-3. Keep full external restore limitation documented; do not use a paid workaround and do not falsely mark it PASS.
+No new Smart Document feature work is permitted during RC1.3-RC.
 
-### RC1.3-D — Full Regression
-- Platform Admin / Company Admin / Support separation.
-- multi-company/two-user RLS.
-- Company Portfolio/create/suspend/reactivate.
-- Draft/Posted/Reversed immutability.
-- invoices/reports/currency/fiscal periods.
-- orphan lines zero.
-- standard chart and Company lifecycle.
-- Smart Documents manual flow.
-- print/export/company identity/units.
-- mobile/iPhone/navigation.
-- auth recovery/session behavior.
+---
 
-### RC1.3-RC
-- feature freeze.
+## 15) RC1.3-RC — CURRENT
+Feature Freeze is active.
+
+Rules:
+- no feature additions.
 - Blocker/Critical fixes only.
+- any RC fix must trigger focused re-regression in the impacted boundary.
 
-Then:
-- approved Staging → Production/root promotion.
-- custom domain + production SMTP/sender branding only when a zero-charge suitable path and domain are available.
+Promotion gate:
+- `avan-staging/RC1_3_RC_PROMOTION_GATE.md`
+
+Current Production root is materially older than accepted Staging:
+- root `index.html` still loads old Core runtime only.
+- root Service Worker = `avan-prod-core-1-0-v11`.
+- accepted Staging = `avan-staging-rc1-v49` and includes multi-company/security/print/mobile/platform/support runtime.
+
+Promotion must therefore be controlled runtime sync, with these transformations:
+- root `config.js` stays `environment: 'production'`.
+- root `authRedirectUrl` stays `https://afzalpour.github.io/`.
+- root Service Worker receives a new **Production** cache namespace/version, not the staging cache name.
+- no DB migration/data mutation is part of frontend promotion.
+
+### Required explicit authorization before root modification
+Production/root must not be changed until the user gives a separate instruction equivalent to:
+
+`Production را منتشر کن`
+
+---
+
+## 16) Production smoke after promotion
+Minimum user smoke:
+1. Login desktop + iPhone.
+2. Active Company / Company switch.
+3. Dashboard loads.
+4. Open one journal + one invoice detail.
+5. Print one detail; Company identity + unit correct.
+6. Reports + settings open.
+7. iPhone `بیشتر`, modal and bottom navigation usable.
+
+Server post-promotion checks:
+- ledger balanced.
+- orphan lines = 0.
+- unbalanced Posted/Reversed = 0.
+- invoice reversal links valid.
+- public authenticated SECURITY DEFINER = 0.
+
+Rollback immediately to pre-promotion root commit for login/startup block, Company-boundary anomaly, accounting unusability, PWA reload/wait loop, critical mobile failure or Production config/redirect defect.
+
+---
 
 ## 17) Product roadmap after first Production release
-The complete Avan vision is multi-release, not one RC:
-- Inventory Stock Ledger / multi-warehouse / costing.
-- Sales & Purchase lifecycle.
-- Versioned Tax/VAT + electronic invoicing based on current Iranian law at implementation time.
+Post-release roadmap remains multi-release and is outside the current freeze:
+- Inventory / warehouse / costing.
+- expanded Sales & Purchase lifecycle.
+- current-law Tax/VAT/e-invoicing implementation when that release is started.
 - Treasury / cheque / bank reconciliation.
-- Bank AI / transaction matching.
+- Bank transaction matching.
 - Payroll.
 - Fixed Assets.
-- Budgeting / rolling forecast / scenarios.
+- Budgeting / forecast / scenarios.
 - Workflow & Approval.
 - Consolidated multi-company reporting.
-- External integrations/API/Excel/POS/banks.
-- stronger server/provider Document AI using free/local paths where possible.
-- CFO Autopilot / Continuous Audit / Collections / Close Autopilot.
+- external integrations/API/Excel/POS/banks.
+- stronger document intelligence using free/local paths where feasible.
+- CFO Autopilot / Continuous Audit / Collections / Close automation.
 - Persian Voice AI with explicit consent and human-controlled financial actions.
 
 Governing principle:
