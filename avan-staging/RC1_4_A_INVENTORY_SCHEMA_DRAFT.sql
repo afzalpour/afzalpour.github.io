@@ -17,7 +17,8 @@ create table if not exists public.inventory_items (
   constraint inventory_items_sku_nonempty check (length(btrim(sku)) > 0),
   constraint inventory_items_name_nonempty check (length(btrim(name)) > 0),
   constraint inventory_items_unit_nonempty check (length(btrim(base_unit)) > 0),
-  constraint inventory_items_workspace_sku_uk unique (workspace_id, sku)
+  constraint inventory_items_workspace_sku_uk unique (workspace_id, sku),
+  constraint inventory_items_workspace_id_uk unique (workspace_id, id)
 );
 
 create table if not exists public.warehouses (
@@ -32,7 +33,8 @@ create table if not exists public.warehouses (
   updated_at timestamptz not null default now(),
   constraint warehouses_code_nonempty check (length(btrim(code)) > 0),
   constraint warehouses_name_nonempty check (length(btrim(name)) > 0),
-  constraint warehouses_workspace_code_uk unique (workspace_id, code)
+  constraint warehouses_workspace_code_uk unique (workspace_id, code),
+  constraint warehouses_workspace_id_uk unique (workspace_id, id)
 );
 
 create table if not exists public.inventory_documents (
@@ -47,7 +49,7 @@ create table if not exists public.inventory_documents (
   source_type text,
   source_id uuid,
   journal_entry_id uuid references public.journal_entries(id),
-  reversal_of uuid references public.inventory_documents(id),
+  reversal_of uuid,
   created_by uuid default auth.uid(),
   posted_by uuid,
   reversed_by uuid,
@@ -58,7 +60,10 @@ create table if not exists public.inventory_documents (
   constraint inventory_documents_type_ck check (document_type in ('opening','receipt','issue','transfer','adjustment')),
   constraint inventory_documents_status_ck check (status in ('draft','posted','reversed')),
   constraint inventory_documents_no_positive_ck check (document_no is null or document_no > 0),
-  constraint inventory_documents_reversal_not_self_ck check (reversal_of is null or reversal_of <> id)
+  constraint inventory_documents_reversal_not_self_ck check (reversal_of is null or reversal_of <> id),
+  constraint inventory_documents_workspace_id_uk unique (workspace_id, id),
+  constraint inventory_documents_reversal_fk foreign key (workspace_id, reversal_of)
+    references public.inventory_documents(workspace_id, id)
 );
 
 create unique index if not exists inventory_documents_no_uk
@@ -68,10 +73,10 @@ create unique index if not exists inventory_documents_no_uk
 create table if not exists public.inventory_document_lines (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces(id) on delete cascade,
-  inventory_document_id uuid not null references public.inventory_documents(id) on delete cascade,
-  item_id uuid not null references public.inventory_items(id),
-  from_warehouse_id uuid references public.warehouses(id),
-  to_warehouse_id uuid references public.warehouses(id),
+  inventory_document_id uuid not null,
+  item_id uuid not null,
+  from_warehouse_id uuid,
+  to_warehouse_id uuid,
   quantity numeric(20,6) not null,
   unit_cost numeric(20,6) not null default 0,
   description text,
@@ -80,7 +85,16 @@ create table if not exists public.inventory_document_lines (
   constraint inventory_document_lines_quantity_positive_ck check (quantity > 0),
   constraint inventory_document_lines_unit_cost_nonnegative_ck check (unit_cost >= 0),
   constraint inventory_document_lines_warehouse_presence_ck check (from_warehouse_id is not null or to_warehouse_id is not null),
-  constraint inventory_document_lines_transfer_distinct_ck check (from_warehouse_id is null or to_warehouse_id is null or from_warehouse_id <> to_warehouse_id)
+  constraint inventory_document_lines_transfer_distinct_ck check (from_warehouse_id is null or to_warehouse_id is null or from_warehouse_id <> to_warehouse_id),
+  constraint inventory_document_lines_workspace_id_uk unique (workspace_id, id),
+  constraint inventory_document_lines_document_fk foreign key (workspace_id, inventory_document_id)
+    references public.inventory_documents(workspace_id, id) on delete cascade,
+  constraint inventory_document_lines_item_fk foreign key (workspace_id, item_id)
+    references public.inventory_items(workspace_id, id),
+  constraint inventory_document_lines_from_warehouse_fk foreign key (workspace_id, from_warehouse_id)
+    references public.warehouses(workspace_id, id),
+  constraint inventory_document_lines_to_warehouse_fk foreign key (workspace_id, to_warehouse_id)
+    references public.warehouses(workspace_id, id)
 );
 
 create index if not exists inventory_document_lines_document_idx
@@ -91,20 +105,31 @@ create index if not exists inventory_document_lines_item_idx
 create table if not exists public.inventory_movements (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces(id) on delete cascade,
-  inventory_document_id uuid not null references public.inventory_documents(id),
-  inventory_document_line_id uuid not null references public.inventory_document_lines(id),
-  item_id uuid not null references public.inventory_items(id),
-  warehouse_id uuid not null references public.warehouses(id),
+  inventory_document_id uuid not null,
+  inventory_document_line_id uuid not null,
+  item_id uuid not null,
+  warehouse_id uuid not null,
   movement_date date not null,
   quantity_delta numeric(20,6) not null,
   unit_cost numeric(20,6) not null default 0,
   total_cost numeric(24,6) generated always as (abs(quantity_delta) * unit_cost) stored,
-  reversal_of uuid references public.inventory_movements(id),
+  reversal_of uuid,
   created_at timestamptz not null default now(),
   constraint inventory_movements_quantity_nonzero_ck check (quantity_delta <> 0),
   constraint inventory_movements_unit_cost_nonnegative_ck check (unit_cost >= 0),
   constraint inventory_movements_reversal_not_self_ck check (reversal_of is null or reversal_of <> id),
-  constraint inventory_movements_source_uk unique (inventory_document_line_id, warehouse_id, quantity_delta)
+  constraint inventory_movements_workspace_id_uk unique (workspace_id, id),
+  constraint inventory_movements_source_uk unique (inventory_document_line_id, warehouse_id, quantity_delta),
+  constraint inventory_movements_document_fk foreign key (workspace_id, inventory_document_id)
+    references public.inventory_documents(workspace_id, id),
+  constraint inventory_movements_line_fk foreign key (workspace_id, inventory_document_line_id)
+    references public.inventory_document_lines(workspace_id, id),
+  constraint inventory_movements_item_fk foreign key (workspace_id, item_id)
+    references public.inventory_items(workspace_id, id),
+  constraint inventory_movements_warehouse_fk foreign key (workspace_id, warehouse_id)
+    references public.warehouses(workspace_id, id),
+  constraint inventory_movements_reversal_fk foreign key (workspace_id, reversal_of)
+    references public.inventory_movements(workspace_id, id)
 );
 
 create index if not exists inventory_movements_item_warehouse_date_idx
@@ -116,7 +141,6 @@ alter table public.inventory_documents enable row level security;
 alter table public.inventory_document_lines enable row level security;
 alter table public.inventory_movements enable row level security;
 
--- Master data: Company-scoped access. Role-specific tightening can be layered in RC1.4-A2.
 create policy inventory_items_access on public.inventory_items
 for all to authenticated
 using (public.has_workspace_access(workspace_id))
@@ -127,7 +151,6 @@ for all to authenticated
 using (public.has_workspace_access(workspace_id))
 with check (public.has_workspace_access(workspace_id));
 
--- Draft inventory documents may be created/edited/deleted by authorized Company users.
 create policy inventory_documents_select on public.inventory_documents
 for select to authenticated
 using (public.has_workspace_access(workspace_id));
@@ -194,7 +217,8 @@ using (
   )
 );
 
--- Movement ledger is read-only from browser. Posting/reversal RPCs will own INSERT.
+-- Movement ledger is intentionally SELECT-only from browser.
+-- Posting/reversal RPCs will own INSERT; browser UPDATE/DELETE remains unavailable.
 create policy inventory_movements_select on public.inventory_movements
 for select to authenticated
 using (public.has_workspace_access(workspace_id));
