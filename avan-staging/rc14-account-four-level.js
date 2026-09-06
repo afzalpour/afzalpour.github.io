@@ -42,7 +42,7 @@ async function enhancePage(){
   const subtitle = head?.querySelector('.muted');
   if (subtitle) subtitle.textContent = 'کل / معین / تفصیلی ۱ / تفصیلی ۲ — ثبت سند فقط روی آخرین حساب قابل‌ثبت انجام می‌شود.';
 
-  if (head && !head.querySelector('[data-four-level-legend]')) {
+  if (head && !root.querySelector('[data-four-level-legend]')) {
     const legend = document.createElement('div');
     legend.dataset.fourLevelLegend = '1';
     legend.className = 'rc14-account-level-legend';
