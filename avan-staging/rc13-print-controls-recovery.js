@@ -2,8 +2,7 @@
 
 // RC1.3-D Live Gate recovery layer.
 // The shared RC1.2 print engine remains the single print implementation.
-// This module only restores deterministic UI controls when the legacy
-// MutationObserver injector misses a desktop render/modal transition.
+// This module guarantees list + detail print controls across desktop/mobile.
 
 const PRINTABLE_KEYS = new Set(['reports', 'invoices', 'journal']);
 const TITLE_BY_KEY = Object.freeze({
@@ -13,6 +12,7 @@ const TITLE_BY_KEY = Object.freeze({
 });
 
 let scheduled = null;
+let detailObserver = null;
 
 function text(value) {
   return String(value ?? '').replace(/\s+/g, ' ').trim();
@@ -33,6 +33,7 @@ function printEngine() {
 function prepareOutput() {
   try {
     window.AvanOutputIntegrity?.prepare?.();
+    window.AvanLiveGatePolish?.prepare?.();
   } catch (error) {
     console.warn('[Avan print recovery] output preparation failed', error);
   }
@@ -100,29 +101,61 @@ function ensureListPrintControl() {
   content.prepend(toolbar);
 }
 
-function printableDetail(modal) {
-  if (!modal || modal.querySelector('form')) return false;
-  if (modal.classList.contains('avan-doc-viewer-modal')) return false;
-  if (!modal.querySelector('table')) return false;
+function detailKind(modal) {
+  if (!modal || modal.classList.contains('avan-doc-viewer-modal')) return '';
+  if (modal.querySelector('form')) return '';
+  if (!modal.querySelector('table')) return '';
 
   const heading = text(modal.querySelector('h2')?.textContent);
-  return heading.startsWith('سند ') || heading.startsWith('فاکتور');
+  if (heading.startsWith('سند ')) return 'journal';
+  if (heading.startsWith('فاکتور')) return 'invoice';
+  return '';
+}
+
+function ensureDetailActionsHost(modal) {
+  let actions = modal.querySelector('.form-actions');
+  if (actions) return actions;
+
+  actions = document.createElement('div');
+  actions.className = 'form-actions avan-detail-print-actions';
+
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'ghost';
+  close.textContent = 'بستن';
+  close.addEventListener('click', () => {
+    const backdrop = document.getElementById('modalBackdrop');
+    if (backdrop) backdrop.hidden = true;
+    modal.innerHTML = '';
+    document.body.classList.remove('mobile-scroll-lock');
+  });
+
+  actions.appendChild(close);
+  modal.appendChild(actions);
+  return actions;
 }
 
 function ensureDetailPrintControl() {
   const backdrop = document.getElementById('modalBackdrop');
   const modal = document.getElementById('modal');
-  if (!backdrop || backdrop.hidden || !printableDetail(modal)) return;
+  if (!modal || !backdrop) return;
+
+  const kind = detailKind(modal);
+  if (!kind) return;
+
+  // The modal content itself is authoritative. Do not depend solely on the
+  // hidden attribute because some browsers/PWA transitions can report it late.
+  if (backdrop.hidden && !modal.textContent.trim()) return;
 
   const existing = modal.querySelector('[data-avan-print-detail]');
   if (existing) {
     existing.hidden = false;
+    existing.style.display = '';
     existing.dataset.desktopPrintVerified = '1';
     return;
   }
 
-  const actions = modal.querySelector('.form-actions');
-  if (!actions) return;
+  const actions = ensureDetailActionsHost(modal);
 
   const button = document.createElement('button');
   button.type = 'button';
@@ -130,13 +163,27 @@ function ensureDetailPrintControl() {
   button.dataset.avanPrintDetail = '1';
   button.dataset.avanPrintRecovery = '1';
   button.dataset.desktopPrintVerified = '1';
+  button.dataset.detailKind = kind;
   button.textContent = 'چاپ / ذخیره PDF';
-  button.addEventListener('click', () => {
-    const title = text(modal.querySelector('h2')?.textContent) || 'سند آوان';
+  button.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    const title = text(modal.querySelector('h2')?.textContent) || (kind === 'invoice' ? 'فاکتور آوان' : 'سند آوان');
     runPrint(modal, title);
   });
 
+  // Keep the print action visually next to the existing close action.
   actions.prepend(button);
+}
+
+function retryDetailControl() {
+  ensureDetailPrintControl();
+  queueMicrotask(ensureDetailPrintControl);
+  window.requestAnimationFrame(() => {
+    ensureDetailPrintControl();
+    window.requestAnimationFrame(ensureDetailPrintControl);
+  });
+  [0, 25, 80, 180].forEach(delay => window.setTimeout(ensureDetailPrintControl, delay));
 }
 
 function recover() {
@@ -149,19 +196,48 @@ function schedule() {
   scheduled = window.setTimeout(() => {
     scheduled = null;
     recover();
-  }, 30);
+  }, 20);
+}
+
+function installDirectDetailObserver() {
+  const modal = document.getElementById('modal');
+  const backdrop = document.getElementById('modalBackdrop');
+  if (!modal || !backdrop) return;
+
+  detailObserver?.disconnect?.();
+  detailObserver = new MutationObserver(() => {
+    // Run directly; do not debounce this critical control behind other page mutations.
+    retryDetailControl();
+  });
+
+  detailObserver.observe(modal, {
+    childList: true,
+    subtree: true,
+    characterData: true
+  });
+
+  detailObserver.observe(backdrop, {
+    attributes: true,
+    attributeFilter: ['hidden']
+  });
 }
 
 function install() {
   recover();
+  installDirectDetailObserver();
 
-  // Deterministic hooks added in RC1.3-D.
   window.addEventListener('avan:page-rendered', schedule);
-  window.addEventListener('avan:modal-opened', schedule);
+  window.addEventListener('avan:modal-opened', retryDetailControl);
   window.addEventListener('avan:company-context-changed', schedule);
   window.addEventListener('avan:company-profile-updated', schedule);
 
-  // Defense-in-depth for legacy render paths that do not dispatch hooks yet.
+  // Exact view actions get an immediate post-click recovery pass.
+  document.addEventListener('click', event => {
+    const button = event.target?.closest?.('[data-view-invoice],[data-view-journal]');
+    if (button) retryDetailControl();
+  }, false);
+
+  // Defense-in-depth for legacy render paths.
   new MutationObserver(schedule).observe(document.body, {
     childList: true,
     subtree: true,
@@ -170,7 +246,7 @@ function install() {
   });
 
   document.addEventListener('click', schedule, true);
-  window.setTimeout(recover, 150);
+  window.setTimeout(recover, 120);
 }
 
 if (document.readyState === 'loading') {
@@ -179,4 +255,8 @@ if (document.readyState === 'loading') {
   install();
 }
 
-window.AvanPrintControlsRecovery = Object.freeze({ recover });
+window.AvanPrintControlsRecovery = Object.freeze({
+  recover,
+  ensureDetailPrintControl,
+  retryDetailControl
+});
