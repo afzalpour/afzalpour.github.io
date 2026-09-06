@@ -1,0 +1,23 @@
+-- Avan RC1.4 — APPLIED migration record
+-- Applied to connected Supabase project on 2026-09-06.
+-- Purpose: account hierarchy = کل / معین / تفصیلی ۱ / تفصیلی ۲.
+-- Rules:
+--   * levels 1..4 only
+--   * only leaf accounts may remain postable
+--   * adding a level-4 child demotes an eligible non-system level-3 parent to non-postable
+--   * level-3 parents with journal activity, account-role binding, financial-account binding, or system status cannot be converted into parents
+--   * automatic codes: existing standard codes are preserved; new detail children use a 3-digit sibling suffix
+--   * account RLS writes require owner/manager/accountant; reads remain workspace-scoped
+--   * two accounting-standard sample paths are provisioned per Company:
+--       دارایی‌ها → دارایی‌های ثابت مشهود → وسایل نقلیه (نمونه) → خودروی اداری نمونه
+--       هزینه‌ها → هزینه‌های حقوق و مزایا → حقوق کارکنان اداری (نمونه) → پرسنل نمونه
+--   * future Company onboarding calls private.ensure_four_level_account_samples
+-- Verification after apply:
+--   * six Companies each have 2 sample تفصیلی۱ + 2 sample تفصیلی۲
+--   * level-4 non-postable = 0
+--   * postable accounts with active children = 0
+--   * Ledger debit = credit = 201581351
+--   * public SECURITY DEFINER executable by authenticated = 0
+
+-- The authoritative executable DDL is stored in Supabase migration history as:
+-- rc1_4_account_four_level_hierarchy
