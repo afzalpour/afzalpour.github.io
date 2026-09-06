@@ -42,14 +42,52 @@ Therefore **Accounts** and **reversed-invoice accounting-link** checks are CLOSE
 - **Single journal/invoice print — PASS** by user on 2026-09-06.
   - detail modal `چاپ / ذخیره PDF` works for journals and invoices.
 - **Money unit toggle — PASS**.
+- **Company switching / active-company behavior — PASS** by user on 2026-09-06.
+  - active Company selection works;
+  - switching between Companies works.
 
-## Remaining User Live checks — only 4
+## RC1.3-D fixes after latest Live feedback
+### Company Portfolio action layout
+User found an owner/admin Company card could show both `تغییر نام` and `ورود به شرکت`, causing CSS Grid to auto-place `ورود به شرکت` unattractively below the card.
+
+Fix applied:
+- `rc13-final-polish.css` now pins Rename and Enter into a stable action column on desktop;
+- mobile keeps full-width stacked actions;
+- active-company indicator remains in the same action column.
+
+Commit:
+- `aad098d75d835b8086cfe55c1f0fa8bdab06169d`
+
+Status: **FIXED / Live visual retest pending**.
+
+### Revoked / missing Supabase Session recovery
+User encountered:
+`session from session_id claim in JWT does not exist`
+
+Supabase session semantics confirm that the JWT `session_id` must correspond to a row in `auth.sessions`; a missing row means the server-side session is terminated.
+
+Fix applied:
+- `supabase-auth.js` clears a revoked/missing local session instead of reusing the still-time-valid JWT;
+- password login explicitly starts from a clean local session and stores only the newly issued session;
+- `rc13-session-security.js` returns the UI to the Auth shell when the server session disappears;
+- raw Supabase session errors are localized in `error-messages-fa.js`;
+- active Company local selection is cleared when the auth session becomes invalid;
+- Staging PWA cache bumped to `avan-staging-rc1-v48`.
+
+Commits:
+- `d8199e844fff1daf42068b5c9c1dd2f41debe4dd`
+- `74c748c8ef9276f0aa5706bf5317a96913743e55`
+- `0cebe9d585c4ddd0f96787190f4011f8fc400eee`
+- `dfa917c2cdc1dd37f774b746997f1c6fe8b31e7c`
+
+Status: **FIXED / Live login retest pending**.
+
+## Remaining User Live checks
 Hard Refresh Staging first.
 
-1. **شرکت‌های من**
-   - Active Company shows `شرکت انتخاب‌شده`.
-   - Misplaced `بازگشت به شرکت` is not shown on the active card.
-   - Entering another Company and returning works.
+1. **Company Portfolio polish retest**
+   - On a non-active Company where the user can rename it, `تغییر نام` and `ورود به شرکت` must stay neatly aligned inside the card.
+   - `ورود به شرکت` must not drop unattractively below the card.
 
 2. **سند حسابداری**
    - Open one journal detail.
@@ -61,19 +99,19 @@ Hard Refresh Staging first.
    - No horizontal page overflow except intentional finance-table scrolling.
    - Modal is usable and bottom navigation does not collide with the iPhone home indicator.
 
-4. **Auth smoke**
-   - Existing-user login works.
+4. **Auth smoke after Session recovery fix**
+   - Hard Refresh once; an obsolete Session should be discarded instead of showing the raw `session_id claim` error.
+   - Existing-user login must create a fresh valid session and enter the app.
    - Signup/recovery UI rejects a password under 12 characters or without letter + number + symbol.
    - Recovery flow remains reachable.
 
 ### Static implementation already verified for the remaining checks
-- Final Polish replaces the active Company enter button with non-action `شرکت انتخاب‌شده`.
 - Journal detail enhancer calculates debit/credit totals and adds balanced/unbalanced status.
 - iPhone CSS includes safe-area handling, `100dvh`, 16px form controls, modal viewport protection and safe bottom navigation.
 - Password guard applies 12-character + letter + number + symbol policy to signup/recovery while existing-user login remains compatible with the existing login path.
 
 ## PASS phrase
-If the 4 remaining Live checks pass, reply exactly or equivalently:
+If the remaining Live checks pass, reply exactly or equivalently:
 
 `Gate RC1.3-D پاس شد`
 
