@@ -24,9 +24,23 @@ RC1.3-D regression fix committed as:
 - `99c3ee7b7d21a8de003026081e350d41a852af89`
 - `avan-staging/APPLIED_RC13_D_INVOICE_REVERSAL_INTEGRITY_FIX.sql`
 
-## User Live UI Gate — only these 8 checks remain
+## User Live UI Gate
 Hard Refresh Staging first.
 
+### Confirmed Live PASS evidence
+- **Print layout corrections — PASS** by user on 2026-09-06.
+  - correct `واحد مبالغ: تومان/ریال` presentation;
+  - technical journal/invoice subtitles removed;
+  - requested journal/invoice table alignment applied;
+  - `اقدام` removed from printed list output;
+  - list print/PDF works.
+- **Single journal/invoice print — PASS** by user on 2026-09-06.
+  - detail modal `چاپ / ذخیره PDF` restored for both journals and invoices.
+- **Money unit toggle — PASS**: user confirmed Toman/Rial switching works; print presentation was subsequently accepted in the print-layout PASS above.
+
+Therefore checks 3 and 4 below are CLOSED and must not be repeated unless a later Blocker/Critical print fix touches them.
+
+### Remaining Live checks
 1. **شرکت‌های من**
    - Active Company shows `شرکت انتخاب‌شده`.
    - Misplaced `بازگشت به شرکت` is not shown on the active card.
@@ -37,14 +51,15 @@ Hard Refresh Staging first.
    - Bottom shows `جمع کل` debit/credit.
    - Balanced document shows `✓ سند تراز است`.
 
-3. **چاپ / PDF**
-   - Print one report, one journal detail and one invoice detail.
-   - Company identity is present.
-   - `واحد مبالغ` and money-column unit are visible and correct.
+3. **چاپ / PDF — CLOSED / PASS**
+   - List print/PDF PASS.
+   - Single journal print/PDF PASS.
+   - Single invoice print/PDF PASS.
+   - Company identity/unit presentation accepted.
 
-4. **تومان / ریال**
-   - Switch the active Company display unit once.
-   - Repeat one print; unit must change with the Company setting.
+4. **تومان / ریال — CLOSED / PASS**
+   - Display unit switching works.
+   - Print unit presentation accepted.
 
 5. **حساب‌ها**
    - Standard chart looks complete through level `معین` across دارایی/بدهی/حقوق مالکانه/درآمد/هزینه.
@@ -66,7 +81,7 @@ Hard Refresh Staging first.
    - Recovery flow remains reachable.
 
 ## PASS phrase
-If all 8 checks pass, reply exactly or equivalently:
+If all remaining checks pass, reply exactly or equivalently:
 
 `Gate RC1.3-D پاس شد`
 
