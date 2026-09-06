@@ -24,7 +24,29 @@ begin
     return old;
   end if;
 
-  if old.status in ('posted','reversed') then
+  if old.status = 'reversed' then
+    raise exception 'POSTED_INVENTORY_DOCUMENT_IMMUTABLE';
+  end if;
+
+  if old.status = 'posted' then
+    if new.status = 'reversed'
+       and new.workspace_id = old.workspace_id
+       and new.fiscal_year_id = old.fiscal_year_id
+       and new.document_type = old.document_type
+       and new.document_date = old.document_date
+       and new.description is not distinct from old.description
+       and new.source_type is not distinct from old.source_type
+       and new.source_id is not distinct from old.source_id
+       and new.journal_entry_id is not distinct from old.journal_entry_id
+       and new.reversal_of is not distinct from old.reversal_of
+       and new.created_by is not distinct from old.created_by
+       and new.posted_by is not distinct from old.posted_by
+       and new.created_at = old.created_at
+       and new.posted_at is not distinct from old.posted_at
+       and new.reversed_by is not null
+       and new.reversed_at is not null then
+      return new;
+    end if;
     raise exception 'POSTED_INVENTORY_DOCUMENT_IMMUTABLE';
   end if;
 
@@ -63,7 +85,6 @@ begin
 end;
 $$;
 
--- Triggers are created only when RC1.4-A tables are present.
 drop trigger if exists trg_guard_inventory_document_mutation on public.inventory_documents;
 create trigger trg_guard_inventory_document_mutation
 before update or delete on public.inventory_documents
@@ -91,7 +112,7 @@ as $$
 declare
   d public.inventory_documents%rowtype;
   ln public.inventory_document_lines%rowtype;
-  v_allow_negative boolean;
+  v_allow_negative boolean := false;
   v_current_qty numeric(20,6);
   v_line_count integer := 0;
 begin
@@ -123,6 +144,7 @@ begin
     into v_allow_negative
   from public.inventory_settings s
   where s.workspace_id=d.workspace_id;
+  v_allow_negative := coalesce(v_allow_negative,false);
 
   for ln in
     select * from public.inventory_document_lines
@@ -253,13 +275,19 @@ begin
       and p_reverse_date between p.date_from and p.date_to
   ) then raise exception 'PERIOD_CLOSED'; end if;
 
+  if not exists (
+    select 1 from public.fiscal_years fy
+    where fy.id=src.fiscal_year_id and fy.workspace_id=src.workspace_id
+      and p_reverse_date between fy.date_from and fy.date_to and fy.status='open'
+  ) then raise exception 'FISCAL_YEAR_INVALID'; end if;
+
   insert into public.inventory_documents(
     workspace_id,fiscal_year_id,document_type,document_date,description,status,
-    source_type,source_id,reversal_of,created_by
+    source_type,source_id,reversal_of,created_by,posted_by,posted_at
   ) values(
-    src.workspace_id,src.fiscal_year_id,'reversal',p_reverse_date,
+    src.workspace_id,src.fiscal_year_id,src.document_type,p_reverse_date,
     coalesce(nullif(btrim(p_reason),''),'برگشت سند انبار')||' — '||coalesce(src.description,''),
-    'posted','inventory_reversal',src.id,src.id,auth.uid()
+    'posted','inventory_reversal',src.id,src.id,auth.uid(),auth.uid(),now()
   ) returning id into v_reversal_id;
 
   for m in
@@ -275,10 +303,6 @@ begin
       p_reverse_date,-m.quantity_delta,m.unit_cost,m.id
     );
   end loop;
-
-  update public.inventory_documents
-     set posted_by=auth.uid(),posted_at=now(),updated_at=now()
-   where id=v_reversal_id;
 
   update public.inventory_documents
      set status='reversed',reversed_by=auth.uid(),reversed_at=now(),updated_at=now()
@@ -316,6 +340,9 @@ as $$
   select private.reverse_inventory_document(p_document_id,p_reverse_date,p_reason)
 $$;
 
+revoke all on function private.guard_inventory_document_mutation() from public, anon, authenticated;
+revoke all on function private.guard_inventory_line_mutation() from public, anon, authenticated;
+revoke all on function private.block_inventory_movement_mutation() from public, anon, authenticated;
 revoke all on function private.post_inventory_document(uuid) from public, anon;
 revoke all on function private.reverse_inventory_document(uuid,date,text) from public, anon;
 grant execute on function private.post_inventory_document(uuid) to authenticated;
