@@ -3,8 +3,9 @@
 ## Current platform state
 - Supabase project: `Avan-production` (`dkyqsxnllvxypigxpygo`).
 - Current organization/project tier recorded for this gate: **Free**.
+- Project operating constraint: use **zero-charge paths only**; do not provision paid Supabase projects/branches or depend on paid-only controls unless this policy is explicitly changed in the future.
 - Managed downloadable database backups / advanced recovery features must not be assumed on the current tier.
-- Avan therefore requires an operator-controlled logical database backup plus a separate Storage-object backup until the production tier is upgraded.
+- Avan therefore requires an operator-controlled logical database backup plus a separate Storage-object backup until a genuinely free external recovery workflow is available.
 - Database backup and Storage object bytes are separate recovery assets; a complete recovery set must contain both.
 
 ## Recovery objectives for Core 1.0
@@ -13,7 +14,7 @@ Until real production usage supports tighter measured objectives, use these oper
 - Storage object backup: at least daily, and additionally before destructive document/storage operations.
 - Retention: at least 7 daily copies plus 4 weekly copies in encrypted off-site storage.
 - Integrity: every backup receives a SHA-256 checksum and a manifest.
-- A backup is not considered recoverable merely because it exists; at least one isolated restore drill must pass before the gate can be marked PASS.
+- A backup is not considered recoverable merely because it exists; at least one isolated restore drill must pass before the full external disaster-recovery gate can be marked PASS.
 
 ## Complete backup set
 A complete Avan recovery point contains:
@@ -48,10 +49,10 @@ For every private bucket:
 5. Treat count or checksum mismatch as backup failure.
 
 ## Restore drill — mandatory isolated target
-**Never run a restore drill against the live Avan project.**
+**Never run a destructive restore drill against the live Avan project.**
 
-Procedure:
-1. Provision an isolated scratch Supabase project or approved development branch.
+Procedure for a full external drill when a genuinely free isolated target is available:
+1. Provision an isolated scratch Supabase/PostgreSQL target that does not incur a charge.
 2. Restore the logical database dump into the isolated target using the current supported restore workflow.
 3. Recreate configuration that is not contained in the dump: Auth settings/redirects, Edge Functions, Storage configuration, keys/secrets and provider configuration.
 4. Restore Storage object bytes into the corresponding private buckets.
@@ -72,6 +73,7 @@ Required PASS checks:
 - Posted/Reversed invoices without linked journal = 0.
 - Account roles have no broken references.
 - Standard account chart has no duplicate `(workspace_id, code)`.
+- Every current Company has the expected standard level-2 chart count.
 - Private Storage object count and checksums match the manifest.
 
 ## Authorization validation after restore
@@ -83,12 +85,12 @@ Required PASS checks:
 - Personal user preferences cannot be read/written by another user.
 - Company print-profile data is readable only to authorized Company members and writable only through the guarded owner/manager workflow.
 
-## Restore-drill status — 2026-09-06
-**Status: BLOCKED / NOT YET A RESTORE PASS.**
+## Full external restore-drill status — 2026-09-06
+**Status: OPEN / NOT YET A FULL EXTERNAL RESTORE PASS.**
 
-A destructive or pseudo-restore was deliberately not run against `Avan-production`. The currently connected tooling does not provide a no-cost isolated target plus a materialized logical dump artifact. Creating a paid/chargeable scratch target has not been authorized. Therefore this gate remains open until an actual backup artifact is restored into an isolated target.
+A destructive or pseudo-restore was deliberately not run against `Avan-production`. The currently connected free tooling does not provide a no-cost isolated Supabase target plus a materialized logical dump and Storage-byte restore target. A paid/chargeable branch was explicitly rejected under the project zero-charge policy. Therefore the full external disaster-recovery gate remains open until an actual backup artifact can be restored into a genuinely free isolated target.
 
-What has been completed now is the **pre-drill recovery baseline and integrity check**, not the restore itself:
+The production recovery baseline remains:
 - database size: 14,167,187 bytes (~13.5 MiB)
 - Companies/Workspaces: 6
 - Workspace memberships: 6
@@ -105,10 +107,60 @@ What has been completed now is the **pre-drill recovery baseline and integrity c
 
 This baseline must be copied into the first real backup manifest and compared with the isolated restored copy (adjusted for any legitimate transactions occurring after that recovery point).
 
-## First real restore drill acceptance record
-The first drill may be marked PASS only when all of the following are recorded:
+## Free transactional recovery rehearsal — PASS — 2026-09-06
+A zero-charge, non-destructive data-layer recovery rehearsal was executed directly inside PostgreSQL using transaction-scoped TEMP tables. This rehearsal does **not** modify permanent production tables: source tables were copied into temporary recovery copies, validated, and discarded automatically at transaction/session end.
+
+Evidence:
+- public/private base tables copied: **26**
+- total rows copied into TEMP recovery copies: **841**
+- count + deterministic content-hash matches: **26 / 26**
+- checksum/count failures: **0**
+- recovered-copy total debit: **201,101,351**
+- recovered-copy total credit: **201,101,351**
+- orphan journal lines: **0**
+- unbalanced Posted/Reversed journals: **0**
+- Posted/Reversed invoices without linked journal: **0**
+- broken account-role references: **0**
+- Companies without exactly 52 standard level-2 system headings: **0**
+- minimum standard level-2 headings per Company: **52**
+- maximum standard level-2 headings per Company: **52**
+- accounting/data recovery-integrity result: **PASS**
+
+Current RLS tenant-isolation was then re-tested with the real `authenticated` database role and a transaction-local simulated user identity:
+- authorized Company visible: **1 row**
+- unrelated Company visible: **0 rows**
+- authorized Company accounts visible: **68 rows** for the selected anonymous test membership
+- unrelated Company accounts visible: **0 rows**
+- tenant-isolation result: **PASS**
+
+Current privileged-function contract was also verified:
+- `public` SECURITY DEFINER functions executable by `authenticated`: **0**
+- hardened public SECURITY INVOKER RPC wrappers: **20**
+- corresponding privileged implementations retained in `private`: **20**
+- security-boundary contract: **PASS**
+
+The reusable rehearsal is versioned at:
+- `avan-staging/FREE_TRANSACTIONAL_RECOVERY_REHEARSAL.sql`
+
+### What this PASS proves
+- Current database rows can be copied into an independent temporary recovery set without count/content drift.
+- Core accounting invariants remain valid on the recovered copies.
+- Current tenant RLS still blocks an unrelated Company after the SECURITY DEFINER hardening.
+- Public privileged RPC exposure remains closed.
+
+### What this PASS does not prove
+This is **not** a full disaster-recovery restore pass because it does not restore:
+- an external PostgreSQL logical dump,
+- Auth/Storage platform metadata into a fresh Supabase stack,
+- private Storage object bytes from an external backup,
+- operational configuration into an independent target.
+
+Accordingly, mark the transactional recovery rehearsal **PASS**, while keeping the full external restore gate **OPEN**.
+
+## First real external restore drill acceptance record
+The first full external drill may be marked PASS only when all of the following are recorded:
 - source backup timestamp and SHA-256
-- isolated target identifier
+- genuinely free isolated target identifier
 - restored release SHA/migration head
 - database validation checklist PASS
 - Storage count/checksum PASS
@@ -116,5 +168,11 @@ The first drill may be marked PASS only when all of the following are recorded:
 - observed restore start/end timestamps and RTO
 - operator/reviewer sign-off
 
-## Production recommendation
-Before onboarding paying customers, move the project to a production-appropriate Supabase tier so managed backup retention and, where needed, finer-grained recovery such as PITR can be evaluated and configured. Keep the independent restore drill even after upgrading; provider backup availability does not replace restore testing.
+## Free-only production posture
+While the zero-charge project policy remains active:
+- do not create paid Supabase branches/projects;
+- do not make paid-only Auth/backup controls a release dependency;
+- keep application-level session/password compensating controls enabled;
+- continue independent count/hash/integrity recovery rehearsals after material schema changes;
+- maintain separate encrypted database and Storage backup procedures whenever a trusted free operator environment is available;
+- retain the full external restore gate as OPEN until a genuinely free isolated restoration path becomes available.
