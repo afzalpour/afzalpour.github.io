@@ -1,25 +1,16 @@
--- Avan RC1.4-A Inventory schema draft
+-- Avan RC1.4-A Inventory schema upgrade draft
 -- STATUS: repository candidate only; NOT APPLIED to Production.
+-- Existing Production foundation preserved:
+--   public.inventory_units
+--   public.inventory_items
+--   public.inventory_settings
 -- Canonical financial currency remains integer Toman at the financial Ledger boundary.
 
-create table if not exists public.inventory_items (
-  id uuid primary key default gen_random_uuid(),
-  workspace_id uuid not null references public.workspaces(id) on delete cascade,
-  sku text not null,
-  name text not null,
-  base_unit text not null default 'عدد',
-  allow_negative_stock boolean not null default false,
-  is_active boolean not null default true,
-  archived_at timestamptz,
-  created_by uuid default auth.uid(),
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  constraint inventory_items_sku_nonempty check (length(btrim(sku)) > 0),
-  constraint inventory_items_name_nonempty check (length(btrim(name)) > 0),
-  constraint inventory_items_unit_nonempty check (length(btrim(base_unit)) > 0),
-  constraint inventory_items_workspace_sku_uk unique (workspace_id, sku),
-  constraint inventory_items_workspace_id_uk unique (workspace_id, id)
-);
+-- Existing inventory_items already has (workspace_id, sku) uniqueness and a composite
+-- FK to inventory_units. This additional unique index allows all new inventory tables
+-- to enforce Company identity in their FKs, preventing cross-workspace ID mixing.
+create unique index if not exists inventory_items_workspace_id_uk
+  on public.inventory_items(workspace_id, id);
 
 create table if not exists public.warehouses (
   id uuid primary key default gen_random_uuid(),
@@ -135,21 +126,22 @@ create table if not exists public.inventory_movements (
 create index if not exists inventory_movements_item_warehouse_date_idx
   on public.inventory_movements(workspace_id, item_id, warehouse_id, movement_date, created_at);
 
-alter table public.inventory_items enable row level security;
 alter table public.warehouses enable row level security;
 alter table public.inventory_documents enable row level security;
 alter table public.inventory_document_lines enable row level security;
 alter table public.inventory_movements enable row level security;
 
-create policy inventory_items_access on public.inventory_items
-for all to authenticated
-using (public.has_workspace_access(workspace_id))
-with check (public.has_workspace_access(workspace_id));
-
-create policy warehouses_access on public.warehouses
-for all to authenticated
-using (public.has_workspace_access(workspace_id))
-with check (public.has_workspace_access(workspace_id));
+-- Match existing Inventory role model: owner / manager / accountant may maintain master/draft data.
+create policy warehouses_select on public.warehouses
+for select to authenticated
+using (public.has_workspace_access(workspace_id));
+create policy warehouses_insert on public.warehouses
+for insert to authenticated
+with check (public.workspace_role(workspace_id) = any (array['owner','manager','accountant']));
+create policy warehouses_update on public.warehouses
+for update to authenticated
+using (public.workspace_role(workspace_id) = any (array['owner','manager','accountant']))
+with check (public.workspace_role(workspace_id) = any (array['owner','manager','accountant']));
 
 create policy inventory_documents_select on public.inventory_documents
 for select to authenticated
@@ -158,7 +150,7 @@ using (public.has_workspace_access(workspace_id));
 create policy inventory_documents_insert_draft on public.inventory_documents
 for insert to authenticated
 with check (
-  public.has_workspace_access(workspace_id)
+  public.workspace_role(workspace_id) = any (array['owner','manager','accountant'])
   and status = 'draft'
   and journal_entry_id is null
   and reversal_of is null
@@ -175,9 +167,12 @@ with check (
 
 create policy inventory_documents_update_draft on public.inventory_documents
 for update to authenticated
-using (public.has_workspace_access(workspace_id) and status = 'draft')
+using (
+  public.workspace_role(workspace_id) = any (array['owner','manager','accountant'])
+  and status = 'draft'
+)
 with check (
-  public.has_workspace_access(workspace_id)
+  public.workspace_role(workspace_id) = any (array['owner','manager','accountant'])
   and status = 'draft'
   and journal_entry_id is null
   and reversal_of is null
@@ -194,7 +189,10 @@ with check (
 
 create policy inventory_documents_delete_draft on public.inventory_documents
 for delete to authenticated
-using (public.has_workspace_access(workspace_id) and status = 'draft');
+using (
+  public.workspace_role(workspace_id) = any (array['owner','manager','accountant'])
+  and status = 'draft'
+);
 
 create policy inventory_document_lines_select on public.inventory_document_lines
 for select to authenticated
@@ -203,7 +201,7 @@ using (public.has_workspace_access(workspace_id));
 create policy inventory_document_lines_insert on public.inventory_document_lines
 for insert to authenticated
 with check (
-  public.has_workspace_access(workspace_id)
+  public.workspace_role(workspace_id) = any (array['owner','manager','accountant'])
   and exists (
     select 1 from public.inventory_documents d
     where d.id = inventory_document_id
@@ -215,7 +213,7 @@ with check (
 create policy inventory_document_lines_update on public.inventory_document_lines
 for update to authenticated
 using (
-  public.has_workspace_access(workspace_id)
+  public.workspace_role(workspace_id) = any (array['owner','manager','accountant'])
   and exists (
     select 1 from public.inventory_documents d
     where d.id = inventory_document_id
@@ -224,7 +222,7 @@ using (
   )
 )
 with check (
-  public.has_workspace_access(workspace_id)
+  public.workspace_role(workspace_id) = any (array['owner','manager','accountant'])
   and exists (
     select 1 from public.inventory_documents d
     where d.id = inventory_document_id
@@ -236,7 +234,7 @@ with check (
 create policy inventory_document_lines_delete on public.inventory_document_lines
 for delete to authenticated
 using (
-  public.has_workspace_access(workspace_id)
+  public.workspace_role(workspace_id) = any (array['owner','manager','accountant'])
   and exists (
     select 1 from public.inventory_documents d
     where d.id = inventory_document_id
@@ -245,8 +243,7 @@ using (
   )
 );
 
--- Movement ledger is intentionally SELECT-only from browser.
--- Posting/reversal RPCs will own INSERT; browser UPDATE/DELETE remains unavailable.
+-- Movement ledger is SELECT-only from browser. Posting/reversal RPCs will own INSERT.
 create policy inventory_movements_select on public.inventory_movements
 for select to authenticated
 using (public.has_workspace_access(workspace_id));
@@ -263,10 +260,9 @@ select
 from public.inventory_movements
 group by workspace_id, item_id, warehouse_id;
 
--- Deliberately deferred from RC1.4-A draft:
+-- Deferred to RC1.4-B/C:
 -- 1) posting/reversal SECURITY INVOKER wrappers + private implementations,
 -- 2) immutable triggers for posted inventory documents/lines,
 -- 3) moving weighted-average cost engine,
 -- 4) exact inventory ↔ journal posting bridge,
--- 5) automatic invoice integration,
--- 6) role-specific write permissions beyond workspace membership.
+-- 5) automatic invoice integration.
