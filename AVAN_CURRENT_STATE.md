@@ -1,8 +1,8 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: 2026-09-05، پس از **Live PASS شدن RC1.3-MT-C** و Merge شدن **RC1.3 Final Accounting Polish + Operational/Security Hardening** در انتظار Live Gate.
+آخرین به‌روزرسانی مرجع: 2026-09-06، پس از **RC1.3 Final Accounting Polish + Operational/Security Hardening**، بسته‌شدن exposure عمومی `SECURITY DEFINER`ها و PASS شدن **Free Transactional Recovery Rehearsal**.
 
-این فایل Source of Truth وضعیت جاری پروژه است. Gate فقط با تایید صریح کاربر PASS می‌شود.
+این فایل Source of Truth وضعیت جاری پروژه است. Gateهای Live فقط با تایید صریح کاربر PASS می‌شوند.
 
 ## 1) Repository / Release
 Repository: `afzalpour/afzalpour.github.io`
@@ -10,6 +10,7 @@ Repository: `afzalpour/afzalpour.github.io`
 - `avan-staging/` = Staging + Live Gate
 - Workflow: Branch → PR → Diff review → Merge → User Live Gate
 - Production promotion فقط پس از Full Regression و RC freeze.
+- Project cost policy: **zero-charge paths only**؛ هیچ Paid Supabase branch/project/feature نباید بدون تغییر صریح این سیاست وارد مسیر پروژه شود.
 
 ## 2) Explicit Live PASS history
 - B-4 Live — PASS
@@ -31,10 +32,13 @@ Repository: `afzalpour/afzalpour.github.io`
 Retained but not exact Gate phrase: RC1.2-D.1 and RC1.3-A1 recovery success.
 
 Current status:
-- **RC1.3-FINAL-POLISH — MERGED / awaiting Live Gate**
-- **Operational / Security Completion — partially completed; provider/restore blockers remain**
+- **RC1.3-FINAL-POLISH — MERGED / awaiting user Live Gate**
+- **Operational / Security free-scope hardening — COMPLETE**
+- **Free Transactional Recovery Rehearsal — PASS**
+- **Full external dump + Storage isolated restore — OPEN (no genuinely free isolated target currently available)**
+- **RC1.3-D Full Regression — NEXT / starting**
 
-## 3) Latest important merges
+## 3) Latest important merges / hardening commits
 - PR #29 ADR-0014: `8a8723ba28f0bed82b39bbc1ade93e1361ef87b8`
 - PR #30 C1.2: `952fa37ba874da5f06630a23d1f80a8b012f3186`
 - PR #31 MT-A: `b11f2aeb25d9315adc6969607e4b5535a598bf39`
@@ -44,9 +48,13 @@ Current status:
 - PR #35 MT-P2: `c5473896cc6e90d9891e0da9a87fee2e59b5b492`
 - PR #36 MT-P3: `626e3a62a8cbd3f06a728ad86baf08b92927fd95`
 - PR #37 MT-C: `c6d3194d4bc309f3d7357afb02b8f59444748f57`
-- **PR #38 Final Polish + Operational/Security Hardening: `3b4ff1be18bcfdcfe54e4c77f09ac79ac907181e`**
+- PR #38 Final Polish + Operational/Security Hardening: `3b4ff1be18bcfdcfe54e4c77f09ac79ac907181e`
+- Workspace access helper Invoker hardening: `5ebf73dc735e718dd78d3d9d3693b2481c4c782c`
+- Public RPC / private privileged boundary hardening: `3dc35795ece1015cf41eb731cf1c790f885e235e`
+- Free transactional recovery rehearsal SQL: `73ef37ce13dd6c1789459e9b26a8c9c438c77f5f`
+- Backup/Restore runbook evidence update: `b574b20b2c29ec28d64500e6d7add8bf9cf5ad73`
 
-PWA staging cache after PR #38: **v42**.
+PWA staging cache: **v43**.
 
 ## 4) Core invariants
 - PostgreSQL/Supabase = financial Source of Truth.
@@ -137,10 +145,10 @@ Implemented boundary cleanup:
 
 User explicitly confirmed: `Gate RC1.3-MT-C پاس شد`.
 
-## 12) Final Accounting Polish — MERGED / AWAITING LIVE GATE
+## 12) Final Accounting Polish — MERGED / AWAITING USER LIVE GATE
 PR #38 merge: `3b4ff1be18bcfdcfe54e4c77f09ac79ac907181e`
 Gate: `avan-staging/RC1_3_FINAL_POLISH_OPS_GATE.md`
-PWA cache: v42.
+PWA cache: v43.
 
 Implemented:
 - Active Company card in `شرکت‌های من` no longer shows misplaced `بازگشت به شرکت`; it shows non-action `شرکت انتخاب‌شده`.
@@ -148,47 +156,57 @@ Implemented:
 - financial pages/details annotate output with current Toman/Rial unit; cloned print/PDF/CSV output carries unit text/headers.
 - standard default account chart expanded through app level 2 (`معین`) across Assets/Liabilities/Equity/Income/Expenses.
 - Standard headings are non-postable/raw and create no balances.
-- Existing/custom account codes are not overwritten. Existing legacy collision at code 220 was preserved; standard supplemental liability heading uses a free code.
+- Existing/custom account codes are not overwritten.
 - same standard chart is automatically added to future `create_avan_company` tenants.
 
-DB migration:
-- `rc1_3_final_polish_standard_chart_security_hardening`
-- `rc1_3_operational_close_legacy_company_bootstrap`
-
-Verification at migration point:
+Current DB verification after final chart corrections:
 - workspaces = 6.
-- accounts changed from 117 to 279 only due new raw headings.
-- journals = 29 unchanged.
-- journal lines = 65 unchanged.
-- account roles = 48 unchanged; broken account roles = 0.
-- financial accounts = 12 unchanged.
-- invoices = 11 unchanged.
-- total debit = total credit = 201101351 canonical Toman unchanged.
-- new standard level-2 headings referenced by journal lines = 0.
-- transactional new Company test: 46 accounts / 33 system level-2 / 8 roles / 2 financial accounts; rollback confirmed temp Company persisted = 0.
+- accounts = 393.
+- every Company = exactly **52** system level-2 headings.
+- journals = 29.
+- journal lines = 65.
+- account roles = 48; broken account roles = 0.
+- financial accounts = 12.
+- invoices = 11.
+- total debit = total credit = **201101351** canonical Toman.
+- orphan lines = 0.
+- unbalanced Posted/Reversed = 0.
 
 Do not mark Final Polish PASS until user explicitly confirms the Live Gate.
 
-## 13) Operational / Security Completion — PARTIAL, BLOCKERS RECORDED
+## 13) Operational / Security Completion — FREE-SCOPE HARDENING COMPLETE
 ### Completed / hardened
-- `BACKUP_RESTORE_RUNBOOK.md` added with DB + Storage + configuration backup set and isolated restore validation checklist.
-- current pre-drill baseline: DB 13 MB; Storage objects 23; orphan journal lines 0; unbalanced Posted/Reversed 0; Posted/Reversed invoices without journal 0.
-- Free-plan application session guard: 60-minute inactivity logout and 12-hour maximum browser session; security timestamps only, no financial data locally.
-- new Signup compensating password policy: minimum 10 chars including letter + digit; existing-user Login is not blocked by this UI rule.
-- 7 internal SECURITY DEFINER trigger/helper functions are no longer executable by authenticated Browser users.
-- 10 safe read-only report/integrity RPCs changed to SECURITY INVOKER; `v_posted_ledger` is `security_invoker=true`.
-- direct browser EXECUTE revoked from legacy `bootstrap_avan_workspace` and `create_workspace`; lifecycle stays through `create_avan_company`.
-- authenticated regression: authorized report returns rows; unrelated Company report returns 0.
-- remaining authenticated public SECURITY DEFINER count = 26; inventory shows all have visible Auth/Company/Role guard signals and authenticated/public have no CREATE privilege on public/auth schemas. These are intentional command/RPC boundaries and must not be bulk-revoked.
+- `BACKUP_RESTORE_RUNBOOK.md` contains DB + Storage + configuration backup set and isolated restore validation checklist.
+- Free-plan application session guard: **60-minute inactivity logout** and **12-hour maximum browser session** with clock rollback/drift protection.
+- new Signup/password-recovery compensating password policy: minimum **12 chars**, letter + number + symbol, plus local common-password denylist.
+- `public.has_workspace_access` and `public.workspace_role` are SECURITY INVOKER.
+- 20 browser-facing privileged RPCs keep their public API signatures as SECURITY INVOKER wrappers while privileged implementations live in `private`.
+- current count of `public` SECURITY DEFINER functions executable by `authenticated` = **0**.
+- direct browser EXECUTE remains revoked from legacy `bootstrap_avan_workspace` and `create_workspace`.
+- Security Advisor has no remaining authenticated-public-SECURITY-DEFINER warning.
+- Current accounting regression after hardening: debit=credit=201101351; orphan lines=0; unbalanced Posted/Reversed=0.
 
-### Provider / restore blockers
+### Free transactional recovery rehearsal — PASS
+Reusable SQL: `avan-staging/FREE_TRANSACTIONAL_RECOVERY_REHEARSAL.sql`
+- public/private tables copied to transaction-scoped TEMP recovery set: **26**.
+- rows copied: **841**.
+- count + deterministic content-hash matches: **26/26**; failures=0.
+- recovered-copy accounting integrity: PASS.
+- every Company has 52 standard level-2 system headings.
+- RLS authenticated tenant-isolation: PASS; unrelated Company and unrelated accounts return 0 rows.
+- permanent Production rows were not modified; TEMP recovery copies were discarded by transaction/session end.
+
+### Tracked free-tier limitations — not falsely marked complete
 Current Supabase organization plan = **Free**.
-- Built-in Supabase **Leaked Password Protection remains disabled**; current Security Advisor still reports the warning. This provider feature is not being falsely marked complete.
-- Advanced hosted Auth session controls are not available on the current plan; Avan uses the application guard above as a compensating control.
-- Supabase managed daily backup retention is not available on current Free plan; Free requires regular off-site logical `supabase db dump` plus separate Storage object backup.
-- A **true isolated restore drill has NOT been executed** because the connected environment currently has neither a downloadable dump artifact nor a no-cost isolated restore target. A restore drill must never run against live Production.
+- Built-in Supabase **Leaked Password Protection remains disabled** because the provider feature is Pro+; Avan keeps the application-level strength/denylist compensating control.
+- Advanced hosted Auth session controls are unavailable on the current plan; Avan uses the application session guard above.
+- A **full external logical-dump + Storage-byte restore into an isolated target has not been executed** because no genuinely free isolated target is currently available.
+- The paid Supabase branch path was rejected under the project zero-charge policy.
 
-Operational / Security Completion remains open until the provider/restore blockers are resolved and verified.
+Therefore:
+- **free-scope Operational/Security hardening = complete**;
+- **transactional recovery rehearsal = PASS**;
+- **full external disaster-recovery restore gate = OPEN** and must remain accurately labeled until a free path exists.
 
 ## 14) Auth / Security status before Production
 Working:
@@ -196,12 +214,13 @@ Working:
 - self password change + reauth.
 - recovery email/reset Live-confirmed desktop+iPhone.
 - application inactivity/max-session guard installed on staging.
+- 12-character password strength + local weak-password denylist for new/recovered passwords.
+- public authenticated SECURITY DEFINER exposure = 0 for hardened command RPC boundary.
 
-Remaining before Production readiness:
-- enable/verify provider leaked-password protection when supported production plan is available.
-- execute actual off-site backup + isolated restore drill and record checksums/results.
-- custom SMTP/sender branding and final custom-domain redirects when domain exists.
-- keep remaining command SECURITY DEFINER RPCs under dependency-aware review; never bulk revoke.
+Remaining tracked constraints:
+- provider leaked-password protection is paid-only and is not a release dependency under the zero-charge policy.
+- full external backup+restore remains OPEN until a genuinely free isolated target exists.
+- custom SMTP/sender branding and final custom-domain redirects wait for a domain/zero-charge suitable configuration.
 
 ## 15) Smart Documents
 Browser-local OCR frozen under ADR-0013.
@@ -210,12 +229,11 @@ Supported flow:
 
 ## 16) Immediate roadmap before Production
 ### Current
-1. User Live Gate: **RC1.3-FINAL-POLISH**.
-2. Resolve Operational/Security provider/restore blockers:
-   - provider leaked-password protection,
-   - real off-site backup + isolated restore drill.
+1. User Live Gate: **RC1.3-FINAL-POLISH** — still awaiting explicit user PASS.
+2. **RC1.3-D — Full Regression** — start now in parallel with the pending Live Gate.
+3. Keep full external restore limitation documented; do not use a paid workaround and do not falsely mark it PASS.
 
-### Then RC1.3-D — Full Regression
+### RC1.3-D — Full Regression
 - Platform Admin / Company Admin / Support separation.
 - multi-company/two-user RLS.
 - Company Portfolio/create/suspend/reactivate.
@@ -234,7 +252,7 @@ Supported flow:
 
 Then:
 - approved Staging → Production/root promotion.
-- custom domain + production SMTP/sender branding when domain exists.
+- custom domain + production SMTP/sender branding only when a zero-charge suitable path and domain are available.
 
 ## 17) Product roadmap after first Production release
 The complete Avan vision is multi-release, not one RC:
@@ -249,7 +267,7 @@ The complete Avan vision is multi-release, not one RC:
 - Workflow & Approval.
 - Consolidated multi-company reporting.
 - External integrations/API/Excel/POS/banks.
-- stronger server/provider Document AI.
+- stronger server/provider Document AI using free/local paths where possible.
 - CFO Autopilot / Continuous Audit / Collections / Close Autopilot.
 - Persian Voice AI with explicit consent and human-controlled financial actions.
 
