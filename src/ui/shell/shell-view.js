@@ -50,4 +50,13 @@ export function page(html) {
   content.innerHTML = html;
 
   jalalizeDateInputs(content);
+
+  window.dispatchEvent(
+    new CustomEvent('avan:page-rendered', {
+      detail: {
+        title:
+          byId('pageTitle')?.textContent || ''
+      }
+    })
+  );
 }

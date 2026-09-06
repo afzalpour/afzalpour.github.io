@@ -1,0 +1,145 @@
+/* Avan RC1.2-C — Smart document viewer and OCR progress */
+.modal.avan-doc-viewer-modal{
+  width:min(1120px,96vw);
+  max-height:94vh;
+  overflow:hidden;
+  padding:14px;
+}
+
+.avan-doc-viewer{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  min-height:min(78vh,760px);
+}
+
+.avan-doc-viewer-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:14px;
+  padding:4px 4px 2px;
+}
+
+.avan-doc-viewer-head h2{margin:0 0 4px}
+.avan-doc-viewer-name{max-width:64ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.avan-doc-original-link{text-decoration:none;display:inline-flex;align-items:center}
+
+.avan-doc-viewer-toolbar{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  flex-wrap:wrap;
+  padding:8px;
+  border:1px solid rgba(190,174,151,.42);
+  background:rgba(255,253,249,.88);
+  border-radius:12px;
+}
+
+.avan-doc-zoom-label{
+  min-width:58px;
+  text-align:center;
+  font-variant-numeric:tabular-nums;
+  color:var(--muted);
+}
+
+.avan-doc-page-controls{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin-inline-start:auto;
+}
+
+.avan-doc-viewer-stage{
+  flex:1;
+  min-height:54vh;
+  max-height:70vh;
+  overflow:auto;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  padding:18px;
+  border-radius:14px;
+  border:1px solid rgba(118,105,92,.32);
+  background:
+    linear-gradient(45deg,rgba(255,255,255,.025) 25%,transparent 25%) 0 0/24px 24px,
+    linear-gradient(-45deg,rgba(255,255,255,.025) 25%,transparent 25%) 0 12px/24px 24px,
+    #24232b;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+
+.avan-doc-viewer-stage .loading{color:#dedbe6}
+
+.avan-doc-viewer-image{
+  display:block;
+  height:auto;
+  max-width:none;
+  width:100%;
+  object-fit:contain;
+  image-orientation:from-image;
+  transform-origin:center center;
+  border-radius:8px;
+  box-shadow:0 18px 48px -28px rgba(0,0,0,.75);
+  background:#fff;
+}
+
+.avan-doc-viewer-pdf-canvas{
+  display:block;
+  flex:0 0 auto;
+  max-width:none;
+  background:#fff;
+  box-shadow:0 18px 48px -28px rgba(0,0,0,.78);
+  border-radius:4px;
+}
+
+.avan-doc-viewer-status{
+  min-height:20px;
+  padding-inline:4px;
+  font-size:12px;
+}
+
+.avan-ocr-progress{min-width:min(520px,88vw)}
+.avan-ocr-progress h2{margin-bottom:4px}
+
+.avan-ocr-progress-track{
+  height:10px;
+  border-radius:999px;
+  overflow:hidden;
+  background:rgba(75,70,152,.10);
+  border:1px solid rgba(75,70,152,.13);
+}
+
+.avan-ocr-progress-bar{
+  width:0;
+  height:100%;
+  border-radius:inherit;
+  background:linear-gradient(90deg,#4b4698,#7f76c8,#b78a43);
+  transition:width .18s ease;
+}
+
+#avanOcrProgressText{line-height:1.9}
+
+@media(max-width:900px){
+  .modal.avan-doc-viewer-modal{
+    width:97vw;
+    max-height:96vh;
+    padding:10px;
+  }
+  .avan-doc-viewer{min-height:82vh}
+  .avan-doc-viewer-head{align-items:stretch}
+  .avan-doc-viewer-head,.avan-doc-viewer-head>.row-actions{flex-wrap:wrap}
+  .avan-doc-viewer-stage{min-height:58vh;max-height:72vh;padding:10px}
+  .avan-doc-page-controls{width:100%;margin-inline-start:0;justify-content:space-between}
+}
+
+@media(max-width:520px){
+  .avan-doc-viewer-toolbar>button{flex:1 1 auto}
+  .avan-doc-viewer-name{max-width:76vw}
+  .avan-doc-viewer-stage{padding:6px;border-radius:10px}
+  .avan-ocr-progress{min-width:0}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .avan-ocr-progress-bar{transition:none}
+}

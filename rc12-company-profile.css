@@ -1,0 +1,107 @@
+/* Avan RC1.2-E — Company print identity */
+.avan-company-profile-card{
+  position:relative;
+  overflow:hidden;
+}
+
+.avan-company-profile-card::before{
+  content:'';
+  position:absolute;
+  inset-inline:0;
+  top:0;
+  height:3px;
+  background:linear-gradient(90deg,#6e5e3e,#b89252,#5b567e);
+  opacity:.75;
+}
+
+.avan-company-profile-preview{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:14px;
+  border:1px solid rgba(183,138,67,.22);
+  background:linear-gradient(135deg,rgba(255,252,246,.96),rgba(247,244,251,.9));
+  border-radius:14px;
+}
+
+.avan-company-profile-preview img,
+.avan-company-logo-fallback{
+  width:68px;
+  height:68px;
+  flex:0 0 68px;
+  border-radius:16px;
+}
+
+.avan-company-profile-preview img{
+  display:block;
+  object-fit:contain;
+  background:#fff;
+  border:1px solid rgba(93,84,69,.14);
+  padding:6px;
+}
+
+.avan-company-logo-fallback{
+  display:grid;
+  place-items:center;
+  color:#fff;
+  font-size:30px;
+  font-weight:850;
+  background:linear-gradient(145deg,#4e477e,#776ba9 65%,#b88f4f);
+  box-shadow:0 12px 30px -20px rgba(56,45,105,.8);
+}
+
+.avan-company-profile-preview strong{
+  display:block;
+  font-size:17px;
+  margin-bottom:5px;
+}
+
+.avan-company-profile-summary{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px 12px;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.9;
+}
+
+.avan-company-profile-summary span{
+  display:inline-block;
+}
+
+.avan-company-logo-editor{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:14px;
+  align-items:end;
+  padding:12px;
+  border:1px dashed rgba(101,87,66,.28);
+  border-radius:12px;
+  background:rgba(250,247,241,.62);
+}
+
+.avan-company-remove-logo{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-height:43px;
+  padding:0 10px;
+  border-radius:10px;
+  background:rgba(168,60,72,.06);
+  color:#8c3340;
+  white-space:nowrap;
+}
+
+.avan-company-remove-logo input{
+  width:auto!important;
+  min-height:0!important;
+}
+
+@media(max-width:720px){
+  .avan-company-profile-preview{
+    align-items:flex-start;
+  }
+  .avan-company-logo-editor{
+    grid-template-columns:1fr;
+  }
+}

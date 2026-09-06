@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#302b68" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>آوان — مدیریت سامانه</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="avan-favicon-32.png" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vazirmatn@33.0.3/Vazirmatn-Variable-font-face.css" />
+  <link rel="stylesheet" href="platform-admin.css" />
+</head>
+<body>
+  <div class="platform-shell" id="platformShell">
+    <header class="platform-topbar">
+      <div>
+        <span class="eyebrow">آوان · SaaS Control Plane</span>
+        <h1>مدیریت سامانه آوان</h1>
+        <p>مدیریت وضعیت و عملیات Tenantهای مشتری؛ کاملاً مستقل از مدیریت مالی هر شرکت و بدون دسترسی پیش‌فرض به Ledger.</p>
+      </div>
+      <div class="platform-topbar-actions">
+        <button class="ghost" id="refreshPlatform">به‌روزرسانی</button>
+        <a class="ghost link-button" href="./">بازگشت به محیط شرکت</a>
+      </div>
+    </header>
+
+    <main>
+      <section id="platformAuthState" class="state-card">در حال بررسی دسترسی ادمین کل…</section>
+      <section id="platformContent" hidden>
+        <div class="kpi-grid" id="platformKpis"></div>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>عملیات شرکت‌ها / Tenantها</h2>
+              <p>وضعیت سرویس، پلن، سقف کاربران، Onboarding و Support از اینجا مدیریت می‌شود. تعلیق/آرشیو دسترسی Tenant را در DB می‌بندد؛ اطلاعات مالی حذف نمی‌شوند.</p>
+            </div>
+            <input id="companySearch" type="search" placeholder="جستجو در شرکت، مالک، پلن یا وضعیت" />
+          </div>
+          <div class="table-wrap operations-table-wrap">
+            <table class="operations-table">
+              <thead><tr>
+                <th>شرکت</th>
+                <th>کاربران / سقف</th>
+                <th>وضعیت سرویس</th>
+                <th>پلن</th>
+                <th>Onboarding</th>
+                <th>پشتیبانی</th>
+                <th>Registry</th>
+                <th>ثبت عملیات</th>
+              </tr></thead>
+              <tbody id="companyRows"></tbody>
+            </table>
+          </div>
+          <div class="control-note">تعلیق و آرشیو، عضویت کاربران را حذف نمی‌کند؛ فقط ورود به Tenant و دسترسی RLS را می‌بندد. با فعال‌سازی مجدد، همان Company و داده‌های آن بازمی‌گردد.</div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><div><h2>رویدادهای Control Plane</h2><p>هر عملیات مدیریتی همراه دلیل در Audit مستقل پلتفرم ثبت می‌شود؛ رویدادهای حسابداری Tenant اینجا نمایش داده نمی‌شوند.</p></div></div>
+          <div id="platformAudit" class="audit-list"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+  <script src="config.js"></script>
+  <script type="module" src="platform-admin.js"></script>
+</body>
+</html>

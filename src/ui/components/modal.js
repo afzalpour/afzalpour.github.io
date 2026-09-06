@@ -28,6 +28,15 @@ export function openModal(html) {
   document.body.classList.add(
     'mobile-scroll-lock'
   );
+
+  window.dispatchEvent(
+    new CustomEvent('avan:modal-opened', {
+      detail: {
+        heading:
+          modal.querySelector('h2')?.textContent || ''
+      }
+    })
+  );
 }
 
 export function closeModal() {

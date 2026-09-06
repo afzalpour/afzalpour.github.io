@@ -1,0 +1,122 @@
+.money-input-enhanced{
+  direction:ltr;
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:.01em;
+}
+
+.money-in-words{
+  min-height:18px;
+  margin-top:1px;
+  color:var(--muted);
+  font-size:11.5px;
+  line-height:1.65;
+  direction:rtl;
+  text-align:right;
+}
+
+.money-in-words[hidden]{
+  display:none!important;
+}
+
+.currency-settings-card{
+  border-color:#d8d5fa;
+}
+
+.currency-settings-card .section-head .muted,
+.currency-settings-card .section-head>.badge{
+  display:none!important;
+}
+
+.currency-choice{
+  display:inline-flex;
+  gap:4px;
+  padding:4px;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:var(--surface2);
+}
+
+.currency-choice button{
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  color:var(--muted);
+  padding:9px 18px;
+  font-weight:700;
+}
+
+.currency-choice button.active{
+  background:var(--surface);
+  color:var(--brand2);
+  box-shadow:0 2px 8px rgba(30,28,80,.08);
+}
+
+.currency-choice button:disabled{
+  cursor:not-allowed;
+  opacity:.55;
+}
+
+.currency-status{
+  margin:9px 0 0;
+  font-size:12px;
+}
+
+.currency-settings-card:has(.currency-choice button:not(:disabled)) .currency-status{
+  display:none!important;
+}
+
+.currency-note{
+  display:none!important;
+}
+
+.money-compact{
+  font-variant-numeric:tabular-nums;
+}
+
+.money-page-unit,
+.money-form-unit{
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  padding:2px 7px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:var(--surface2);
+  color:var(--muted);
+  font-size:10.5px;
+  font-weight:600;
+  line-height:1.5;
+}
+
+.money-page-unit{
+  margin-top:4px;
+}
+
+.money-form-unit{
+  margin:0 0 10px;
+}
+
+.toast.currency-good{
+  background:var(--good);
+}
+
+@media(max-width:520px){
+  .money-in-words{
+    font-size:11px;
+    line-height:1.6;
+  }
+
+  .currency-choice{
+    display:flex;
+  }
+
+  .currency-choice button{
+    flex:1;
+  }
+
+  .money-page-unit,
+  .money-form-unit{
+    font-size:10px;
+  }
+}
