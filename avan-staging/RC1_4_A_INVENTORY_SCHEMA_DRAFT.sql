@@ -157,12 +157,40 @@ using (public.has_workspace_access(workspace_id));
 
 create policy inventory_documents_insert_draft on public.inventory_documents
 for insert to authenticated
-with check (public.has_workspace_access(workspace_id) and status = 'draft');
+with check (
+  public.has_workspace_access(workspace_id)
+  and status = 'draft'
+  and journal_entry_id is null
+  and reversal_of is null
+  and posted_by is null
+  and reversed_by is null
+  and posted_at is null
+  and reversed_at is null
+  and exists (
+    select 1 from public.fiscal_years fy
+    where fy.id = fiscal_year_id
+      and fy.workspace_id = inventory_documents.workspace_id
+  )
+);
 
 create policy inventory_documents_update_draft on public.inventory_documents
 for update to authenticated
 using (public.has_workspace_access(workspace_id) and status = 'draft')
-with check (public.has_workspace_access(workspace_id) and status = 'draft');
+with check (
+  public.has_workspace_access(workspace_id)
+  and status = 'draft'
+  and journal_entry_id is null
+  and reversal_of is null
+  and posted_by is null
+  and reversed_by is null
+  and posted_at is null
+  and reversed_at is null
+  and exists (
+    select 1 from public.fiscal_years fy
+    where fy.id = fiscal_year_id
+      and fy.workspace_id = inventory_documents.workspace_id
+  )
+);
 
 create policy inventory_documents_delete_draft on public.inventory_documents
 for delete to authenticated
