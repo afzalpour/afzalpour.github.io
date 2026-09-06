@@ -1,0 +1,7 @@
+.rc14l-sku-help{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px;padding:8px 10px;border:1px dashed var(--line,#d8dbe7);border-radius:10px;background:rgba(87,84,216,.04)}
+.rc14l-sku-help small,.rc14l-field-help{display:block;color:var(--muted,#6b7280);font-size:.78rem;line-height:1.7;margin-top:4px}
+.rc14l-groups-card{margin-bottom:14px}
+.rc14l-structure-cell{min-width:160px;line-height:1.7}
+.rc14l-number-input{direction:ltr;text-align:left;font-variant-numeric:tabular-nums}
+.rc14e-doc-line .rc14l-field-help{min-height:1.2em}
+@media(max-width:720px){.rc14l-sku-help{align-items:flex-start;flex-direction:column}.rc14l-sku-help button{width:100%}.rc14l-structure-cell{min-width:130px}.rc14e-doc-line .rc14l-number-input{font-size:16px}}
