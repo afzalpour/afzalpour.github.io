@@ -4,29 +4,13 @@
 --   public.inventory_units
 --   public.inventory_items
 --   public.inventory_settings
+--   public.warehouses
 -- Canonical financial currency remains integer Toman at the financial Ledger boundary.
 
--- Existing inventory_items already has (workspace_id, sku) uniqueness and a composite
--- FK to inventory_units. This additional unique index allows all new inventory tables
--- to enforce Company identity in their FKs, preventing cross-workspace ID mixing.
+-- inventory_items already has workspace-scoped SKU uniqueness and a composite FK to inventory_units.
+-- Add a non-partial unique index so new composite FKs can also enforce item Company identity.
 create unique index if not exists inventory_items_workspace_id_uk
   on public.inventory_items(workspace_id, id);
-
-create table if not exists public.warehouses (
-  id uuid primary key default gen_random_uuid(),
-  workspace_id uuid not null references public.workspaces(id) on delete cascade,
-  code text not null,
-  name text not null,
-  is_active boolean not null default true,
-  archived_at timestamptz,
-  created_by uuid default auth.uid(),
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  constraint warehouses_code_nonempty check (length(btrim(code)) > 0),
-  constraint warehouses_name_nonempty check (length(btrim(name)) > 0),
-  constraint warehouses_workspace_code_uk unique (workspace_id, code),
-  constraint warehouses_workspace_id_uk unique (workspace_id, id)
-);
 
 create table if not exists public.inventory_documents (
   id uuid primary key default gen_random_uuid(),
@@ -126,23 +110,11 @@ create table if not exists public.inventory_movements (
 create index if not exists inventory_movements_item_warehouse_date_idx
   on public.inventory_movements(workspace_id, item_id, warehouse_id, movement_date, created_at);
 
-alter table public.warehouses enable row level security;
 alter table public.inventory_documents enable row level security;
 alter table public.inventory_document_lines enable row level security;
 alter table public.inventory_movements enable row level security;
 
--- Match existing Inventory role model: owner / manager / accountant may maintain master/draft data.
-create policy warehouses_select on public.warehouses
-for select to authenticated
-using (public.has_workspace_access(workspace_id));
-create policy warehouses_insert on public.warehouses
-for insert to authenticated
-with check (public.workspace_role(workspace_id) = any (array['owner','manager','accountant']));
-create policy warehouses_update on public.warehouses
-for update to authenticated
-using (public.workspace_role(workspace_id) = any (array['owner','manager','accountant']))
-with check (public.workspace_role(workspace_id) = any (array['owner','manager','accountant']));
-
+-- Existing Inventory role model is retained: owner / manager / accountant may maintain drafts.
 create policy inventory_documents_select on public.inventory_documents
 for select to authenticated
 using (public.has_workspace_access(workspace_id));
