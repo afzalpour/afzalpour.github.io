@@ -3,8 +3,8 @@
 -- NOT APPLIED to Production.
 
 -- 1) Prevent an inventory accounting role from being mapped to an account
--- with the wrong accounting nature. Custom postable accounts are allowed
--- as long as Company, category and normal balance are correct.
+-- with the wrong accounting nature or wrong standard parent heading.
+-- Custom postable accounts are allowed only under the correct Company heading.
 create or replace function private.guard_inventory_account_role_mapping()
 returns trigger
 language plpgsql
@@ -15,8 +15,10 @@ declare
   v_normal text;
   v_postable boolean;
   v_active boolean;
+  v_parent_code text;
   v_expected_category text;
   v_expected_normal text;
+  v_expected_parent text;
 begin
   if new.role_key not in (
     'inventory_asset','inventory_cogs','inventory_grni',
@@ -39,15 +41,25 @@ begin
     when 'inventory_adjustment_gain' then 'credit'
     when 'inventory_adjustment_loss' then 'debit'
   end;
+  v_expected_parent := case new.role_key
+    when 'inventory_asset' then '130'
+    when 'inventory_cogs' then '520'
+    when 'inventory_grni' then '225'
+    when 'inventory_adjustment_gain' then '425'
+    when 'inventory_adjustment_loss' then '570'
+  end;
 
-  select a.category,a.normal_balance,a.is_postable,a.is_active
-    into v_category,v_normal,v_postable,v_active
+  select a.category,a.normal_balance,a.is_postable,a.is_active,p.code
+    into v_category,v_normal,v_postable,v_active,v_parent_code
   from public.accounts a
+  left join public.accounts p
+    on p.id=a.parent_id and p.workspace_id=a.workspace_id
   where a.id=new.account_id and a.workspace_id=new.workspace_id;
 
   if not found or not coalesce(v_postable,false) or not coalesce(v_active,false)
      or v_category is distinct from v_expected_category
-     or v_normal is distinct from v_expected_normal then
+     or v_normal is distinct from v_expected_normal
+     or v_parent_code is distinct from v_expected_parent then
     raise exception 'INVENTORY_ACCOUNT_ROLE_INVALID:%',new.role_key;
   end if;
   return new;
