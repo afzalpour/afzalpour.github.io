@@ -3,19 +3,23 @@
 Date: 2026-09-06
 
 ## Release status
-**PUBLISHED / DEPLOYED**
+**PRODUCTION PASS / RELEASE COMPLETE**
 
 User authorization received explicitly:
-`Production را منتشر کن`
+- `Production را منتشر کن`
+- `Production پاس شد`
 
 Accepted release source:
-- RC1.3-D Automated/Server Regression: PASS
-- RC1.3-D User Live Gate: PASS
-- Final Accounting Polish Live Gate: PASS
+- RC1.3-D Automated/Server Regression: **PASS**
+- RC1.3-D User Live Gate: **PASS**
+- Final Accounting Polish Live Gate: **PASS**
+- Production Smoke Gate: **PASS** — user-confirmed 2026-09-06
 - Source runtime: accepted `avan-staging/` RC
 
+The first RC1.3 Production release is therefore formally complete.
+
 ## Production commit
-- Production commit: `4bcf0d00538486ba610c179d123c6a7b0ae6b0c2`
+- Production runtime commit: `4bcf0d00538486ba610c179d123c6a7b0ae6b0c2`
 - Commit message: `Promote accepted RC1.3 staging runtime to production`
 - Production branch: `main`
 - Promotion was a fast-forward (`force=false`).
@@ -53,14 +57,16 @@ Production-only configuration:
 The broad Production prefix intentionally removes prior Production caches such as `avan-prod-core-1-0-v11` during Service Worker activation.
 
 ## GitHub Pages deployment
-GitHub Pages workflow for production commit:
+GitHub Pages workflow for production runtime commit:
 - Workflow: `pages build and deployment`
 - Run ID: `34034831152`
 - Head SHA: `4bcf0d00538486ba610c179d123c6a7b0ae6b0c2`
 - Status: `completed`
 - Conclusion: `success`
 
-Therefore the repository promotion and GitHub Pages deployment are both complete.
+Release-record deployment also completed successfully:
+- Run ID: `34034994373`
+- Conclusion: `success`
 
 ## Post-deploy database baseline
 Read-only verification after publication:
@@ -77,19 +83,27 @@ Read-only verification after publication:
 
 No financial mutation was performed for the deployment verification.
 
+## Production smoke — USER PASS
+User explicitly confirmed `Production پاس شد` after the minimum release-critical smoke covering:
+- desktop/iPhone startup/login,
+- dashboard/active Company,
+- Company switching,
+- journal/invoice detail,
+- detail printing with Company identity/unit,
+- mobile navigation/modal behavior.
+
+This closes RC1.3-RC Feature Freeze for the first Production release.
+
+## Current operating mode
+- RC1.3 first Production release: **COMPLETE**.
+- Release-specific Feature Freeze: **ENDED**.
+- Production remains protected by normal change discipline: new work starts in Staging/new release cycle; Production changes require their own gate/promotion.
+- Blocker/Critical production defects still take priority over feature work.
+
 ## Security / operational limitations retained accurately
 - `public` SECURITY DEFINER executable by `authenticated` remains 0 at RC baseline.
 - Supabase Leaked Password Protection remains a tracked Free-plan provider limitation; no paid upgrade is part of this release path.
-- Free Transactional Recovery Rehearsal: PASS.
-- Full external logical dump + Storage-byte restore into a genuinely isolated target: OPEN / NOT FULL PASS under the zero-charge policy.
+- Free Transactional Recovery Rehearsal: **PASS**.
+- Full external logical dump + Storage-byte restore into a genuinely isolated target: **OPEN / NOT FULL PASS** under the zero-charge policy.
 
-## Production smoke gate
-Only a minimal end-user Production smoke remains:
-1. Root login opens normally on desktop and iPhone.
-2. Dashboard and active Company load.
-3. Company switch works.
-4. One journal and one invoice detail open.
-5. One detail print includes Company identity and correct money unit.
-6. iPhone `بیشتر`, modal and bottom navigation remain usable.
-
-No full RC1.3-D re-test is required unless a Blocker/Critical defect appears.
+These open provider/DR limitations are tracked explicitly and do not get re-labelled as PASS by the Production smoke result.
