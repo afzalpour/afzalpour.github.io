@@ -4,34 +4,35 @@ Date: 2026-09-06
 Branch: `rc1-4-inventory`
 
 ## Status
-**CODE COMPLETE / STATIC PASS / BACKEND MIGRATION + LIVE GATE PENDING**
+**CODE COMPLETE / STATIC PASS / BACKEND ENABLED / LIVE GATE PENDING**
 
-Production RC1.3 remains unchanged. No RC1.4 transactional table, inventory account role, invoice precision migration, or permanent inventory test data has been applied to the Production database.
+The RC1.4 transactional backend is now enabled by RC1.4-M on the connected Supabase project. Production frontend/root has not been promoted or modified. No permanent inventory test rows were retained.
 
 ## Frontend artifacts
 - `rc14-inventory-foundation.js` / `.css` — existing master data UI retained.
 - `rc14-inventory-operations.js` — documents, lifecycle and reports UI.
 - `rc14-inventory-operations.css` — responsive desktop/mobile layout.
-- `rc14-invoice-inventory-ui.js` — stock-aware invoice companion and safe RPC bridge.
+- `rc14-invoice-inventory-ui.js` — stock-aware invoice companion and RPC bridge.
 - `index.html` — loads RC1.4-E assets after the foundation.
-- `sw.js` — staging cache bumped to `avan-staging-rc1-v51`.
+- `sw.js` — Staging cache remains `avan-staging-rc1-v51`.
 
 ## Inventory navigation
-The existing `کالا و انبار` page is extended, not replaced. It now has three sub-sections:
-1. کالاها و انبارها — existing master data foundation.
-2. اسناد انبار — receipt, issue, transfer, adjustment and opening drafts; post/reverse/details when backend is available.
+The existing `کالا و انبار` page is extended, not replaced. It has three sub-sections:
+1. کالاها و انبارها — master data foundation.
+2. اسناد انبار — receipt, issue, transfer, adjustment and opening drafts; post/reverse/details.
 3. گزارش‌ها — valuation, moving average, low-stock alerts, Ledger reconciliation and item movement card.
 
-## Schema-aware staging behavior
-A–D backend candidates are intentionally not yet migrated to Production. RC1.4-E probes for the transactional schema before using it.
+## Backend activation
+RC1.4-E remains schema-aware, but the required backend schema is now present after the successful RC1.4-M migration.
 
-Until migration:
-- current item/unit/warehouse master data remains usable;
-- existing service/non-inventory invoice behavior remains usable;
-- transactional inventory tabs show an explicit preparation notice instead of surfacing REST/schema errors;
-- invoice inventory metadata is not sent to the legacy backend.
+Expected active Staging behavior now:
+- item/unit/warehouse master data remains usable;
+- inventory documents and reports use the live RC1.4 backend;
+- stock-aware invoice metadata is accepted by the existing `save_draft_invoice` contract;
+- service/non-inventory invoice lines remain stock-neutral and backward-compatible;
+- atomic stock-aware invoice reversal uses `reverse_invoice`.
 
-After migration the same UI activates without a separate frontend rewrite.
+The former pre-migration preparation notice should no longer be shown once the refreshed Staging client sees the reloaded PostgREST schema.
 
 ## Inventory document UI
 Implemented:
@@ -64,41 +65,43 @@ Implemented:
 ## Invoice integration UI
 The existing invoice modal is augmented rather than rewritten.
 
-When the D backend exists:
+With the D backend now active:
 - stock-aware sale line: item + base unit + source warehouse.
 - stock-aware purchase line: item + base unit + exact Posted receipt line.
 - line metadata is appended to the existing `save_draft_invoice` RPC payload.
-- invoice reversal requests from the old UI are redirected to atomic `reverse_invoice` when the D schema is present.
-- item quantities above the legacy 3-decimal UI path use a guarded 6-decimal submit path only after the D schema is detected.
+- invoice reversal requests from the old UI are redirected to atomic `reverse_invoice`.
+- item quantities above the legacy 3-decimal UI path use the guarded 6-decimal submit path.
 - service/non-inventory lines remain stock-neutral.
 
-When the D backend is absent, all of the above degrades safely to the existing RC1.3 invoice flow.
-
 ## Static checks
-- locally-authored `rc14-inventory-operations.js`: `node --check` PASS before repository write.
-- locally-authored `rc14-invoice-inventory-ui.js`: `node --check` PASS before repository write.
-- a DOM binding defect found during static review (`div.name` assumptions for document-line controls) was fixed to explicit `querySelector` bindings before Gate closure.
+- `rc14-inventory-operations.js`: `node --check` PASS before repository write.
+- `rc14-invoice-inventory-ui.js`: `node --check` PASS before repository write.
+- a DOM binding defect found during static review was fixed to explicit `querySelector` bindings before Gate closure.
 - `app.js` was not modified by RC1.4-E.
 - Auth/session files were not modified by RC1.4-E.
 
-## Production baseline after RC1.4-E code work
-- Journal entries: 30
-- Journal lines: 67
-- Debit = Credit = 201581351 canonical Toman
-- Inventory items: 0
-- RC1.4 transactional Production tables: 0
-- Production `invoice_lines.quantity` scale: 3
+## Backend verification from RC1.4-M
+- backend migration: PASS.
+- transaction-scoped weighted-average / issue / transfer / reversal regression: PASS.
+- six-decimal stock-aware sale: PASS.
+- atomic sale reversal: PASS.
+- matched purchase GRNI/AP flow: PASS.
+- duplicate receipt guard: PASS.
+- purchase reversal: PASS.
+- Inventory ↔ Financial Ledger reconciliation: PASS.
+- authenticated RLS isolation and Posted immutability: PASS.
+- public authenticated SECURITY DEFINER functions: 0.
+- final financial baseline: Debit = Credit = `201581351` canonical Toman.
 
-This confirms that RC1.4-E frontend development did not silently migrate the Production database.
+See `RC1_4_M_STATUS.md` and `RC1_4_M_BACKEND_MIGRATION_MANIFEST.sql` for the migration and regression evidence.
 
 ## Next gate
-**RC1.4-M — Backend Migration / Staging Enablement Gate**
+**RC1.4-L — Live Staging Inventory Acceptance**
 
-Before user Live testing:
-1. consolidate A/B/C/C1/D/D0/D1 into one reviewed migration order;
-2. run one final transaction rehearsal against current Production baseline;
-3. apply the additive/hardening migration to the connected Supabase project only after migration-gate checks are green;
-4. run Security Advisors and server regression immediately after migration;
-5. activate and test the RC1.4-E Staging UI against the migrated backend;
-6. request only the minimal user Live Gate for inventory workflows and iPhone layout;
-7. Production frontend promotion remains a later explicit release gate.
+Only browser-facing acceptance remains before any later release decision:
+1. inventory page/tabs activate without the old backend-pending notice;
+2. create an inventory item and post a receipt; stock/report must update;
+3. post one stock-aware sale and reverse it; stock and invoice status must restore correctly;
+4. verify inventory tabs and document modal on iPhone/mobile.
+
+Production frontend promotion remains a later explicit release gate.
