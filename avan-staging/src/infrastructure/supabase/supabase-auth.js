@@ -25,57 +25,6 @@ export function createSupabaseAuth({
     saveSession
   } = sessionStore;
 
-  function invalidServerSession(error) {
-    const status = Number(error?.status || 0);
-    const message = String(
-      error?.message ||
-      error?.payload?.message ||
-      error ||
-      ''
-    ).toLowerCase();
-
-    if (status !== 401 && status !== 403) {
-      return false;
-    }
-
-    return (
-      message.includes('session from session_id claim') ||
-      message.includes('session does not exist') ||
-      message.includes('session not found') ||
-      message.includes('invalid jwt') ||
-      message.includes('jwt expired') ||
-      message.includes('token has expired') ||
-      message.includes('invalid claim')
-    );
-  }
-
-  function invalidateLocalSession(reason = 'server_session_invalid') {
-    saveSession(null);
-
-    try {
-      window.localStorage.removeItem(
-        'avan.active_workspace_id'
-      );
-    } catch {
-      // Storage cleanup is best effort only.
-    }
-
-    try {
-      window.dispatchEvent(
-        new CustomEvent(
-          'avan:auth-session-invalidated',
-          {
-            detail: {
-              reason
-            }
-          }
-        )
-      );
-    } catch {
-      // Non-browser/test runtime.
-    }
-  }
-
   async function refreshIfNeeded() {
     let currentSession = session();
 
@@ -115,7 +64,7 @@ export function createSupabaseAuth({
 
       return data;
     } catch (error) {
-      invalidateLocalSession('refresh_failed');
+      saveSession(null);
       throw error;
     }
   }
@@ -159,10 +108,6 @@ export function createSupabaseAuth({
     email,
     password
   ) {
-    // Password sign-in creates a fresh Supabase session. Never carry a
-    // previously revoked local session across this boundary.
-    saveSession(null);
-
     const data = await raw(
       '/auth/v1/token?grant_type=password',
       {
@@ -206,95 +151,82 @@ export function createSupabaseAuth({
       return null;
     }
 
-    try {
-      return await raw(
-        '/auth/v1/user',
-        {
-          token: accessToken
-        }
-      );
-    } catch (error) {
-      if (invalidServerSession(error)) {
-        invalidateLocalSession(
-          'server_session_missing'
-        );
-        return null;
+    return raw(
+      '/auth/v1/user',
+      {
+        token: accessToken
       }
+    );
+  }
+function consumeAuthCallback() {
+  const rawHash =
+    String(location.hash || '')
+      .replace(/^#/, '');
 
-      throw error;
-    }
+  if (!rawHash) {
+    return null;
   }
 
-  function consumeAuthCallback() {
-    const rawHash =
-      String(location.hash || '')
-        .replace(/^#/, '');
+  const params =
+    new URLSearchParams(rawHash);
 
-    if (!rawHash) {
-      return null;
-    }
+  const accessToken =
+    params.get('access_token');
 
-    const params =
-      new URLSearchParams(rawHash);
+  const refreshToken =
+    params.get('refresh_token');
 
-    const accessToken =
-      params.get('access_token');
+  if (!accessToken) {
+    return null;
+  }
 
-    const refreshToken =
-      params.get('refresh_token');
-
-    if (!accessToken) {
-      return null;
-    }
-
-    const expiresIn =
-      Number(
-        params.get('expires_in') || 0
-      );
-
-    const expiresAt =
-      Number(
-        params.get('expires_at') || 0
-      ) ||
-      Math.floor(Date.now() / 1000) +
-        expiresIn;
-
-    const currentSession = {
-      access_token: accessToken,
-      refresh_token: refreshToken,
-      expires_in: expiresIn,
-      expires_at: expiresAt,
-      token_type:
-        params.get('token_type') ||
-        'bearer'
-    };
-
-    saveSession(currentSession);
-
-    const type =
-      params.get('type') || '';
-
-    history.replaceState(
-      null,
-      document.title,
-      location.pathname +
-        location.search
+  const expiresIn =
+    Number(
+      params.get('expires_in') || 0
     );
 
-    return {
-      type,
-      session: currentSession
-    };
-  }
+  const expiresAt =
+    Number(
+      params.get('expires_at') || 0
+    ) ||
+    Math.floor(Date.now() / 1000) +
+      expiresIn;
 
+  const currentSession = {
+    access_token: accessToken,
+    refresh_token: refreshToken,
+    expires_in: expiresIn,
+    expires_at: expiresAt,
+    token_type:
+      params.get('token_type') ||
+      'bearer'
+  };
+
+  saveSession(currentSession);
+
+  const type =
+    params.get('type') || '';
+
+  history.replaceState(
+    null,
+    document.title,
+    location.pathname +
+      location.search
+  );
+
+  return {
+    type,
+    session: currentSession
+  };
+}
   async function requestPasswordReset(
     email,
     redirectTo
   ) {
     const target =
-      redirectTo ||
-      config.authRedirectUrl ||
-      location.origin + location.pathname;
+  redirectTo ||
+  config.authRedirectUrl ||
+  location.origin + location.pathname;
 
     return raw(
       `/auth/v1/recover?redirect_to=${
@@ -332,14 +264,14 @@ export function createSupabaseAuth({
   }
 
   return {
-    refreshIfNeeded,
-    token,
-    consumeAuthCallback,
-    signup,
-    login,
-    logout,
-    user,
-    requestPasswordReset,
-    updatePassword
-  };
+  refreshIfNeeded,
+  token,
+  consumeAuthCallback,
+  signup,
+  login,
+  logout,
+  user,
+  requestPasswordReset,
+  updatePassword
+};
 }
