@@ -176,6 +176,16 @@ export function errorMessageFa(error) {
       'خطای نامشخص'
     );
 
+  const normalized = key.toLowerCase();
+
+  if (
+    normalized.includes('session from session_id claim') ||
+    normalized.includes('session does not exist') ||
+    normalized.includes('session not found')
+  ) {
+    return 'نشست شما دیگر معتبر نیست. لطفاً دوباره وارد شوید.';
+  }
+
   return (
     ERROR_MESSAGES_FA[key] ||
     key
