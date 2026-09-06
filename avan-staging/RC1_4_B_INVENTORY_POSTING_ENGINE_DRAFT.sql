@@ -95,6 +95,11 @@ begin
   from public.inventory_documents d
   where d.id=v_document_id;
 
+  -- ON DELETE CASCADE from a draft parent may run after the parent row is no longer visible.
+  if tg_op='DELETE' and v_status is null then
+    return old;
+  end if;
+
   if v_status is distinct from 'draft' then
     raise exception 'POSTED_INVENTORY_LINE_IMMUTABLE';
   end if;
@@ -146,13 +151,10 @@ declare
   v_cost numeric(24,6);
   v_allow_negative boolean;
   v_count integer;
-  v_lock_a bigint;
-  v_lock_b bigint;
+  v_lock bigint;
   v_no bigint;
 begin
-  if (select auth.uid()) is null then
-    raise exception 'AUTH_REQUIRED';
-  end if;
+  if (select auth.uid()) is null then raise exception 'AUTH_REQUIRED'; end if;
 
   select * into v_doc
   from public.inventory_documents
@@ -174,18 +176,14 @@ begin
       and fy.workspace_id=v_doc.workspace_id
       and fy.status='open'
       and v_doc.document_date between fy.date_from and fy.date_to
-  ) then
-    raise exception 'FISCAL_YEAR_INVALID';
-  end if;
+  ) then raise exception 'FISCAL_YEAR_INVALID'; end if;
 
   if exists (
     select 1 from public.fiscal_periods p
     where p.workspace_id=v_doc.workspace_id
       and p.status='closed'
       and v_doc.document_date between p.date_from and p.date_to
-  ) then
-    raise exception 'PERIOD_CLOSED';
-  end if;
+  ) then raise exception 'PERIOD_CLOSED'; end if;
 
   select count(*) into v_count
   from public.inventory_document_lines l
@@ -198,7 +196,7 @@ begin
   where s.workspace_id=v_doc.workspace_id;
   v_allow_negative := coalesce(v_allow_negative,false);
 
-  -- Validate every line before writing any movement.
+  -- Validate every line before any movement is written.
   for v_line in
     select * from public.inventory_document_lines
     where inventory_document_id=v_doc.id
@@ -210,9 +208,7 @@ begin
         and i.workspace_id=v_doc.workspace_id
         and i.is_active
         and i.item_type='inventory'
-    ) then
-      raise exception 'INVENTORY_ITEM_INVALID';
-    end if;
+    ) then raise exception 'INVENTORY_ITEM_INVALID'; end if;
 
     if v_line.from_warehouse_id is not null and not exists (
       select 1 from public.warehouses w
@@ -240,37 +236,30 @@ begin
     end if;
   end loop;
 
-  -- Lock affected item/warehouse state in a deterministic order and post movements.
+  -- Lock the complete document state in deterministic order to avoid multi-line deadlocks.
+  for v_lock in
+    select distinct q.lock_key
+    from (
+      select pg_catalog.hashtextextended(
+        v_doc.workspace_id::text||':'||l.item_id::text||':'||l.from_warehouse_id::text,0) as lock_key
+      from public.inventory_document_lines l
+      where l.inventory_document_id=v_doc.id and l.from_warehouse_id is not null
+      union all
+      select pg_catalog.hashtextextended(
+        v_doc.workspace_id::text||':'||l.item_id::text||':'||l.to_warehouse_id::text,0) as lock_key
+      from public.inventory_document_lines l
+      where l.inventory_document_id=v_doc.id and l.to_warehouse_id is not null
+    ) q
+    order by q.lock_key
+  loop
+    perform pg_catalog.pg_advisory_xact_lock(v_lock);
+  end loop;
+
   for v_line in
     select * from public.inventory_document_lines
     where inventory_document_id=v_doc.id
     order by line_no,id
   loop
-    v_lock_a := null;
-    v_lock_b := null;
-    if v_line.from_warehouse_id is not null then
-      v_lock_a := pg_catalog.hashtextextended(
-        v_doc.workspace_id::text||':'||v_line.item_id::text||':'||v_line.from_warehouse_id::text,0);
-    end if;
-    if v_line.to_warehouse_id is not null then
-      v_lock_b := pg_catalog.hashtextextended(
-        v_doc.workspace_id::text||':'||v_line.item_id::text||':'||v_line.to_warehouse_id::text,0);
-    end if;
-
-    if v_lock_a is not null and v_lock_b is not null then
-      if v_lock_a <= v_lock_b then
-        perform pg_catalog.pg_advisory_xact_lock(v_lock_a);
-        if v_lock_b <> v_lock_a then perform pg_catalog.pg_advisory_xact_lock(v_lock_b); end if;
-      else
-        perform pg_catalog.pg_advisory_xact_lock(v_lock_b);
-        perform pg_catalog.pg_advisory_xact_lock(v_lock_a);
-      end if;
-    elsif v_lock_a is not null then
-      perform pg_catalog.pg_advisory_xact_lock(v_lock_a);
-    elsif v_lock_b is not null then
-      perform pg_catalog.pg_advisory_xact_lock(v_lock_b);
-    end if;
-
     if v_doc.document_type in ('opening','receipt') then
       insert into public.inventory_movements(
         workspace_id,inventory_document_id,inventory_document_line_id,item_id,warehouse_id,
@@ -295,7 +284,9 @@ begin
 
       if v_qty > 0 then
         v_cost := round(v_value / v_qty,6);
+        if v_cost < 0 then raise exception 'INVENTORY_VALUE_INVALID'; end if;
       elsif v_allow_negative and v_line.unit_cost > 0 then
+        -- When stock is already zero/negative, caller must supply an explicit provisional cost.
         v_cost := v_line.unit_cost;
       else
         raise exception 'OUTGOING_COST_UNAVAILABLE';
@@ -356,11 +347,13 @@ declare
   v_src public.inventory_documents%rowtype;
   v_src_line public.inventory_document_lines%rowtype;
   v_src_move public.inventory_movements%rowtype;
+  v_check record;
   v_reverse_id uuid;
   v_reverse_line_id uuid;
   v_reverse_fy uuid;
   v_allow_negative boolean;
   v_qty numeric(24,6);
+  v_cost numeric(24,6);
   v_no bigint;
   v_lock bigint;
 begin
@@ -409,33 +402,33 @@ begin
   where s.workspace_id=v_src.workspace_id;
   v_allow_negative := coalesce(v_allow_negative,false);
 
-  -- Lock all impacted stock states before testing the reversal.
-  for v_src_move in
-    select m.* from public.inventory_movements m
+  -- Lock all impacted stock states in deterministic order.
+  for v_lock in
+    select distinct pg_catalog.hashtextextended(
+      m.workspace_id::text||':'||m.item_id::text||':'||m.warehouse_id::text,0) as lock_key
+    from public.inventory_movements m
     where m.workspace_id=v_src.workspace_id and m.inventory_document_id=v_src.id
-    order by pg_catalog.hashtextextended(
-      m.workspace_id::text||':'||m.item_id::text||':'||m.warehouse_id::text,0),m.posting_seq
+    order by lock_key
   loop
-    v_lock := pg_catalog.hashtextextended(
-      v_src_move.workspace_id::text||':'||v_src_move.item_id::text||':'||v_src_move.warehouse_id::text,0);
     perform pg_catalog.pg_advisory_xact_lock(v_lock);
   end loop;
 
-  -- Exact reversal may remove stock created by the source document. Enforce negative-stock policy.
+  -- Exact reversal may remove stock created by the source document; check grouped demand.
   if not v_allow_negative then
-    for v_src_move in
-      select m.* from public.inventory_movements m
+    for v_check in
+      select m.item_id,m.warehouse_id,sum(m.quantity_delta)::numeric(24,6) as qty_to_remove
+      from public.inventory_movements m
       where m.workspace_id=v_src.workspace_id
         and m.inventory_document_id=v_src.id
         and m.quantity_delta > 0
-      order by m.posting_seq
+      group by m.item_id,m.warehouse_id
     loop
       select coalesce(sum(m.quantity_delta),0) into v_qty
       from public.inventory_movements m
       where m.workspace_id=v_src.workspace_id
-        and m.item_id=v_src_move.item_id
-        and m.warehouse_id=v_src_move.warehouse_id;
-      if v_qty < v_src_move.quantity_delta then
+        and m.item_id=v_check.item_id
+        and m.warehouse_id=v_check.warehouse_id;
+      if v_qty < v_check.qty_to_remove then
         raise exception 'REVERSAL_NEGATIVE_STOCK_FORBIDDEN';
       end if;
     end loop;
@@ -455,13 +448,19 @@ begin
     where workspace_id=v_src.workspace_id and inventory_document_id=v_src.id
     order by line_no,id
   loop
+    select coalesce(max(m.unit_cost),v_src_line.unit_cost) into v_cost
+    from public.inventory_movements m
+    where m.workspace_id=v_src.workspace_id
+      and m.inventory_document_id=v_src.id
+      and m.inventory_document_line_id=v_src_line.id;
+
     insert into public.inventory_document_lines(
       workspace_id,inventory_document_id,line_no,item_id,from_warehouse_id,to_warehouse_id,
       quantity,unit_cost,description
     ) values(
       v_src.workspace_id,v_reverse_id,v_src_line.line_no,v_src_line.item_id,
       v_src_line.to_warehouse_id,v_src_line.from_warehouse_id,
-      v_src_line.quantity,v_src_line.unit_cost,v_src_line.description
+      v_src_line.quantity,v_cost,v_src_line.description
     ) returning id into v_reverse_line_id;
 
     for v_src_move in
