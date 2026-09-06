@@ -18,30 +18,8 @@ function now(){return Date.now()}
 function readNumber(key){const n=Number(store()?.getItem(key)||0);return Number.isFinite(n)?n:0}
 function clearMarkers(){const s=store();[KEY_USER,KEY_STARTED,KEY_ACTIVITY].forEach(k=>s?.removeItem(k))}
 function initializeFor(userId){const s=store();const t=now();s?.setItem(KEY_USER,userId);s?.setItem(KEY_STARTED,String(t));s?.setItem(KEY_ACTIVITY,String(t));lastActivityWrite=t}
-function authSession(){try{return window.AvanCloud?.session?.()||null}catch{return null}}
 
 async function currentUser(){try{return await window.AvanCloud?.user?.()}catch{return null}}
-
-function showAuthForInvalidSession(){
-  const auth=document.getElementById('authShell');
-  const app=document.getElementById('appShell');
-  const bottom=document.getElementById('bottomNav');
-  const wasAppVisible=Boolean(app&&!app.hidden);
-
-  if(app)app.hidden=true;
-  if(bottom)bottom.hidden=true;
-  if(auth)auth.hidden=false;
-
-  try{document.getElementById('avanCompanyPortfolio')?.remove()}catch{}
-  document.body.classList.remove('avan-company-portfolio-open','mobile-scroll-lock');
-
-  if(!wasAppVisible)return;
-
-  const status=document.getElementById('authStatus');
-  if(status){
-    status.innerHTML='<span class="info-box" style="display:block">نشست قبلی دیگر معتبر نبود. لطفاً دوباره وارد شوید.</span>';
-  }
-}
 
 function touch(){
   if(signingOut||document.visibilityState==='hidden')return;
@@ -62,11 +40,7 @@ async function forceLogout(reason){
 async function check(){
   if(signingOut)return;
   const user=await currentUser();
-  if(!user?.id){
-    clearMarkers();
-    if(!authSession())showAuthForInvalidSession();
-    return;
-  }
+  if(!user?.id){clearMarkers();return}
   const s=store();const known=s?.getItem(KEY_USER)||'';
   if(known!==user.id){initializeFor(user.id);return}
   const started=readNumber(KEY_STARTED),last=readNumber(KEY_ACTIVITY),t=now();
@@ -85,14 +59,9 @@ function install(){
   ['focus','pageshow','online'].forEach(type=>window.addEventListener(type,()=>check()));
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check()});
   window.addEventListener('storage',event=>{if([KEY_USER,KEY_STARTED,KEY_ACTIVITY].includes(event.key))check()});
-  window.addEventListener('avan:auth-session-invalidated',()=>check());
   const observer=new MutationObserver(()=>check());
   const app=document.getElementById('appShell');if(app)observer.observe(app,{attributes:true,attributeFilter:['hidden']});
-  showReason();
-  check();
-  window.setTimeout(check,250);
-  window.setTimeout(check,1000);
-  window.setInterval(check,HEARTBEAT_MS);
+  showReason();check();window.setInterval(check,HEARTBEAT_MS);
   window.AvanSessionSecurity=Object.freeze({idleMinutes:60,maxHours:12,heartbeatSeconds:60,check});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
