@@ -41,6 +41,7 @@ export function installAvanCloud({ globalObject = window, storage = localStorage
   const config = globalObject.AVAN_CONFIG || {};
   const client = createSupabaseClient({ config, storage });
   const baseSelect = client.select.bind(client);
+  const operations = ensureOperationPipeline(client);
   let claimedForUserId = null;
 
   async function claimInvitationsForCurrentUser() {
@@ -75,19 +76,6 @@ export function installAvanCloud({ globalObject = window, storage = localStorage
   });
   const companyBoundary = createCompanyBoundary(companyContext);
 
-  // MT-C legacy projection: modules that still read `workspaces` can no longer
-  // enumerate or choose a tenant. CompanyContext resolves the tenant first and
-  // this compatibility path exposes only that already-authorized active Company.
-  client.select = async (table, query = '') => {
-    if (table !== 'workspaces') return baseSelect(table, query);
-    await claimInvitationsForCurrentUser();
-    const contextState = await companyContext.ensure();
-    if (contextState.selection_required) throw new Error('COMPANY_SELECTION_REQUIRED');
-    const activeId = contextState.active_company?.id || null;
-    if (!activeId) throw new Error('COMPANY_REQUIRED');
-    return baseSelect(table, scopeWorkspaceQueryToId(query, activeId));
-  };
-
   client.ACTIVE_WORKSPACE_KEY = ACTIVE_WORKSPACE_KEY;
   client.ACTIVE_COMPANY_KEY = ACTIVE_WORKSPACE_KEY;
   client.companyContext = companyContext;
@@ -95,7 +83,24 @@ export function installAvanCloud({ globalObject = window, storage = localStorage
   client.activeCompany = companyBoundary.requireActiveCompany;
   client.listCompanies = companyBoundary.listCompanies;
   client.workspaceProjectionMode = 'active-company-only';
-  ensureOperationPipeline(client);
+
+  // MT-C compatibility projection expressed as named middleware instead of
+  // replacing `client.select`. Legacy modules may ask for `workspaces`, but the
+  // runtime exposes only the already-authorized active Company.
+  if (!operations.has('select', 'company.active-workspace-projection')) {
+    operations.use('select', 'company.active-workspace-projection', async ({ args, next }) => {
+      const [table, query = '', ...rest] = args;
+      if (table !== 'workspaces') return next(table, query, ...rest);
+
+      await claimInvitationsForCurrentUser();
+      const contextState = await companyContext.ensure();
+      if (contextState.selection_required) throw new Error('COMPANY_SELECTION_REQUIRED');
+      const activeId = contextState.active_company?.id || null;
+      if (!activeId) throw new Error('COMPANY_REQUIRED');
+      return next(table, scopeWorkspaceQueryToId(query, activeId), ...rest);
+    }, { priority: 10 });
+  }
+
   globalObject.AvanCloud = client;
   globalObject.AvanCompanyContext = companyContext;
   globalObject.AvanCompanyBoundary = companyBoundary;
