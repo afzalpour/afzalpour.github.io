@@ -8,6 +8,7 @@ const C = installAvanCloud();
 const LEVEL_FA = Object.freeze({1:'کل',2:'معین',3:'تفصیلی ۱',4:'تفصیلی ۲'});
 const MANAGE = new Set(['owner','manager','accountant']);
 let scanBusy = false;
+let enhancedTable = null;
 
 const esc = v => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 
@@ -54,9 +55,11 @@ function nextCode(parent, accounts){
 
 async function enhancePage(){
   if (!accountsPage()) return;
-  const d = await snapshot();
   const root = document.getElementById('content');
-  if (!root) return;
+  const table = root?.querySelector('table');
+  if (!root || !table || table === enhancedTable) return;
+
+  const d = await snapshot();
   const head = root.querySelector('.section-head');
   const subtitle = head?.querySelector('.muted');
   if (subtitle) subtitle.textContent = 'کل / معین / تفصیلی ۱ / تفصیلی ۲ — ثبت سند فقط روی آخرین حساب قابل‌ثبت انجام می‌شود.';
@@ -67,8 +70,9 @@ async function enhancePage(){
     legend.innerHTML = '<span>۱. کل</span><span>۲. معین</span><span>۳. تفصیلی ۱</span><span>۴. تفصیلی ۲</span><small>والدی که زیرحساب دارد، قابل ثبت مستقیم نیست.</small>';
     head.insertAdjacentElement('afterend', legend);
   }
+
   const byCode = new Map(d.accounts.map(a => [String(a.code), a]));
-  root.querySelectorAll('table tbody tr').forEach(row => {
+  table.querySelectorAll('tbody tr').forEach(row => {
     const account = byCode.get(codeFromRow(row));
     if (!account) return;
     if (row.children[2]) row.children[2].textContent = LEVEL_FA[account.level] || `سطح ${account.level}`;
@@ -82,6 +86,7 @@ async function enhancePage(){
       nameCell.append(' ', badge);
     }
   });
+  enhancedTable = table;
 }
 
 function parentOptions(accounts){
@@ -145,6 +150,7 @@ async function openCreateAccount(){
         if (!account || Number(account.level) !== expectedLevel || account.parent_id !== p.id) throw new Error('ACCOUNT_LEVEL_CONFIRMATION_FAILED');
         closeModal();
         toast(`${LEVEL_FA[account.level]} «${account.name}» با کد ${account.code} ساخته شد.`);
+        enhancedTable = null;
         document.querySelector('[data-page="accounts"]')?.click();
       } catch (err) {
         submit.disabled = false;
@@ -158,23 +164,36 @@ async function openCreateAccount(){
   } catch (err) { showError(err, 'four level account modal'); }
 }
 
+async function scan(){
+  if (scanBusy || !accountsPage()) return;
+  scanBusy = true;
+  try { await enhancePage(); }
+  catch (err) { if (accountsPage()) console.warn('account hierarchy enhancer', err); }
+  finally { scanBusy = false; }
+}
+
+function scheduleAccountScan(){
+  [0,60,180,450,900].forEach(ms => setTimeout(scan, ms));
+}
+
 function install(){
   document.addEventListener('click', e => {
     if (e.target.closest?.('#addAccount')) {
       e.preventDefault();
       e.stopImmediatePropagation();
       openCreateAccount();
+      return;
+    }
+    if (e.target.closest?.('[data-page="accounts"]')) {
+      enhancedTable = null;
+      scheduleAccountScan();
     }
   }, true);
-  const scan = async () => {
-    if (scanBusy) return;
-    scanBusy = true;
-    try { await enhancePage(); } catch (err) { if (accountsPage()) console.warn('account hierarchy enhancer', err); }
-    finally { scanBusy = false; }
-  };
-  new MutationObserver(() => queueMicrotask(scan)).observe(document.body, {childList:true,subtree:true});
-  window.addEventListener('avan:company-context-changed', () => queueMicrotask(scan));
-  scan();
+  window.addEventListener('avan:company-context-changed', () => {
+    enhancedTable = null;
+    scheduleAccountScan();
+  });
+  scheduleAccountScan();
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, {once:true}); else install();
