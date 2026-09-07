@@ -1,0 +1,9 @@
+.rc14-account-level-legend{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 14px;padding:10px 12px;border:1px solid var(--line,#d8dbe7);border-radius:12px;background:rgba(87,84,216,.04)}
+.rc14-account-level-legend span{font-weight:700;font-size:.86rem;padding:4px 8px;border-radius:999px;background:var(--surface,#fff);border:1px solid var(--line,#d8dbe7)}
+.rc14-account-level-legend small{color:var(--muted,#6b7280)}
+.rc14-leaf-badge{display:inline-flex;align-items:center;padding:2px 6px;border-radius:999px;font-size:.7rem;font-weight:700;vertical-align:middle}
+.rc14-leaf-badge.leaf{background:rgba(22,163,74,.10);color:#166534}
+.rc14-leaf-badge.parent{background:rgba(100,116,139,.12);color:#475569}
+.tree-indent-3{padding-inline-start:56px!important}
+tr[data-account-level="4"] td:first-child{font-weight:700}
+@media(max-width:720px){.rc14-account-level-legend{align-items:flex-start}.rc14-account-level-legend small{flex-basis:100%}.tree-indent-3{padding-inline-start:32px!important}}
