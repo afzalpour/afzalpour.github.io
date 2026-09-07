@@ -1,6 +1,6 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: **2026-09-06 — Production RC1.3 PASS / first Production release complete**.
+آخرین به‌روزرسانی مرجع: **2026-09-08 — RC1.4 Production Released / RC1.5 Tax-VAT cycle started**.
 
 این فایل Source of Truth وضعیت جاری پروژه است. Gateهای Live فقط با تأیید صریح کاربر PASS می‌شوند.
 
@@ -16,67 +16,63 @@ Repository: `afzalpour/afzalpour.github.io`
 - Production URL = `https://afzalpour.github.io/`.
 
 ### Current status
-- **RC1.3-D Full Regression = PASS**.
-- **Final Accounting Polish = PASS**.
-- **RC1.3 Production promotion = PASS**.
-- **Production Smoke Gate = PASS** (`Production پاس شد`, user-confirmed 2026-09-06).
-- **First RC1.3 Production release = COMPLETE**.
-- **RC1.3 release-specific Feature Freeze = ENDED** after Production Smoke PASS.
-- Normal change discipline remains: new feature work starts in Staging/new release cycle; Production is not the development workspace.
-- Blocker/Critical Production defects always take priority.
+- **RC1.4 Inventory / Sales-Purchase / Settlement = Production Released**.
+- Production promotion commit: `81b5c54643267842a8f225ee09668ade2fc95052`.
+- Production Pages run: `34141884953` = **success**.
+- Production Service Worker cache: **`avan-prod-rc1-4-v1`**.
+- Rollback branch: **`prod-backup-20260907-rc1-4-pre`**.
+- Production config remains production-specific and was preserved during promotion.
+- New feature development returns to Staging; Production is not the development workspace.
+- Next release cycle: **RC1.5 — Tax / VAT / e-invoicing foundation**, governed by ADR-0007.
 
 Release record:
-- `PRODUCTION_RELEASE_RC1_3.md`
+- `PRODUCTION_RELEASE_RC1_4.md`
 
-Closed promotion gate:
-- `avan-staging/RC1_3_RC_PROMOTION_GATE.md`
-
-Rollback branch:
-- `prod-backup-20260906-rc1-3-pre`
+Promotion readiness evidence:
+- `avan-staging/RC1_4_PROMOTION_READINESS.md`
 
 ---
 
-## 2) Production deployment baseline
+## 2) Production deployment baseline — RC1.4
 Production runtime commit:
-- `4bcf0d00538486ba610c179d123c6a7b0ae6b0c2`
+- `81b5c54643267842a8f225ee09668ade2fc95052`
 
-Accepted runtime:
-- root `index.html` SHA = `b7264c3760c3a1dfe7dde53ce0a8bb07c0e28698`.
-- root `src` tree SHA = `755a60cb7c6f7d20dc6810e62d2f49c974b07d76`.
+Accepted runtime facts:
+- root includes approved RC1.4 inventory, invoice, settlement, localization and money-input runtime.
 - Production `config.js` remains `environment: 'production'`.
-- Production Auth redirect = `https://afzalpour.github.io/`.
-- Production Service Worker cache = **`avan-prod-rc1-3-v1`**.
-- Production `sw.js` SHA = `82d081c9134605fcfb279feb1a1f1cdf18aa4d6b`.
+- Production Auth redirect remains `https://afzalpour.github.io/`.
+- Production Service Worker cache = **`avan-prod-rc1-4-v1`**.
+- Production Pages run `34141884953` = **completed / success**.
+- rollback branch `prod-backup-20260907-rc1-4-pre` exists.
 
-GitHub Pages:
-- runtime deploy run `34034831152` = **success**.
-- release-record deploy run `34034994373` = **success**.
-
-The Promotion contained no database DDL/data migration.
+RC1.4 Backend migrations were applied before frontend promotion to the shared Production Supabase project and passed staged regression/rehearsal gates.
 
 ---
 
-## 3) Explicit Live PASS history
+## 3) Explicit Live PASS / acceptance history
+Prior accepted gates remain valid, including:
 - B-4 Live — PASS
 - B-4.1 — PASS
 - RC1 + two-user RLS — PASS
 - RC1.1-A/B/C/D/F — PASS
 - RC1.2-B/CF/D/E/F/F.1 — PASS
-- RC1.3-B — PASS
-- RC1.3-C1 — PASS
-- RC1.3-C1.1 — PASS
-- RC1.3-C1.2 — PASS
-- RC1.3-MT-A — PASS
-- RC1.3-MT-B — PASS
-- RC1.3-MT-P1.1 — PASS
-- RC1.3-MT-P2 — PASS
-- RC1.3-MT-P3 — PASS
-- RC1.3-MT-C — PASS
-- **RC1.3-D Full Regression — PASS** (`Gate RC1.3-D پاس شد`)
-- **RC1.3 Final Accounting Polish — PASS**
-- **Production Smoke Gate — PASS** (`Production پاس شد`)
+- RC1.3-B/C/MT/D — PASS
+- RC1.3 Final Accounting Polish — PASS
+- RC1.3 Production Smoke Gate — PASS
 
-Retained but not exact Gate phrase: RC1.2-D.1 and RC1.3-A1 recovery success.
+RC1.4 user-accepted behavior includes:
+- four-level accounts `کل / معین / تفصیلی ۱ / تفصیلی ۲`.
+- inventory receipt hang fixed and accepted.
+- inventory document workspace/modal UX accepted.
+- invoice workspace/modal UX accepted.
+- invoice party selection fixed and accepted.
+- three-level product grouping + operational SKU accepted.
+- minimum-stock semantics accepted.
+- Persian dates in inventory documents/item card accepted.
+- purchase receipt line → purchase invoice matching fixed and accepted.
+- sale inventory issue/reversal tested by user.
+- Persian-only user-visible terminology/error policy accepted.
+- mixed/installment settlement money inputs use three-digit grouping in v64.
 
 ---
 
@@ -92,23 +88,30 @@ Retained but not exact Gate phrase: RC1.2-D.1 and RC1.3-A1 recovery success.
 - same-Company authorized users share the Company ledger.
 - Local/Session storage contains only auth/security/UI state; no financial source data.
 - Standard chart headings are structural/raw/non-postable; balances are Ledger-derived.
+- user-visible UI/errors must be fluent Persian; unavoidable standards such as PDF/CSV/SKU may remain Latin.
 
 ---
 
-## 5) Final Production database baseline — 2026-09-06
-Read-only verification after publication:
-- Workspaces = **6**.
-- Accounts = **393**.
-- Journal entries = **30**.
-- Journal lines = **67**.
-- Invoices = **11**.
-- Ledger debit = credit = **201581351** canonical Toman.
+## 5) Final accounting baseline at RC1.4 Promotion Readiness
+Read-only verification before/around promotion:
+- Ledger debit = credit = **4,073,481,351 Toman**.
 - orphan journal lines = **0**.
 - unbalanced Posted/Reversed journals = **0**.
-- reversed invoices with missing/invalid reversal link = **0**.
-- Companies with incorrect 52-heading standard chart = **0**.
+- postable accounts with active children = **0**.
+- `public SECURITY DEFINER` functions executable by `authenticated` = **0**.
+- settlement schedule total mismatches = **0**.
+- orphan settlement schedules = **0**.
+- orphan financial checks = **0**.
+- duplicate check identities under current identity rule = **0**.
 
-No financial mutation was performed for deployment verification.
+Inventory/financial reconciliation:
+- all **6 Companies** reconciled.
+- active Company Movement Ledger value = **1,123,500,000**.
+- active Company Inventory Ledger account balance = **1,123,500,000**.
+- inventory difference = **0**.
+- issue Movement COGS = **32,500,000**.
+- COGS Ledger balance = **32,500,000**.
+- COGS difference = **0**.
 
 ---
 
@@ -123,21 +126,24 @@ Implemented and accepted:
 - member limit enforced in DB.
 - Platform Admin / Company Admin separation.
 - controlled read-only Support sessions.
-
-Company Portfolio polish accepted:
-- active Company shows `شرکت انتخاب‌شده`.
-- misplaced active-card return action removed.
-- owner/admin Company cards have stable layout for `تغییر نام` + `ورود به شرکت`.
+- active Company identity/logo drives sidebar branding; Avan logo is fallback.
 
 ---
 
-## 7) Standard chart of accounts
-- exactly **52 system level-2 (`معین`) headings per Company**.
-- all standard level-2 headings are non-postable/raw.
-- Assets / Liabilities / Equity / Income / Expenses covered.
-- contra-account normal-balance exceptions validated.
-- existing/custom account codes preserved.
-- `private.ensure_standard_account_chart(...)` used by Company onboarding.
+## 7) Chart of accounts — current hierarchy
+Account hierarchy is now:
+- Level 1 = `کل`
+- Level 2 = `معین`
+- Level 3 = `تفصیلی ۱`
+- Level 4 = `تفصیلی ۲`
+
+Rules:
+- only leaf accounts are postable.
+- parent with active child is non-postable.
+- browser cannot create root Level 1.
+- account code is assigned authoritatively by DB trigger.
+- Level2→Level3 uses short numeric suffix; Level3→Level4 uses exactly 3 digits.
+- standard chart remains provisioned for every Company; existing/custom codes are preserved.
 
 ---
 
@@ -149,71 +155,100 @@ Journal lifecycle:
 
 Invoice lifecycle:
 - Draft → Posted → Reversed = PASS.
-- RC1.3-D fixed reversal-link integrity.
-- trigger authoritatively links reversed invoice to posted reversal journal.
-- historical repair completed where deterministic.
-
-Evidence:
-- `avan-staging/APPLIED_RC13_D_INVOICE_REVERSAL_INTEGRITY_FIX.sql`
-- fix commit `99c3ee7b7d21a8de003026081e350d41a852af89`.
+- reversal journal link integrity enforced.
+- sale item invoices atomically bridge to Inventory issue + COGS.
+- purchase item invoices can bind to posted Inventory receipt lines and must not duplicate stock receipt.
+- purchase receipt item/quantity mismatch is blocked by Backend.
 
 ---
 
-## 9) Final Accounting / UX polish — LIVE PASS
-Accepted:
-- journal detail debit/credit `جمع کل`.
-- explicit balanced/unbalanced state.
-- print/PDF includes Company identity + money unit.
-- `واحد مبالغ: تومان/ریال` formatting.
-- journal/invoice list alignment polish.
-- useless `اقدام` column removed from print.
-- technical implementation subtitles removed from user/print output.
-- list print/PDF works.
-- single journal print/PDF works.
-- single invoice print/PDF works.
-- Toman/Rial output follows Company preference.
-- iPhone/mobile gate accepted.
+## 9) RC1.4 Inventory / Warehouse / Costing — Production
+Architecture:
+- inventory movement ledger is source of stock quantity/value.
+- posted movement is immutable; correction uses reversal.
+- quantity supports controlled decimal precision; core quantity column supports up to 6 decimals.
+- moving weighted-average costing.
+- deterministic integer-Toman Ledger boundary.
+- composite Company-scoped FK/RLS boundaries.
+- browser does not write stock movements directly.
+
+Product model:
+- `گروه اصلی → زیرگروه → مدل/خانواده → SKU واقعی`.
+- grouping levels 1..3 are classification only.
+- stock/purchase/sale is recorded on operational SKU only.
+- existing legacy items remain compatible.
+
+Operational flows:
+- receipt / issue / transfer / adjustment / opening.
+- Draft → Posted → Reversed.
+- quantity/value reports, weighted average, item card, low-stock and reconciliation.
+- inventory document and invoice forms use focused modal/workspace layout with internal scrolling.
+- inventory dates displayed Jalali.
 
 ---
 
-## 10) Auth / Session
+## 10) Sales / Purchase settlement — Production
+Invoice settlement supports:
+- اعتباری
+- نقدی
+- چکی
+- اقساطی
+- ترکیبی
+
+Accounting model:
+- invoice first recognizes receivable/payable.
+- settlement separately clears receivable/payable.
+- checks use dedicated `چک‌های دریافتنی` / `چک‌های پرداختنی` accounts.
+- check lifecycle supports receipt/issue, clearance/pass, bounce and reversal of settlement.
+- installment schedules have independent due date/status.
+- settlement plan total must exactly equal invoice total.
+
+Check identity rule:
+- same Bank + same Check Number can coexist when Account Number differs.
+- if Account Number is absent, same Company + direction + Bank + Check Number remains protected from duplicate registration.
+
+---
+
+## 11) Persian UX / Money / Print contract
+Frozen product rule:
+- no raw English error code, Postgres/Supabase message or technical enum may be exposed directly to user.
+- known errors map to specific fluent Persian messages.
+- unknown technical errors show a safe general Persian message; detail is Console-only.
+- exceptions only for unavoidable standard terms such as PDF/CSV/SKU.
+
+Money UX:
+- numeric money inputs use three-digit grouping where applicable, including mixed/installment settlement rows.
+- reports/tables/prints include active money unit in monetary headings.
+- Rial/Toman presentation follows workspace/user preference without rewriting canonical Toman history.
+
+---
+
+## 12) Auth / Session
 Accepted stable behavior:
 - existing-user login.
 - signup/recovery password guard: minimum 12 chars + letter + number + symbol + local common-password denylist.
 - recovery flow reachable.
 - session guard: 60-minute inactivity + 12-hour maximum browser session + clock-skew protection.
-
-RC blocker history:
-- an experimental revoked/missing `session_id` auto-recovery caused startup wait loop on desktop/iPhone.
-- it was fully rolled back before final RC PASS.
-- accepted Production does **not** include that experimental behavior.
-
-Stable rollback commits:
-- `38500077cc2fb9c3a055c4d53f4f69e0f20ac21e` — stable `supabase-auth.js`.
-- `c8f1f13004d1e4a41bb4bf4c73b298f847026140` — stable `rc13-session-security.js`.
+- revoked-session auto-recovery experiment remains excluded from stable runtime.
 
 ---
 
-## 11) SECURITY DEFINER / RLS hardening
-Completed:
+## 13) SECURITY DEFINER / RLS hardening
+Completed contract:
 - `public.has_workspace_access` and `public.workspace_role` are SECURITY INVOKER.
 - browser-facing privileged command RPCs use public SECURITY INVOKER wrappers.
 - privileged implementation functions live in `private` where required.
-- direct unsafe broad browser execution revoked.
-- critical public tables have RLS enabled.
-
-Final RC/security contract:
-- critical public tables without RLS = **0**.
+- critical public tables use RLS.
 - `public` SECURITY DEFINER functions executable by `authenticated` = **0**.
 
 Security Advisor:
-- no new public authenticated SECURITY DEFINER warning.
-- INFO-only no-policy notices for deny-by-default/private control-plane boundaries remain intentional.
-- only WARN remains `auth_leaked_password_protection`.
+- no new RC1.4 public authenticated SECURITY DEFINER warning.
+- INFO no-policy notices for private/deny-by-default boundaries remain intentional.
+- only standing WARN remains `auth_leaked_password_protection`.
 
 ---
 
-## 12) Leaked Password Protection — Free-tier limitation
+## 14) Leaked Password Protection — Free-tier limitation
 Supabase built-in leaked-password screening remains disabled on current Free plan.
 
 Policy:
@@ -223,28 +258,13 @@ Policy:
 
 ---
 
-## 13) Backup / Restore
+## 15) Backup / Restore
 Runbook:
 - `avan-staging/BACKUP_RESTORE_RUNBOOK.md`
 
-### Free Transactional Recovery Rehearsal — PASS
-Reusable SQL:
-- `avan-staging/FREE_TRANSACTIONAL_RECOVERY_REHEARSAL.sql`
+Free Transactional Recovery Rehearsal = PASS.
 
-Evidence:
-- 26 public/private base tables copied to TEMP recovery set.
-- 841 rows at rehearsal point.
-- deterministic count/content-hash 26/26 PASS.
-- recovered-copy accounting integrity PASS.
-- RLS tenant isolation PASS.
-- permanent Production data not modified.
-
-### Full external disaster restore — OPEN / NOT FULL PASS
-Not completed:
-- materialized external logical DB dump + Storage bytes restored into a genuinely isolated target.
-
-Reason:
-- no genuinely free isolated target is currently available in connected environment.
+Full external disaster restore remains **OPEN / NOT FULL PASS** because no genuinely free isolated restore target is available in the connected environment.
 
 Rules:
 - never restore against `Avan-production` itself.
@@ -252,13 +272,7 @@ Rules:
 
 ---
 
-## 14) Platform Admin / Support
-Private Control Plane includes:
-- `private.platform_admins`
-- `private.platform_tenants`
-- `private.platform_audit_logs`
-- `private.platform_support_sessions`
-
+## 16) Platform Admin / Support
 Accepted:
 - Platform Admin separate from Company Ledger authority.
 - Support access actor-bound, Company-bound, reason-required, time-limited and read-only.
@@ -268,7 +282,7 @@ Accepted:
 
 ---
 
-## 15) Smart Documents
+## 17) Smart Documents
 Browser-local OCR path remains frozen under ADR-0013.
 
 Supported flow:
@@ -278,25 +292,39 @@ Any new Smart Document work belongs to a future release cycle and must begin in 
 
 ---
 
-## 16) Operating mode after first Production release
-The RC1.3 release-specific Feature Freeze is closed.
-
-Current operating rules:
-- Production remains stable release target, not development branch/workspace.
-- New features start in `avan-staging/` or a new release branch/cycle.
-- Relevant regression is required before every future Production promotion.
-- Production promotion always requires an explicit release decision.
-- Blocker/Critical Production defects are handled immediately with focused regression.
-- zero-charge policy remains binding unless the user explicitly changes it.
+## 18) Current operating mode after RC1.4 Production
+- Production remains stable release target, not development workspace.
+- all new RC1.5 work starts in `avan-staging/` / release branch.
+- relevant regression required before future Production promotion.
+- Blocker/Critical Production defects take immediate priority.
+- zero-charge policy remains binding.
 
 ---
 
-## 17) Product roadmap for next release cycles
-Candidate areas:
-- Inventory / warehouse / costing.
-- expanded Sales & Purchase lifecycle.
-- current-law Tax/VAT/e-invoicing when that release begins.
-- Treasury / cheque / bank reconciliation.
+## 19) RC1.5 — Tax / VAT / e-invoicing cycle — STARTED
+Governing ADR:
+- `docs/adr/0007-versioned-tax-rules.md` — Accepted.
+
+Verified regulatory direction at cycle start (2026-09-08):
+- current general VAT rate for 1405 is 10%, but tax values must never be permanently hard-coded in scattered UI/business logic.
+- Tax/VAT rules must be versioned by effective date.
+- electronic-invoice / taxpayer-system integration must be adapter-based.
+- item/service/party tax profiles and invoice tax snapshots are required for historical reproducibility.
+- tax submission is sensitive and Human-controlled.
+- official/current regulations and technical API specifications must be re-verified before enabling actual external submission.
+
+Planned RC1.5 gates:
+1. **RC1.5-A — Versioned Tax Data Foundation**: tax rule versions, workspace tax settings, tax profiles, historical invoice-line snapshots, RLS/security.
+2. **RC1.5-B — VAT calculation & invoice accounting bridge**: taxable/exempt/zero-rate rules, deterministic rounding, tax payable/receivable accounting, reversal.
+3. **RC1.5-C — Tax UX & reports**: tax settings, item/service tax profile, VAT sales/purchase reports, Persian validation.
+4. **RC1.5-D — e-Invoice pre-validation / adapter contract**: no paid dependency; no automatic legal submission without explicit user action.
+5. Full regression + Staging Live Gate before any future Production promotion.
+
+---
+
+## 20) Product roadmap after RC1.5
+Candidate future areas:
+- Treasury / cheque / bank reconciliation expansion.
 - Bank transaction matching.
 - Payroll.
 - Fixed Assets.
