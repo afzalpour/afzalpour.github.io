@@ -1,5 +1,6 @@
 'use strict';
 
+import './rc14-persian-ux-v62.js';
 import { openModal, closeModal } from './src/ui/components/modal.js';
 import { jalalizeDateInputs } from './src/ui/date/jalali-picker.js';
 import { toast, showError } from './src/ui/feedback/toast.js';
