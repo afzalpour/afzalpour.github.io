@@ -1,9 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = path.resolve(new URL('..', import.meta.url).pathname, '..');
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const root = path.resolve(scriptDir, '..');
 const textExtensions = new Set(['.js', '.mjs', '.html']);
-const ignoredDirs = new Set(['.git', 'node_modules']);
+const ignoredDirs = new Set(['.git', 'node_modules', 'tests', 'scripts']);
 const findings = [];
 
 function walk(dir) {
@@ -27,7 +29,7 @@ function inspect(file) {
       severity: 'high'
     },
     {
-      code: 'GLOBAL_MUTATION_OBSERVER',
+      code: 'MUTATION_OBSERVER',
       re: /new\s+MutationObserver\s*\(/,
       severity: 'medium'
     }
@@ -52,16 +54,21 @@ walk(root);
 
 const appPath = path.join(root, 'app.js');
 const indexPath = path.join(root, 'index.html');
+const directOverwrites = findings.filter(f => f.code === 'DIRECT_CLIENT_METHOD_OVERWRITE');
+const observers = findings.filter(f => f.code === 'MUTATION_OBSERVER');
+const bodyWideObservers = observers.filter(f => /document\.body/.test(f.excerpt));
+
 const metrics = {
   app_js_bytes: fs.existsSync(appPath) ? fs.statSync(appPath).size : null,
   index_html_bytes: fs.existsSync(indexPath) ? fs.statSync(indexPath).size : null,
-  direct_client_method_overwrites: findings.filter(f => f.code === 'DIRECT_CLIENT_METHOD_OVERWRITE').length,
-  mutation_observers: findings.filter(f => f.code === 'GLOBAL_MUTATION_OBSERVER').length,
+  direct_client_method_overwrites: directOverwrites.length,
+  mutation_observers: observers.length,
+  body_wide_mutation_observers: bodyWideObservers.length,
   high_findings: findings.filter(f => f.severity === 'high').length
 };
 
 console.log(JSON.stringify({ metrics, findings }, null, 2));
 
 // Migration-mode audit: report debt without failing the build yet.
-// ADR-0016 will allow turning high findings into a non-zero exit code after
+// ADR-0016 allows turning high findings into a non-zero exit code after
 // all known legacy patches have been migrated.
