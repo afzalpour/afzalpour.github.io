@@ -1,4 +1,4 @@
-/* RC1.4 v58 — sales/purchase invoice single-window workspace */
+/* RC1.4 v61 — sales/purchase invoice single-window workspace */
 body:has(#invoiceForm){overflow:hidden;overscroll-behavior:none}
 .modal-backdrop:has(#invoiceForm){padding:14px;overscroll-behavior:contain}
 #modal:has(#invoiceForm){
@@ -17,15 +17,26 @@ body:has(#invoiceForm){overflow:hidden;overscroll-behavior:none}
   border-bottom:1px solid var(--line,#e5e7eb);
   flex:0 0 auto;
 }
+/* The old D1 notice is obsolete after inventory integration and consumed modal height. */
+#modal:has(#invoiceForm)>.info-box{display:none!important}
+
+/*
+ * v61 layout rule: the whole invoice body scrolls inside the modal.
+ * Only the action footer stays visible. This prevents settlement/check/installment
+ * controls from being clipped by the old flex/overflow model.
+ */
 #invoiceForm{
   flex:1 1 auto;
   min-height:0;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
+  display:block!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+  position:relative;
+  padding:0;
 }
 #invoiceForm>.rc14e-invoice-note{
-  flex:0 0 auto;
   margin:0!important;
   border:0;
   border-bottom:1px solid #d8d5fa;
@@ -33,7 +44,6 @@ body:has(#invoiceForm){overflow:hidden;overscroll-behavior:none}
   padding:9px 20px;
 }
 #invoiceForm>.form-grid{
-  flex:0 0 auto;
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
   gap:10px 12px;
@@ -45,43 +55,60 @@ body:has(#invoiceForm){overflow:hidden;overscroll-behavior:none}
 #invoiceForm>.form-grid .field{min-width:0}
 #invoiceForm>.form-grid input,
 #invoiceForm>.form-grid select{width:100%;min-width:0}
+
+/* Lines are part of the same scroll workspace; never create a competing scroll area. */
 #invoiceLines{
-  flex:1 1 auto;
   min-height:0;
-  overflow:auto;
-  overscroll-behavior:contain;
+  overflow:visible!important;
   padding:12px 20px;
   margin:0!important;
   align-content:start;
 }
 #invoiceLines .invoice-line{
   width:100%;
-  margin:0;
+  margin:0 0 10px;
   align-items:start;
 }
+#invoiceLines .invoice-line:last-child{margin-bottom:0}
 #invoiceLines .invoice-line .field{min-width:0}
 #invoiceLines .invoice-line input,
 #invoiceLines .invoice-line select{width:100%;min-width:0}
-#invoiceForm>#addInvoiceLine{
-  flex:0 0 auto;
-  width:max-content;
-  margin:0 20px 10px;
-}
-#invoiceForm>.line-total{
-  flex:0 0 auto;
+
+/* Correct selector for the actual invoice total element. */
+#invoiceForm>.invoice-grand-total{
   margin:0!important;
-  padding:9px 20px;
+  padding:11px 20px;
   border-top:1px solid var(--line,#e5e7eb);
   background:var(--surface2,#fafafc);
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  min-height:46px;
 }
+
+/* Settlement block is allowed to grow naturally inside the form scroll area. */
+#invoiceForm>.rc14v60-settlement-box{
+  flex:none!important;
+  min-height:max-content;
+  overflow:visible!important;
+}
+
+/* One fixed operation bar; the +row button actually lives here in the real HTML. */
 #invoiceForm>.form-actions{
-  flex:0 0 auto;
+  position:sticky!important;
+  bottom:0;
+  z-index:30;
   margin:0!important;
   padding:11px 20px calc(11px + env(safe-area-inset-bottom));
   border-top:1px solid var(--line,#e5e7eb);
   background:var(--surface,#fff);
   box-shadow:0 -8px 24px -22px rgba(20,20,30,.35);
-  z-index:3;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
 }
 #invoiceForm>.form-actions button{min-width:130px}
 
@@ -125,10 +152,13 @@ body:has(#invoiceForm){overflow:hidden;overscroll-behavior:none}
   #invoiceLines .invoice-line .field:first-child,
   #invoiceLines .invoice-line .field:nth-child(2),
   #invoiceLines .rc14e-stock-controls{grid-column:1/-1!important}
-  #invoiceForm>#addInvoiceLine{margin:0 12px 9px}
-  #invoiceForm>.line-total{padding:8px 12px;justify-content:flex-start;flex-wrap:wrap}
-  #invoiceForm>.form-actions{padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
-  #invoiceForm>.form-actions button{min-width:0;flex:1}
+  #invoiceForm>.invoice-grand-total{padding:9px 12px;justify-content:flex-start;flex-wrap:wrap}
+  #invoiceForm>.form-actions{
+    padding:9px 12px calc(9px + env(safe-area-inset-bottom));
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  #invoiceForm>.form-actions button{min-width:0;width:100%}
   .rc14i-party-tools{align-items:stretch}
   .rc14i-party-tools>[data-rc14i-new-party]{width:100%}
   .rc14i-party-editor{grid-template-columns:1fr 1fr}
@@ -142,6 +172,7 @@ body:has(#invoiceForm){overflow:hidden;overscroll-behavior:none}
   #invoiceLines .invoice-line .field:first-child,
   #invoiceLines .invoice-line .field:nth-child(2),
   #invoiceLines .rc14e-stock-controls{grid-column:1!important}
+  #invoiceForm>.form-actions{grid-template-columns:1fr 1fr}
   .rc14i-party-editor{grid-template-columns:1fr}
   .rc14i-party-editor input:first-child{grid-column:auto}
   .rc14i-party-editor button{width:100%}
