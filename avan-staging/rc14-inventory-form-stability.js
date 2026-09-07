@@ -8,6 +8,7 @@ const C = installAvanCloud();
 const PERSIAN_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
 const ARABIC_DIGITS = '٠١٢٣٤٥٦٧٨٩';
 let docMeta = null;
+let enhanceBusy = false;
 
 function toLatin(value) {
   return String(value ?? '')
@@ -24,19 +25,21 @@ function decimalRaw(value) {
 
 function parseDecimal(value, maxDecimals = 6) {
   const s = decimalRaw(value);
-  if (!new RegExp(`^\\d+(?:\\.\\d{1,${maxDecimals}})?$`).test(s)) return null;
-  return s;
+  const n = Math.max(0, Math.min(6, Number(maxDecimals) || 0));
+  if (n === 0) return /^\d+$/.test(s) ? s : null;
+  return new RegExp(`^\\d+(?:\\.\\d{1,${n}})?$`).test(s) ? s : null;
 }
 
 function groupedDecimal(value, maxDecimals = 6) {
+  const n = Math.max(0, Math.min(6, Number(maxDecimals) || 0));
   const s = decimalRaw(value).replace(/[^\d.]/g, '');
   if (!s) return '';
   const hadDot = s.includes('.');
   const [rawInt = '', rawFrac = ''] = s.split('.');
   const intPart = (rawInt || '0').replace(/^0+(?=\d)/, '') || '0';
   const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '٬');
-  const frac = rawFrac.slice(0, Math.max(0, maxDecimals));
-  return hadDot ? `${grouped}${maxDecimals ? `٫${frac}` : ''}` : grouped;
+  if (!n || !hadDot) return grouped;
+  return `${grouped}٫${rawFrac.slice(0, n)}`;
 }
 
 async function loadMeta() {
@@ -63,15 +66,21 @@ function itemLabel(item, meta) {
   return `${path ? `${path} › ` : ''}${item.name}${variant ? ` · ${variant}` : ''} [${item.sku}]`;
 }
 
-function wireNumber(input, maxDecimals) {
+function claim(form) {
+  if (!form) return;
+  // Synchronous claim: the later legacy observer sees this and skips its
+  // self-triggering document-form MutationObserver.
+  form.dataset.rc14lEnhanced = '1';
+  form.dataset.rc14Stable = '1';
+}
+
+function wireNumber(input, decimals) {
   if (!input) return;
-  input.dataset.rc14StableNumber = '1';
-  input.dataset.rc14Decimals = String(maxDecimals);
+  const n = Math.max(0, Math.min(6, Number(decimals) || 0));
+  input.dataset.rc14Decimals = String(n);
   input.classList.add('rc14l-number-input');
   input.inputMode = 'decimal';
-  const format = () => {
-    input.value = groupedDecimal(input.value, Number(input.dataset.rc14Decimals ?? maxDecimals));
-  };
+  const format = () => { input.value = groupedDecimal(input.value, Number(input.dataset.rc14Decimals ?? n)); };
   if (input.dataset.rc14StableListeners !== '1') {
     input.dataset.rc14StableListeners = '1';
     input.addEventListener('input', format);
@@ -81,65 +90,59 @@ function wireNumber(input, maxDecimals) {
   format();
 }
 
-async function stabilizeDocForm() {
-  const form = document.getElementById('eDocForm');
+async function enhanceForm(form = document.getElementById('eDocForm')) {
   if (!form) return;
+  claim(form);
+  if (enhanceBusy) return;
+  enhanceBusy = true;
+  try {
+    const meta = await loadMeta();
+    if (!form.isConnected) return;
+    for (const row of form.querySelectorAll('[data-e-line]')) {
+      const itemSelect = row.querySelector('[name="item"]');
+      const qty = row.querySelector('[name="qty"]');
+      const cost = row.querySelector('[name="cost"]');
+      if (!itemSelect) continue;
 
-  // Critical: prevents the legacy refinement module from installing its
-  // self-triggering MutationObserver on this form.
-  form.dataset.rc14lEnhanced = '1';
-  form.dataset.rc14Stable = '1';
+      for (const opt of itemSelect.options) {
+        if (!opt.value) continue;
+        const item = meta.items.find(i => i.id === opt.value);
+        if (!item) continue;
+        const label = itemLabel(item, meta);
+        if (opt.textContent !== label) opt.textContent = label;
+      }
 
-  let meta;
-  try { meta = await loadMeta(); }
-  catch (err) { console.warn('inventory form metadata', err); return; }
-
-  for (const row of form.querySelectorAll('[data-e-line]')) {
-    const itemSelect = row.querySelector('[name="item"]');
-    const qty = row.querySelector('[name="qty"]');
-    const cost = row.querySelector('[name="cost"]');
-    if (!itemSelect) continue;
-
-    for (const opt of itemSelect.options) {
-      if (!opt.value) continue;
-      const item = meta.items.find(i => i.id === opt.value);
-      if (!item) continue;
-      const label = itemLabel(item, meta);
-      if (opt.textContent !== label) opt.textContent = label;
-    }
-
-    const applyUnit = () => {
-      const item = meta.items.find(i => i.id === itemSelect.value);
-      const unit = meta.units.find(u => u.id === item?.base_unit_id);
-      const decimals = Number(unit?.decimal_places ?? 6);
-      if (qty) {
-        qty.dataset.rc14Decimals = String(decimals);
+      const applyUnit = () => {
+        const item = meta.items.find(i => i.id === itemSelect.value);
+        const unit = meta.units.find(u => u.id === item?.base_unit_id);
+        const decimals = Number(unit?.decimal_places ?? 6);
         wireNumber(qty, decimals);
-        let help = qty.parentElement?.querySelector('.rc14l-qty-help');
-        if (!help && qty.parentElement) {
+        let help = qty?.parentElement?.querySelector('.rc14l-qty-help');
+        if (qty && !help) {
           help = document.createElement('small');
           help.className = 'rc14l-field-help rc14l-qty-help';
           qty.insertAdjacentElement('afterend', help);
         }
         if (help) help.textContent = unit ? `${unit.name}: ${decimals ? `تا ${decimals} رقم اعشار` : 'بدون اعشار'}` : '';
-      }
-    };
+      };
 
-    if (itemSelect.dataset.rc14StableUnit !== '1') {
-      itemSelect.dataset.rc14StableUnit = '1';
-      itemSelect.addEventListener('change', applyUnit);
+      if (itemSelect.dataset.rc14StableUnit !== '1') {
+        itemSelect.dataset.rc14StableUnit = '1';
+        itemSelect.addEventListener('change', applyUnit);
+      }
+      wireNumber(cost, 6);
+      applyUnit();
     }
-    wireNumber(cost, 6);
-    applyUnit();
+  } catch (err) {
+    console.warn('inventory stable form enhancer', err);
+  } finally {
+    enhanceBusy = false;
   }
 }
 
 async function saveDraft(e) {
   const form = e.target;
   if (form?.id !== 'eDocForm') return;
-
-  // This listener is loaded before the legacy refinement listener and is the
-  // sole owner of inventory-draft submission.
   e.preventDefault();
   e.stopImmediatePropagation();
   if (form.dataset.rc14Saving === '1') return;
@@ -148,7 +151,8 @@ async function saveDraft(e) {
   const submit = e.submitter || form.querySelector('button.primary');
   const oldText = submit?.textContent || 'ذخیره پیش‌نویس';
   try {
-    await stabilizeDocForm();
+    claim(form);
+    await enhanceForm(form);
     const state = await C.companyContext.ensure();
     const company = state?.active_company;
     if (!company?.id) throw new Error('COMPANY_REQUIRED');
@@ -212,19 +216,41 @@ async function saveDraft(e) {
   }
 }
 
-function scheduleDocStabilize() {
-  // Queued from capture phase before the legacy MutationObserver is scheduled.
-  queueMicrotask(() => { stabilizeDocForm(); });
+function inspectMutations(records) {
+  let form = null;
+  let needsEnhance = false;
+  for (const record of records) {
+    for (const node of record.addedNodes) {
+      if (node.nodeType !== 1) continue;
+      if (node.matches?.('#eDocForm')) {
+        form = node;
+        claim(form);
+        needsEnhance = true;
+      } else {
+        const nested = node.querySelector?.('#eDocForm');
+        if (nested) {
+          form = nested;
+          claim(form);
+          needsEnhance = true;
+        }
+      }
+      if (node.matches?.('[data-e-line]') || node.querySelector?.('[data-e-line]')) needsEnhance = true;
+    }
+  }
+  form ||= document.getElementById('eDocForm');
+  if (form && needsEnhance) queueMicrotask(() => enhanceForm(form));
 }
 
-function install() {
-  document.addEventListener('click', e => {
-    if (e.target.closest?.('[data-e-new]') || e.target.closest?.('[data-e-add]')) scheduleDocStabilize();
-  }, true);
+function installNow() {
+  // Loaded before rc14-inventory-live-refinements.js, so this observer is
+  // delivered first and claims the form synchronously.
+  const observer = new MutationObserver(inspectMutations);
+  observer.observe(document.body, { childList: true, subtree: true });
   document.addEventListener('submit', saveDraft, true);
   window.addEventListener('avan:company-context-changed', () => { docMeta = null; });
-  scheduleDocStabilize();
+  const existing = document.getElementById('eDocForm');
+  if (existing) { claim(existing); queueMicrotask(() => enhanceForm(existing)); }
 }
 
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once: true });
-else install();
+if (document.body) installNow();
+else document.addEventListener('DOMContentLoaded', installNow, { once: true });
