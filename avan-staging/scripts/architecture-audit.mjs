@@ -69,6 +69,7 @@ const metrics = {
 
 console.log(JSON.stringify({ metrics, findings }, null, 2));
 
-// Migration-mode audit: report debt without failing the build yet.
-// ADR-0016 allows turning high findings into a non-zero exit code after
-// all known legacy patches have been migrated.
+if (directOverwrites.length > 0) {
+  console.error(`Architecture gate failed: ${directOverwrites.length} direct client method overwrite(s) remain.`);
+  process.exitCode = 1;
+}
