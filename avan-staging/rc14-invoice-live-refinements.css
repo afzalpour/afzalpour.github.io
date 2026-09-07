@@ -1,0 +1,148 @@
+/* RC1.4 v58 — sales/purchase invoice single-window workspace */
+body:has(#invoiceForm){overflow:hidden;overscroll-behavior:none}
+.modal-backdrop:has(#invoiceForm){padding:14px;overscroll-behavior:contain}
+#modal:has(#invoiceForm){
+  width:min(1500px,calc(100vw - 28px))!important;
+  max-width:none!important;
+  height:min(900px,calc(100dvh - 28px));
+  max-height:calc(100dvh - 28px)!important;
+  padding:0!important;
+  overflow:hidden!important;
+  display:flex;
+  flex-direction:column;
+}
+#modal:has(#invoiceForm)>h2{
+  margin:0!important;
+  padding:16px 20px 13px;
+  border-bottom:1px solid var(--line,#e5e7eb);
+  flex:0 0 auto;
+}
+#invoiceForm{
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+#invoiceForm>.rc14e-invoice-note{
+  flex:0 0 auto;
+  margin:0!important;
+  border:0;
+  border-bottom:1px solid #d8d5fa;
+  border-radius:0;
+  padding:9px 20px;
+}
+#invoiceForm>.form-grid{
+  flex:0 0 auto;
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px 12px;
+  padding:12px 20px;
+  margin:0;
+  border-bottom:1px solid var(--line,#e5e7eb);
+  background:var(--surface2,#fafafc);
+}
+#invoiceForm>.form-grid .field{min-width:0}
+#invoiceForm>.form-grid input,
+#invoiceForm>.form-grid select{width:100%;min-width:0}
+#invoiceLines{
+  flex:1 1 auto;
+  min-height:0;
+  overflow:auto;
+  overscroll-behavior:contain;
+  padding:12px 20px;
+  margin:0!important;
+  align-content:start;
+}
+#invoiceLines .invoice-line{
+  width:100%;
+  margin:0;
+  align-items:start;
+}
+#invoiceLines .invoice-line .field{min-width:0}
+#invoiceLines .invoice-line input,
+#invoiceLines .invoice-line select{width:100%;min-width:0}
+#invoiceForm>#addInvoiceLine{
+  flex:0 0 auto;
+  width:max-content;
+  margin:0 20px 10px;
+}
+#invoiceForm>.line-total{
+  flex:0 0 auto;
+  margin:0!important;
+  padding:9px 20px;
+  border-top:1px solid var(--line,#e5e7eb);
+  background:var(--surface2,#fafafc);
+}
+#invoiceForm>.form-actions{
+  flex:0 0 auto;
+  margin:0!important;
+  padding:11px 20px calc(11px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line,#e5e7eb);
+  background:var(--surface,#fff);
+  box-shadow:0 -8px 24px -22px rgba(20,20,30,.35);
+  z-index:3;
+}
+#invoiceForm>.form-actions button{min-width:130px}
+
+/* Active-company party control lives inside the invoice window. */
+.rc14i-party-field{position:relative}
+.rc14i-party-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}
+.rc14i-party-tools>small{color:var(--muted,#6b7280);font-size:.76rem}
+.rc14i-party-editor{
+  flex:1 0 100%;
+  display:grid;
+  grid-template-columns:minmax(180px,1.4fr) minmax(150px,.8fr) minmax(150px,1fr) auto auto;
+  gap:8px;
+  align-items:end;
+  padding:10px;
+  border:1px dashed var(--line,#d8dbe7);
+  border-radius:10px;
+  background:var(--surface,#fff);
+}
+.rc14i-party-editor[hidden]{display:none!important}
+.rc14i-party-editor input,.rc14i-party-editor select{min-height:38px!important;height:38px;padding:7px 9px}
+.rc14i-party-editor button{white-space:nowrap}
+
+@media(max-width:1050px){
+  #invoiceForm>.form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .rc14i-party-editor{grid-template-columns:1fr 1fr 1fr auto auto}
+}
+
+@media(max-width:720px){
+  .modal-backdrop:has(#invoiceForm){padding:0;place-items:stretch}
+  #modal:has(#invoiceForm){
+    width:100vw!important;
+    height:100dvh;
+    max-height:100dvh!important;
+    border-radius:0!important;
+  }
+  #modal:has(#invoiceForm)>h2{padding:14px 14px 11px}
+  #invoiceForm>.rc14e-invoice-note{padding:8px 12px;font-size:.8rem;line-height:1.65}
+  #invoiceForm>.form-grid{grid-template-columns:repeat(2,minmax(0,1fr));padding:10px 12px}
+  #invoiceLines{padding:10px 12px}
+  #invoiceLines .invoice-line{grid-template-columns:1fr 1fr!important}
+  #invoiceLines .invoice-line .field:first-child,
+  #invoiceLines .invoice-line .field:nth-child(2),
+  #invoiceLines .rc14e-stock-controls{grid-column:1/-1!important}
+  #invoiceForm>#addInvoiceLine{margin:0 12px 9px}
+  #invoiceForm>.line-total{padding:8px 12px;justify-content:flex-start;flex-wrap:wrap}
+  #invoiceForm>.form-actions{padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+  #invoiceForm>.form-actions button{min-width:0;flex:1}
+  .rc14i-party-tools{align-items:stretch}
+  .rc14i-party-tools>[data-rc14i-new-party]{width:100%}
+  .rc14i-party-editor{grid-template-columns:1fr 1fr}
+  .rc14i-party-editor input:first-child{grid-column:1/-1}
+}
+
+@media(max-width:430px){
+  #invoiceForm>.form-grid{grid-template-columns:1fr}
+  #invoiceLines .invoice-line{grid-template-columns:1fr!important}
+  #invoiceLines .invoice-line .field,
+  #invoiceLines .invoice-line .field:first-child,
+  #invoiceLines .invoice-line .field:nth-child(2),
+  #invoiceLines .rc14e-stock-controls{grid-column:1!important}
+  .rc14i-party-editor{grid-template-columns:1fr}
+  .rc14i-party-editor input:first-child{grid-column:auto}
+  .rc14i-party-editor button{width:100%}
+}
