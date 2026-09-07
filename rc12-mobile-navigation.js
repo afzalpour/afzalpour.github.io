@@ -1,11 +1,12 @@
 'use strict';
 
-const MORE_PAGES = new Set(['invoices', 'journal', 'documents', 'parties', 'settings']);
+const MORE_PAGES = new Set(['invoices', 'journal', 'documents', 'parties', 'inventory', 'settings']);
 const ITEMS = [
   { page: 'invoices', icon: '▤', label: 'فاکتورها', hint: 'فروش و خرید' },
   { page: 'journal', icon: '≡', label: 'اسناد حسابداری', hint: 'پیش‌نویس، ثبت و برگشت' },
   { page: 'documents', icon: '▧', label: 'اسناد هوشمند', hint: 'اصل سند و بازبینی' },
   { page: 'parties', icon: '◎', label: 'طرف‌حساب‌ها', hint: 'مشتری و فروشنده' },
+  { page: 'inventory', icon: '▣', label: 'کالا و انبار', hint: 'کالا، واحد و انبار' },
   { page: 'settings', icon: '⚙', label: 'تنظیمات', hint: 'کاربر، شرکت و سیستم' }
 ];
 
