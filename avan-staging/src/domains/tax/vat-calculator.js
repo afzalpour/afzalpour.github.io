@@ -4,6 +4,7 @@ const PERSIAN_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
 const ARABIC_DIGITS = '٠١٢٣٤٥٦٧٨٩';
 const QUANTITY_SCALE = 1000000n;
 const RATE_SCALE = 10000n;
+const PERCENT_DENOMINATOR = 100n * RATE_SCALE;
 
 export function latinDigits(value) {
   return String(value ?? '')
@@ -51,7 +52,7 @@ export function calculateVatAmount({ taxableAmount, rate }) {
     : parseIntegerMoney(taxableAmount);
   const rateUnits = typeof rate === 'bigint' ? rate : parseRateUnits(rate);
   if (base === null || rateUnits === null) return null;
-  return (base * rateUnits + RATE_SCALE / 2n) / RATE_SCALE;
+  return (base * rateUnits + PERCENT_DENOMINATOR / 2n) / PERCENT_DENOMINATOR;
 }
 
 export function calculateVatLine({ quantity, unitPrice, discount = 0, rate = 0 }) {
