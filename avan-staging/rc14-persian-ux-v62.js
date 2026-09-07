@@ -74,7 +74,9 @@ const TEXT_REPLACEMENTS = [
   ['NEGATIVE_STOCK_FORBIDDEN', 'موجودی کالا برای این فروش کافی نیست؛ ابتدا موجودی قابل فروش را کنترل کنید.'],
   ['report_trial_balance', 'تراز آزمایشی'],
   ['report_journal', 'دفتر روزنامه'],
-  ['report_account_statement', 'گردش حساب']
+  ['report_account_statement', 'گردش حساب'],
+  ...Object.entries(SOURCE_FA),
+  ...Object.entries(PARTY_KIND_FA)
 ];
 
 const REPORT_REMOVE = [
@@ -120,7 +122,7 @@ function annotateMoneyHeaders(root = document){
 function replaceTextNode(node, dashboardOnly = false){
   if (!(node instanceof Text)) return;
   const parent = node.parentElement;
-  if (!parent || parent.closest('script,style,input,textarea,select,option')) return;
+  if (!parent || parent.closest('script,style')) return;
   let value = node.nodeValue || '';
   const trimmed = value.trim();
   if (EXACT_FA[trimmed]) {
