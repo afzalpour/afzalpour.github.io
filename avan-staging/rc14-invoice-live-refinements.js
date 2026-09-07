@@ -8,6 +8,7 @@ const C = installAvanCloud();
 let requestedType = null;
 let editingInvoiceId = null;
 let cache = null;
+let observer = null;
 
 const esc = value => String(value ?? '').replace(/[&<>'"]/g, ch => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
@@ -34,13 +35,14 @@ async function activeData(force = false) {
   if (!force && cache?.company?.id === company.id) return cache;
 
   const wid = company.id;
-  const [parties, accounts, roles, financialAccounts, years, invoices] = await Promise.all([
+  const [parties, accounts, roles, financialAccounts, years, invoices, items] = await Promise.all([
     C.select('parties', `select=id,name,kind,phone,is_active&workspace_id=eq.${wid}&order=name.asc`),
     C.select('accounts', `select=id,code,name,category,is_active,is_postable&workspace_id=eq.${wid}&order=code.asc`),
     C.select('account_roles', `select=role_key,account_id&workspace_id=eq.${wid}`),
     C.select('financial_accounts', `select=ledger_account_id,is_active&workspace_id=eq.${wid}`),
     C.select('fiscal_years', `select=id,name,date_from,date_to,status&workspace_id=eq.${wid}&order=date_from.desc`),
-    C.select('invoices', `select=id,invoice_type,party_id,fiscal_year_id,status&workspace_id=eq.${wid}&order=created_at.desc&limit=500`)
+    C.select('invoices', `select=id,invoice_type,party_id,fiscal_year_id,status&workspace_id=eq.${wid}&order=created_at.desc&limit=500`),
+    C.select('inventory_items', `select=id,item_type&workspace_id=eq.${wid}&order=created_at.asc`)
   ]);
 
   cache = {
@@ -50,7 +52,8 @@ async function activeData(force = false) {
     roles: Object.fromEntries((roles || []).map(r => [r.role_key, r.account_id])),
     financialAccounts: financialAccounts || [],
     years: years || [],
-    invoices: invoices || []
+    invoices: invoices || [],
+    items: items || []
   };
   return cache;
 }
@@ -117,9 +120,10 @@ function ensurePartyEditor(form, d, type, selected = '') {
   const select = form.querySelector('[name="party"]');
   if (!select) return;
 
-  const wanted = selected || select.value;
-  select.innerHTML = partyOptions(d, type, wanted);
-  if (wanted && [...select.options].some(o => o.value === wanted)) select.value = wanted;
+  select.innerHTML = partyOptions(d, type, selected || select.value);
+  if ((selected || select.value) && [...select.options].some(o => o.value === (selected || select.value))) {
+    select.value = selected || select.value;
+  }
 
   const field = select.closest('.field');
   if (!field) return;
@@ -172,6 +176,11 @@ function ensurePartyEditor(form, d, type, selected = '') {
       cache = null;
       const fresh = await activeData(true);
       ensurePartyEditor(form, fresh, type, id || '');
+      editor.hidden = true;
+      const nameInput = tools.querySelector('[name="rc14i_party_name"]');
+      const phoneInput = tools.querySelector('[name="rc14i_party_phone"]');
+      if (nameInput) nameInput.value = '';
+      if (phoneInput) phoneInput.value = '';
       toast('طرف‌حساب ثبت و انتخاب شد');
     } catch (err) {
       showError(err, 'invoice inline party');
@@ -187,6 +196,8 @@ function stockPurchaseDefault(form, d, type) {
     const item = row.querySelector('[data-e-item]');
     const account = row.querySelector('[name="account"]');
     if (!item || !account || !item.value) return;
+    const selectedItem = d.items.find(x => x.id === item.value);
+    if (selectedItem?.item_type !== 'inventory') return;
     if ([...account.options].some(o => o.value === inventoryAsset)) account.value = inventoryAsset;
   });
 }
@@ -217,9 +228,8 @@ async function enhance(form) {
         if (!mutations.some(m => m.addedNodes.length)) return;
         try {
           const fresh = await activeData();
-          const currentType = inferType(form, fresh);
-          await syncAccountSelects(form, fresh, currentType);
-          stockPurchaseDefault(form, fresh, currentType);
+          await syncAccountSelects(form, fresh, inferType(form, fresh));
+          stockPurchaseDefault(form, fresh, inferType(form, fresh));
         } catch (err) {
           console.warn('[RC1.4 invoice window] line sync failed', err);
         }
@@ -278,7 +288,7 @@ async function saveInvoice(form, submitter) {
     if (editingInvoiceId) {
       const inv = d.invoices.find(x => x.id === editingInvoiceId);
       fiscalYearId = inv?.fiscal_year_id || null;
-      if (!inv) throw new Error('INVOICE_NOT_IN_ACTIVE_COMPANY');
+      if (editingInvoiceId && !inv) throw new Error('INVOICE_NOT_IN_ACTIVE_COMPANY');
     }
     fiscalYearId ||= d.years.find(y => date >= y.date_from && date <= y.date_to)?.id
       || d.years.find(y => y.status === 'open')?.id;
@@ -330,7 +340,7 @@ function install() {
     const form = e.target;
     if (form?.id !== 'invoiceForm' || form.dataset.rc14InvoiceWindow !== '1') return;
 
-    // Quantities with >3 decimals are already intercepted by the earlier RC1.4 inventory bridge.
+    // Quantities with >3 decimals are already intercepted earlier by the RC1.4 inventory bridge.
     const hasHighPrecision = [...form.querySelectorAll('[data-invoice-line]')].some(row => {
       if (!(row.dataset.eItem || row.querySelector('[data-e-item]')?.value)) return false;
       const raw = faToLatin(row.querySelector('[name="quantity"]')?.value || '').replace(/٫|,/g, '.');
@@ -343,10 +353,11 @@ function install() {
     saveInvoice(form, e.submitter);
   }, true);
 
-  new MutationObserver(() => {
+  observer = new MutationObserver(() => {
     const form = document.getElementById('invoiceForm');
     if (form && form.dataset.rc14InvoiceWindow !== '1') enhance(form);
-  }).observe(document.body, { childList: true, subtree: true });
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 
   window.addEventListener('avan:company-context-changed', () => {
     cache = null;
