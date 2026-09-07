@@ -9,6 +9,9 @@ import {
 import {
   createCompanyBoundary
 } from '../../application/company/company-boundary.js';
+import {
+  createOperationPipeline
+} from '../../core/runtime/operation-pipeline.js';
 
 const ACTIVE_WORKSPACE_KEY = 'avan.active_workspace_id';
 
@@ -22,8 +25,16 @@ function scopeWorkspaceQueryToId(query, workspaceId) {
   return parts.join('&');
 }
 
+function ensureOperationPipeline(client) {
+  if (!client.operations) {
+    client.operations = createOperationPipeline(client);
+  }
+  return client.operations;
+}
+
 export function installAvanCloud({ globalObject = window, storage = localStorage } = {}) {
   if (globalObject.AvanCloud?.companyContext && globalObject.AvanCloud?.companyBoundary && globalObject.AvanCloud?.select && globalObject.AvanCloud?.rpc) {
+    ensureOperationPipeline(globalObject.AvanCloud);
     return globalObject.AvanCloud;
   }
 
@@ -84,6 +95,7 @@ export function installAvanCloud({ globalObject = window, storage = localStorage
   client.activeCompany = companyBoundary.requireActiveCompany;
   client.listCompanies = companyBoundary.listCompanies;
   client.workspaceProjectionMode = 'active-company-only';
+  ensureOperationPipeline(client);
   globalObject.AvanCloud = client;
   globalObject.AvanCompanyContext = companyContext;
   globalObject.AvanCompanyBoundary = companyBoundary;
