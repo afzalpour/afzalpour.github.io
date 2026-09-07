@@ -49,6 +49,7 @@ export function createOperationPipeline(target, {
           method,
           args,
           next,
+          raw: (...rawArgs) => base(...rawArgs),
           target,
           id: entry.id
         });
