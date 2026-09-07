@@ -51,6 +51,8 @@
 | [0013](0013-freeze-browser-ocr.md) | Freeze OCR مرورگری تا انتخاب موتور قابل‌اعتمادتر | Accepted |
 | [0014](0014-multitenant-company-and-platform-admin.md) | Multi-tenant Company model + Platform Admin جدا از شرکت‌ها | Accepted |
 | [0015](0015-central-company-context-application-boundary.md) | CompanyContext مرکزی + Company Portfolio به‌عنوان مرز Application Tenant | Accepted |
+| [0016](0016-modular-runtime-no-monkey-patching.md) | Runtime ماژولار، Composition صریح و ممنوعیت monkey-patch جدید | Accepted |
+| [0017](0017-windows-desktop-offline-direction.md) | جهت Windows Desktop و Offline-capable architecture | Proposed |
 
 ## اصل حاکم
 
