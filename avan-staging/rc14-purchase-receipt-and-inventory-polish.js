@@ -2,10 +2,11 @@
 
 import { jalalizeDateInputs } from './src/ui/date/jalali-picker.js';
 import { installAvanCloud } from './src/infrastructure/supabase/avan-cloud-bootstrap.js';
+import { installUiLifecycle } from './src/ui/runtime/lifecycle.js';
 import { toast, showError } from './src/ui/feedback/toast.js';
 
 const C = installAvanCloud();
-const previousRpc = C.rpc.bind(C);
+const Lifecycle = installUiLifecycle();
 let scheduled = false;
 
 const faDate = iso => {
@@ -173,19 +174,26 @@ function bindPurchaseRows() {
   });
 }
 
-C.rpc = async (name, args = {}) => {
-  const form = document.getElementById('invoiceForm');
-  let next = args;
-  if (name === 'save_draft_invoice' && form?.dataset.rc14InvoiceType === 'purchase') {
-    const savedId = form.dataset.rc14PurchaseDraftId || '';
-    if (!args.p_invoice_id && savedId) next = { ...args, p_invoice_id: savedId };
-  }
-  const result = await previousRpc(name, next);
-  if (name === 'save_draft_invoice' && form?.dataset.rc14InvoiceType === 'purchase' && result) {
-    form.dataset.rc14PurchaseDraftId = String(result);
-  }
-  return result;
-};
+if (!C.operations.has('rpc', 'purchase.receipt-draft-id')) {
+  C.operations.use('rpc', 'purchase.receipt-draft-id', async ({ args, next }) => {
+    const [name, payload = {}] = args;
+    const form = document.getElementById('invoiceForm');
+    let nextPayload = payload;
+
+    if (name === 'save_draft_invoice' && form?.dataset.rc14InvoiceType === 'purchase') {
+      const savedId = form.dataset.rc14PurchaseDraftId || '';
+      if (!payload.p_invoice_id && savedId) {
+        nextPayload = { ...payload, p_invoice_id: savedId };
+      }
+    }
+
+    const result = await next(name, nextPayload);
+    if (name === 'save_draft_invoice' && form?.dataset.rc14InvoiceType === 'purchase' && result) {
+      form.dataset.rc14PurchaseDraftId = String(result);
+    }
+    return result;
+  }, { priority: 150 });
+}
 
 function replaceInventoryCopy(root = document) {
   const scope = root.querySelector?.('.rc14-inventory-page') || document.querySelector('.rc14-inventory-page');
@@ -265,7 +273,7 @@ function schedule() {
   });
 }
 
-new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true });
-window.addEventListener('avan:company-context-changed', schedule);
+document.addEventListener('avan:ui-changed', schedule);
+window.addEventListener('avan:company-context-changed', () => Lifecycle.schedule('company-context'));
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', schedule, { once: true });
 else schedule();
