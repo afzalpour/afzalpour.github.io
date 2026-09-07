@@ -1,0 +1,15 @@
+/* RC1.4 live blocker fixes v3 */
+#eDocForm .rc14e-doc-line{align-items:start!important;row-gap:10px!important}
+#eDocForm .rc14e-doc-line .field{display:flex;flex-direction:column;gap:6px;min-width:0;margin:0!important}
+#eDocForm .rc14e-doc-line .field label{display:flex;align-items:flex-end;min-height:1.4em;margin:0!important;line-height:1.4}
+#eDocForm .rc14e-doc-line .field input,
+#eDocForm .rc14e-doc-line .field select{height:42px;min-height:42px;box-sizing:border-box;margin:0!important}
+#eDocForm .rc14e-doc-line .rc14l-field-help{display:none!important}
+#eDocForm .rc14e-doc-line [data-e-rm]{align-self:end;margin-bottom:0}
+[data-e-panel="documents"] .rc14e-section-head .muted{display:none!important}
+@media(max-width:720px){
+  #eDocForm .rc14e-doc-line{align-items:start!important}
+  #eDocForm .rc14e-doc-line .field{width:100%}
+  #eDocForm .rc14e-doc-line .field input,
+  #eDocForm .rc14e-doc-line .field select{width:100%;font-size:16px}
+}
