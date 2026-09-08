@@ -1,0 +1,43 @@
+name: Avan Money Refactor Apply
+
+on:
+  push:
+    branches:
+      - rc1.5-money-architecture-refactor
+    paths:
+      - 'avan-staging/scripts/apply-money-architecture-refactor.mjs'
+      - '.github/workflows/avan-money-refactor-apply.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rc1.5-money-architecture-refactor
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply deterministic money refactor
+        run: node avan-staging/scripts/apply-money-architecture-refactor.mjs
+      - name: Syntax check transformed shell
+        run: |
+          node --check avan-staging/app.js
+          node --check avan-staging/rc14-catalog-settlement-v61.js
+          node --check avan-staging/rc14-inventory-operations.js
+      - name: Commit transformed sources
+        run: |
+          if git diff --quiet; then
+            echo 'No generated changes.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add avan-staging/app.js avan-staging/rc14-catalog-settlement-v61.js avan-staging/rc14-inventory-operations.js
+          git commit -m 'Apply unified money boundaries to compatibility shell'
+          git push origin HEAD:rc1.5-money-architecture-refactor
