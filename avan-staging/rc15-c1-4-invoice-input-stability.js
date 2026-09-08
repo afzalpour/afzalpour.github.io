@@ -99,6 +99,14 @@ function refreshSettlementTotals(form) {
   setText(status, balanced ? '✓ برابر' : 'مغایرت');
 }
 
+function refreshAfterInvoiceInput(form) {
+  if (window.AvanTaxSettlementSync?.sync) {
+    window.AvanTaxSettlementSync.sync();
+    return;
+  }
+  refreshSettlementTotals(form);
+}
+
 function bindInvoiceMoneyInputs(form) {
   if (!form) return;
 
@@ -108,9 +116,9 @@ function bindInvoiceMoneyInputs(form) {
 
     input.addEventListener('input', event => {
       // Keep target/capture handlers (money formatting, base invoice totals and tax)
-      // but do not bubble into the legacy V60 form-level scan on every keystroke.
+      // but do not bubble into the legacy settlement form-level scan on every keystroke.
       event.stopPropagation();
-      queueMicrotask(() => refreshSettlementTotals(form));
+      queueMicrotask(() => refreshAfterInvoiceInput(form));
     });
   });
 }
@@ -130,5 +138,6 @@ export {
   integerBig,
   invoiceTotal,
   refreshSettlementTotals,
+  refreshAfterInvoiceInput,
   bindInvoiceMoneyInputs
 };
