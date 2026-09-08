@@ -10,7 +10,10 @@ const EXACT = new Map([
   ['Workspace company identity and operational print settings updated', 'مشخصات شرکت و تنظیمات چاپ به‌روزرسانی شد'],
   ['Workspace print identity updated', 'مشخصات چاپ شرکت به‌روزرسانی شد'],
   ['Company display identity renamed', 'نام نمایشی شرکت تغییر کرد'],
-  ['Draft journal saved without lines', 'پیش‌نویس سند حسابداری بدون ردیف ذخیره شد']
+  ['Draft journal saved without lines', 'پیش‌نویس سند حسابداری بدون ردیف ذخیره شد'],
+  ['داده‌های مالی از PostgreSQL/Supabase خوانده می‌شوند؛ LocalStorage فقط Session کاربر را نگه می‌دارد.', 'داده‌های مالی از پایگاه داده ابری آوان خوانده می‌شوند؛ حافظه محلی مرورگر فقط اطلاعات ورود کاربر را نگه می‌دارد.'],
+  ['PNG، JPG یا WEBP — حداکثر ۲ مگابایت. لوگو در Storage خصوصی شرکت نگهداری می‌شود.', 'فرمت‌های مجاز: پی‌ان‌جی، جی‌پی‌جی یا وب‌پی — حداکثر ۲ مگابایت. لوگو در فضای ذخیره‌سازی خصوصی شرکت نگهداری می‌شود.'],
+  ['ارسال صورتحساب الکترونیکی در این Gate فعال نیست و در RC1.5-D فقط با اقدام صریح کاربر بررسی می‌شود.', 'ارسال صورتحساب الکترونیکی در این مرحله فعال نیست و در مرحله بعد فقط با تأیید صریح کاربر انجام خواهد شد.']
 ]);
 
 const ROLE_FA = Object.freeze({ owner:'مالک', manager:'مدیر', accountant:'حسابدار', viewer:'مشاهده‌گر' });
@@ -37,6 +40,7 @@ const REPLACERS = [
   [/Support Session/gi, 'دسترسی پشتیبانی'], [/Support/gi, 'پشتیبانی'], [/Session/gi, 'نشست'],
   [/Read-only/gi, 'فقط‌خواندنی'], [/Read only/gi, 'فقط‌خواندنی'], [/Viewer/gi, 'مشاهده‌گر'],
   [/Tenant/gi, 'شرکت'], [/Workspace/gi, 'شرکت'], [/Company/gi, 'شرکت'], [/Onboarding/gi, 'راه‌اندازی'], [/Registry/gi, 'ثبت سامانه'],
+  [/PostgreSQL/gi, 'پایگاه داده'], [/Storage/gi, 'فضای ذخیره‌سازی'], [/Gate/gi, 'مرحله'],
   [/Ledger/gi, 'دفتر حسابداری'], [/Posted\/Reversed/gi, 'ثبت‌قطعی/برگشتی'], [/Posted/gi, 'ثبت‌قطعی'], [/Reversed/gi, 'برگشتی'], [/Posting/gi, 'ثبت قطعی'],
   [/Immutable/gi, 'غیرقابل‌تغییر'], [/Database/gi, 'پایگاه داده'], [/LocalStorage/gi, 'حافظه محلی مرورگر'], [/Dashboard/gi, 'داشبورد'],
   [/Supabase/gi, 'زیرساخت ابری'], [/Core/gi, 'هسته'], [/Enterprise/gi, 'سازمانی'], [/Pro/gi, 'حرفه‌ای'],
