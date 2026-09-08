@@ -2,10 +2,11 @@
 import {openModal,closeModal} from './src/ui/components/modal.js';
 import {toast,showError} from './src/ui/feedback/toast.js';
 import {installAvanCloud} from './src/infrastructure/supabase/avan-cloud-bootstrap.js';
+import {MoneyRuntime} from './src/ui/money/money-runtime.js';
 const C=installAvanCloud(),MANAGE=new Set(['owner','manager','accountant']);
 const DF={opening:'افتتاحیه',receipt:'رسید',issue:'حواله',transfer:'انتقال',adjustment:'تعدیل',reversal:'برگشت'},SF={draft:'پیش‌نویس',posted:'ثبت‌شده',reversed:'برگشتی'};
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-const fa=v=>Number(v||0).toLocaleString('fa-IR',{maximumFractionDigits:6}),money=v=>`${Math.round(Number(v||0)).toLocaleString('fa-IR')} تومان`;
+const fa=v=>Number(v||0).toLocaleString('fa-IR',{maximumFractionDigits:6}),money=v=>MoneyRuntime.formatCanonical(Math.round(Number(v||0)));
 let M=null,schema='unknown',tab='masters';
 function schemaErr(e){return /inventory_documents|inventory_movements|inventory_valuation|relation .*does not exist|schema cache/i.test(String(e?.message||e||''));}
 async function masters(force=false){const s=await C.companyContext.ensure(),co=s?.active_company;if(!co?.id)throw new Error('COMPANY_REQUIRED');if(!force&&M?.company.id===co.id)return M;const w=co.id,[items,units,warehouses,years,role]=await Promise.all([C.select('inventory_items',`select=*&workspace_id=eq.${w}&order=is_active.desc,name.asc`),C.select('inventory_units',`select=*&workspace_id=eq.${w}&order=is_active.desc,name.asc`),C.select('warehouses',`select=*&workspace_id=eq.${w}&order=is_default.desc,name.asc`),C.select('fiscal_years',`select=id,name,date_from,date_to,status&workspace_id=eq.${w}&order=date_from.desc`),C.rpc('workspace_role',{wid:w})]);return M={company:co,items:items||[],units:units||[],warehouses:warehouses||[],years:years||[],role};}

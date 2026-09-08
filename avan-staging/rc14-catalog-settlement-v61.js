@@ -4,6 +4,7 @@ import { openModal, closeModal } from './src/ui/components/modal.js';
 import { toast, showError } from './src/ui/feedback/toast.js';
 import { jalalizeDateInputs } from './src/ui/date/jalali-picker.js';
 import { installAvanCloud } from './src/infrastructure/supabase/avan-cloud-bootstrap.js';
+import { MoneyRuntime } from './src/ui/money/money-runtime.js';
 import { installUiLifecycle } from './src/ui/runtime/lifecycle.js';
 
 const C=installAvanCloud();
@@ -16,7 +17,7 @@ const faDate=iso=>{try{return new Intl.DateTimeFormat('fa-IR-u-ca-persian',{year
 const latin=v=>String(v??'').replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
 const digits=v=>latin(v).replace(/[٬,\s]/g,'');
 const groupInt=v=>{const s=digits(v).replace(/\D/g,'')||'0';return s.replace(/\B(?=(\d{3})+(?!\d))/g,'٬');};
-const money=v=>`${groupInt(v)} تومان`;
+const money=v=>MoneyRuntime.formatCanonical(v);
 const fieldValue=(root,name)=>String(root.querySelector(`[name="${name}"]`)?.value||'');
 
 async function activeCompany(){const s=await C.companyContext.ensure(),co=s?.active_company;if(!co?.id)throw new Error('COMPANY_REQUIRED');return co;}

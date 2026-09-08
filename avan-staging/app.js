@@ -106,10 +106,11 @@ import {
 import {
   installAvanCloud
 } from './src/infrastructure/supabase/avan-cloud-bootstrap.js';
+import { MoneyRuntime } from './src/ui/money/money-runtime.js';
 
 (function(){
 'use strict';
-const Q=id=>document.getElementById(id), C=installAvanCloud();
+const Q=id=>document.getElementById(id), C=installAvanCloud(), Money=MoneyRuntime;
 const Auth=createAuthController(C);
 const Documents=
   createDocumentService(C);
@@ -152,7 +153,9 @@ let ctx={
 const faDigits=s=>String(s??'').replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
 const cleanAmount=v=>faDigits(v).replace(/[٬,\s]/g,'').replace(/[^0-9-]/g,'');
 const bi=v=>{try{return BigInt(cleanAmount(v)||'0')}catch{return 0n}};
-const money=v=>{let n=bi(v),sign=n<0n?'-':'';if(n<0n)n=-n;return sign+n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,'٬')+' تومان'};
+const money=v=>Money.formatCanonical(v);
+const inputCanonical=v=>{const parsed=Money.parseInput(v||'0');return parsed.ok?parsed.value:null};
+const inputCanonicalRequired=(v,label='مبلغ')=>{const parsed=Money.parseInput(v);if(!parsed.ok){const e=new Error(parsed.code||'INVALID_AMOUNT');e.userMessage=parsed.code==='RIAL_NOT_DIVISIBLE_BY_10'?`${label} ریالی باید مضرب ۱۰ باشد.`:`${label} معتبر نیست.`;throw e}return parsed.value};
 const today=()=>new Date().toISOString().slice(0,10);
 const dateFa=s=>{try{return new Intl.DateTimeFormat('fa-IR-u-ca-persian',{year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(s+'T12:00:00'))}catch{return s||'—'}};
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -235,7 +238,7 @@ if(!reportState.from&&ctx.fiscalYear){
 async function reloadAndRender(){await loadContext();await render()}
 async function showApp(){
   Q('authShell').hidden=true;Q('appShell').hidden=false;Q('bottomNav').hidden=false;
-  try{await reloadAndRender()}catch(e){
+  try{await Money.ready();await reloadAndRender()}catch(e){
     if(e.message==='PATCH_B4_REQUIRED')
   page(`<div class="error-box"><b>Gate B-4 هنوز روی دیتابیس نصب نشده است.</b></div>`);
 else if(e.message==='PATCH_D1_REQUIRED')
@@ -1334,8 +1337,8 @@ function accountModal(id=null){
  async function toggleArchive(id){const a=acct(id),wasActive=a.is_active;await C.update('accounts',{is_active:!wasActive},`id=eq.${id}&workspace_id=eq.${ctx.workspace.id}`);await reloadAndRender();toast(wasActive?'حساب بایگانی شد':'حساب فعال شد')}
 async function deleteAccount(id){if(!confirm('این حساب حذف شود؟ حساب دارای گردش یا زیرحساب حذف نمی‌شود.'))return;try{await C.remove('accounts',`id=eq.${id}&workspace_id=eq.${ctx.workspace.id}`);await reloadAndRender();toast('حساب حذف شد')}catch(e){showError(e)}}
 function openingModal(id){
-  const a=acct(id);openModal(`<h2>مانده افتتاحیه — ${esc(a.name)}</h2><form id="openingForm"><div class="form-grid"><div class="field"><label>تاریخ</label><input type="date" name="date" value="${ctx.fiscalYear.date_from}" required><small>جلالی: ${dateFa(ctx.fiscalYear.date_from)}</small></div><div class="field"><label>مبلغ</label><input name="amount" inputmode="numeric" required></div></div><div class="form-actions"><button type="button" class="ghost" id="cancelModal">انصراف</button><button class="primary">ثبت قطعی</button></div></form>`);
-  Q('cancelModal').onclick=closeModal;Q('openingForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),amt=cleanAmount(f.get('amount'));if(bi(amt)<=0n)return toast('مبلغ معتبر وارد کنید');try{await C.rpc('post_financial_operation',{p_workspace_id:ctx.workspace.id,p_fiscal_year_id:ctx.fiscalYear.id,p_tx_date:f.get('date'),p_tx_type:'opening_balance',p_amount:amt,p_primary_account_id:a.id,p_counterpart_account_id:null,p_party_id:null,p_description:`مانده افتتاحیه ${a.name}`});closeModal();await reloadAndRender();toast('مانده افتتاحیه ثبت شد')}catch(err){showError(err)}};
+  const a=acct(id);openModal(`<h2>مانده افتتاحیه — ${esc(a.name)}</h2><form id="openingForm"><div class="form-grid"><div class="field"><label>تاریخ</label><input type="date" name="date" value="${ctx.fiscalYear.date_from}" required><small>جلالی: ${dateFa(ctx.fiscalYear.date_from)}</small></div><div class="field"><label>مبلغ (${Money.unitLabel()})</label><input name="amount" data-money-input="true" inputmode="numeric" required></div></div><div class="form-actions"><button type="button" class="ghost" id="cancelModal">انصراف</button><button class="primary">ثبت قطعی</button></div></form>`);
+  Q('cancelModal').onclick=closeModal;Q('openingForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);let amt;try{amt=inputCanonicalRequired(f.get('amount'))}catch(err){return toast(err.userMessage||'مبلغ معتبر وارد کنید')}if(amt<=0n)return toast('مبلغ معتبر وارد کنید');try{await C.rpc('post_financial_operation',{p_workspace_id:ctx.workspace.id,p_fiscal_year_id:ctx.fiscalYear.id,p_tx_date:f.get('date'),p_tx_type:'opening_balance',p_amount:amt.toString(),p_primary_account_id:a.id,p_counterpart_account_id:null,p_party_id:null,p_description:`مانده افتتاحیه ${a.name}`});closeModal();await reloadAndRender();toast('مانده افتتاحیه ثبت شد')}catch(err){showError(err)}};
 }
 
 function renderParties(){
@@ -1366,24 +1369,12 @@ function qtyMilli(v){
 }
 
 function invoiceAmount(qty,price,discount){
-
   const q=qtyMilli(qty);
-  const p=bi(price);
-  const d=bi(discount);
-
-  if(
-    q===null||
-    q<=0n||
-    p<0n||
-    d<0n
-  )
-    return null;
-
+  const p=inputCanonical(price);
+  const d=inputCanonical(discount||'0');
+  if(q===null||q<=0n||p===null||d===null||p<0n||d<0n)return null;
   const gross=(q*p+500n)/1000n;
-
-  return d>gross
-    ?null
-    :gross-d;
+  return d>gross?null:gross-d;
 }
 
 function invoicePartyOptions(type,selected=''){
@@ -1529,70 +1520,18 @@ function invoiceLineRow(type,l={}){
 }
 
 function updateInvoiceTotals(){
-
-  let total=0n;
-
-  document
-    .querySelectorAll('[data-invoice-line]')
-    .forEach(r=>{
-
-      const a=
-        invoiceAmount(
-          r.querySelector('[name=quantity]').value,
-          cleanAmount(
-            r.querySelector('[name=unit_price]').value
-          )||'0',
-          cleanAmount(
-            r.querySelector('[name=discount]').value
-          )||'0'
-        );
-
-      const el=
-        r.querySelector('[data-line-amount]');
-
-      if(a===null){
-
-        el.textContent='نامعتبر';
-        el.classList.add('neg');
-
-      }else{
-
-        el.textContent=money(a);
-        el.classList.remove('neg');
-        total+=a;
-      }
-    });
-
-  if(Q('invoiceTotal'))
-    Q('invoiceTotal').textContent=money(total);
+  window.AvanInvoiceMoney?.project?.();
 }
 
 function bindInvoiceLines(){
-
-  document
-    .querySelectorAll(
-      '[data-remove-invoice-line]'
-    )
-    .forEach(b=>{
-
-      b.onclick=()=>{
-
-        b.closest(
-          '[data-invoice-line]'
-        ).remove();
-
-        updateInvoiceTotals();
-      };
-    });
-
-  document
-    .querySelectorAll(
-      '[data-invoice-line] input,[data-invoice-line] select'
-    )
-    .forEach(
-      i=>i.oninput=updateInvoiceTotals
-    );
-
+  document.querySelectorAll('[data-remove-invoice-line]').forEach(b=>{
+    b.onclick=()=>{
+      b.closest('[data-invoice-line]').remove();
+      document.dispatchEvent(new CustomEvent('avan:ui-changed'));
+      updateInvoiceTotals();
+    };
+  });
+  document.dispatchEvent(new CustomEvent('avan:ui-changed'));
   updateInvoiceTotals();
 }
 
@@ -2031,9 +1970,9 @@ prefill?.description ||
             'تعداد ردیف معتبر نیست'
           );
 
-        if(bi(price)<=0n)
+        if((inputCanonical(price)??0n)<=0n)
           return toast(
-            'فی باید بیشتر از صفر باشد'
+            Money.unit()==='rial'&&inputCanonical(price)===null?'فی ریالی باید مضرب ۱۰ باشد.':'فی باید بیشتر از صفر باشد'
           );
 
         if(
@@ -2368,9 +2307,9 @@ function renderJournal(){
   const rows=ctx.entries.map(e=>`<tr><td>${e.journal_no??'پیش‌نویس'}</td><td>${dateFa(e.entry_date)}</td><td>${esc(e.description)}</td><td>${esc(e.source_type)}</td><td><span class="badge ${e.status}">${statusFa[e.status]||esc(e.status)}</span></td><td><div class="row-actions"><button class="ghost small" data-view-journal="${e.id}">مشاهده</button>${e.status==='draft'?`<button class="ghost small" data-edit-journal="${e.id}">ویرایش</button><button class="good-btn small" data-post-journal="${e.id}">ثبت قطعی</button><button class="danger small" data-delete-journal="${e.id}">حذف</button>`:e.status==='posted'?`<button class="danger small" data-reverse-journal="${e.id}">برگشت سند</button>`:''}</div></td></tr>`).join('');
   page(`<div class="section-head"><div><h2>چرخه اسناد</h2><span class="muted">Draft → Posted → Reversed؛ سند Posted و خطوط آن Immutable هستند.</span></div><button class="primary" id="addJournal">＋ سند دستی</button></div>${rows?`<table><thead><tr><th>شماره</th><th>تاریخ</th><th>شرح</th><th>منبع</th><th>وضعیت</th><th>اقدام</th></tr></thead><tbody>${rows}</tbody></table>`:'<div class="empty">هنوز سندی وجود ندارد.</div>'}`);
 }
-function lineRow(l={}){return `<div class="journal-line" data-line-row><div class="field"><label>حساب</label><select name="account"><option value="">انتخاب حساب…</option>${accountOptions(l.account_id||'',a=>a.is_active&&a.is_postable)}</select></div><div class="field"><label>طرف‌حساب</label><select name="party">${partyOptions(l.party_id||'')}</select></div><div class="field"><label>بدهکار</label><input name="debit" inputmode="numeric" value="${esc(l.debit&&String(l.debit)!=='0'?l.debit:'')}"></div><div class="field"><label>بستانکار</label><input name="credit" inputmode="numeric" value="${esc(l.credit&&String(l.credit)!=='0'?l.credit:'')}"></div><button type="button" class="danger small" data-remove-line>×</button></div>`}
+function lineRow(l={}){return `<div class="journal-line" data-line-row><div class="field"><label>حساب</label><select name="account"><option value="">انتخاب حساب…</option>${accountOptions(l.account_id||'',a=>a.is_active&&a.is_postable)}</select></div><div class="field"><label>طرف‌حساب</label><select name="party">${partyOptions(l.party_id||'')}</select></div><div class="field"><label>بدهکار (${Money.unitLabel()})</label><input name="debit" data-money-input="true" inputmode="numeric" value="${esc(l.debit&&String(l.debit)!=='0'?Money.inputFromCanonical(l.debit):'')}"></div><div class="field"><label>بستانکار (${Money.unitLabel()})</label><input name="credit" data-money-input="true" inputmode="numeric" value="${esc(l.credit&&String(l.credit)!=='0'?Money.inputFromCanonical(l.credit):'')}"></div><button type="button" class="danger small" data-remove-line>×</button></div>`}
 function bindLines(){document.querySelectorAll('[data-remove-line]').forEach(b=>b.onclick=()=>{b.closest('[data-line-row]').remove();updateLineTotals()});document.querySelectorAll('[data-line-row] input,[data-line-row] select').forEach(i=>i.oninput=updateLineTotals);updateLineTotals()}
-function updateLineTotals(){const rows=[...document.querySelectorAll('[data-line-row]')],d=rows.reduce((s,r)=>s+bi(r.querySelector('[name=debit]').value),0n),c=rows.reduce((s,r)=>s+bi(r.querySelector('[name=credit]').value),0n),complete=rows.filter(r=>r.querySelector('[name=account]').value&&(bi(r.querySelector('[name=debit]').value)>0n||bi(r.querySelector('[name=credit]').value)>0n)).length;Q('lineTotals').innerHTML=`جمع بدهکار: <b>${money(d)}</b> | جمع بستانکار: <b>${money(c)}</b> | ${d>0n&&d===c&&complete>=2?'<span class="pos">آماده ثبت قطعی</span>':'<span class="warn">پیش‌نویس — هنوز آماده Post نیست</span>'}`}
+function updateLineTotals(){const rows=[...document.querySelectorAll('[data-line-row]')];let d=0n,c=0n,complete=0,valid=true;for(const r of rows){const dv=inputCanonical(r.querySelector('[name=debit]').value||'0'),cv=inputCanonical(r.querySelector('[name=credit]').value||'0');if(dv===null||cv===null){valid=false;continue}d+=dv;c+=cv;if(r.querySelector('[name=account]').value&&(dv>0n||cv>0n))complete+=1}Q('lineTotals').innerHTML=`جمع بدهکار: <b>${valid?money(d):'نامعتبر'}</b> | جمع بستانکار: <b>${valid?money(c):'نامعتبر'}</b> | ${valid&&d>0n&&d===c&&complete>=2?'<span class="pos">آماده ثبت قطعی</span>':'<span class="warn">پیش‌نویس — هنوز آماده Post نیست</span>'}`}
 function journalModal(
   id = null,
   prefill = null
@@ -2398,7 +2337,7 @@ function journalModal(
   )
 }" required></div></div><div class="journal-lines" id="journalLines">${(ls.length?ls:[{},{}]).map(lineRow).join('')}</div><div class="line-total" id="lineTotals"></div><div class="form-actions"><button type="button" class="ghost" id="addLine">＋ ردیف</button><button type="button" class="ghost" id="cancelModal">انصراف</button><button class="primary">ذخیره پیش‌نویس</button></div></form>`);
   Q('addLine').onclick=()=>{Q('journalLines').insertAdjacentHTML('beforeend',lineRow());bindLines()};Q('cancelModal').onclick=closeModal;bindLines();
-  Q('journalForm').onsubmit=async ev=>{ev.preventDefault();const f=new FormData(ev.target),rawRows=[...document.querySelectorAll('[data-line-row]')].map(r=>({account_id:r.querySelector('[name=account]').value,party_id:r.querySelector('[name=party]').value||null,debit:cleanAmount(r.querySelector('[name=debit]').value)||'0',credit:cleanAmount(r.querySelector('[name=credit]').value)||'0'}));for(const r of rawRows){const d=bi(r.debit),c=bi(r.credit);if((d>0n||c>0n)&&!r.account_id)return toast('برای ردیفی که مبلغ دارد، حساب را انتخاب کنید');if(d>0n&&c>0n)return toast('هر ردیف فقط می‌تواند بدهکار یا بستانکار باشد، نه هر دو');}const rows=rawRows.filter(r=>r.account_id&&(bi(r.debit)>0n||bi(r.credit)>0n));try{const jid =
+  Q('journalForm').onsubmit=async ev=>{ev.preventDefault();const f=new FormData(ev.target),rawRows=[];for(const row of document.querySelectorAll('[data-line-row]')){const debit=inputCanonical(row.querySelector('[name=debit]').value||'0'),credit=inputCanonical(row.querySelector('[name=credit]').value||'0');if(debit===null||credit===null)return toast('مبلغ بدهکار/بستانکار با واحد انتخاب‌شده سازگار نیست');rawRows.push({account_id:row.querySelector('[name=account]').value,party_id:row.querySelector('[name=party]').value||null,debit:debit.toString(),credit:credit.toString()})}for(const r of rawRows){const d=bi(r.debit),c=bi(r.credit);if((d>0n||c>0n)&&!r.account_id)return toast('برای ردیفی که مبلغ دارد، حساب را انتخاب کنید');if(d>0n&&c>0n)return toast('هر ردیف فقط می‌تواند بدهکار یا بستانکار باشد، نه هر دو');}const rows=rawRows.filter(r=>r.account_id&&(bi(r.debit)>0n||bi(r.credit)>0n));try{const jid =
   await C.rpc('save_draft_journal',{p_workspace_id:ctx.workspace.id,p_fiscal_year_id:ctx.fiscalYear.id,p_journal_id:e?.id||null,p_entry_date:f.get('date'),p_description:f.get('description'),p_lines:rows});if (
   prefill?.sourceDocumentId
 ) {
@@ -2595,9 +2534,10 @@ function operationModal(kind){
         </div>
 
         <div class="field">
-          <label>مبلغ</label>
+          <label>مبلغ (${Money.unitLabel()})</label>
 
           <input
+            data-money-input="true"
             name="amount"
             inputmode="numeric"
             required
@@ -2740,10 +2680,9 @@ function operationModal(kind){
       const f=
         new FormData(e.target);
 
-      const amt=
-        cleanAmount(
-          f.get('amount')
-        );
+      let amt;try{amt=inputCanonicalRequired(f.get('amount'))}catch(err){return toast(err.userMessage||'مبلغ معتبر وارد کنید')}
+
+      
 
       const primary=
         f.get('primary');
@@ -2751,7 +2690,7 @@ function operationModal(kind){
       const counter=
         f.get('counter');
 
-      if(bi(amt)<=0n)
+      if(amt<=0n)
         return toast(
           'مبلغ معتبر وارد کنید'
         );
@@ -2779,7 +2718,7 @@ function operationModal(kind){
               kind,
 
             p_amount:
-              amt,
+              amt.toString(),
 
             p_primary_account_id:
               primary,
