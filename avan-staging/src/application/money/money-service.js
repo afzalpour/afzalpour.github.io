@@ -5,7 +5,10 @@ import {
   normalizeUnitOrNull,
   displayToCanonical,
   canonicalToDisplay,
+  displayDecimalToCanonical,
+  canonicalDecimalToDisplay,
   formatCanonical,
+  formatCanonicalDecimal,
   formatDisplay,
   displayAmountInWords,
   canonicalAmountInWords,
@@ -62,13 +65,7 @@ export function createMoneyService({
     if (!force && pending && state.loading && state.workspaceId === workspaceId) return pending;
 
     const ownToken = ++token;
-    publish({
-      ready: false,
-      loading: true,
-      workspaceId,
-      unit: null,
-      revision: state.revision
-    });
+    publish({ ready: false, loading: true, workspaceId, unit: null, revision: state.revision });
 
     pending = (async () => {
       let raw;
@@ -76,26 +73,13 @@ export function createMoneyService({
         raw = await readPreference(workspaceId);
       } catch (error) {
         if (ownToken === token) {
-          publish({
-            ready: false,
-            loading: false,
-            workspaceId,
-            unit: null,
-            revision: state.revision
-          });
+          publish({ ready: false, loading: false, workspaceId, unit: null, revision: state.revision });
         }
         throw error;
       }
-
       if (ownToken !== token) return state;
       const unit = normalizeUnitOrNull(raw) || UNIT_TOMAN;
-      return publish({
-        ready: true,
-        loading: false,
-        workspaceId,
-        unit,
-        revision: state.revision + 1
-      });
+      return publish({ ready: true, loading: false, workspaceId, unit, revision: state.revision + 1 });
     })();
 
     try { return await pending; }
@@ -114,18 +98,17 @@ export function createMoneyService({
     if (normalized === current.unit) return current;
     const saved = normalizeUnitOrNull(await writePreference(current.workspaceId, normalized));
     if (!saved) throw new Error('INVALID_MONEY_UNIT_RESPONSE');
-    return publish({
-      ready: true,
-      loading: false,
-      workspaceId: current.workspaceId,
-      unit: saved,
-      revision: state.revision + 1
-    });
+    return publish({ ready: true, loading: false, workspaceId: current.workspaceId, unit: saved, revision: state.revision + 1 });
   }
 
   function parseInput(value) {
     const current = requireReady();
     return displayToCanonical(value, current.unit);
+  }
+
+  function parseDecimalInput(value) {
+    const current = requireReady();
+    return displayDecimalToCanonical(value, current.unit);
   }
 
   function inputFromCanonical(value) {
@@ -134,9 +117,19 @@ export function createMoneyService({
     return displayed === null ? '' : groupInteger(displayed);
   }
 
+  function decimalInputFromCanonical(value) {
+    const current = requireReady();
+    return canonicalDecimalToDisplay(value, current.unit) ?? '';
+  }
+
   function format(value, options) {
     const current = requireReady();
     return formatCanonical(value, current.unit, options);
+  }
+
+  function formatDecimal(value, options) {
+    const current = requireReady();
+    return formatCanonicalDecimal(value, current.unit, options);
   }
 
   function formatInput(value, options) {
@@ -167,13 +160,7 @@ export function createMoneyService({
   function invalidate() {
     token += 1;
     pending = null;
-    publish({
-      ready: false,
-      loading: false,
-      workspaceId: null,
-      unit: null,
-      revision: state.revision + 1
-    });
+    publish({ ready: false, loading: false, workspaceId: null, unit: null, revision: state.revision + 1 });
   }
 
   return Object.freeze({
@@ -181,8 +168,11 @@ export function createMoneyService({
     ensure,
     setUnit,
     parseInput,
+    parseDecimalInput,
     inputFromCanonical,
+    decimalInputFromCanonical,
     format,
+    formatDecimal,
     formatInput,
     inputWords,
     canonicalWords,
