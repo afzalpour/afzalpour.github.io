@@ -2,12 +2,28 @@
 
 export const UNIT_TOMAN = 'toman';
 export const UNIT_RIAL = 'rial';
+export const MONEY_UNITS = Object.freeze([UNIT_TOMAN, UNIT_RIAL]);
 
 const PERSIAN_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
 const ARABIC_DIGITS = '٠١٢٣٤٥٦٧٨٩';
+const QUANTITY_SCALE = 1000000n;
+const RIAL_PER_TOMAN = 10n;
+
+const ONES = [
+  '', 'یک', 'دو', 'سه', 'چهار', 'پنج', 'شش', 'هفت', 'هشت', 'نه',
+  'ده', 'یازده', 'دوازده', 'سیزده', 'چهارده', 'پانزده', 'شانزده',
+  'هفده', 'هجده', 'نوزده'
+];
+const TENS = ['', '', 'بیست', 'سی', 'چهل', 'پنجاه', 'شصت', 'هفتاد', 'هشتاد', 'نود'];
+const HUNDREDS = ['', 'صد', 'دویست', 'سیصد', 'چهارصد', 'پانصد', 'ششصد', 'هفتصد', 'هشتصد', 'نهصد'];
+const SCALES = ['', 'هزار', 'میلیون', 'میلیارد', 'تریلیون', 'کوادریلیون', 'کوینتیلیون', 'سکستیلیون'];
+
+export function normalizeUnitOrNull(unit) {
+  return MONEY_UNITS.includes(unit) ? unit : null;
+}
 
 export function normalizeUnit(unit) {
-  return unit === UNIT_RIAL ? UNIT_RIAL : UNIT_TOMAN;
+  return normalizeUnitOrNull(unit) || UNIT_TOMAN;
 }
 
 export function latinDigits(value) {
@@ -29,14 +45,16 @@ export function decimalMicros(value) {
     .replace(/٫|,/g, '.');
   if (!/^\d+(?:\.\d{0,6})?$/.test(raw)) return null;
   const [whole, fraction = ''] = raw.split('.');
-  return BigInt(whole || '0') * 1000000n + BigInt((fraction + '000000').slice(0, 6));
+  return BigInt(whole || '0') * QUANTITY_SCALE + BigInt((fraction + '000000').slice(0, 6));
 }
 
 export function displayToCanonical(value, unit = UNIT_TOMAN) {
+  const normalizedUnit = normalizeUnitOrNull(unit);
+  if (!normalizedUnit) return { ok: false, value: null, code: 'MONEY_UNIT_NOT_READY' };
   const amount = typeof value === 'bigint' ? value : integerFromText(value);
   if (amount === null) return { ok: false, value: null, code: 'INVALID_AMOUNT' };
-  if (normalizeUnit(unit) === UNIT_TOMAN) return { ok: true, value: amount, code: null };
-  if (amount % 10n !== 0n) {
+  if (normalizedUnit === UNIT_TOMAN) return { ok: true, value: amount, code: null };
+  if (amount % RIAL_PER_TOMAN !== 0n) {
     return {
       ok: false,
       value: null,
@@ -44,30 +62,99 @@ export function displayToCanonical(value, unit = UNIT_TOMAN) {
       message: 'مبلغ ریالی باید مضرب ۱۰ باشد.'
     };
   }
-  return { ok: true, value: amount / 10n, code: null };
+  return { ok: true, value: amount / RIAL_PER_TOMAN, code: null };
 }
 
 export function canonicalToDisplay(value, unit = UNIT_TOMAN) {
+  const normalizedUnit = normalizeUnitOrNull(unit);
+  if (!normalizedUnit) return null;
   const canonical = typeof value === 'bigint' ? value : integerFromText(value);
   if (canonical === null) return null;
-  return normalizeUnit(unit) === UNIT_RIAL ? canonical * 10n : canonical;
+  return normalizedUnit === UNIT_RIAL ? canonical * RIAL_PER_TOMAN : canonical;
 }
 
 export function groupInteger(value) {
-  let amount = typeof value === 'bigint' ? value : BigInt(value || 0);
+  let amount;
+  try { amount = typeof value === 'bigint' ? value : BigInt(value ?? 0); }
+  catch { return ''; }
   const sign = amount < 0n ? '−' : '';
   if (amount < 0n) amount = -amount;
   return sign + amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '٬');
 }
 
 export function unitLabel(unit = UNIT_TOMAN) {
-  return normalizeUnit(unit) === UNIT_RIAL ? 'ریال' : 'تومان';
+  const normalizedUnit = normalizeUnitOrNull(unit);
+  if (!normalizedUnit) return '';
+  return normalizedUnit === UNIT_RIAL ? 'ریال' : 'تومان';
 }
 
-export function formatCanonical(value, unit = UNIT_TOMAN) {
+export function formatCanonical(value, unit = UNIT_TOMAN, { withUnit = true } = {}) {
   const displayed = canonicalToDisplay(value, unit);
   if (displayed === null) return '—';
-  return `${groupInteger(displayed)} ${unitLabel(unit)}`;
+  const grouped = groupInteger(displayed);
+  return withUnit ? `${grouped} ${unitLabel(unit)}` : grouped;
+}
+
+export function formatDisplay(value, unit = UNIT_TOMAN, { withUnit = false } = {}) {
+  const amount = typeof value === 'bigint' ? value : integerFromText(value);
+  if (amount === null) return '';
+  const grouped = groupInteger(amount);
+  return withUnit ? `${grouped} ${unitLabel(unit)}` : grouped;
+}
+
+function tripletToWords(number) {
+  const n = Number(number);
+  if (!n) return '';
+  const parts = [];
+  const hundreds = Math.floor(n / 100);
+  const remainder = n % 100;
+  if (hundreds) parts.push(HUNDREDS[hundreds]);
+  if (remainder) {
+    if (remainder < 20) parts.push(ONES[remainder]);
+    else {
+      const tens = Math.floor(remainder / 10);
+      const ones = remainder % 10;
+      parts.push(TENS[tens]);
+      if (ones) parts.push(ONES[ones]);
+    }
+  }
+  return parts.join(' و ');
+}
+
+export function integerToPersianWords(value) {
+  let amount = typeof value === 'bigint' ? value : integerFromText(value);
+  if (amount === null) return '';
+  if (amount === 0n) return 'صفر';
+  const negative = amount < 0n;
+  if (negative) amount = -amount;
+  const chunks = [];
+  let scaleIndex = 0;
+  while (amount > 0n) {
+    const chunk = Number(amount % 1000n);
+    if (chunk) {
+      if (scaleIndex >= SCALES.length) return '';
+      const words = tripletToWords(chunk);
+      const scale = SCALES[scaleIndex];
+      chunks.unshift(scale ? `${words} ${scale}` : words);
+    }
+    amount /= 1000n;
+    scaleIndex += 1;
+  }
+  const phrase = chunks.join(' و ');
+  return negative ? `منفی ${phrase}` : phrase;
+}
+
+export function displayAmountInWords(value, unit) {
+  const normalizedUnit = normalizeUnitOrNull(unit);
+  const amount = typeof value === 'bigint' ? value : integerFromText(value);
+  if (!normalizedUnit || amount === null) return '';
+  const words = integerToPersianWords(amount);
+  return words ? `${words} ${unitLabel(normalizedUnit)}` : '';
+}
+
+export function canonicalAmountInWords(value, unit) {
+  const displayed = canonicalToDisplay(value, unit);
+  return displayed === null ? '' : displayAmountInWords(displayed, unit);
 }
 
 export function lineCanonicalAmount({ quantity, unitPrice, discount = '0', unit = UNIT_TOMAN }) {
@@ -81,7 +168,7 @@ export function lineCanonicalAmount({ quantity, unitPrice, discount = '0', unit 
       code: !p.ok ? p.code : !d.ok ? d.code : 'INVALID_QUANTITY'
     };
   }
-  const gross = (q * p.value + 500000n) / 1000000n;
-  const value = gross > d.value ? gross - d.value : 0n;
-  return { ok: true, value, code: null };
+  const gross = (q * p.value + QUANTITY_SCALE / 2n) / QUANTITY_SCALE;
+  if (d.value > gross) return { ok: false, value: null, code: 'DISCOUNT_EXCEEDS_GROSS' };
+  return { ok: true, value: gross - d.value, code: null };
 }
