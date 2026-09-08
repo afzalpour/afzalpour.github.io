@@ -7,8 +7,7 @@ const MONEY_FIELD_NAMES = new Set([
   'unit_price',
   'discount',
   'opening_balance',
-  'total_amount',
-  'v60_amount'
+  'total_amount'
 ]);
 
 const PERSIAN_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
@@ -49,19 +48,24 @@ function formatGrouped(value) {
 function tripletToWords(number) {
   const n = Number(number);
   if (!n) return '';
+
   const parts = [];
   const hundreds = Math.floor(n / 100);
   const remainder = n % 100;
+
   if (hundreds) parts.push(HUNDREDS[hundreds]);
+
   if (remainder) {
-    if (remainder < 20) parts.push(ONES[remainder]);
-    else {
+    if (remainder < 20) {
+      parts.push(ONES[remainder]);
+    } else {
       const tens = Math.floor(remainder / 10);
       const ones = remainder % 10;
       parts.push(TENS[tens]);
       if (ones) parts.push(ONES[ones]);
     }
   }
+
   return parts.join(' و ');
 }
 
@@ -69,10 +73,17 @@ function integerToPersianWords(value) {
   const raw = digitsOnly(value).replace(/^0+(?=\d)/, '');
   if (!raw) return '';
   if (/^0+$/.test(raw)) return 'صفر';
+
   let n;
-  try { n = BigInt(raw); } catch { return ''; }
+  try {
+    n = BigInt(raw);
+  } catch {
+    return '';
+  }
+
   const chunks = [];
   let scaleIndex = 0;
+
   while (n > 0n) {
     const chunk = Number(n % 1000n);
     if (chunk) {
@@ -84,6 +95,7 @@ function integerToPersianWords(value) {
     n /= 1000n;
     scaleIndex += 1;
   }
+
   return chunks.join(' و ');
 }
 
@@ -116,7 +128,10 @@ function caretForDigitCount(formatted, digitCount) {
 function ensureWordsElement(input) {
   const field = input.closest('.field') || input.parentElement;
   if (!field) return null;
-  let words = Array.from(field.children).find(child => child.classList?.contains('money-in-words')) || null;
+
+  let words = Array.from(field.children)
+    .find(child => child.classList?.contains('money-in-words')) || null;
+
   if (!words) {
     words = document.createElement('div');
     words.className = 'money-in-words';
@@ -136,26 +151,40 @@ function refreshWords(input) {
 
 function formatInput(input, preserveCaret = false) {
   const oldValue = input.value;
-  const oldCaret = preserveCaret && typeof input.selectionStart === 'number' ? input.selectionStart : null;
-  const digitsBeforeCaret = oldCaret === null ? null : digitsOnly(oldValue.slice(0, oldCaret)).length;
+  const oldCaret = preserveCaret && typeof input.selectionStart === 'number'
+    ? input.selectionStart
+    : null;
+  const digitsBeforeCaret = oldCaret === null
+    ? null
+    : digitsOnly(oldValue.slice(0, oldCaret)).length;
+
   const formatted = formatGrouped(oldValue);
   if (formatted !== oldValue) input.value = formatted;
+
   if (digitsBeforeCaret !== null && document.activeElement === input) {
     const nextCaret = caretForDigitCount(formatted, digitsBeforeCaret);
-    try { input.setSelectionRange(nextCaret, nextCaret); } catch {}
+    try {
+      input.setSelectionRange(nextCaret, nextCaret);
+    } catch {
+      // Some mobile input modes may not expose selection APIs consistently.
+    }
   }
+
   refreshWords(input);
 }
 
 function enhanceMoneyInput(input) {
   if (!isMoneyInputElement(input) || input.dataset.moneyEnhanced === 'true') return;
+
   input.dataset.moneyEnhanced = 'true';
   input.classList.add('money-input-enhanced');
   if (!input.inputMode) input.inputMode = 'numeric';
   input.autocomplete = 'off';
+
   input.addEventListener('input', () => formatInput(input, true));
   input.addEventListener('change', () => formatInput(input, false));
   input.addEventListener('blur', () => formatInput(input, false));
+
   formatInput(input, false);
 }
 
@@ -184,6 +213,7 @@ function setDisplayUnit(unit) {
 
 function installMoneyInputEnhancer() {
   scan(document);
+
   const observer = new MutationObserver(mutations => {
     for (const mutation of mutations) {
       mutation.addedNodes.forEach(node => {
@@ -191,11 +221,15 @@ function installMoneyInputEnhancer() {
       });
     }
   });
+
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installMoneyInputEnhancer, { once: true });
-else installMoneyInputEnhancer();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', installMoneyInputEnhancer, { once: true });
+} else {
+  installMoneyInputEnhancer();
+}
 
 export {
   formatGrouped,
