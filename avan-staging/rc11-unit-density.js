@@ -7,7 +7,6 @@ const PERSIAN_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
 const ARABIC_DIGITS = '٠١٢٣٤٥٦٧٨٩';
 const GROUP_SEPARATOR = '٬';
 const MONEY_PATTERN = /(-?[0-9۰-۹٠-٩][0-9۰-۹٠-٩٬,]*)\s*(تومان|ریال)/g;
-const WORD_UNIT_PATTERN = /\s+(تومان|ریال)\s*$/;
 const MONEY_INPUT_SELECTOR = [
   'input.money-input-enhanced',
   'input[name="amount"]',
@@ -50,8 +49,6 @@ function canonicalFromRendered(amount, renderedLabel) {
   const n = parseInteger(amount);
   if (n === null) return null;
   if (renderedLabel === UNIT_LABEL[UNIT_RIAL]) return n % 10n === 0n ? n / 10n : null;
-  // A Toman-labelled value is always canonical Toman. No live-DOM heuristic
-  // is allowed to reinterpret a Toman amount as a hidden Rial amount.
   return n;
 }
 
@@ -64,7 +61,7 @@ function shouldSkipNumericCompaction(node) {
   const parent = node.parentElement;
   if (!parent) return true;
   return Boolean(parent.closest(
-    'script,style,input,textarea,select,option,button,' +
+    'script,style,input,textarea,select,option,button,#invoiceForm,' +
     '.money-in-words,.money-compact,.money-page-unit,.money-form-unit,' +
     '.currency-settings-card,.toast,.error-box,.success-box,.info-box,' +
     '[data-avan-money-owned]'
@@ -113,24 +110,6 @@ function compactNumericRoot(root = document) {
   nodes.forEach(compactTextNode);
 }
 
-function stripWordsUnitElement(element) {
-  if (!(element instanceof Element)) return;
-  const value = element.textContent || '';
-  const compacted = value.replace(WORD_UNIT_PATTERN, '').trim();
-  if (compacted !== value.trim()) element.textContent = compacted;
-}
-
-function compactWordsRoot(root = document) {
-  if (root instanceof Text) {
-    const parent = root.parentElement;
-    if (parent?.classList.contains('money-in-words')) stripWordsUnitElement(parent);
-    return;
-  }
-  if (!(root instanceof Element) && root !== document) return;
-  if (root instanceof Element && root.classList.contains('money-in-words')) stripWordsUnitElement(root);
-  root.querySelectorAll?.('.money-in-words').forEach(stripWordsUnitElement);
-}
-
 function refreshCompactAmounts(unit = currentUnit()) {
   document.querySelectorAll('.money-compact[data-money-canonical]').forEach(element => {
     let canonical;
@@ -162,8 +141,12 @@ function ensurePageUnitBadge() {
 
 function ensureFormUnitBadges() {
   document.querySelectorAll('form').forEach(form => {
-    const hasMoney = Boolean(form.querySelector(MONEY_INPUT_SELECTOR));
     let badge = Array.from(form.children).find(child => child.classList?.contains('money-form-unit')) || null;
+    if (form.id === 'invoiceForm') {
+      badge?.remove();
+      return;
+    }
+    const hasMoney = Boolean(form.querySelector(MONEY_INPUT_SELECTOR));
     if (!hasMoney) {
       badge?.remove();
       return;
@@ -180,7 +163,6 @@ function ensureFormUnitBadges() {
 
 function refreshPresentation(root = document) {
   compactNumericRoot(root);
-  compactWordsRoot(root);
   ensurePageUnitBadge();
   ensureFormUnitBadges();
 }
@@ -191,12 +173,9 @@ function installObserver() {
       mutation.addedNodes.forEach(node => {
         if (node.nodeType === Node.ELEMENT_NODE || node.nodeType === Node.TEXT_NODE) {
           compactNumericRoot(node);
-          compactWordsRoot(node);
         }
       });
     }
-    ensurePageUnitBadge();
-    ensureFormUnitBadges();
   });
   observer.observe(document.body, { childList: true, subtree: true });
 }
@@ -207,7 +186,10 @@ function install() {
   document.addEventListener('avan:money-unit-changed', event => {
     const unit = event.detail?.unit === UNIT_RIAL ? UNIT_RIAL : UNIT_TOMAN;
     refreshCompactAmounts(unit);
-    compactWordsRoot(document);
+    ensurePageUnitBadge();
+    ensureFormUnitBadges();
+  });
+  window.addEventListener('avan:page-rendered', () => {
     ensurePageUnitBadge();
     ensureFormUnitBadges();
   });
