@@ -7,6 +7,7 @@ export const MONEY_UNITS = Object.freeze([UNIT_TOMAN, UNIT_RIAL]);
 const PERSIAN_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
 const ARABIC_DIGITS = '٠١٢٣٤٥٦٧٨٩';
 const QUANTITY_SCALE = 1000000n;
+const DECIMAL_MONEY_SCALE = 1000000n;
 const RIAL_PER_TOMAN = 10n;
 
 const ONES = [
@@ -46,6 +47,78 @@ export function decimalMicros(value) {
   if (!/^\d+(?:\.\d{0,6})?$/.test(raw)) return null;
   const [whole, fraction = ''] = raw.split('.');
   return BigInt(whole || '0') * QUANTITY_SCALE + BigInt((fraction + '000000').slice(0, 6));
+}
+
+export function signedDecimalMoneyMicros(value) {
+  const raw = latinDigits(value)
+    .trim()
+    .replace(/[٬\s]/g, '')
+    .replace(/٫|,/g, '.');
+  if (!/^-?\d+(?:\.\d{0,6})?$/.test(raw)) return null;
+  const negative = raw.startsWith('-');
+  const unsigned = negative ? raw.slice(1) : raw;
+  const [whole, fraction = ''] = unsigned.split('.');
+  let micros = BigInt(whole || '0') * DECIMAL_MONEY_SCALE + BigInt((fraction + '000000').slice(0, 6));
+  if (negative) micros = -micros;
+  return micros;
+}
+
+function decimalMicrosToPlainString(micros, { trim = true } = {}) {
+  let amount = typeof micros === 'bigint' ? micros : BigInt(micros || 0);
+  const sign = amount < 0n ? '-' : '';
+  if (amount < 0n) amount = -amount;
+  const whole = amount / DECIMAL_MONEY_SCALE;
+  let fraction = (amount % DECIMAL_MONEY_SCALE).toString().padStart(6, '0');
+  if (trim) fraction = fraction.replace(/0+$/, '');
+  return `${sign}${whole}${fraction ? `.${fraction}` : ''}`;
+}
+
+export function displayDecimalToCanonical(value, unit = UNIT_TOMAN) {
+  const normalizedUnit = normalizeUnitOrNull(unit);
+  if (!normalizedUnit) return { ok: false, value: null, code: 'MONEY_UNIT_NOT_READY' };
+  const displayMicros = signedDecimalMoneyMicros(value);
+  if (displayMicros === null) return { ok: false, value: null, code: 'INVALID_DECIMAL_AMOUNT' };
+  if (normalizedUnit === UNIT_TOMAN) {
+    return { ok: true, value: decimalMicrosToPlainString(displayMicros), micros: displayMicros, code: null };
+  }
+  if (displayMicros % RIAL_PER_TOMAN !== 0n) {
+    return {
+      ok: false,
+      value: null,
+      micros: null,
+      code: 'RIAL_DECIMAL_PRECISION_EXCEEDED',
+      message: 'مبلغ ریالی با دقت فعلی بهای واحد قابل تبدیل دقیق به تومان نیست.'
+    };
+  }
+  const canonicalMicros = displayMicros / RIAL_PER_TOMAN;
+  return { ok: true, value: decimalMicrosToPlainString(canonicalMicros), micros: canonicalMicros, code: null };
+}
+
+export function canonicalDecimalToDisplay(value, unit = UNIT_TOMAN) {
+  const normalizedUnit = normalizeUnitOrNull(unit);
+  if (!normalizedUnit) return null;
+  const canonicalMicros = signedDecimalMoneyMicros(value);
+  if (canonicalMicros === null) return null;
+  const displayMicros = normalizedUnit === UNIT_RIAL
+    ? canonicalMicros * RIAL_PER_TOMAN
+    : canonicalMicros;
+  return decimalMicrosToPlainString(displayMicros);
+}
+
+function groupedDecimalString(value) {
+  const raw = String(value ?? '');
+  const sign = raw.startsWith('-') ? '−' : '';
+  const unsigned = raw.startsWith('-') ? raw.slice(1) : raw;
+  const [whole = '0', fraction = ''] = unsigned.split('.');
+  const groupedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, '٬');
+  return `${sign}${groupedWhole}${fraction ? `٫${fraction}` : ''}`;
+}
+
+export function formatCanonicalDecimal(value, unit = UNIT_TOMAN, { withUnit = true } = {}) {
+  const display = canonicalDecimalToDisplay(value, unit);
+  if (display === null) return '—';
+  const formatted = groupedDecimalString(display);
+  return withUnit ? `${formatted} ${unitLabel(unit)}` : formatted;
 }
 
 export function displayToCanonical(value, unit = UNIT_TOMAN) {
