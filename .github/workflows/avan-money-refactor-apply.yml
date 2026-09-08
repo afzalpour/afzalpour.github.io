@@ -23,6 +23,27 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Harden regex cardinality helper
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('avan-staging/scripts/apply-money-architecture-refactor.mjs')
+          s=p.read_text()
+          old="""function replaceRegexOnce(source, re, after, label) {
+            const matches = source.match(re);
+            if (!matches || matches.length !== 1) throw new Error(`${label}: expected exactly one match`);
+            return source.replace(re, after);
+          }"""
+          new="""function replaceRegexOnce(source, re, after, label) {
+            const flags = re.flags.includes('g') ? re.flags : `${re.flags}g`;
+            const matches = [...source.matchAll(new RegExp(re.source, flags))];
+            if (matches.length !== 1) throw new Error(`${label}: expected exactly one match, found ${matches.length}`);
+            return source.replace(re, after);
+          }"""
+          if old not in s:
+              raise SystemExit('regex helper source not found')
+          p.write_text(s.replace(old,new))
+          PY
       - name: Apply deterministic money refactor
         run: node avan-staging/scripts/apply-money-architecture-refactor.mjs
       - name: Syntax check transformed shell
