@@ -5,31 +5,34 @@ import { installUiLifecycle } from './src/ui/runtime/lifecycle.js';
 const Lifecycle = installUiLifecycle();
 const INVOICE_MONEY_NAMES = new Set(['quantity', 'unit_price', 'discount']);
 
-function queueSettlementSync() {
-  queueMicrotask(() => window.AvanTaxSettlementSync?.sync?.());
+function isTotalAffectingControl(control) {
+  return INVOICE_MONEY_NAMES.has(control?.name) ||
+    control?.matches?.('[data-rc15-tax-profile],[data-e-item]');
 }
 
-function bindInvoiceMoneyInputs(form) {
-  if (!form) return;
+function queueSettlementSync() {
+  window.AvanTaxSettlementSync?.queue?.();
+}
 
-  form.querySelectorAll('[data-invoice-line] input').forEach(input => {
-    if (!INVOICE_MONEY_NAMES.has(input.name) || input.dataset.c14InputStable === '1') return;
-    input.dataset.c14InputStable = '1';
+function bindInvoiceControls(form) {
+  if (!form) return;
+  form.querySelectorAll('[data-invoice-line] input,[data-invoice-line] select').forEach(control => {
+    if (!isTotalAffectingControl(control) || control.dataset.c14InputStable === '1') return;
+    control.dataset.c14InputStable = '1';
 
     const stopLegacyBubble = event => {
-      // Target/capture handlers still run. Only legacy form-level settlement
-      // recalculation is blocked; the single canonical sync runs afterwards.
+      // Direct target listeners (base invoice + VAT) already ran; prevent the
+      // legacy form-level Settlement recalculator from becoming a second owner.
       event.stopPropagation();
       queueSettlementSync();
     };
-
-    input.addEventListener('input', stopLegacyBubble);
-    input.addEventListener('change', stopLegacyBubble);
+    control.addEventListener('input', stopLegacyBubble);
+    control.addEventListener('change', stopLegacyBubble);
   });
 }
 
 Lifecycle.use('c1.4:invoice-input-stability', () => {
-  bindInvoiceMoneyInputs(document.getElementById('invoiceForm'));
+  bindInvoiceControls(document.getElementById('invoiceForm'));
 }, { priority: 20 });
 
 if (document.readyState === 'loading') {
@@ -38,4 +41,4 @@ if (document.readyState === 'loading') {
   Lifecycle.schedule('c1.4-ready');
 }
 
-export { bindInvoiceMoneyInputs };
+export { bindInvoiceControls, isTotalAffectingControl };
