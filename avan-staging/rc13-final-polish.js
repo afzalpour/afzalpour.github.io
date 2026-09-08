@@ -29,17 +29,32 @@ function fixPortfolioActiveCard(){
 }
 
 function moneyColumnTitle(raw){
-  const t=text(raw).replace(/\((تومان|ریال)\)$/,'').trim();
+  const t=text(raw).replace(/(?:\s*\((?:تومان|ریال)\))+$/,'').trim();
   return Boolean(t)&&/(بدهکار|بستانکار|مبلغ|مانده|خالص|جمع|فی|قیمت|ارزش|فروش|خرید|درآمد|هزینه|دارایی|بدهی|حقوق مالکانه|سود|زیان|مالیات|تخفیف)/.test(t);
+}
+
+function moneyHeaderBase(th){
+  const clone=th.cloneNode(true);
+  clone.querySelectorAll?.('.avan-table-money-unit').forEach(node=>node.remove());
+  return text(clone.textContent).replace(/(?:\s*\((?:تومان|ریال)\))+$/,'').trim();
 }
 
 function annotateMoneyHeaders(root){
   if(!root?.querySelectorAll)return;
   root.querySelectorAll('table thead th').forEach(th=>{
-    const raw=text(th.childNodes?.[0]?.nodeValue||th.textContent);
-    if(!moneyColumnTitle(raw))return;
-    let small=th.querySelector(':scope > .avan-table-money-unit');
-    if(!small){small=document.createElement('small');small.className='avan-table-money-unit';th.append(small)}
+    const base=moneyHeaderBase(th);
+    const unitNodes=[...th.querySelectorAll('.avan-table-money-unit')].filter(node=>node.parentElement===th);
+    if(!moneyColumnTitle(base)){
+      unitNodes.forEach(node=>node.remove());
+      return;
+    }
+
+    const small=unitNodes.shift()||document.createElement('small');
+    unitNodes.forEach(node=>node.remove());
+    small.className='avan-table-money-unit';
+    if(!small.parentElement)th.append(small);
+
+    th.dataset.avanMoneyHeaderBase=base;
     const desired=` (${unitFa()})`;
     if(small.textContent!==desired)small.textContent=desired;
   });
@@ -47,15 +62,26 @@ function annotateMoneyHeaders(root){
 
 function ensureUnitChip(root,{detail=false}={}){
   if(!root)return;
-  let chip=root.querySelector(':scope > .avan-output-money-unit');
+  let chip=[...root.children].find(node=>node.classList?.contains('avan-output-money-unit'))||null;
   if(!chip){
     chip=document.createElement('div');
     chip.className='avan-output-money-unit';
+    const label=document.createElement('span');
+    const value=document.createElement('strong');
+    chip.append(label,value);
     if(detail){const head=root.querySelector('.section-head');if(head)head.after(chip);else root.prepend(chip)}
-    else {const toolbar=root.querySelector(':scope > .avan-export-toolbar');if(toolbar)toolbar.after(chip);else root.prepend(chip)}
+    else {const toolbar=[...root.children].find(node=>node.classList?.contains('avan-export-toolbar'));if(toolbar)toolbar.after(chip);else root.prepend(chip)}
   }
-  chip.dataset.unit=unit();
-  chip.innerHTML=`<span>واحد مبالغ</span><strong>${esc(unitFa())}</strong>`;
+
+  let label=chip.querySelector(':scope > span');
+  let value=chip.querySelector(':scope > strong');
+  if(!label){label=document.createElement('span');chip.prepend(label)}
+  if(!value){value=document.createElement('strong');chip.append(value)}
+
+  const nextUnit=unit(),nextLabel='واحد مبالغ',nextValue=unitFa();
+  if(chip.dataset.unit!==nextUnit)chip.dataset.unit=nextUnit;
+  if(label.textContent!==nextLabel)label.textContent=nextLabel;
+  if(value.textContent!==nextValue)value.textContent=nextValue;
 }
 
 function journalTable(modal){
@@ -68,7 +94,7 @@ function journalTable(modal){
 
 function ensureJournalTotals(modal){
   const table=journalTable(modal);if(!table)return;
-  const headers=[...table.querySelectorAll('thead th')].map(th=>text(th.childNodes?.[0]?.nodeValue||th.textContent));
+  const headers=[...table.querySelectorAll('thead th')].map(th=>moneyHeaderBase(th));
   const debitIndex=headers.findIndex(x=>x.includes('بدهکار')),creditIndex=headers.findIndex(x=>x.includes('بستانکار'));
   if(debitIndex<0||creditIndex<0)return;
   let debit=0n,credit=0n;
