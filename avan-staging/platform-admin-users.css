@@ -1,0 +1,93 @@
+.platform-users-panel{
+  margin-top:18px;
+}
+
+.platform-users-head{
+  align-items:flex-end;
+}
+
+.platform-users-tools{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.platform-users-tools input{
+  min-width:min(320px,70vw);
+}
+
+.platform-user-status{
+  min-height:20px;
+  margin:-2px 0 10px;
+  font-size:12px;
+  color:var(--muted);
+}
+
+.platform-user-status.ok{color:var(--good)}
+.platform-user-status.error{color:var(--bad)}
+
+.platform-users-table th,
+.platform-users-table td{
+  vertical-align:top;
+}
+
+.platform-user-account{
+  display:grid;
+  gap:5px;
+  min-width:230px;
+}
+
+.platform-user-account input{
+  width:100%;
+  min-width:0;
+  direction:ltr;
+  text-align:left;
+}
+
+.platform-user-account small,
+.platform-user-membership small,
+.platform-user-row-status{
+  color:var(--muted);
+  font-size:11px;
+}
+
+.platform-user-membership{
+  display:grid;
+  gap:2px;
+  margin-bottom:6px;
+}
+
+.platform-user-membership:last-child{margin-bottom:0}
+.platform-user-membership.inactive{opacity:.58}
+
+.platform-user-actions{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  min-width:170px;
+}
+
+.platform-user-actions button:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+.platform-user-row-status{
+  display:block;
+  margin-top:6px;
+  max-width:260px;
+  line-height:1.65;
+}
+
+@media(max-width:860px){
+  .platform-users-tools,
+  .platform-users-tools input{
+    width:100%;
+    min-width:0;
+  }
+
+  .platform-users-tools button{
+    width:100%;
+  }
+}
