@@ -10,7 +10,7 @@ let scheduled=null;
 
 function text(v){return String(v??'').replace(/\s+/g,' ').trim()}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function unit(){return window.AVAN_MONEY_DISPLAY_UNIT==='rial'?'rial':'toman'}
+function unit(){return window.AvanMoney?.unit?.()||'toman'}
 function unitFa(){return UNIT_FA[unit()]}
 function latinDigits(v){return String(v??'').replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))}
 function amount(v){const s=latinDigits(v).replace(/[٬,\s]/g,'').replace(/[^0-9-]/g,'');try{return BigInt(s||'0')}catch{return 0n}}
@@ -123,29 +123,13 @@ function ensureJournalTotals(modal){
   foot.innerHTML=`<tr class="avan-journal-total-row">${totalCells.join('')}</tr><tr class="avan-journal-balance-row"><td colspan="${cols}"><strong class="${balanced?'avan-balanced':'avan-unbalanced'}">${balanced?'✓ سند تراز است':`⚠ سند تراز نیست — اختلاف: ${grouped(diff)} ${esc(unitFa())}`}</strong></td></tr>`;
 }
 
-function preparePageOutput(){
-  const content=document.getElementById('content');if(!content)return;
-  const pageTitle=text(document.getElementById('pageTitle')?.textContent);
-  if(!PRINT_PAGES.has(pageTitle))return;
-  if(pageTitle==='فاکتورها'){
-    content.querySelectorAll(':scope > .avan-output-money-unit').forEach(node=>node.remove());
-    annotateMoneyHeaders(content);
-    return;
-  }
-  ensureUnitChip(content);annotateMoneyHeaders(content);
-}
+function preparePageOutput(){window.AvanMoneyOutput?.project?.()}
 
 function prepareDetailOutput(){
+  window.AvanMoneyOutput?.project?.();
   const backdrop=document.getElementById('modalBackdrop'),modal=document.getElementById('modal');
   if(!modal||backdrop?.hidden)return;
-  const heading=text(modal.querySelector('h2')?.textContent);
-  if(!(heading.startsWith('سند ')||heading.startsWith('فاکتور')))return;
-  if(heading.startsWith('فاکتور')){
-    modal.querySelectorAll(':scope > .avan-output-money-unit').forEach(node=>node.remove());
-    annotateMoneyHeaders(modal);
-    return;
-  }
-  ensureUnitChip(modal,{detail:true});annotateMoneyHeaders(modal);ensureJournalTotals(modal);
+  ensureJournalTotals(modal);
 }
 
 function strongPassword(password){
@@ -185,7 +169,7 @@ function install(){
   const observer=new MutationObserver(schedule);
   observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['hidden','class']});
   document.addEventListener('click',prepareBeforeExport,true);
-  document.addEventListener('avan:money-unit-changed',schedule);
+
   window.addEventListener('avan:company-context-changed',schedule);
   installPasswordGuard();run();
   window.AvanOutputIntegrity=Object.freeze({prepare:run,unit:unitFa,strongPassword});

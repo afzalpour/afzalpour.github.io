@@ -184,7 +184,10 @@ async function loadContext(){
     await C.rpc('bootstrap_avan_workspace',{p_name:'فضای مالی من',p_mode:'personal',p_money_unit:'toman',p_fiscal_name:'۱۴۰۵',p_date_from:'2026-03-21',p_date_to:'2027-03-20'});
     ws=await C.select('workspaces','select=id,name,mode,base_currency,created_at&order=created_at.asc');
   }
-  ctx.visibleWorkspaces=ws.length;ctx.workspace=ws[0]; const wid=ctx.workspace.id;
+  const companyState=await C.companyContext.ensure();
+  if(companyState?.selection_required)throw new Error('COMPANY_SELECTION_REQUIRED');
+  const activeId=companyState?.active_company?.id||null;
+  ctx.visibleWorkspaces=ws.length;ctx.workspace=ws.find(x=>x.id===activeId)||companyState?.active_company||ws[0]; const wid=ctx.workspace.id;
   let result;
   try{
     result=await Promise.all([
