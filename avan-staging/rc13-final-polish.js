@@ -9,7 +9,7 @@ const COMMON_PASSWORDS=new Set([
 let scheduled=null;
 
 function text(v){return String(v??'').replace(/\s+/g,' ').trim()}
-function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]))}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function unit(){return window.AVAN_MONEY_DISPLAY_UNIT==='rial'?'rial':'toman'}
 function unitFa(){return UNIT_FA[unit()]}
 function latinDigits(v){return String(v??'').replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))}
