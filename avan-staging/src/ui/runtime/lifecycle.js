@@ -109,6 +109,13 @@ export function installUiLifecycle({
     );
   }
 
+  function isCoreSurfaceReplacement(mutations = [], root) {
+    return mutations.some(mutation =>
+      mutation.target === root &&
+      [...(mutation.removedNodes || [])].some(node => node?.nodeType === elementNode)
+    );
+  }
+
   function observe(selector, surface) {
     if (!MutationObserverCtor || !documentObject?.querySelector) return;
     const node = documentObject.querySelector(selector);
@@ -116,13 +123,15 @@ export function installUiLifecycle({
     const observer = new MutationObserverCtor(mutations => {
       if (!hasElementChange(mutations)) return;
 
-      // A core page can finish rendering while an async enhancement handler is
-      // still awaiting data. Never drop that external mutation: queue one more
-      // lifecycle pass. Idempotent handlers then settle without losing UI.
+      // If the compatibility shell replaces the whole surface while an async
+      // enhancement is awaiting data, request one follow-up pass. Ignore
+      // descendant mutations made by the enhancement itself to avoid loops.
       if (running) {
-        rerunRequested = true;
-        pending.add(surface);
-        lastReason = 'mutation';
+        if (isCoreSurfaceReplacement(mutations, node)) {
+          rerunRequested = true;
+          pending.add(surface);
+          lastReason = 'surface-replaced';
+        }
         return;
       }
 
