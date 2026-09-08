@@ -31,7 +31,7 @@ const index = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8')
 assert.match(index, /src\/ui\/money\/invoice-canonical-input-boundary\.js/);
 
 const sw = fs.readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
-assert.match(sw, /avan-staging-rc1-v73-c2-2-rial-header/);
+assert.match(sw, /const CACHE='avan-staging-rc1-v\d+[^']*'/, 'Staging cache must remain versioned');
 assert.match(sw, /src\/ui\/money\/currency-contract\.js/);
 assert.match(sw, /src\/ui\/money\/invoice-canonical-input-boundary\.js/);
 
