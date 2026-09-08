@@ -34,21 +34,20 @@
           <div class="panel-head">
             <div>
               <h2>عملیات شرکت‌ها</h2>
-              <p>وضعیت سرویس، طرح اشتراک، سقف کاربران، راه‌اندازی و پشتیبانی از اینجا مدیریت می‌شود. تعلیق یا آرشیو، دسترسی شرکت را در سطح پایگاه داده می‌بندد و اطلاعات مالی حذف نمی‌شوند.</p>
+              <p>تنظیمات هر شرکت در یک ردیف فشرده نمایش داده می‌شود؛ عملیات و دسترسی پشتیبانی از زیر نام همان شرکت باز می‌شوند.</p>
             </div>
             <input id="companySearch" type="search" placeholder="جستجو در شرکت، مالک، طرح یا وضعیت" />
           </div>
           <div class="table-wrap operations-table-wrap">
-            <table class="operations-table">
+            <table class="operations-table compact-operations-table">
               <thead><tr>
-                <th>شرکت</th>
+                <th>شرکت و عملیات</th>
                 <th>کاربران / سقف</th>
                 <th>وضعیت سرویس</th>
                 <th>طرح</th>
                 <th>راه‌اندازی</th>
                 <th>پشتیبانی</th>
                 <th>وضعیت ثبت</th>
-                <th>ثبت عملیات</th>
               </tr></thead>
               <tbody id="companyRows"></tbody>
             </table>
@@ -58,9 +57,9 @@
 
         <section class="panel" id="platformTaxRules"></section>
 
-        <section class="panel">
-          <div class="panel-head"><div><h2>رویدادهای مدیریتی سامانه</h2><p>هر عملیات مدیریتی همراه دلیل در گزارش مستقل سامانه ثبت می‌شود؛ رویدادهای حسابداری شرکت‌ها در این بخش نمایش داده نمی‌شوند.</p></div></div>
-          <div id="platformAudit" class="audit-list"></div>
+        <section class="panel compact-audit-panel">
+          <div class="panel-head"><div><h2>رویدادهای مدیریتی سامانه</h2><p>نمایش فشرده آخرین عملیات مدیریتی؛ رویدادهای حسابداری شرکت‌ها در این بخش نمایش داده نمی‌شوند.</p></div></div>
+          <div id="platformAudit" class="audit-list compact-audit-list"></div>
         </section>
       </section>
     </main>
