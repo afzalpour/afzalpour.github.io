@@ -1,35 +1,10 @@
 'use strict';
 
 import { refreshAllMoneyInputs } from '../../../rc11-money.js';
+import { canonicalTextForDisplay } from './currency-contract.js';
 
 const UNIT_RIAL = 'rial';
 const MONEY_FIELDS = new Set(['unit_price', 'discount']);
-const PERSIAN_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
-const ARABIC_DIGITS = '٠١٢٣٤٥٦٧٨٩';
-
-function latin(value) {
-  return String(value ?? '')
-    .replace(/[۰-۹]/g, digit => String(PERSIAN_DIGITS.indexOf(digit)))
-    .replace(/[٠-٩]/g, digit => String(ARABIC_DIGITS.indexOf(digit)));
-}
-
-export function integerText(value) {
-  const raw = latin(value).replace(/[٬,\s]/g, '');
-  return /^\d+$/.test(raw) ? raw : null;
-}
-
-export function canonicalTextForDisplay(value, unit = 'toman') {
-  const raw = integerText(value);
-  if (raw === null) return null;
-  if (unit !== UNIT_RIAL) return raw;
-
-  let amount;
-  try { amount = BigInt(raw); }
-  catch { return null; }
-
-  if (amount % 10n !== 0n) return null;
-  return (amount / 10n).toString();
-}
 
 export function isSalesInvoiceForm(form) {
   if (!form?.closest) return false;
@@ -65,9 +40,9 @@ export function installInvoiceCanonicalInputBoundary({
     input.dataset.avanDisplayedRialSnapshot = displayed;
     input.dataset.avanLiveRialValid = canonical === null ? '0' : '1';
 
-    // All target-level invoice/tax calculators now see canonical Toman.
-    // For a partial Rial value that is not divisible by 10, expose zero to the
-    // calculators instead of accidentally treating the partial Rial as Toman.
+    // Target-level invoice and tax calculators must see canonical Toman.
+    // A partial Rial value that is not divisible by 10 is exposed as zero so
+    // it can never be interpreted accidentally as Toman while the user types.
     input.value = canonical ?? '0';
 
     globalObject.queueMicrotask(() => {
