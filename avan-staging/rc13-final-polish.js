@@ -28,27 +28,52 @@ function fixPortfolioActiveCard(){
   });
 }
 
+function stripMoneyUnitSuffix(raw){
+  return text(raw).replace(/(?:\s*\((?:تومان|ریال)\))+$/,'').trim();
+}
+
 function moneyColumnTitle(raw){
-  const t=text(raw).replace(/(?:\s*\((?:تومان|ریال)\))+$/,'').trim();
+  const t=stripMoneyUnitSuffix(raw);
   return Boolean(t)&&/(بدهکار|بستانکار|مبلغ|مانده|خالص|جمع|فی|قیمت|ارزش|فروش|خرید|درآمد|هزینه|دارایی|بدهی|حقوق مالکانه|سود|زیان|مالیات|تخفیف)/.test(t);
 }
 
 function moneyHeaderBase(th){
   const clone=th.cloneNode(true);
   clone.querySelectorAll?.('.avan-table-money-unit').forEach(node=>node.remove());
-  return text(clone.textContent).replace(/(?:\s*\((?:تومان|ریال)\))+$/,'').trim();
+  return stripMoneyUnitSuffix(clone.textContent);
+}
+
+function unitTokenCount(value){
+  return (String(value??'').match(/\((?:تومان|ریال)\)/g)||[]).length;
+}
+
+function resetCorruptedMoneyHeader(th,base){
+  const owned=[...th.querySelectorAll('.avan-table-money-unit')];
+  const totalTokens=unitTokenCount(th.textContent);
+  const ownedTokens=owned.reduce((sum,node)=>sum+unitTokenCount(node.textContent),0);
+  const hasRawUnit=totalTokens>ownedTokens;
+  const corrupted=owned.length>1||totalTokens>1||hasRawUnit;
+  if(!corrupted)return null;
+
+  // A polluted header can contain hundreds of raw "(ریال)" text fragments.
+  // Rebuild only that money-header cell from its canonical label so stale raw
+  // suffixes cannot survive or be copied into the next render cycle.
+  th.replaceChildren(document.createTextNode(base));
+  th.dataset.avanMoneyHeaderBase=base;
+  return true;
 }
 
 function annotateMoneyHeaders(root){
   if(!root?.querySelectorAll)return;
   root.querySelectorAll('table thead th').forEach(th=>{
     const base=moneyHeaderBase(th);
-    const unitNodes=[...th.querySelectorAll('.avan-table-money-unit')].filter(node=>node.parentElement===th);
     if(!moneyColumnTitle(base)){
-      unitNodes.forEach(node=>node.remove());
+      th.querySelectorAll('.avan-table-money-unit').forEach(node=>node.remove());
       return;
     }
 
+    resetCorruptedMoneyHeader(th,base);
+    const unitNodes=[...th.querySelectorAll('.avan-table-money-unit')].filter(node=>node.parentElement===th);
     const small=unitNodes.shift()||document.createElement('small');
     unitNodes.forEach(node=>node.remove());
     small.className='avan-table-money-unit';
@@ -179,7 +204,7 @@ function prepareBeforeExport(event){
 function run(){fixPortfolioActiveCard();preparePageOutput();prepareDetailOutput();syncPasswordInputs()}
 function schedule(){if(scheduled)clearTimeout(scheduled);scheduled=setTimeout(()=>{scheduled=null;run()},40)}
 function install(){
-  const observer=new MutationObserver(schedule);observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','class']});
+  const observer=new MutationObserver(schedule);observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['hidden','class']});
   document.addEventListener('click',prepareBeforeExport,true);
   document.addEventListener('avan:money-unit-changed',schedule);window.addEventListener('avan:company-context-changed',schedule);
   installPasswordGuard();run();
