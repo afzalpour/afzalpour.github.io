@@ -28,39 +28,21 @@ function fixPortfolioActiveCard(){
   });
 }
 
-function stripMoneyUnitSuffix(raw){
-  return text(raw).replace(/(?:\s*\((?:تومان|ریال)\))+$/,'').trim();
+export function stripMoneyHeaderUnits(raw){
+  return text(raw).replace(/(?:\s*\((?:تومان|ریال)\))+\s*$/,'').trim();
 }
 
 function moneyColumnTitle(raw){
-  const t=stripMoneyUnitSuffix(raw);
+  const t=stripMoneyHeaderUnits(raw);
   return Boolean(t)&&/(بدهکار|بستانکار|مبلغ|مانده|خالص|جمع|فی|قیمت|ارزش|فروش|خرید|درآمد|هزینه|دارایی|بدهی|حقوق مالکانه|سود|زیان|مالیات|تخفیف)/.test(t);
 }
 
 function moneyHeaderBase(th){
+  const stored=stripMoneyHeaderUnits(th?.dataset?.avanMoneyHeaderBase||'');
+  if(stored)return stored;
   const clone=th.cloneNode(true);
   clone.querySelectorAll?.('.avan-table-money-unit').forEach(node=>node.remove());
-  return stripMoneyUnitSuffix(clone.textContent);
-}
-
-function unitTokenCount(value){
-  return (String(value??'').match(/\((?:تومان|ریال)\)/g)||[]).length;
-}
-
-function resetCorruptedMoneyHeader(th,base){
-  const owned=[...th.querySelectorAll('.avan-table-money-unit')];
-  const totalTokens=unitTokenCount(th.textContent);
-  const ownedTokens=owned.reduce((sum,node)=>sum+unitTokenCount(node.textContent),0);
-  const hasRawUnit=totalTokens>ownedTokens;
-  const corrupted=owned.length>1||totalTokens>1||hasRawUnit;
-  if(!corrupted)return null;
-
-  // A polluted header can contain hundreds of raw "(ریال)" text fragments.
-  // Rebuild only that money-header cell from its canonical label so stale raw
-  // suffixes cannot survive or be copied into the next render cycle.
-  th.replaceChildren(document.createTextNode(base));
-  th.dataset.avanMoneyHeaderBase=base;
-  return true;
+  return stripMoneyHeaderUnits(clone.textContent);
 }
 
 function annotateMoneyHeaders(root){
@@ -69,19 +51,20 @@ function annotateMoneyHeaders(root){
     const base=moneyHeaderBase(th);
     if(!moneyColumnTitle(base)){
       th.querySelectorAll('.avan-table-money-unit').forEach(node=>node.remove());
+      delete th.dataset.avanMoneyHeader;
+      delete th.dataset.avanMoneyHeaderBase;
+      delete th.dataset.avanMoneyUnit;
       return;
     }
 
-    resetCorruptedMoneyHeader(th,base);
-    const unitNodes=[...th.querySelectorAll('.avan-table-money-unit')].filter(node=>node.parentElement===th);
-    const small=unitNodes.shift()||document.createElement('small');
-    unitNodes.forEach(node=>node.remove());
-    small.className='avan-table-money-unit';
-    if(!small.parentElement)th.append(small);
-
+    // The DOM contains only the canonical label. The unit is metadata and CSS
+    // renders it exactly once, so repeated lifecycle passes cannot append text.
+    if(text(th.textContent)!==base||th.children.length){
+      th.replaceChildren(document.createTextNode(base));
+    }
+    th.dataset.avanMoneyHeader='1';
     th.dataset.avanMoneyHeaderBase=base;
-    const desired=` (${unitFa()})`;
-    if(small.textContent!==desired)small.textContent=desired;
+    th.dataset.avanMoneyUnit=unitFa();
   });
 }
 
@@ -132,8 +115,7 @@ function ensureJournalTotals(modal){
   const balanced=debit===credit&&debit>0n,diff=debit>=credit?debit-credit:credit-debit,cols=headers.length;
   const first=Math.min(debitIndex,creditIndex),last=Math.max(debitIndex,creditIndex);
   const totalCells=[];
-  if(first>0)totalCells.push(`<th colspan="${first}">جمع کل</th>`);
-  else totalCells.push('<th>جمع کل</th>');
+  if(first>0)totalCells.push(`<th colspan="${first}">جمع کل</th>`);else totalCells.push('<th>جمع کل</th>');
   for(let i=first;i<=last;i++){
     if(i===debitIndex)totalCells.push(`<th class="num">${grouped(debit)} ${esc(unitFa())}</th>`);
     else if(i===creditIndex)totalCells.push(`<th class="num">${grouped(credit)} ${esc(unitFa())}</th>`);
@@ -144,8 +126,7 @@ function ensureJournalTotals(modal){
 }
 
 function preparePageOutput(){
-  const content=document.getElementById('content');
-  if(!content)return;
+  const content=document.getElementById('content');if(!content)return;
   const pageTitle=text(document.getElementById('pageTitle')?.textContent);
   if(PRINT_PAGES.has(pageTitle)){ensureUnitChip(content);annotateMoneyHeaders(content)}
 }
@@ -164,49 +145,39 @@ function strongPassword(password){
   if(!/[A-Za-zآ-ی]/.test(p)||!/[0-9۰-۹]/.test(p)||!/[!@#$%^&*()_+\-=\[\]{};:'"\\|,.<>?\/`~]/.test(p))return false;
   return !COMMON_PASSWORDS.has(p.toLowerCase());
 }
-
 function passwordError(){return 'رمز جدید باید حداقل ۱۲ کاراکتر و شامل حرف، عدد و نماد باشد و از الگوهای بسیار رایج استفاده نکند.'}
-
 function installPasswordGuard(){
   document.addEventListener('submit',event=>{
-    const form=event.target;
-    if(!(form instanceof HTMLFormElement))return;
+    const form=event.target;if(!(form instanceof HTMLFormElement))return;
     let password=null,status=null;
-    if(form.id==='authForm'&&document.getElementById('signupTab')?.classList.contains('active')){
-      password=document.getElementById('authPassword')?.value||'';
-      status=document.getElementById('authStatus');
-    }else if(form.id==='recoveryForm'){
-      password=document.getElementById('newPassword')?.value||'';
-      status=document.getElementById('recoveryStatus');
-    }else return;
+    if(form.id==='authForm'&&document.getElementById('signupTab')?.classList.contains('active')){password=document.getElementById('authPassword')?.value||'';status=document.getElementById('authStatus');}
+    else if(form.id==='recoveryForm'){password=document.getElementById('newPassword')?.value||'';status=document.getElementById('recoveryStatus');}
+    else return;
     if(strongPassword(password))return;
     event.preventDefault();event.stopImmediatePropagation();
     if(status)status.innerHTML=`<span class="error-box" style="display:block">${passwordError()}</span>`;
   },true);
 }
-
 function syncPasswordInputs(){
   const signup=document.getElementById('signupTab')?.classList.contains('active');
   const authPassword=document.getElementById('authPassword');
   if(authPassword)authPassword.minLength=signup?12:6;
   document.querySelectorAll('#newPassword,#newPassword2').forEach(input=>input.minLength=12);
 }
-
 function prepareBeforeExport(event){
-  const button=event.target?.closest?.('button');
-  if(!button)return;
+  const button=event.target?.closest?.('button');if(!button)return;
   const label=text(button.textContent);
-  const isExport=button.hasAttribute('data-avan-print-detail')||/چاپ|PDF|CSV|خروجی/.test(label);
-  if(!isExport)return;
+  if(!(button.hasAttribute('data-avan-print-detail')||/چاپ|PDF|CSV|خروجی/.test(label)))return;
   preparePageOutput();prepareDetailOutput();
 }
-
 function run(){fixPortfolioActiveCard();preparePageOutput();prepareDetailOutput();syncPasswordInputs()}
 function schedule(){if(scheduled)clearTimeout(scheduled);scheduled=setTimeout(()=>{scheduled=null;run()},40)}
 function install(){
-  const observer=new MutationObserver(schedule);observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['hidden','class']});
+  const observer=new MutationObserver(schedule);
+  observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['hidden','class']});
   document.addEventListener('click',prepareBeforeExport,true);
-  document.addEventListener('avan:money-unit-changed',schedule);window.addEventListener('avan:company-context-changed',schedule);
+  document.addEventListener('avan:money-unit-changed',schedule);
+  window.addEventListener('avan:company-context-changed',schedule);
   installPasswordGuard();run();
   window.AvanOutputIntegrity=Object.freeze({prepare:run,unit:unitFa,strongPassword});
 }
