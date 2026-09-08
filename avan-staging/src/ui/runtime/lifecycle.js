@@ -114,6 +114,9 @@ export function installUiLifecycle({
     const node = documentObject.querySelector(selector);
     if (!node) return;
     const observer = new MutationObserverCtor(mutations => {
+      // Enhancements are expected to mutate the DOM. Do not feed those
+      // lifecycle-owned mutations back into the registry and create loops.
+      if (running) return;
       if (hasElementChange(mutations)) schedule(surface, 'mutation');
     });
     observer.observe(node, { childList: true, subtree: true });
