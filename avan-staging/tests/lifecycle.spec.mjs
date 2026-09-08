@@ -8,19 +8,25 @@ class FakeCustomEvent {
   }
 }
 
+const observerInstances = [];
 class FakeMutationObserver {
   constructor(callback) {
     this.callback = callback;
     this.connected = false;
+    observerInstances.push(this);
   }
-  observe() { this.connected = true; }
+  observe(node) { this.connected = true; this.node = node; }
   disconnect() { this.connected = false; }
 }
 
 const events = [];
+const roots = {
+  '#content': { selector:'#content' },
+  '#modal': { selector:'#modal' }
+};
 const fakeDocument = {
   querySelector(selector) {
-    return selector === '#content' || selector === '#modal' ? { selector } : null;
+    return roots[selector] || null;
   },
   dispatchEvent(event) {
     events.push(event);
@@ -67,6 +73,23 @@ assert.deepEqual(calls, ['late']);
 lifecycle.emit('manual-event', 'test');
 assert.equal(events.at(-1)?.type, 'avan:ui-changed');
 assert.equal(events.at(-1)?.detail?.surface, 'manual-event');
+
+// Regression: a core page replacement must not be dropped while an async UI
+// handler is running. This was the race that removed «گزارش‌های من».
+let releaseAsync;
+const blocker = new Promise(resolve => { releaseAsync = resolve; });
+lifecycle.use('async-race', async () => { await blocker; }, { priority: 50 });
+const running = lifecycle.run('race', 'test');
+await Promise.resolve();
+const contentObserver = observerInstances.find(item => item.node === roots['#content']);
+contentObserver.callback([{
+  target: roots['#content'],
+  addedNodes: [{ nodeType: 1 }],
+  removedNodes: [{ nodeType: 1 }]
+}]);
+releaseAsync();
+await running;
+assert.equal(lifecycle.snapshot().pending.includes('content'), true);
 
 lifecycle.stop();
 console.log('lifecycle.spec PASS');

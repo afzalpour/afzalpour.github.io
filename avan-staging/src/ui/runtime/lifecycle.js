@@ -109,15 +109,33 @@ export function installUiLifecycle({
     );
   }
 
+  function isCoreSurfaceReplacement(mutations = [], root) {
+    return mutations.some(mutation =>
+      mutation.target === root &&
+      [...(mutation.removedNodes || [])].some(node => node?.nodeType === elementNode)
+    );
+  }
+
   function observe(selector, surface) {
     if (!MutationObserverCtor || !documentObject?.querySelector) return;
     const node = documentObject.querySelector(selector);
     if (!node) return;
     const observer = new MutationObserverCtor(mutations => {
-      // Enhancements are expected to mutate the DOM. Do not feed those
-      // lifecycle-owned mutations back into the registry and create loops.
-      if (running) return;
-      if (hasElementChange(mutations)) schedule(surface, 'mutation');
+      if (!hasElementChange(mutations)) return;
+
+      // If the compatibility shell replaces the whole surface while an async
+      // enhancement is awaiting data, request one follow-up pass. Ignore
+      // descendant mutations made by the enhancement itself to avoid loops.
+      if (running) {
+        if (isCoreSurfaceReplacement(mutations, node)) {
+          rerunRequested = true;
+          pending.add(surface);
+          lastReason = 'surface-replaced';
+        }
+        return;
+      }
+
+      schedule(surface, 'mutation');
     });
     observer.observe(node, { childList: true, subtree: true });
     observers.push(observer);
