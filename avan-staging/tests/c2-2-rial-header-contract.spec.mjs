@@ -27,4 +27,12 @@ assert.match(boundary, /isSalesInvoiceForm/);
 assert.match(boundary, /AVAN_MONEY_DISPLAY_UNIT !== UNIT_RIAL/);
 assert.match(boundary, /canonicalTextForDisplay\(displayed, UNIT_RIAL\)/);
 
+const index = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+assert.match(index, /src\/ui\/money\/invoice-canonical-input-boundary\.js/);
+
+const sw = fs.readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
+assert.match(sw, /avan-staging-rc1-v73-c2-2-rial-header/);
+assert.match(sw, /src\/ui\/money\/currency-contract\.js/);
+assert.match(sw, /src\/ui\/money\/invoice-canonical-input-boundary\.js/);
+
 console.log('c2-2-rial-header-contract.spec.mjs: PASS');
