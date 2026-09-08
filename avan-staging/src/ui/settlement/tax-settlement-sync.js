@@ -40,6 +40,14 @@ function plannedRowsTotal(box) {
   return total;
 }
 
+function setValue(input, value) {
+  if (input && input.value !== value) input.value = value;
+}
+
+function setHtml(node, html) {
+  if (node && node.innerHTML !== html) node.innerHTML = html;
+}
+
 export function syncTaxSettlementTotal(documentObject) {
   const form = documentObject?.getElementById?.('invoiceForm');
   const box = form?.querySelector('[data-v60-settlement-box]');
@@ -48,9 +56,14 @@ export function syncTaxSettlementTotal(documentObject) {
   const total = finalInvoiceTotal(form);
   if (total === null || total < 0n) return false;
 
-  form.dataset.avanInvoiceTotal = total.toString();
+  const totalText = total.toString();
+  if (form.dataset.avanInvoiceTotal !== totalText) {
+    form.dataset.avanInvoiceTotal = totalText;
+  }
+
+  const formattedTotal = groupInteger(total);
   box.querySelectorAll('[data-v60-fixed-amount]').forEach(input => {
-    input.value = groupInteger(total);
+    setValue(input, formattedTotal);
   });
 
   const planType = box.querySelector('[name="v60_plan_type"]')?.value || 'credit';
@@ -61,7 +74,8 @@ export function syncTaxSettlementTotal(documentObject) {
   const totalNode = box.querySelector('[data-v60-plan-total]');
   if (totalNode) {
     const matches = scheduled === total;
-    totalNode.innerHTML = `جمع برنامه: <b>${groupInteger(scheduled)} تومان</b> از <b>${groupInteger(total)} تومان</b> ${matches ? '<span class="pos">✓ برابر</span>' : '<span class="neg">مغایرت</span>'}`;
+    const html = `جمع برنامه: <b>${groupInteger(scheduled)} تومان</b> از <b>${formattedTotal} تومان</b> ${matches ? '<span class="pos">✓ برابر</span>' : '<span class="neg">مغایرت</span>'}`;
+    setHtml(totalNode, html);
   }
 
   return true;
