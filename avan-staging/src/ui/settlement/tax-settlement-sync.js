@@ -2,36 +2,33 @@
 
 import { installUiLifecycle } from '../runtime/lifecycle.js';
 
-const Lifecycle = installUiLifecycle();
-let syncQueued = false;
-
 const latin = value => String(value ?? '')
   .replace(/[۰-۹]/g, digit => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(digit)))
   .replace(/[٠-٩]/g, digit => String('٠١٢٣٤٥٦٧٨٩'.indexOf(digit)));
 
-function integerFromText(value) {
+export function integerFromText(value) {
   const normalized = latin(value).replace(/[٬,\s]/g, '');
   const match = normalized.match(/-?\d+/);
   if (!match) return null;
   try { return BigInt(match[0]); } catch { return null; }
 }
 
-function groupInteger(value) {
+export function groupInteger(value) {
   const amount = typeof value === 'bigint' ? value : BigInt(value || 0);
   return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '٬');
 }
 
-function finalInvoiceTotal(form) {
+export function finalInvoiceTotal(form) {
   const taxGrand = integerFromText(
-    form.querySelector('[data-rc15-invoice-tax-summary] .rc15-grand b')?.textContent
+    form?.querySelector?.('[data-rc15-invoice-tax-summary] .rc15-grand b')?.textContent
   );
   if (taxGrand !== null) return taxGrand;
 
-  const contracted = integerFromText(form.dataset.avanInvoiceTotal || '');
+  const contracted = integerFromText(form?.dataset?.avanInvoiceTotal || '');
   if (contracted !== null) return contracted;
 
   return integerFromText(
-    form.querySelector('.invoice-grand-total')?.textContent || ''
+    form?.querySelector?.('.invoice-grand-total')?.textContent || ''
   );
 }
 
@@ -43,8 +40,8 @@ function plannedRowsTotal(box) {
   return total;
 }
 
-export function syncTaxSettlementTotal(documentObject = document) {
-  const form = documentObject.getElementById('invoiceForm');
+export function syncTaxSettlementTotal(documentObject) {
+  const form = documentObject?.getElementById?.('invoiceForm');
   const box = form?.querySelector('[data-v60-settlement-box]');
   if (!form || !box) return false;
 
@@ -70,19 +67,35 @@ export function syncTaxSettlementTotal(documentObject = document) {
   return true;
 }
 
-function queueSync() {
-  if (syncQueued) return;
-  syncQueued = true;
-  queueMicrotask(() => {
-    syncQueued = false;
-    syncTaxSettlementTotal();
-  });
+export function installTaxSettlementSync({ globalObject = globalThis, documentObject = globalObject.document } = {}) {
+  if (!documentObject?.addEventListener) return null;
+  if (globalObject.AvanTaxSettlementSync?.installed) return globalObject.AvanTaxSettlementSync;
+
+  const Lifecycle = installUiLifecycle({ globalObject, documentObject });
+  let syncQueued = false;
+
+  const queueSync = () => {
+    if (syncQueued) return;
+    syncQueued = true;
+    globalObject.queueMicrotask(() => {
+      syncQueued = false;
+      syncTaxSettlementTotal(documentObject);
+    });
+  };
+
+  Lifecycle.use('settlement:tax-final-total-sync', () => syncTaxSettlementTotal(documentObject), { priority: 900 });
+  documentObject.addEventListener('input', event => {
+    if (event.target?.closest?.('#invoiceForm')) queueSync();
+  }, true);
+  documentObject.addEventListener('change', event => {
+    if (event.target?.closest?.('#invoiceForm')) queueSync();
+  }, true);
+
+  const api = Object.freeze({ installed: true, sync: () => syncTaxSettlementTotal(documentObject) });
+  globalObject.AvanTaxSettlementSync = api;
+  return api;
 }
 
-Lifecycle.use('settlement:tax-final-total-sync', () => syncTaxSettlementTotal(), { priority: 900 });
-document.addEventListener('input', event => {
-  if (event.target?.closest?.('#invoiceForm')) queueSync();
-}, true);
-document.addEventListener('change', event => {
-  if (event.target?.closest?.('#invoiceForm')) queueSync();
-}, true);
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  installTaxSettlementSync({ globalObject: window, documentObject: document });
+}
