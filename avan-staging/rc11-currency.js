@@ -8,21 +8,18 @@ import {
 
 const UNIT_TOMAN = 'toman';
 const UNIT_RIAL = 'rial';
-const UNIT_LABEL = {
-  toman: 'تومان',
-  rial: 'ریال'
-};
+const UNIT_LABEL = Object.freeze({ toman: 'تومان', rial: 'ریال' });
+const PERSIAN_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
+const ARABIC_DIGITS = '٠١٢٣٤٥٦٧٨٩';
+const GROUP_SEPARATOR = '٬';
 
 const state = {
   unit: UNIT_TOMAN,
   workspaceId: null,
   rpcReady: false,
-  loading: true
+  loading: true,
+  loadToken: 0
 };
-
-const PERSIAN_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
-const ARABIC_DIGITS = '٠١٢٣٤٥٦٧٨٩';
-const GROUP_SEPARATOR = '٬';
 
 function latinDigits(value) {
   return String(value ?? '')
@@ -35,11 +32,7 @@ function parseInteger(value) {
     .replace(/[٬,\s]/g, '')
     .replace(/[^0-9-]/g, '');
   if (!cleaned || cleaned === '-') return null;
-  try {
-    return BigInt(cleaned);
-  } catch {
-    return null;
-  }
+  try { return BigInt(cleaned); } catch { return null; }
 }
 
 function grouped(value) {
@@ -64,7 +57,7 @@ function displayToCanonical(value, unit = state.unit) {
     return {
       ok: false,
       value: null,
-      message: 'مبلغ ریالی باید مضرب ۱۰ باشد تا بدون اعشار به تومان در Ledger ثبت شود.'
+      message: 'مبلغ ریالی باید مضرب ۱۰ باشد تا بدون اعشار به تومان ثبت شود.'
     };
   }
   return { ok: true, value: n / 10n };
@@ -79,75 +72,7 @@ function showMessage(message, kind = 'error') {
   toast.textContent = message;
   toast.classList.toggle('currency-good', kind === 'success');
   toast.classList.add('show');
-  window.setTimeout(() => {
-    toast.classList.remove('show', 'currency-good');
-  }, 2600);
-}
-
-function isLiveCalculatedNode(node) {
-  const parent = node.parentElement;
-  if (!parent) return false;
-  return Boolean(
-    parent.closest('#lineTotals') ||
-    parent.closest('#invoiceTotal') ||
-    parent.closest('[data-line-amount]')
-  );
-}
-
-function rewriteMoneyTextNode(node, fromUnit, toUnit) {
-  if (!(node instanceof Text)) return;
-  if (node.parentElement?.closest('.money-in-words')) return;
-
-  const fromLabel = UNIT_LABEL[fromUnit];
-  const toLabel = UNIT_LABEL[toUnit];
-  if (!node.nodeValue?.includes(fromLabel)) return;
-
-  const liveCalculated = isLiveCalculatedNode(node);
-  const pattern = new RegExp(`(-?[0-9۰-۹٠-٩][0-9۰-۹٠-٩٬,]*)\\s*${fromLabel}`, 'g');
-
-  node.nodeValue = node.nodeValue.replace(pattern, (match, amount) => {
-    const n = parseInteger(amount);
-    if (n === null) return match;
-
-    let converted = n;
-    if (!liveCalculated) {
-      if (fromUnit === UNIT_TOMAN && toUnit === UNIT_RIAL) converted = n * 10n;
-      if (fromUnit === UNIT_RIAL && toUnit === UNIT_TOMAN) {
-        if (n % 10n !== 0n) return match;
-        converted = n / 10n;
-      }
-    }
-    return `${grouped(converted)} ${toLabel}`;
-  });
-}
-
-function walkText(root, fromUnit, toUnit) {
-  if (!root || fromUnit === toUnit) return;
-  if (root instanceof Text) {
-    rewriteMoneyTextNode(root, fromUnit, toUnit);
-    return;
-  }
-  if (!(root instanceof Element) && root !== document) return;
-  if (root instanceof Element && root.closest?.('.money-in-words')) return;
-
-  const walker = document.createTreeWalker(
-    root,
-    NodeFilter.SHOW_TEXT,
-    {
-      acceptNode(node) {
-        const p = node.parentElement;
-        if (!p) return NodeFilter.FILTER_REJECT;
-        if (p.closest('script,style,.money-in-words')) return NodeFilter.FILTER_REJECT;
-        return node.nodeValue?.includes(UNIT_LABEL[fromUnit])
-          ? NodeFilter.FILTER_ACCEPT
-          : NodeFilter.FILTER_REJECT;
-      }
-    }
-  );
-
-  const nodes = [];
-  while (walker.nextNode()) nodes.push(walker.currentNode);
-  nodes.forEach(node => rewriteMoneyTextNode(node, fromUnit, toUnit));
+  window.setTimeout(() => toast.classList.remove('show', 'currency-good'), 2600);
 }
 
 function convertMoneyInput(input, fromUnit, toUnit, { initialCanonical = false } = {}) {
@@ -167,8 +92,8 @@ function convertMoneyInput(input, fromUnit, toUnit, { initialCanonical = false }
   }
 
   input.value = grouped(next);
-  input.dispatchEvent(new Event('input', { bubbles: true }));
   input.dataset.currencyPreparedUnit = toUnit;
+  input.dispatchEvent(new Event('input', { bubbles: true }));
   return true;
 }
 
@@ -210,30 +135,34 @@ function convertExistingInputs(fromUnit, toUnit) {
   return true;
 }
 
-function applyUnit(nextUnit, { persist = false } = {}) {
+function applyUnit(nextUnit, { persist = false, convertInputs = true } = {}) {
   if (![UNIT_TOMAN, UNIT_RIAL].includes(nextUnit)) return false;
   const previous = state.unit;
+
   if (previous === nextUnit) {
+    state.unit = nextUnit;
+    window.AVAN_MONEY_DISPLAY_UNIT = nextUnit;
     setDisplayUnit(nextUnit);
     refreshAllMoneyInputs();
     renderSettingsCard(true);
     return true;
   }
 
-  if (!canSwitchInputs(previous, nextUnit)) {
-    showMessage('برای تغییر از ریال به تومان، مبالغ باز باید مضرب ۱۰ ریال باشند.');
-    return false;
+  if (convertInputs) {
+    if (!canSwitchInputs(previous, nextUnit)) {
+      showMessage('برای تغییر از ریال به تومان، مبالغ باز باید مضرب ۱۰ ریال باشند.');
+      return false;
+    }
+    if (!convertExistingInputs(previous, nextUnit)) return false;
   }
 
-  if (!convertExistingInputs(previous, nextUnit)) return false;
-  walkText(document.body, previous, nextUnit);
   state.unit = nextUnit;
   window.AVAN_MONEY_DISPLAY_UNIT = nextUnit;
   setDisplayUnit(nextUnit);
   refreshAllMoneyInputs();
   renderSettingsCard(true);
   document.dispatchEvent(new CustomEvent('avan:money-unit-changed', {
-    detail: { unit: nextUnit, previous, persist }
+    detail: { unit: nextUnit, previous, persist, workspaceId: state.workspaceId }
   }));
   return true;
 }
@@ -247,14 +176,17 @@ function temporaryCanonicalizeForm(form) {
     if (!input.value) continue;
     const converted = displayToCanonical(input.value, state.unit);
     if (!converted.ok) return { error: converted.message };
-    snapshots.push({ input, value: input.value });
+    snapshots.push({ input, value: input.value, prepared: input.dataset.currencyPreparedUnit || '' });
     input.value = converted.value === null ? '' : converted.value.toString();
+    input.dataset.currencyPreparedUnit = UNIT_TOMAN;
   }
 
   return {
     restore() {
-      snapshots.forEach(({ input, value }) => {
-        if (input.isConnected) input.value = value;
+      snapshots.forEach(({ input, value, prepared }) => {
+        if (!input.isConnected) return;
+        input.value = value;
+        input.dataset.currencyPreparedUnit = prepared || UNIT_RIAL;
       });
       refreshAllMoneyInputs();
     }
@@ -274,7 +206,6 @@ function installSubmitBoundary() {
       return;
     }
     if (!boundary?.restore) return;
-
     window.setTimeout(() => boundary.restore(), 0);
   }, true);
 }
@@ -288,28 +219,26 @@ function settingsHost() {
 function settingsCardHtml() {
   const disabled = state.rpcReady ? '' : 'disabled';
   const status = state.loading
-    ? 'در حال خواندن تنظیم واحد از Cloud…'
+    ? 'در حال خواندن تنظیم واحد پول…'
     : state.rpcReady
-      ? 'این تنظیم در Workspace ذخیره می‌شود.'
-      : 'Patch دیتابیس RC1.1-B هنوز نصب نشده است؛ واحد فعلاً تومان باقی می‌ماند.';
+      ? 'این تنظیم برای شرکت فعال ذخیره می‌شود.'
+      : 'تنظیم واحد پول در دسترس نیست؛ واحد فعلاً تومان است.';
 
   return `
     <div class="section card currency-settings-card" id="currencySettingsCard">
       <div class="section-head">
         <div>
           <h2>واحد پول</h2>
-          <span class="muted">واحد ذخیره Ledger ثابت و تومان است؛ این انتخاب فقط مرز ورود و نمایش را تبدیل می‌کند.</span>
+          <span class="muted">مبالغ حسابداری در هسته به تومان نگهداری می‌شوند؛ این انتخاب فقط ورود و نمایش را تغییر می‌دهد.</span>
         </div>
-        <span class="badge">Ledger: تومان</span>
+        <span class="badge">هسته: تومان</span>
       </div>
       <div class="currency-choice" role="group" aria-label="واحد نمایش و ورود">
         <button type="button" class="${state.unit === UNIT_TOMAN ? 'active' : ''}" data-currency-unit="toman" ${disabled}>تومان</button>
         <button type="button" class="${state.unit === UNIT_RIAL ? 'active' : ''}" data-currency-unit="rial" ${disabled}>ریال</button>
       </div>
       <p class="muted currency-status">${status}</p>
-      <div class="info-box currency-note">
-        در حالت ریال، مبلغ ورودی باید مضرب ۱۰ ریال باشد؛ آوان آن را پیش از ثبت به تومان تبدیل می‌کند و گزارش‌ها را برای نمایش دوباره ×۱۰ می‌کند. هیچ سند قبلی تغییر داده نمی‌شود.
-      </div>
+      <div class="info-box currency-note">در حالت ریال، مبلغ ورودی باید مضرب ۱۰ باشد و فقط یک‌بار در مرز ثبت به تومان تبدیل می‌شود.</div>
     </div>`;
 }
 
@@ -337,11 +266,11 @@ function renderSettingsCard(force = false) {
           wid: state.workspaceId,
           p_unit: next
         });
-        const normalized = typeof saved === 'string' ? saved : next;
+        const normalized = saved === UNIT_RIAL ? UNIT_RIAL : UNIT_TOMAN;
         if (!applyUnit(normalized, { persist: true })) return;
         showMessage(`واحد پول روی ${UNIT_LABEL[normalized]} تنظیم شد.`, 'success');
       } catch (error) {
-        console.error('[RC1.1 currency] save failed', error);
+        console.error('[Avan currency] save failed', error);
         showMessage('ذخیره واحد پول انجام نشد.');
       } finally {
         renderSettingsCard(true);
@@ -350,35 +279,55 @@ function renderSettingsCard(force = false) {
   });
 }
 
-async function loadCloudPreference() {
+async function activeCompanyId() {
   const cloud = window.AvanCloud;
-  if (!cloud?.select || !cloud?.rpc) {
+  const context = cloud?.companyContext;
+  if (context?.active?.()?.id) return context.active().id;
+  if (context?.ensure) {
+    const snapshot = await context.ensure();
+    return snapshot?.active_company?.id || null;
+  }
+  return null;
+}
+
+async function loadCloudPreference({ companyChanged = false } = {}) {
+  const cloud = window.AvanCloud;
+  const token = ++state.loadToken;
+  state.loading = true;
+
+  if (!cloud?.rpc || !cloud?.companyContext) {
     state.loading = false;
+    state.rpcReady = false;
     renderSettingsCard(true);
     return;
   }
 
   try {
-    const workspaces = await cloud.select(
-      'workspaces',
-      'select=id&order=created_at.asc&limit=1'
-    );
-    state.workspaceId = workspaces?.[0]?.id || null;
-    if (!state.workspaceId) throw new Error('WORKSPACE_NOT_FOUND');
+    const wid = await activeCompanyId();
+    if (token !== state.loadToken) return;
+    if (!wid) throw new Error('COMPANY_REQUIRED');
 
-    const unit = await cloud.rpc('get_money_display_unit', { wid: state.workspaceId });
+    const unit = await cloud.rpc('get_money_display_unit', { wid });
+    if (token !== state.loadToken) return;
+
+    state.workspaceId = wid;
     state.rpcReady = true;
     const normalized = unit === UNIT_RIAL ? UNIT_RIAL : UNIT_TOMAN;
-    applyUnit(normalized);
+    applyUnit(normalized, { convertInputs: !companyChanged });
+    prepareNewInputs(document);
   } catch (error) {
+    if (token !== state.loadToken) return;
+    state.workspaceId = null;
     state.rpcReady = false;
     state.unit = UNIT_TOMAN;
     window.AVAN_MONEY_DISPLAY_UNIT = UNIT_TOMAN;
     setDisplayUnit(UNIT_TOMAN);
-    console.warn('[RC1.1 currency] database patch unavailable', error);
+    console.warn('[Avan currency] preference unavailable', error);
   } finally {
-    state.loading = false;
-    renderSettingsCard(true);
+    if (token === state.loadToken) {
+      state.loading = false;
+      renderSettingsCard(true);
+    }
   }
 }
 
@@ -386,9 +335,7 @@ function installObserver() {
   const observer = new MutationObserver(mutations => {
     for (const mutation of mutations) {
       mutation.addedNodes.forEach(node => {
-        if (node.nodeType !== Node.ELEMENT_NODE && node.nodeType !== Node.TEXT_NODE) return;
         if (node.nodeType === Node.ELEMENT_NODE) prepareNewInputs(node);
-        if (state.unit === UNIT_RIAL) walkText(node, UNIT_TOMAN, UNIT_RIAL);
       });
     }
     renderSettingsCard();
@@ -398,17 +345,29 @@ function installObserver() {
 
 function install() {
   window.AVAN_MONEY_DISPLAY_UNIT = UNIT_TOMAN;
-
-  document.addEventListener('click', event => {
-    const settingsButton = event.target.closest?.('[data-page="settings"]');
-    if (!settingsButton || state.workspaceId || state.loading) return;
-    window.setTimeout(() => loadCloudPreference(), 120);
-  });
   setDisplayUnit(UNIT_TOMAN);
   prepareNewInputs(document);
   installSubmitBoundary();
   installObserver();
+
+  window.addEventListener('avan:company-context-changed', () => {
+    loadCloudPreference({ companyChanged: true });
+  });
+
+  document.addEventListener('click', event => {
+    if (event.target.closest?.('[data-page="settings"]')) renderSettingsCard(true);
+  }, true);
+
   loadCloudPreference();
+
+  window.AvanCurrency = Object.freeze({
+    unit: () => state.unit,
+    workspaceId: () => state.workspaceId,
+    canonicalToDisplay,
+    displayToCanonical,
+    prepare: prepareNewInputs,
+    reload: () => loadCloudPreference({ companyChanged: true })
+  });
 }
 
 if (document.readyState === 'loading') {
