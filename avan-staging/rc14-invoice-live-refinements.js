@@ -202,6 +202,15 @@ function stockPurchaseDefault(form, d, type) {
   });
 }
 
+function mutationAddsInvoiceLine(mutations) {
+  return mutations.some(mutation => [...mutation.addedNodes].some(node => (
+    node.nodeType === Node.ELEMENT_NODE && (
+      node.matches?.('[data-invoice-line]') ||
+      node.querySelector?.('[data-invoice-line]')
+    )
+  )));
+}
+
 async function enhance(form) {
   if (!form || form.dataset.rc14iEnhancing === '1') return;
   form.dataset.rc14iEnhancing = '1';
@@ -225,7 +234,7 @@ async function enhance(form) {
     if (!lines.dataset.rc14iObserver) {
       lines.dataset.rc14iObserver = '1';
       new MutationObserver(async mutations => {
-        if (!mutations.some(m => m.addedNodes.length)) return;
+        if (!mutationAddsInvoiceLine(mutations)) return;
         try {
           const fresh = await activeData();
           await syncAccountSelects(form, fresh, inferType(form, fresh));
