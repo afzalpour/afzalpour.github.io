@@ -8,13 +8,6 @@ const textExtensions = new Set(['.js', '.mjs', '.html']);
 const ignoredDirs = new Set(['.git', 'node_modules', 'tests', 'scripts']);
 const findings = [];
 
-// Strangler migration exception: this single settlement bridge is intentionally
-// quarantined until the tax + settlement integration gate. No other direct
-// client overwrite is allowed, and the exception itself must stay exactly one.
-const legacyOverwriteAllowlist = new Map([
-  ['rc14-catalog-settlement-v60.js', 1]
-]);
-
 function walk(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (entry.isDirectory() && ignoredDirs.has(entry.name)) continue;
@@ -65,22 +58,12 @@ const directOverwrites = findings.filter(f => f.code === 'DIRECT_CLIENT_METHOD_O
 const observers = findings.filter(f => f.code === 'MUTATION_OBSERVER');
 const bodyWideObservers = observers.filter(f => /document\.body/.test(f.excerpt));
 
-const overwriteCounts = new Map();
-for (const finding of directOverwrites) {
-  overwriteCounts.set(finding.file, (overwriteCounts.get(finding.file) || 0) + 1);
-}
-
-const unauthorizedOverwrites = directOverwrites.filter(f => !legacyOverwriteAllowlist.has(f.file));
-const allowlistViolations = [...legacyOverwriteAllowlist.entries()].filter(([file, expected]) =>
-  (overwriteCounts.get(file) || 0) !== expected
-);
-
 const metrics = {
   app_js_bytes: fs.existsSync(appPath) ? fs.statSync(appPath).size : null,
   index_html_bytes: fs.existsSync(indexPath) ? fs.statSync(indexPath).size : null,
   direct_client_method_overwrites: directOverwrites.length,
-  quarantined_legacy_overwrites: directOverwrites.length - unauthorizedOverwrites.length,
-  unauthorized_client_overwrites: unauthorizedOverwrites.length,
+  quarantined_legacy_overwrites: 0,
+  unauthorized_client_overwrites: directOverwrites.length,
   mutation_observers: observers.length,
   body_wide_mutation_observers: bodyWideObservers.length,
   high_findings: findings.filter(f => f.severity === 'high').length
@@ -88,17 +71,12 @@ const metrics = {
 
 console.log(JSON.stringify({
   metrics,
-  legacy_overwrite_allowlist: Object.fromEntries(legacyOverwriteAllowlist),
+  legacy_overwrite_allowlist: {},
   findings
 }, null, 2));
 
-if (unauthorizedOverwrites.length > 0 || allowlistViolations.length > 0) {
-  console.error('Architecture gate failed: monkey-patch quarantine contract violated.');
-  if (unauthorizedOverwrites.length) {
-    console.error(`Unauthorized direct overwrite(s): ${unauthorizedOverwrites.length}`);
-  }
-  if (allowlistViolations.length) {
-    console.error(`Legacy allowlist count mismatch: ${JSON.stringify(allowlistViolations)}`);
-  }
+if (directOverwrites.length > 0) {
+  console.error('Architecture gate failed: direct shared-client overwrite detected.');
+  console.error(`Direct overwrite(s): ${directOverwrites.length}`);
   process.exitCode = 1;
 }
