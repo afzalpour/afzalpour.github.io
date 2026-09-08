@@ -1,0 +1,36 @@
+name: Avan Frontend Architecture Gate
+
+on:
+  push:
+    branches:
+      - main
+      - rc1.5-architecture-consolidation
+    paths:
+      - 'avan-staging/**'
+      - 'docs/adr/**'
+      - '.github/workflows/avan-frontend-architecture.yml'
+  pull_request:
+    paths:
+      - 'avan-staging/**'
+      - 'docs/adr/**'
+      - '.github/workflows/avan-frontend-architecture.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Syntax, unit tests and architecture audit
+        working-directory: avan-staging
+        run: npm run quality

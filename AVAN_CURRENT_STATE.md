@@ -1,6 +1,6 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: **2026-09-08 — RC1.5-B Backend PASS / RC1.5-C Tax UX & Reports next**.
+آخرین به‌روزرسانی مرجع: **2026-09-08 — AC-1 Engineering PASS / RC1.5-C Backend PASS + Frontend STAGING READY / Live Gate pending**.
 
 این فایل Source of Truth وضعیت جاری پروژه است. Gateهای Live فقط با تأیید صریح کاربر PASS می‌شوند.
 
@@ -25,8 +25,12 @@ Repository: `afzalpour/afzalpour.github.io`
 - New feature development remains in Staging; Production is not the development workspace.
 - **RC1.5-A — Versioned Tax Data Foundation = BACKEND PASS**.
 - **RC1.5-B — VAT Calculation & Invoice Accounting Bridge = BACKEND PASS**.
-- Tax remains disabled by default for all current Companies, so RC1.4 Production invoice behavior is unchanged until RC1.5-C provides explicit Company activation/configuration UX.
-- Next gate: **RC1.5-C — Tax UX & reports**, governed by ADR-0007.
+- **AC-1 — Frontend Architecture Consolidation = ENGINEERING PASS**.
+- **RC1.5-C — Tax UX & VAT Reports = BACKEND PASS / FRONTEND ENGINEERING READY / LIVE PENDING**.
+- Tax remains disabled for all current Companies. No legacy invoice/item was silently reclassified.
+- Next user gate: **RC1.5-C Staging Live Gate**.
+- Next development gate after C Live PASS: **RC1.5-D — e-Invoice pre-validation / adapter contract**.
+- Windows/Desktop/Offline work is explicitly **deferred until the Web/PWA release is final**.
 
 Release record:
 - `PRODUCTION_RELEASE_RC1_4.md`
@@ -34,9 +38,11 @@ Release record:
 Promotion readiness evidence:
 - `avan-staging/RC1_4_PROMOTION_READINESS.md`
 
-RC1.5 backend evidence:
+RC1.5 / architecture evidence:
 - `avan-staging/RC1_5_A_GATE_EVIDENCE.md`
 - `avan-staging/RC1_5_B_GATE_EVIDENCE.md`
+- `avan-staging/RC1_5_C_GATE_EVIDENCE.md`
+- `avan-staging/ARCHITECTURE_CONSOLIDATION_GATE_EVIDENCE.md`
 
 ---
 
@@ -54,7 +60,7 @@ Accepted runtime facts:
 
 RC1.4 Backend migrations were applied before frontend promotion to the shared Production Supabase project and passed staged regression/rehearsal gates.
 
-RC1.5-A/B backend migrations are additive/backward-compatible. Tax remains disabled for all Companies until explicit RC1.5-C activation, so the stable Production runtime continues to follow RC1.4 behavior.
+RC1.5-A/B/C backend migrations and the targeted performance migration are backward-compatible. Tax remains disabled for all Companies until explicit activation, so the stable Production runtime continues to follow RC1.4 behavior.
 
 ---
 
@@ -83,7 +89,7 @@ RC1.4 user-accepted behavior includes:
 - Persian-only user-visible terminology/error policy accepted.
 - mixed/installment settlement money inputs use three-digit grouping in v64.
 
-RC1.5-A/B are **engineering/backend PASS only**; they are not recorded as user Live PASS gates.
+RC1.5-A/B/C and AC-1 are **engineering/backend PASS states only** unless separately listed above; RC1.5-C is not recorded as user Live PASS yet.
 
 ---
 
@@ -100,22 +106,28 @@ RC1.5-A/B are **engineering/backend PASS only**; they are not recorded as user L
 - Local/Session storage contains only auth/security/UI state; no financial source data.
 - Standard chart headings are structural/raw/non-postable; balances are Ledger-derived.
 - user-visible UI/errors must be fluent Persian; unavoidable standards such as PDF/CSV/SKU may remain Latin.
+- Frontend migration follows Strangler Pattern; full rewrite is prohibited.
+- new runtime extensions may not monkey-patch shared client methods; use the named Operation Pipeline.
+- new business calculation logic must be separated from DOM where practical and unit-testable.
 
 ---
 
-## 5) Current accounting integrity baseline
-Read-only verification after RC1.5-B transactional rehearsal:
+## 5) Current accounting / security integrity baseline
+Read-only verification after RC1.5-C and performance hardening:
 - Ledger debit = credit = **4,073,481,351 Toman**.
 - orphan journal lines = **0**.
 - unbalanced Posted/Reversed journals = **0**.
 - postable accounts with active children = **0** at RC1.4 promotion baseline.
 - `public SECURITY DEFINER` functions executable by `authenticated` = **0**.
+- authenticated dangerous Tax table privileges (`TRUNCATE/REFERENCES/TRIGGER`) = **0**.
+- `set_workspace_tax_settings` = SECURITY INVOKER, authenticated-only execute.
+- `report_vat_transactions` = SECURITY INVOKER, authenticated-only execute.
+- Companies with Tax enabled = **0**.
 - settlement schedule total mismatches = **0** at RC1.4 promotion baseline.
 - orphan settlement schedules = **0** at RC1.4 promotion baseline.
 - orphan financial checks = **0** at RC1.4 promotion baseline.
 - duplicate check identities under current identity rule = **0** at RC1.4 promotion baseline.
-- Companies with Tax enabled = **0**.
-- RC1.5-B rehearsal invoices left behind = **0**.
+- RC1.5 authenticated tax rehearsal data left behind = **0** because the rehearsal was rolled back.
 
 Inventory/financial reconciliation at RC1.4 promotion baseline:
 - all **6 Companies** reconciled.
@@ -178,7 +190,7 @@ Invoice lifecycle:
 - purchase item invoices can bind to posted Inventory receipt lines and must not duplicate stock receipt.
 - purchase receipt item/quantity mismatch is blocked by Backend.
 
-RC1.5-B tax bridge:
+RC1.5 tax bridge:
 - invoice Draft stores deterministic tax snapshots when Company Tax is enabled.
 - invoice header stores `subtotal_amount`, `tax_total`, and final `total_amount`.
 - standard-rate rule version/effective-date is validated before snapshotting.
@@ -187,6 +199,7 @@ RC1.5-B tax bridge:
 - Purchase VAT posts as input VAT receivable debit.
 - reversal reverses the VAT Ledger effect with the original journal.
 - Posted/Reversed immutability includes tax totals.
+- RC1.5-C preserves tax treatment/code/Persian profile-name snapshots for historical reporting.
 
 ---
 
@@ -235,7 +248,7 @@ Check identity rule:
 - same Bank + same Check Number can coexist when Account Number differs.
 - if Account Number is absent, same Company + direction + Bank + Check Number remains protected from duplicate registration.
 
-RC1.5 tax amounts become part of final invoice `total_amount`, therefore settlement-plan equality continues to be enforced against the VAT-inclusive invoice total.
+RC1.5 tax amounts become part of final invoice `total_amount`; integrated Tax + Settlement regression is required before C Production promotion. The final legacy settlement RPC bridge remains quarantined until that migration is regression-tested against VAT-inclusive totals.
 
 ---
 
@@ -251,7 +264,7 @@ Money UX:
 - reports/tables/prints include active money unit in monetary headings.
 - Rial/Toman presentation follows workspace/user preference without rewriting canonical Toman history.
 
-RC1.5-C must extend these same rules to all Tax/VAT settings, invoice tax fields, reports, print views and validation messages.
+RC1.5-C extends the same rules to Tax/VAT settings, invoice tax fields, VAT reports, print-visible tax sections and validation messages.
 
 ---
 
@@ -271,12 +284,15 @@ Completed contract:
 - browser-facing privileged command RPCs use public SECURITY INVOKER wrappers.
 - privileged implementation functions live in `private` where required.
 - critical public tables use RLS.
-- `public` SECURITY DEFINER functions executable by `authenticated` = **0** after RC1.5-B Gate.
+- `public` SECURITY DEFINER functions executable by `authenticated` = **0** after RC1.5-C verification.
+- Tax settings INSERT/UPDATE are owner/manager-only with UPDATE `USING` + `WITH CHECK`.
+- C tax APIs are public-schema SECURITY INVOKER functions with explicit authenticated execute grants only.
 
-Security Advisor after RC1.5-B:
-- no RC1.5-B public authenticated SECURITY DEFINER regression.
-- INFO no-policy notices remain on deny-by-default/private boundaries; `public.workspace_invitations` also remains deny-by-default with no direct RLS policy.
-- only standing WARN remains `auth_leaked_password_protection`.
+Security Advisor after RC1.5-C:
+- no RC1.5-C public authenticated SECURITY DEFINER regression.
+- INFO no-policy notices remain on intentional deny-by-default/private boundaries.
+- `public.workspace_invitations` remains deny-by-default/helper-mediated with no direct RLS policy.
+- standing WARN remains `auth_leaked_password_protection`.
 
 ---
 
@@ -302,6 +318,8 @@ Rules:
 - never restore against `Avan-production` itself.
 - never use a paid Supabase branch/project workaround under current policy.
 
+This remains a final Web/PWA readiness item; it must be documented as a known zero-charge limitation if no free isolated target becomes available before release.
+
 ---
 
 ## 16) Platform Admin / Support
@@ -324,17 +342,65 @@ Any new Smart Document work belongs to a future release cycle and must begin in 
 
 ---
 
-## 18) Current operating mode after RC1.4 Production
+## 18) Current operating mode / Web-PWA-first decision
 - Production remains stable release target, not development workspace.
-- all RC1.5 frontend work remains in `avan-staging/` / release branch.
-- RC1.5-A/B backend changes are backward-compatible and Tax is still disabled for all Companies.
-- relevant regression required before future Production promotion.
+- all RC1.5 frontend and architecture work remains in `avan-staging/` / release branch until Live PASS.
+- Tax remains disabled for all Companies unless explicitly activated by an authorized Company owner/manager.
+- relevant regression is required before future Production promotion.
 - Blocker/Critical Production defects take immediate priority.
 - zero-charge policy remains binding.
+- Web + PWA must be completed and stabilized before Windows/Desktop work begins.
+- Windows `.exe` and true offline mode remain a later platform phase; current architecture should remain portable but no desktop runtime work is started now.
+
+Web/PWA path to final release:
+1. AC-1 + RC1.5-C Staging Live Gate.
+2. RC1.5-D e-Invoice pre-validation / adapter contract.
+3. final Security + Backup/Restore disposition.
+4. full accounting/inventory/invoice/tax/settlement/print/PWA regression.
+5. performance, mobile and PWA polish.
+6. final Release Candidate and Production Smoke Gate.
+7. final Web/PWA Production release.
 
 ---
 
-## 19) RC1.5 — Tax / VAT / e-invoicing cycle — IN PROGRESS
+## 19) AC-1 — Frontend Architecture Consolidation — ENGINEERING PASS
+Governing ADR:
+- `docs/adr/0016-modular-runtime-no-monkey-patching.md` — Accepted.
+
+Migration model:
+- Strangler Pattern; no full rewrite.
+- `app.js` remains Compatibility Shell while features are extracted and tested.
+- Domain/Application/Infrastructure/UI dependency direction from `AVAN_MIGRATION_MAP_V1.md` remains governing.
+
+Implemented:
+- deterministic named Operation Pipeline for shared client operations.
+- transitional shared UI lifecycle adapter.
+- VAT calculation extracted into pure Domain logic.
+- automated syntax checks + unit tests + architecture audit in GitHub Actions.
+- Service Worker staging cache includes new architecture/tax modules.
+
+Migrated away from direct shared-client overwrites:
+- Company/workspace projection.
+- User Preferences.
+- invoice/inventory bridge.
+- purchase/receipt bridge.
+- RC1.5 tax bridge.
+
+Latest CI evidence:
+- GitHub Actions run `34184751258` = **success**.
+- Operation Pipeline test = PASS.
+- VAT calculator test = PASS.
+- unauthorized direct client overwrites = **0**.
+- one legacy Settlement overwrite remains explicitly quarantined with exact-count allowlist.
+- new direct monkey patches are CI-blocked.
+- MutationObserver debt is measurable and will be reduced feature-by-feature rather than via unsafe bulk rewrite.
+
+Evidence:
+- `avan-staging/ARCHITECTURE_CONSOLIDATION_GATE_EVIDENCE.md`
+
+---
+
+## 20) RC1.5 — Tax / VAT / e-invoicing cycle — IN PROGRESS
 Governing ADR:
 - `docs/adr/0007-versioned-tax-rules.md` — Accepted.
 
@@ -376,24 +442,74 @@ Verified behavior:
 - purchase VAT → input receivable.
 - sale and purchase reversal integrity.
 - transactional authenticated-user rehearsal PASS and rolled back.
-- global Ledger after rehearsal remains `4,073,481,351 = 4,073,481,351` Toman.
+- global Ledger remains `4,073,481,351 = 4,073,481,351` Toman.
 - orphan lines = 0; unbalanced journals = 0.
-- Tax remains disabled for all Companies until RC1.5-C activation UX.
 
 Evidence:
 - `avan-staging/RC1_5_B_GATE_EVIDENCE.md`
 - `avan-staging/APPLIED_RC1_5_B_VAT_ACCOUNT_ROLES.sql`
 - `avan-staging/APPLIED_RC1_5_B_VAT_INVOICE_ENGINE.sql`
 
+### RC1.5-C — Tax UX & VAT Reports — BACKEND PASS / FRONTEND STAGING READY
+Applied migration:
+- `20260907214750 — rc1_5_c_tax_ux_reporting_contract`
+
+Backend verified:
+- owner/manager-only Tax settings mutation.
+- line snapshot stores treatment/profile code/Persian profile name.
+- deterministic standard VAT rehearsal: base `10,005` → tax `1,001` Toman at 10%.
+- exempt/zero rates = zero VAT.
+- VAT report posts original event on original journal date and reversal as negative on reversal date.
+- combined invoice/reversal net = zero in rehearsal.
+- rehearsal fully rolled back.
+- dangerous authenticated tax-table privileges = 0.
+- public authenticated SECURITY DEFINER exposure = 0.
+
+Frontend engineering ready:
+- explicit Company tax activation/configuration UX.
+- item tax profile.
+- invoice tax profile/defaulting/validation.
+- live subtotal/VAT/final totals.
+- posted invoice tax detail.
+- VAT sales/purchase/net report.
+- Persian validation and print-visible tax sections.
+- Tax remains disabled for all current Companies until explicit activation.
+
+Evidence:
+- `avan-staging/RC1_5_C_GATE_EVIDENCE.md`
+- `avan-staging/APPLIED_RC1_5_C_TAX_UX_REPORTING_CONTRACT.sql`
+
+### RC1.5 performance hardening
+Applied migration:
+- `rc1_5_performance_hot_path_indexes`
+
+Implemented:
+- targeted Company/transaction/document/account/reversal/tax hot-path indexes.
+- duplicate permissive `account_roles_select` policy removed; existing `account_roles_access` retains identical SELECT authorization predicate through `FOR ALL`.
+- post-migration Ledger integrity unchanged.
+- Performance Advisor duplicate-policy warning cleared.
+- remaining INFO FK advisories are not blindly indexed; index additions require real query/referential benefit.
+
+Evidence:
+- `avan-staging/APPLIED_RC1_5_PERFORMANCE_HOT_PATH_INDEXES.sql`
+
 ### Remaining RC1.5 gates
-1. **RC1.5-C — Tax UX & reports**: tax settings, item/service tax profile, invoice tax profile/visible VAT totals, VAT sales/purchase reports, Persian validation.
-2. **RC1.5-D — e-Invoice pre-validation / adapter contract**: no paid dependency; no automatic legal submission without explicit user action.
-3. Full regression + Staging Live Gate before any future Production promotion.
+1. **RC1.5-C Staging Live Gate** — explicit user browser/PWA acceptance; not yet PASS.
+2. **RC1.5-D — e-Invoice pre-validation / adapter contract** — no paid dependency; no automatic legal submission without explicit user action.
+3. integrated Tax + Settlement regression and removal of the last quarantined Settlement monkey patch.
+4. full regression + final Staging Live/Release Candidate gate before any Production promotion.
 
 ---
 
-## 20) Product roadmap after RC1.5
-Candidate future areas:
+## 21) Product roadmap after final Web/PWA release
+Desktop direction is intentionally deferred until the Web/PWA release is final.
+
+Later platform phase:
+- installable Windows `.exe`.
+- true offline-capable mode requires local persistence (e.g. SQLite/local repository adapter) plus a conflict-aware sync engine; a web wrapper alone is not considered offline support.
+- shared Domain/Application logic should remain platform-neutral so Windows does not duplicate accounting logic.
+
+Candidate future product areas:
 - Treasury / cheque / bank reconciliation expansion.
 - Bank transaction matching.
 - Payroll.

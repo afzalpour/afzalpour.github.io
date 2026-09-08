@@ -1,0 +1,36 @@
+.rc15-tax-settings .section-head,
+.rc15-vat-report .section-head{align-items:flex-start}
+.rc15-tax-rule{padding:12px 14px;border:1px solid var(--border,#e4ded5);border-radius:12px;background:var(--surface-soft,#faf8f4);line-height:1.9}
+.rc15-tax-toggle{display:flex;align-items:flex-start;gap:12px;padding:14px;border:1px solid var(--border,#e4ded5);border-radius:14px;background:var(--surface-soft,#faf8f4);cursor:pointer}
+.rc15-tax-toggle input{margin-top:5px;inline-size:18px;block-size:18px;accent-color:var(--primary,#5754d8)}
+.rc15-tax-toggle span{display:grid;gap:4px}
+.rc15-tax-toggle small,.rc15-item-tax-field small,.rc15-invoice-tax-field small{color:var(--muted,#746f7f);line-height:1.7}
+.rc15-small-value{font-size:1rem!important;line-height:1.5}
+.rc15-invoice-tax-field{min-width:180px}
+.rc15-invoice-tax-summary{margin-top:14px}
+.rc15-invoice-totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:12px;border:1px solid var(--border,#e4ded5);border-radius:14px;background:var(--surface-soft,#faf8f4)}
+.rc15-invoice-totals span{display:grid;gap:4px;padding:8px 10px;border-radius:10px;background:var(--surface,#fff)}
+.rc15-invoice-totals small{color:var(--muted,#746f7f)}
+.rc15-invoice-totals b{font-variant-numeric:tabular-nums;font-size:1.02rem}
+.rc15-invoice-totals .rc15-grand{border:1px solid color-mix(in srgb,var(--primary,#5754d8) 26%,transparent)}
+.rc15-tax-detail{margin-top:14px}
+.rc15-tax-detail h3{margin-top:0}
+.rc15-vat-report .grid4>.card{min-width:0}
+.rc15-vat-report .kpi-value{font-size:1.05rem;overflow-wrap:anywhere}
+.rc15-vat-report table{min-width:1040px}
+.rc15-vat-report td.num,.rc15-tax-detail td.num{white-space:nowrap;font-variant-numeric:tabular-nums}
+.rc15-item-tax-field select,.rc15-invoice-tax-field select{width:100%}
+@media(max-width:760px){
+  .rc15-invoice-totals{grid-template-columns:1fr}
+  .rc15-tax-settings .form-actions{display:grid;grid-template-columns:1fr}
+  .rc15-tax-settings .form-actions button{width:100%}
+  .rc15-vat-report .grid4{grid-template-columns:1fr 1fr}
+}
+@media(max-width:460px){
+  .rc15-vat-report .grid4{grid-template-columns:1fr}
+}
+@media print{
+  .rc15-tax-settings{display:none!important}
+  .rc15-vat-report [data-rc15-refresh-vat]{display:none!important}
+  .rc15-invoice-totals{page-break-inside:avoid;break-inside:avoid}
+}
