@@ -114,10 +114,19 @@ export function installUiLifecycle({
     const node = documentObject.querySelector(selector);
     if (!node) return;
     const observer = new MutationObserverCtor(mutations => {
-      // Enhancements are expected to mutate the DOM. Do not feed those
-      // lifecycle-owned mutations back into the registry and create loops.
-      if (running) return;
-      if (hasElementChange(mutations)) schedule(surface, 'mutation');
+      if (!hasElementChange(mutations)) return;
+
+      // A core page can finish rendering while an async enhancement handler is
+      // still awaiting data. Never drop that external mutation: queue one more
+      // lifecycle pass. Idempotent handlers then settle without losing UI.
+      if (running) {
+        rerunRequested = true;
+        pending.add(surface);
+        lastReason = 'mutation';
+        return;
+      }
+
+      schedule(surface, 'mutation');
     });
     observer.observe(node, { childList: true, subtree: true });
     observers.push(observer);
