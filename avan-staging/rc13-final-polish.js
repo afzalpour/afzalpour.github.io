@@ -57,8 +57,6 @@ function annotateMoneyHeaders(root){
       return;
     }
 
-    // The DOM contains only the canonical label. The unit is metadata and CSS
-    // renders it exactly once, so repeated lifecycle passes cannot append text.
     if(text(th.textContent)!==base||th.children.length){
       th.replaceChildren(document.createTextNode(base));
     }
@@ -128,7 +126,13 @@ function ensureJournalTotals(modal){
 function preparePageOutput(){
   const content=document.getElementById('content');if(!content)return;
   const pageTitle=text(document.getElementById('pageTitle')?.textContent);
-  if(PRINT_PAGES.has(pageTitle)){ensureUnitChip(content);annotateMoneyHeaders(content)}
+  if(!PRINT_PAGES.has(pageTitle))return;
+  if(pageTitle==='فاکتورها'){
+    content.querySelectorAll(':scope > .avan-output-money-unit').forEach(node=>node.remove());
+    annotateMoneyHeaders(content);
+    return;
+  }
+  ensureUnitChip(content);annotateMoneyHeaders(content);
 }
 
 function prepareDetailOutput(){
@@ -136,6 +140,11 @@ function prepareDetailOutput(){
   if(!modal||backdrop?.hidden)return;
   const heading=text(modal.querySelector('h2')?.textContent);
   if(!(heading.startsWith('سند ')||heading.startsWith('فاکتور')))return;
+  if(heading.startsWith('فاکتور')){
+    modal.querySelectorAll(':scope > .avan-output-money-unit').forEach(node=>node.remove());
+    annotateMoneyHeaders(modal);
+    return;
+  }
   ensureUnitChip(modal,{detail:true});annotateMoneyHeaders(modal);ensureJournalTotals(modal);
 }
 
