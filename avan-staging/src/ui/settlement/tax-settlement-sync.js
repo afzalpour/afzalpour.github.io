@@ -59,24 +59,24 @@ function currentUnit(globalObject = globalThis) {
 }
 
 export function finalInvoiceTotal(form, unit = UNIT_TOMAN) {
-  // The tax summary is the freshest pre-save total. It is presentation text,
-  // so convert it back to canonical Toman exactly once before using it.
+  // Once established, this is the only authoritative live total contract.
+  const canonicalContract = integerFromText(form?.dataset?.avanCanonicalInvoiceTotalToman || '');
+  if (canonicalContract !== null) return canonicalContract;
+
+  // Before the contract exists, VAT grand total is the freshest source. It is
+  // presentation text and therefore must be converted back exactly once.
   const taxGrand = canonicalFromMoneyText(
     form?.querySelector?.('[data-rc15-invoice-tax-summary] .rc15-grand b')?.textContent,
     unit
   );
   if (taxGrand !== null) return taxGrand;
 
-  // Persisted/contracted totals are always canonical Toman.
-  const contractedCanonical = integerFromText(
-    form?.dataset?.avanCanonicalInvoiceTotalToman || form?.dataset?.avanInvoiceTotal || ''
-  );
-  if (contractedCanonical !== null) return contractedCanonical;
+  // Legacy dataset is expected to be canonical Toman only. It is never a
+  // rendered Rial source and must never be multiplied/divided by presentation code.
+  const legacyCanonical = integerFromText(form?.dataset?.avanInvoiceTotal || '');
+  if (legacyCanonical !== null) return legacyCanonical;
 
-  return canonicalFromMoneyText(
-    form?.querySelector?.('.invoice-grand-total')?.textContent || '',
-    unit
-  );
+  return canonicalFromMoneyText(form?.querySelector?.('.invoice-grand-total')?.textContent || '', unit);
 }
 
 function plannedRowsTotal(box, unit) {
@@ -93,24 +93,25 @@ function setFixedAmount(input, canonical, unit) {
   if (input.value !== displayed) input.value = displayed;
   input.dataset.currencyPreparedUnit = unit;
   input.dataset.moneyCanonicalToman = canonical.toString();
+  input.dataset.avanMoneyOwned = '1';
 }
 
 export function syncTaxSettlementTotal(documentObject, globalObject = globalThis) {
   const form = documentObject?.getElementById?.('invoiceForm');
-  const box = form?.querySelector('[data-v60-settlement-box]');
+  const box = form?.querySelector?.('[data-v60-settlement-box]');
   if (!form || !box) return false;
 
   const unit = currentUnit(globalObject);
   const total = finalInvoiceTotal(form, unit);
   if (total === null || total < 0n) return false;
 
-  // Both contracts are canonical Toman. Never store rendered Rial here.
-  form.dataset.avanInvoiceTotal = total.toString();
   form.dataset.avanCanonicalInvoiceTotalToman = total.toString();
+  // Compatibility only: legacy consumers may read this, but its unit is fixed.
+  form.dataset.avanInvoiceTotal = total.toString();
+  box.dataset.avanMoneyOwned = '1';
+  box.dataset.moneyUnit = unit;
 
-  box.querySelectorAll('[data-v60-fixed-amount]').forEach(input => {
-    setFixedAmount(input, total, unit);
-  });
+  box.querySelectorAll('[data-v60-fixed-amount]').forEach(input => setFixedAmount(input, total, unit));
 
   const planType = box.querySelector('[name="v60_plan_type"]')?.value || 'credit';
   const scheduled = ['credit', 'cash', 'check'].includes(planType)
@@ -119,12 +120,13 @@ export function syncTaxSettlementTotal(documentObject, globalObject = globalThis
 
   const totalNode = box.querySelector('[data-v60-plan-total]');
   if (totalNode) {
-    const matches = scheduled === total;
-    const desired = `جمع برنامه: <b>${formatCanonicalMoney(scheduled, unit)}</b> از <b>${formatCanonicalMoney(total, unit)}</b> ${matches ? '<span class="pos">✓ برابر</span>' : '<span class="neg">مغایرت</span>'}`;
-    if (totalNode.innerHTML !== desired) totalNode.innerHTML = desired;
+    totalNode.dataset.avanMoneyOwned = '1';
     totalNode.dataset.moneyUnit = unit;
     totalNode.dataset.scheduledCanonicalToman = scheduled.toString();
     totalNode.dataset.totalCanonicalToman = total.toString();
+    const matches = scheduled === total;
+    const desired = `جمع برنامه: <b>${formatCanonicalMoney(scheduled, unit)}</b> از <b>${formatCanonicalMoney(total, unit)}</b> ${matches ? '<span class="pos">✓ برابر</span>' : '<span class="neg">مغایرت</span>'}`;
+    if (totalNode.innerHTML !== desired) totalNode.innerHTML = desired;
   }
 
   return true;
@@ -136,7 +138,6 @@ export function installTaxSettlementSync({ globalObject = globalThis, documentOb
 
   const Lifecycle = installUiLifecycle({ globalObject, documentObject });
   let syncQueued = false;
-
   const queueSync = () => {
     if (syncQueued) return;
     syncQueued = true;
@@ -155,10 +156,7 @@ export function installTaxSettlementSync({ globalObject = globalThis, documentOb
   }, true);
   documentObject.addEventListener('avan:money-unit-changed', queueSync);
 
-  const api = Object.freeze({
-    installed: true,
-    sync: () => syncTaxSettlementTotal(documentObject, globalObject)
-  });
+  const api = Object.freeze({ installed: true, sync: () => syncTaxSettlementTotal(documentObject, globalObject) });
   globalObject.AvanTaxSettlementSync = api;
   return api;
 }
