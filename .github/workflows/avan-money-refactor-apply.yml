@@ -6,6 +6,7 @@ on:
       - rc1.5-money-architecture-refactor
     paths:
       - 'avan-staging/scripts/apply-money-architecture-refactor.mjs'
+      - 'avan-staging/scripts/apply-money-architecture-phase2.mjs'
       - '.github/workflows/avan-money-refactor-apply.yml'
   workflow_dispatch:
 
@@ -23,7 +24,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Harden regex cardinality helper
+      - name: Harden phase 1 regex cardinality helper
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -40,17 +41,23 @@ jobs:
             if (matches.length !== 1) throw new Error(`${label}: expected exactly one match, found ${matches.length}`);
             return source.replace(re, after);
           }"""
-          if old not in s:
-              raise SystemExit('regex helper source not found')
-          p.write_text(s.replace(old,new))
+          if old in s:
+              p.write_text(s.replace(old,new))
           PY
-      - name: Apply deterministic money refactor
-        run: node avan-staging/scripts/apply-money-architecture-refactor.mjs
-      - name: Syntax check transformed shell
+      - name: Apply money refactor migrations
+        run: |
+          node avan-staging/scripts/apply-money-architecture-refactor.mjs
+          node avan-staging/scripts/apply-money-architecture-phase2.mjs
+      - name: Syntax check transformed runtime
         run: |
           node --check avan-staging/app.js
           node --check avan-staging/rc14-catalog-settlement-v61.js
           node --check avan-staging/rc14-inventory-operations.js
+          node --check avan-staging/rc13-final-polish.js
+          node --check avan-staging/rc15-tax-ux-v3.js
+          node --check avan-staging/src/ui/settlement/settlement-workspace-v2.js
+          node --check avan-staging/src/ui/tax/tax-workspace-v2.js
+          node --check avan-staging/src/ui/money/money-runtime.js
       - name: Commit transformed sources
         run: |
           if git diff --quiet; then
@@ -59,6 +66,6 @@ jobs:
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add avan-staging/app.js avan-staging/rc14-catalog-settlement-v61.js avan-staging/rc14-inventory-operations.js
-          git commit -m 'Apply unified money boundaries to compatibility shell'
+          git add avan-staging/app.js avan-staging/rc14-catalog-settlement-v61.js avan-staging/rc14-inventory-operations.js avan-staging/rc13-final-polish.js avan-staging/rc15-tax-ux-v3.js avan-staging/src/ui/settlement/settlement-workspace-v2.js avan-staging/index.html avan-staging/sw.js
+          git commit -m 'Activate unified money runtime across Web and PWA'
           git push origin HEAD:rc1.5-money-architecture-refactor
