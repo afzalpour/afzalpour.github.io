@@ -5,7 +5,7 @@
   "scripts": {
     "test:architecture": "node tests/operation-pipeline.spec.mjs && node tests/vat-calculator.spec.mjs",
     "audit:architecture": "node scripts/architecture-audit.mjs",
-    "check:syntax": "node --check src/core/runtime/operation-pipeline.js && node --check src/infrastructure/supabase/avan-cloud-bootstrap.js && node --check src/domains/tax/vat-calculator.js && node --check src/application/tax/tax-service.js && node --check src/ui/runtime/lifecycle.js && node --check src/ui/tax/tax-workspace.js && node --check rc11-user-preferences.js && node --check rc14-invoice-inventory-ui.js && node --check rc14-purchase-receipt-and-inventory-polish.js && node --check rc14-catalog-settlement-v60.js && node --check rc15-tax-ux-v3.js",
+    "check:syntax": "node --check src/core/runtime/operation-pipeline.js && node --check src/infrastructure/supabase/avan-cloud-bootstrap.js && node --check src/domains/tax/vat-calculator.js && node --check src/application/tax/tax-service.js && node --check src/ui/runtime/lifecycle.js && node --check src/ui/tax/tax-workspace.js && node --check src/ui/tax/tax-date-aware.js && node --check src/ui/localization/persian-runtime-guard.js && node --check src/ui/reports/custom-report-builder.js && node --check platform-admin.js && node --check platform-tax-rules.js && node --check rc15-c1-bootstrap.js && node --check rc11-user-preferences.js && node --check rc14-invoice-inventory-ui.js && node --check rc14-purchase-receipt-and-inventory-polish.js && node --check rc14-catalog-settlement-v60.js && node --check rc15-tax-ux-v3.js",
     "quality": "npm run check:syntax && npm run test:architecture && npm run audit:architecture"
   }
 }

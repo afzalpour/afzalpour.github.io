@@ -9,14 +9,15 @@
   <link rel="icon" type="image/png" sizes="32x32" href="avan-favicon-32.png" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vazirmatn@33.0.3/Vazirmatn-Variable-font-face.css" />
   <link rel="stylesheet" href="platform-admin.css" />
+  <link rel="stylesheet" href="rc15-c1.css" />
 </head>
 <body>
   <div class="platform-shell" id="platformShell">
     <header class="platform-topbar">
       <div>
-        <span class="eyebrow">آوان · SaaS Control Plane</span>
+        <span class="eyebrow">آوان · مرکز مدیریت سامانه</span>
         <h1>مدیریت سامانه آوان</h1>
-        <p>مدیریت وضعیت و عملیات Tenantهای مشتری؛ کاملاً مستقل از مدیریت مالی هر شرکت و بدون دسترسی پیش‌فرض به Ledger.</p>
+        <p>مدیریت وضعیت شرکت‌های مشتری، دسترسی پشتیبانی و قوانین سراسری؛ مستقل از مدیریت مالی هر شرکت و بدون دسترسی پیش‌فرض به دفتر حسابداری.</p>
       </div>
       <div class="platform-topbar-actions">
         <button class="ghost" id="refreshPlatform">به‌روزرسانی</button>
@@ -25,17 +26,17 @@
     </header>
 
     <main>
-      <section id="platformAuthState" class="state-card">در حال بررسی دسترسی ادمین کل…</section>
+      <section id="platformAuthState" class="state-card">در حال بررسی دسترسی مدیر سامانه…</section>
       <section id="platformContent" hidden>
         <div class="kpi-grid" id="platformKpis"></div>
 
         <section class="panel">
           <div class="panel-head">
             <div>
-              <h2>عملیات شرکت‌ها / Tenantها</h2>
-              <p>وضعیت سرویس، پلن، سقف کاربران، Onboarding و Support از اینجا مدیریت می‌شود. تعلیق/آرشیو دسترسی Tenant را در DB می‌بندد؛ اطلاعات مالی حذف نمی‌شوند.</p>
+              <h2>عملیات شرکت‌ها</h2>
+              <p>وضعیت سرویس، طرح اشتراک، سقف کاربران، راه‌اندازی و پشتیبانی از اینجا مدیریت می‌شود. تعلیق یا آرشیو، دسترسی شرکت را در سطح پایگاه داده می‌بندد و اطلاعات مالی حذف نمی‌شوند.</p>
             </div>
-            <input id="companySearch" type="search" placeholder="جستجو در شرکت، مالک، پلن یا وضعیت" />
+            <input id="companySearch" type="search" placeholder="جستجو در شرکت، مالک، طرح یا وضعیت" />
           </div>
           <div class="table-wrap operations-table-wrap">
             <table class="operations-table">
@@ -43,20 +44,22 @@
                 <th>شرکت</th>
                 <th>کاربران / سقف</th>
                 <th>وضعیت سرویس</th>
-                <th>پلن</th>
-                <th>Onboarding</th>
+                <th>طرح</th>
+                <th>راه‌اندازی</th>
                 <th>پشتیبانی</th>
-                <th>Registry</th>
+                <th>وضعیت ثبت</th>
                 <th>ثبت عملیات</th>
               </tr></thead>
               <tbody id="companyRows"></tbody>
             </table>
           </div>
-          <div class="control-note">تعلیق و آرشیو، عضویت کاربران را حذف نمی‌کند؛ فقط ورود به Tenant و دسترسی RLS را می‌بندد. با فعال‌سازی مجدد، همان Company و داده‌های آن بازمی‌گردد.</div>
+          <div class="control-note">تعلیق و آرشیو، عضویت کاربران را حذف نمی‌کند؛ فقط ورود و دسترسی داده شرکت را می‌بندد. با فعال‌سازی مجدد، همان شرکت و داده‌های آن بازمی‌گردد.</div>
         </section>
 
+        <section class="panel" id="platformTaxRules"></section>
+
         <section class="panel">
-          <div class="panel-head"><div><h2>رویدادهای Control Plane</h2><p>هر عملیات مدیریتی همراه دلیل در Audit مستقل پلتفرم ثبت می‌شود؛ رویدادهای حسابداری Tenant اینجا نمایش داده نمی‌شوند.</p></div></div>
+          <div class="panel-head"><div><h2>رویدادهای مدیریتی سامانه</h2><p>هر عملیات مدیریتی همراه دلیل در گزارش مستقل سامانه ثبت می‌شود؛ رویدادهای حسابداری شرکت‌ها در این بخش نمایش داده نمی‌شوند.</p></div></div>
           <div id="platformAudit" class="audit-list"></div>
         </section>
       </section>
@@ -64,5 +67,6 @@
   </div>
   <script src="config.js"></script>
   <script type="module" src="platform-admin.js"></script>
+  <script type="module" src="platform-tax-rules.js"></script>
 </body>
 </html>
