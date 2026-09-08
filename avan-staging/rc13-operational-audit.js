@@ -1,7 +1,7 @@
 'use strict';
 
 import { installAvanCloud } from './src/infrastructure/supabase/avan-cloud-bootstrap.js';
-import { translateUserFacingText } from './src/ui/localization/persian-runtime-guard.js';
+import { safeUserFacingFa } from './src/ui/localization/user-facing-fa.js';
 
 const cloud = installAvanCloud();
 const companyContext = cloud.companyContext;
@@ -44,14 +44,9 @@ function formatDate(value) {
   catch { return '—'; }
 }
 function actorLabel(actorId) { if (!actorId) return 'سیستم'; if (currentUser?.id && actorId === currentUser.id) return 'شما'; return 'کاربر دیگر'; }
-function safeFa(value, fallback) {
-  const translated = translateUserFacingText(String(value || '').trim());
-  if (!translated) return fallback;
-  return /[A-Za-z]/.test(translated) ? fallback : translated;
-}
-function actionLabel(value) { return ACTION_FA[value] || safeFa(value, 'فعالیت'); }
-function entityLabel(value) { return ENTITY_FA[value] || safeFa(value, 'رویداد سامانه'); }
-function summaryLabel(value) { return safeFa(value, 'جزئیات این رویداد در گزارش فنی سامانه ثبت شده است.'); }
+function actionLabel(value) { return ACTION_FA[value] || safeUserFacingFa(value, 'فعالیت'); }
+function entityLabel(value) { return ENTITY_FA[value] || safeUserFacingFa(value, 'رویداد سامانه'); }
+function summaryLabel(value) { return safeUserFacingFa(value, 'جزئیات این رویداد در گزارش فنی سامانه ثبت شده است.'); }
 function filteredRows(category) {
   if (!category || category === 'all') return rows;
   const allowed = CATEGORY_ACTIONS[category];
