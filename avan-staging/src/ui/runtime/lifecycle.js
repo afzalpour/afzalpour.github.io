@@ -1,52 +1,120 @@
 'use strict';
 
 /**
- * Transitional UI lifecycle adapter.
+ * Transitional UI lifecycle registry.
  *
- * Legacy app.js does not yet emit explicit page/modal lifecycle events. Until
- * the shell controller is migrated, this adapter centralizes DOM observation
- * into one scoped place instead of allowing each feature to observe document.body.
+ * It centralizes DOM observation and named UI enhancement handlers so feature
+ * modules do not install competing body-wide observers or monkey-patch each
+ * other. Handlers must be idempotent because a page/modal can be enhanced more
+ * than once during its lifetime.
  */
 export function installUiLifecycle({
   globalObject = window,
   documentObject = document,
   debounceMs = 40
 } = {}) {
-  if (globalObject.AvanUiLifecycle) return globalObject.AvanUiLifecycle;
-
-  const observers = [];
-  const pending = new Set();
-  let timer = null;
-
-  function emit(surface, reason = 'dom') {
-    documentObject.dispatchEvent(new CustomEvent('avan:ui-changed', {
-      detail: Object.freeze({ surface, reason })
-    }));
+  if (globalObject.AvanUiLifecycle?.use && globalObject.AvanUiLifecycle?.schedule) {
+    return globalObject.AvanUiLifecycle;
   }
 
-  function schedule(surface) {
-    pending.add(surface);
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(() => {
+  const observers = [];
+  const handlers = new Map();
+  const pending = new Set();
+  let timer = null;
+  let sequence = 0;
+  let running = false;
+  let rerunRequested = false;
+  let lastReason = 'dom';
+
+  const elementNode = globalObject.Node?.ELEMENT_NODE ?? 1;
+  const MutationObserverCtor = globalObject.MutationObserver;
+  const CustomEventCtor = globalObject.CustomEvent;
+
+  function orderedHandlers() {
+    return [...handlers.values()].sort((a, b) =>
+      a.priority - b.priority || a.sequence - b.sequence
+    );
+  }
+
+  async function run(surface = 'manual', reason = 'manual') {
+    if (running) {
+      rerunRequested = true;
+      pending.add(surface || 'rerun');
+      lastReason = reason || lastReason;
+      return;
+    }
+
+    running = true;
+    try {
+      for (const entry of orderedHandlers()) {
+        try {
+          await entry.handler(Object.freeze({ surface, reason, id: entry.id }));
+        } catch (error) {
+          console.warn(`[Avan lifecycle:${entry.id}]`, error);
+        }
+      }
+    } finally {
+      running = false;
+      if (rerunRequested) {
+        rerunRequested = false;
+        schedule('rerun', lastReason || 'rerun');
+      }
+    }
+  }
+
+  function emit(surface = 'unknown', reason = 'dom') {
+    if (CustomEventCtor && documentObject?.dispatchEvent) {
+      documentObject.dispatchEvent(new CustomEventCtor('avan:ui-changed', {
+        detail: Object.freeze({ surface, reason })
+      }));
+    }
+    void run(surface, reason);
+  }
+
+  function schedule(surface = 'unknown', reason = 'dom') {
+    pending.add(surface || 'unknown');
+    lastReason = reason || lastReason;
+    if (timer) globalObject.clearTimeout(timer);
+    timer = globalObject.setTimeout(() => {
       timer = null;
       const surfaces = [...pending];
       pending.clear();
-      for (const surface of surfaces) emit(surface);
+      emit(surfaces.join(',') || 'unknown', lastReason || 'dom');
+      lastReason = 'dom';
     }, debounceMs);
   }
 
-  function hasElementChange(mutations) {
+  function use(id, handler, { priority = 100 } = {}) {
+    if (!id || typeof id !== 'string') throw new Error('LIFECYCLE_HANDLER_ID_REQUIRED');
+    if (typeof handler !== 'function') throw new Error('LIFECYCLE_HANDLER_REQUIRED');
+    if (handlers.has(id)) return false;
+    handlers.set(id, {
+      id,
+      handler,
+      priority: Number.isFinite(Number(priority)) ? Number(priority) : 100,
+      sequence: sequence++
+    });
+    schedule(`register:${id}`, 'register');
+    return true;
+  }
+
+  function remove(id) {
+    return handlers.delete(id);
+  }
+
+  function hasElementChange(mutations = []) {
     return mutations.some(mutation =>
-      [...mutation.addedNodes, ...mutation.removedNodes]
-        .some(node => node.nodeType === Node.ELEMENT_NODE)
+      [...(mutation.addedNodes || []), ...(mutation.removedNodes || [])]
+        .some(node => node?.nodeType === elementNode)
     );
   }
 
   function observe(selector, surface) {
+    if (!MutationObserverCtor || !documentObject?.querySelector) return;
     const node = documentObject.querySelector(selector);
     if (!node) return;
-    const observer = new MutationObserver(mutations => {
-      if (hasElementChange(mutations)) schedule(surface);
+    const observer = new MutationObserverCtor(mutations => {
+      if (hasElementChange(mutations)) schedule(surface, 'mutation');
     });
     observer.observe(node, { childList: true, subtree: true });
     observers.push(observer);
@@ -56,12 +124,27 @@ export function installUiLifecycle({
   observe('#modal', 'modal');
 
   const api = Object.freeze({
+    use,
+    remove,
+    run,
     emit,
     schedule,
+    snapshot() {
+      return Object.freeze({
+        handlers: orderedHandlers().map(entry => Object.freeze({
+          id: entry.id,
+          priority: entry.priority
+        })),
+        observer_count: observers.length,
+        pending: [...pending]
+      });
+    },
     stop() {
-      if (timer) clearTimeout(timer);
+      if (timer) globalObject.clearTimeout(timer);
       timer = null;
+      pending.clear();
       observers.splice(0).forEach(observer => observer.disconnect());
+      handlers.clear();
     }
   });
 
