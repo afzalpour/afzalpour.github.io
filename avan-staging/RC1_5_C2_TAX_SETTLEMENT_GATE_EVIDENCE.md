@@ -8,6 +8,7 @@ Status: **ENGINEERING PASS / LIVE GATE PENDING**
 
 - Remove the final direct Avan Cloud client method overwrite.
 - Make invoice settlement use the VAT-inclusive canonical invoice total.
+- Keep the live settlement amount synchronized with the invoice tax grand total.
 - Move settlement runtime onto Operation Pipeline and the centralized UI Lifecycle.
 - Preserve all RC1.4 catalog, settlement, installment and check behavior.
 
@@ -23,18 +24,29 @@ Status: **ENGINEERING PASS / LIVE GATE PENDING**
   - priority: `300`
 - Tax invoice-line middleware remains earlier in the chain at priority `200`.
 - Settlement UI enhancement now uses centralized UI Lifecycle handler `catalog-settlement:v61`; its former body-wide MutationObserver was removed.
+- Added `src/ui/settlement/tax-settlement-sync.js` as a small integration adapter. It synchronizes the visible settlement total with the tax grand total using Lifecycle + input/change events; it adds no MutationObserver and no client monkey patch.
 
 ## Canonical amount contract
 
-The browser may display a provisional VAT-inclusive amount from the tax workspace, but settlement persistence does not trust duplicated client-side tax arithmetic.
+The live browser UI prefers the VAT-inclusive tax grand total and exposes it through the shared invoice-form amount contract.
 
-After `save_draft_invoice` completes, v61 reads the persisted `invoices.total_amount` and uses that value as the canonical amount for `save_invoice_settlement_plan`.
+Settlement persistence does **not** trust duplicated client-side tax arithmetic. After `save_draft_invoice` completes, v61 reads the persisted `invoices.total_amount` and uses that value as the canonical amount for `save_invoice_settlement_plan`.
 
-Therefore settlement plans are validated against the same total that was produced by the server-side tax snapshot.
+Therefore settlement plans are validated against the same final total produced by the server-side tax snapshot.
 
-## Architecture CI
+## Architecture / unit CI
 
 PR branch Quality Gate: PASS.
+
+Tests include:
+
+- `operation-pipeline.spec.mjs`: PASS
+- `vat-calculator.spec.mjs`: PASS
+- `lifecycle.spec.mjs`: PASS
+- `user-facing-fa.spec.mjs`: PASS
+- `tax-settlement-sync.spec.mjs`: PASS
+  - verifies Persian formatted `۱۱٬۰۰۶ تومان` parses as 11,006;
+  - verifies VAT-inclusive tax grand total wins over a stale/pre-tax 10,005 amount.
 
 Final audit after deleting v60:
 
