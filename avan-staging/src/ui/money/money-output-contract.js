@@ -1,5 +1,6 @@
 'use strict';
 
+import { sumCanonicalDecimals } from '../../core/money/canonical-money.js';
 import { installUiLifecycle } from '../runtime/lifecycle.js';
 import { MoneyRuntime } from './money-runtime.js';
 
@@ -8,12 +9,13 @@ const FINANCIAL_PAGES = new Set([
 ]);
 const MONEY_HEADING = /(بدهکار|بستانکار|مبلغ|مانده|خالص|جمع|فی|قیمت|بهای|ارزش|فروش|خرید|درآمد|هزینه|دارایی|بدهی|حقوق مالکانه|سود|زیان|مالیات|تخفیف)/;
 const TRAILING_UNIT = /(?:\s*\((?:تومان|ریال)\))+\s*$/;
+const VALUE_UNIT_SUFFIX = /\s+(?:تومان|ریال)\s*$/u;
 
 function cleanHeading(raw) {
   return String(raw ?? '').replace(/\s+/g, ' ').trim().replace(TRAILING_UNIT, '').trim();
 }
 
-function annotateHeaders(root, unitLabel) {
+function annotateHeaders(root, unitLabel, { inlineUnit = false } = {}) {
   root?.querySelectorAll?.('table thead th').forEach(th => {
     const base = cleanHeading(th.dataset.avanMoneyHeaderBase || th.textContent);
     if (!base || !MONEY_HEADING.test(base)) {
@@ -22,11 +24,85 @@ function annotateHeaders(root, unitLabel) {
       delete th.dataset.avanMoneyUnit;
       return;
     }
-    if (th.textContent !== base) th.textContent = base;
+    const next = inlineUnit ? `${base} (${unitLabel})` : base;
+    if (th.textContent !== next) th.textContent = next;
     th.dataset.avanMoneyColumn = '1';
     th.dataset.avanMoneyHeaderBase = base;
     th.dataset.avanMoneyUnit = unitLabel;
   });
+}
+
+function cleanMoneyCellText(raw) {
+  return String(raw ?? '').replace(VALUE_UNIT_SUFFIX, '').trim();
+}
+
+function moneyColumnIndexes(table) {
+  const headers = [...(table.querySelectorAll?.('thead tr:last-child th') || [])];
+  return headers
+    .map((th, index) => th.dataset.avanMoneyColumn === '1' ? index : -1)
+    .filter(index => index >= 0);
+}
+
+function stripRepeatedUnitsFromReportTables(root) {
+  root?.querySelectorAll?.('table').forEach(table => {
+    const indexes = moneyColumnIndexes(table);
+    if (!indexes.length) return;
+    table.querySelectorAll('tbody tr, tfoot tr').forEach(row => {
+      const cells = [...row.children];
+      indexes.forEach(index => {
+        const cell = cells[index];
+        if (!cell || cell.children.length) return;
+        const next = cleanMoneyCellText(cell.textContent);
+        if (cell.textContent !== next) cell.textContent = next;
+      });
+    });
+  });
+}
+
+function canonicalColumnSum(table, index) {
+  const values = [];
+  for (const row of table.querySelectorAll('tbody tr')) {
+    const cell = row.children[index];
+    if (!cell) continue;
+    const displayed = cleanMoneyCellText(cell.textContent).replace(/^−/, '-');
+    const parsed = MoneyRuntime.parseDecimalInput(displayed || '0');
+    if (!parsed.ok) return null;
+    values.push(parsed.value);
+  }
+  try { return sumCanonicalDecimals(values); }
+  catch { return null; }
+}
+
+function repairTrialBalanceSummary(root) {
+  const table = [...(root?.querySelectorAll?.('table') || [])].find(candidate => {
+    const bases = [...candidate.querySelectorAll('thead th')].map(th => th.dataset.avanMoneyHeaderBase || cleanHeading(th.textContent));
+    return bases.includes('گردش بدهکار') && bases.includes('گردش بستانکار');
+  });
+  if (!table) return;
+
+  const headers = [...table.querySelectorAll('thead tr:last-child th')];
+  const debitIndex = headers.findIndex(th => (th.dataset.avanMoneyHeaderBase || cleanHeading(th.textContent)) === 'گردش بدهکار');
+  const creditIndex = headers.findIndex(th => (th.dataset.avanMoneyHeaderBase || cleanHeading(th.textContent)) === 'گردش بستانکار');
+  if (debitIndex < 0 || creditIndex < 0) return;
+
+  const debit = canonicalColumnSum(table, debitIndex);
+  const credit = canonicalColumnSum(table, creditIndex);
+  if (debit === null || credit === null) return;
+
+  const summary = root.querySelector('.summary-strip');
+  if (!summary) return;
+  const pills = [...summary.querySelectorAll('.summary-pill')];
+  const debitPill = pills.find(node => /^بدهکار\b/.test(node.textContent.trim()));
+  const creditPill = pills.find(node => /^بستانکار\b/.test(node.textContent.trim()));
+  const balancePill = pills.find(node => /^(?:متوازن|نامتوازن)\b/.test(node.textContent.trim()));
+  if (debitPill) debitPill.textContent = `بدهکار ${MoneyRuntime.formatCanonicalDecimal(debit)}`;
+  if (creditPill) creditPill.textContent = `بستانکار ${MoneyRuntime.formatCanonicalDecimal(credit)}`;
+  if (balancePill) {
+    const balanced = debit === credit;
+    balancePill.textContent = balanced ? 'متوازن' : 'نامتوازن';
+    balancePill.classList.toggle('pos', balanced);
+    balancePill.classList.toggle('neg', !balanced);
+  }
 }
 
 function ensureUnitBadge(root, unitLabel, detail = false) {
@@ -56,7 +132,12 @@ export function projectMoneyOutput(documentObject = document) {
   const content = documentObject.getElementById('content');
   if (content && FINANCIAL_PAGES.has(title)) {
     ensureUnitBadge(content, unitLabel, false);
-    annotateHeaders(content, unitLabel);
+    const isPreparedReports = title === 'گزارش‌ها';
+    annotateHeaders(content, unitLabel, { inlineUnit: isPreparedReports });
+    if (isPreparedReports) {
+      repairTrialBalanceSummary(content);
+      stripRepeatedUnitsFromReportTables(content);
+    }
   }
 
   const backdrop = documentObject.getElementById('modalBackdrop');
@@ -82,7 +163,12 @@ export function installMoneyOutputContract({ globalObject = window, documentObje
       window.setTimeout(() => Lifecycle.schedule('money-output-click'), 0);
     }
   }, true);
-  const api = Object.freeze({ installed: true, project: () => projectMoneyOutput(documentObject), annotateHeaders });
+  const api = Object.freeze({
+    installed: true,
+    project: () => projectMoneyOutput(documentObject),
+    annotateHeaders,
+    stripRepeatedUnitsFromReportTables
+  });
   globalObject.AvanMoneyOutput = api;
   Lifecycle.schedule('money-output-ready');
   return api;
