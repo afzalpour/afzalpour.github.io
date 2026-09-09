@@ -12,10 +12,16 @@ for (const required of [
   'src/ui/money/money-inputs.js',
   'src/ui/money/money-output-contract.js',
   'src/ui/money/invoice-money-workspace.js',
+  'src/ui/settlement/settlement-save-boundary-v3.js',
   'src/ui/settlement/settlement-workspace-v2.js'
 ]) {
   assert.equal(index.includes(`src="${required}"`), true, `${required} must be active`);
 }
+assert.equal(
+  index.indexOf('src/ui/settlement/settlement-save-boundary-v3.js') < index.indexOf('rc14-catalog-settlement-v61.js'),
+  true,
+  'settlement-save-boundary-v3 must own the operation key before v61 compatibility loads'
+);
 
 const taxDate = read('src/ui/tax/tax-date-aware.js');
 assert.equal(taxDate.includes('calculateVatAmount'), false);
@@ -33,13 +39,17 @@ assert.equal(invoice.includes('rc15TaxMetadataReady'), true);
 assert.equal(invoice.includes('displayDecimalToCanonicalTenth'), true);
 assert.equal(invoice.includes('canonicalTenthsToDecimal'), true);
 assert.equal(invoice.includes('MoneyRuntime.formatCanonicalDecimal(total)'), true);
-assert.equal(invoice.includes("CANONICAL_TENTH_PRECISION_EXCEEDED"), true);
+assert.equal(invoice.includes('MoneyRuntime.inputWords(raw)'), true);
+assert.equal(invoice.includes('avanMoneyWords'), true);
+assert.equal(invoice.includes('CANONICAL_TENTH_PRECISION_EXCEEDED'), true);
 assert.equal(invoice.includes('RIAL_NOT_DIVISIBLE_BY_10'), false);
 
 const core = read('src/core/money/canonical-money.js');
 assert.equal(core.includes('CANONICAL_TENTH_SCALE'), true);
 assert.equal(core.includes('CANONICAL_TENTH_PRECISION_EXCEEDED'), true);
 assert.equal(core.includes('parsed.micros % CANONICAL_TENTH_SCALE !== 0n'), true);
+assert.equal(core.includes('canonicalDecimalAmountInWords'), true);
+assert.equal(core.includes("parts.push(`${integerToPersianWords(rial)} ریال`)"), true);
 
 const inputs = read('src/ui/money/money-inputs.js');
 assert.equal(inputs.includes("const DECIMAL_NAMES = new Set(['cost', 'unit_cost'])"), true);
@@ -51,7 +61,25 @@ const output = read('src/ui/money/money-output-contract.js');
 assert.equal(output.includes('stripRepeatedUnitsFromReportTables'), true);
 assert.equal(output.includes('inlineUnit: isPreparedReports'), true);
 assert.equal(output.includes('repairTrialBalanceSummary'), true);
+assert.equal(output.includes('centerReportHeaders(content)'), true);
+assert.equal(output.includes("th.style.textAlign = 'center'"), true);
+assert.equal(output.includes('annotateHeaders(modal, unitLabel, { inlineUnit: true })'), true);
+assert.equal(output.includes('stripRepeatedUnitsFromReportTables(modal)'), true);
 assert.equal(output.includes('VALUE_UNIT_SUFFIX'), true);
+
+const settlement = read('src/ui/settlement/settlement-workspace-v2.js');
+assert.equal(settlement.includes('canonicalDecimalToTenths'), true);
+assert.equal(settlement.includes('displayDecimalToCanonicalTenth(visible.value'), true);
+assert.equal(settlement.includes('MoneyRuntime.formatCanonicalDecimal'), true);
+assert.equal(settlement.includes('MoneyRuntime.parseInput'), false);
+assert.equal(settlement.includes("BigInt(form.dataset.avanCanonicalInvoiceTotalToman"), false);
+
+const settlementSave = read('src/ui/settlement/settlement-save-boundary-v3.js');
+assert.equal(settlementSave.includes("architecture: 'settlement-save-boundary-v3'"), true);
+assert.equal(settlementSave.includes("C.operations.use('rpc', 'settlement:invoice-plan'"), true);
+assert.equal(settlementSave.includes('canonicalDecimalToTenths'), true);
+assert.equal(settlementSave.includes('persisted?.[0]?.total_amount'), true);
+assert.equal(settlementSave.includes('integerBig'), false);
 
 const runtime = read('src/ui/money/money-runtime.js');
 assert.equal(runtime.includes('carriesCanonicalFraction'), true);
@@ -67,5 +95,9 @@ const print = read('rc12-print-export.js');
 assert.equal(print.includes('avan-print-money-unit'), true);
 assert.equal(print.includes("csvCell('واحد مبالغ')"), true);
 assert.equal(print.includes("th[data-avan-money-unit]"), true);
+
+const sw = read('sw.js');
+assert.equal(sw.includes('avan-staging-rc1-v78-live-regression-gate'), true);
+assert.equal(sw.includes('src/ui/settlement/settlement-save-boundary-v3.js'), true);
 
 console.log('money-architecture-v3: PASS');
