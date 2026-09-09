@@ -85,8 +85,10 @@ assert.match(moneyOutput, /centerReportHeaders\(content\)/,
   'all prepared report column headings must be centered');
 assert.match(moneyOutput, /centerPreparedReportTitles\(content\)/,
   'all visible prepared report titles must be centered');
-assert.match(moneyOutput, /\[data-r\]/,
-  'money/report projection must rerun after prepared report tab changes');
+assert.match(moneyOutput, /\[data-report\]/,
+  'money/report projection must rerun after native prepared report tab changes');
+assert.doesNotMatch(moneyOutput, /\[data-r\]/,
+  'obsolete report selector must not drive report presentation');
 assert.match(moneyOutput, /annotateHeaders\(modal, unitLabel, \{ inlineUnit: true \}\)/,
   'financial detail headings must carry the unit instead of each amount cell');
 assert.match(moneyOutput, /stripRepeatedUnitsFromReportTables\(modal\)/,
