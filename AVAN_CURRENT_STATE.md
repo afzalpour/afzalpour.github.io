@@ -1,6 +1,6 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: **2026-09-10 — Settings no-layout-shift Live PASS (PR #91 / PR Actions #119 / main Actions #120 / Pages #318)**. broader RC1.5 browser/PWA Live acceptance is still pending.
+آخرین به‌روزرسانی مرجع: **2026-09-10 — RC1.5 Final RC Engineering Gate در حال بسته‌شدن روی `release/rc15-final-gate`؛ broader RC1.5 Live acceptance هنوز کامل نشده است.**
 
 این فایل Source of Truth وضعیت جاری پروژه است. **Engineering/Backend PASS جایگزین Live PASS نیست** و Live فقط با تأیید صریح کاربر ثبت می‌شود.
 
@@ -22,7 +22,7 @@ Repository: `afzalpour/afzalpour.github.io`
 - Production runtime commit: `81b5c54643267842a8f225ee09668ade2fc95052`.
 - Production Pages run: `34141884953` = success.
 - Production SW cache: `avan-prod-rc1-4-v1`.
-- rollback branch: `prod-backup-20260907-rc1-4-pre`.
+- existing rollback branch: `prod-backup-20260907-rc1-4-pre`.
 - Production root runtime has **not** been promoted to RC1.5.
 
 ### RC1.5 Staging engineering state
@@ -32,51 +32,60 @@ Repository: `afzalpour/afzalpour.github.io`
 - AC-1 — Frontend Architecture Consolidation = **ENGINEERING PASS**.
 - RC1.5-C — Tax UX & VAT Reports = **BACKEND PASS / FRONTEND ENGINEERING PASS / broader LIVE PENDING**.
 - ADR-0019 one-Rial money precision + report/settlement fixes = **ENGINEERING PASS**.
-- RC1.5-D e-Invoice pre-validation / provider-neutral adapter = **ENGINEERING PASS** via PR #82 / Actions #95.
-- Integrated Tax + Settlement precision = **ENGINEERING PASS** via PR #83 / Actions #99 and #100.
-- Full active-runtime regression = **ENGINEERING PASS** via PR #85 / Actions #103 and #104 / Pages #312.
-- Final Web/PWA + iPhone hardening = **ENGINEERING PASS** via PR #86 / Actions #105 and #106 / Pages #313.
+- RC1.5-D e-Invoice pre-validation / provider-neutral adapter = **ENGINEERING PASS + explicit feature Live acceptance**.
+- Integrated Tax + Settlement precision = **ENGINEERING PASS**.
+- Full active-runtime regression = **ENGINEERING PASS**.
+- Final Web/PWA + iPhone hardening = **ENGINEERING PASS / broader Live pending**.
 - Settings no-layout-shift root fix = **ENGINEERING PASS + EXPLICIT USER LIVE PASS** via PR #91.
-- PR #91 merge commit on main: `8115f36ccc4d3e970ade5d7f363eb178b176d7c1`.
-- PR #91 Architecture Gate #119 = success.
-- post-merge main Architecture Gate #120 = success.
-- GitHub Pages #318 = success.
-- latest Staging SW cache: `avan-staging-rc1-v86-settings-no-layout-shift`.
+- Company Context / multi-company entry regressions fixed through PR #93 and PR #94; PR #94 merge commit `328c868e3468f769b2ad93f9ea7ed8900a8f2890`; user explicitly confirmed the refresh problem resolved.
+- Dashboard Risk presentation was hardened in PR #92.
+- Financial-analysis cards were aligned to the accepted Risk presentation pattern in PR #95; merge commit `07b21cd94b7f9f3309460c9855c5546213667488`; user explicitly accepted the result.
+- latest Staging SW cache before Final RC gate: `avan-staging-rc1-v90-financial-analysis-layout`.
 
-### Next gate
+### Final RC gate now in progress
 
-1. Continue explicit RC1.5 browser/PWA Live acceptance for the remaining release scope.
-2. Do **not** re-test the PR #91 Settings jump family unless a regression is observed; that package is accepted.
-3. If the remaining Live scope passes: record RC1.5 Live acceptance and create final RC / promotion-readiness evidence.
-4. Production promotion only after final RC, rollback verification and Production smoke gate.
-5. Full external disaster restore remains OPEN under the current zero-charge constraint unless a genuinely free isolated restore target becomes available.
+Branch: `release/rc15-final-gate`
+
+This gate:
+
+- adds the missing executable `company-context-auth-sync.spec.mjs` behavioral regression to `npm run quality`;
+- aligns `AVAN_MASTER_PROMPT.md` money contract with Accepted ADR-0019 so the obsolete `integer Toman / Rial divisible by 10` rule cannot be reintroduced from the highest-priority source-of-truth file;
+- records the current backend/RLS/security/recovery baseline;
+- creates `avan-staging/RC1_5_FINAL_RC_PROMOTION_READINESS.md`;
+- leaves Production root unchanged.
 
 ---
 
 ## 2) Explicit Live acceptance history
 
-Previously accepted gates remain valid, including:
+Previously accepted gates remain valid, including B-4/B-4.1, RC1 + two-user RLS, RC1.1/1.2/1.3, RC1.3 Production Smoke and RC1.4 inventory/invoice/settlement behavior.
 
-- B-4 Live / B-4.1.
-- RC1 + two-user RLS.
-- RC1.1 / RC1.2 / RC1.3 accepted gates.
-- RC1.3 Production Smoke Gate.
-- RC1.4 inventory/invoice/settlement behavior previously accepted by user.
+### 2026-09-10 — Settings no-layout-shift
 
-### 2026-09-10 — PR #91 Settings no-layout-shift Live PASS
+User explicitly confirmed correct deployed behavior for:
 
-User explicitly confirmed the deployed Staging behavior is correct for the four reported regressions:
+- **واحد پول** — no visible jump/regression.
+- **کاربران و دسترسی‌ها** — no visible jump/regression.
+- **متن زیر «دسترسی پشتیبانی آوان»** — stable.
+- **گزارش فعالیت** — stable.
 
-- **واحد پول**: no visible jump/regression.
-- **کاربران و دسترسی‌ها**: no visible jump/regression.
-- **متن زیر «دسترسی پشتیبانی آوان»**: stable; no visible jump/regression.
-- **گزارش فعالیت**: stable and no longer broken by the competing Settings render paths.
+### 2026-09-10 — e-Invoice prevalidation
 
-This acceptance closes the PR #91 Live Gate only. It does **not** by itself declare the entire accumulated RC1.5 release Live PASS.
+User explicitly confirmed **«پیش‌اعتبارسنجی صورتحساب الکترونیکی»** works correctly in all exposed locations discussed. RC1.5 remains prevalidation-only; this acceptance does not enable transmission.
 
-Core Health drill-down remains engineering-covered when counters are zero; no claim is made that a nonzero drill-down was browser-verified by the user.
+### 2026-09-10 — Company entry/auth hydration
 
-**Still pending broader RC1.5 Live acceptance:** accumulated A/B/C/D release behavior, one-Rial invoice/report/settlement paths, integrated VAT+Settlement, full regression, final Web/PWA/iPhone polish, and e-Invoice preflight as a full release gate.
+After PR #94, user explicitly confirmed the Company Context refresh problem is resolved. A multi-company user must hydrate authoritative memberships immediately after authentication without manual browser refresh.
+
+### 2026-09-10 — Financial analysis presentation
+
+After PR #95, user explicitly accepted the dashboard **تحلیل مالی** card layout and requested proceeding to the five final release actions.
+
+### Previously accepted custom report
+
+The safe composite custom-report/event-matrix behavior was previously user-accepted and remains closed unless a regression is observed.
+
+**The entire accumulated RC1.5 release is NOT yet declared Live PASS.** Remaining Live focus is listed in section 15.
 
 ---
 
@@ -88,56 +97,91 @@ Core Health drill-down remains engineering-covered when counters are zero; no cl
 - Avan is Multi-tenant / Multi-company SaaS.
 - Journal lifecycle = `Draft → Posted → Reversed`; Posted entries/lines are immutable.
 - Canonical money = **Toman with 0.1-Toman precision = 1 Rial** under ADR-0019.
-- `1515 Rial` must persist losslessly as `151.5 Toman`; no silent sub-Rial rounding.
-- generic integer-money flows may retain their established contract until explicitly migrated but may not reinterpret decimal Canonical values.
+- `1515 Rial` must persist losslessly as `151.5 Toman`; the obsolete divisibility-by-10 requirement is not active.
+- sub-Rial values are rejected rather than silently rounded.
 - Ledger must remain balanced; orphan journal lines must remain zero.
 - browser Local/Session storage is not a financial datastore.
 - account hierarchy is structural; only valid leaves are postable.
 - user-visible UI/errors are Persian-first except unavoidable standards such as PDF/CSV/SKU.
 - Frontend migration follows Strangler Pattern; no full rewrite.
 - no new shared-client monkey patching; Operation Pipeline / central lifecycle composition are the extension boundaries.
-- business calculation/validation logic should be pure/domain-level and regression-testable where practical.
 - AI/automation remains Human-controlled and explainable.
 
 ---
 
-## 4) Latest accounting / security integrity baseline
+## 4) Latest accounting / security integrity baseline — 2026-09-10
 
-Latest read-only regression on 2026-09-09:
+Read-only snapshot; this Final RC gate performed **no financial mutation**.
 
-- Posted/Reversed Ledger debit = credit = **4,073,483,384.7 Toman**.
+Current data counts:
+
+- Companies/Workspaces: **7**.
+- Workspace membership rows: **8**.
+- Accounts: **546**.
+- Journal entries: **64**.
+- Journal lines: **144**.
+- Invoices: **30**.
+- Storage objects: **25**.
+
+Accounting integrity:
+
+- Posted/Reversed Ledger debit = **4,073,484,051.5 Toman**.
+- Posted/Reversed Ledger credit = **4,073,484,051.5 Toman**.
 - unbalanced Posted/Reversed journals = **0**.
 - orphan journal lines = **0**.
-- invoice `subtotal + tax` vs final-total mismatches = **0**.
+- authoritative `invoice_integrity(wid)` returned `total_mismatch=0` and `posted_without_journal=0` for **all 7 Companies**.
 - Posted/Reversed invoices without journal = **0**.
 - settlement schedule total mismatches = **0**.
 - orphan settlement schedules = **0**.
-- orphan financial checks = **0**.
-- inventory reconciliation failures = **0 across all 6 Companies**.
-- authenticated-executable `public SECURITY DEFINER` functions = **0**.
-- relevant invoice/settlement/check/journal monetary columns are `numeric(20,1)`.
+- orphan financial checks by invoice/schedule = **0**.
+- inventory reconciliation failures = **0 across all 7 Companies**.
+- relevant invoice/journal/settlement/check monetary columns remain one-Rial-compatible `numeric(...,1)` where required.
 
-Current Tax state observed read-only:
+Legacy invoice note:
+
+- a raw generic comparison finds **25 historical invoices with `subtotal_amount IS NULL`** and populated historical `total_amount`.
+- these are legacy pre-Tax-bridge rows and are not current VAT-total mismatches; the authoritative integrity function reports zero mismatch in every Company.
+- this Final RC gate does not backfill or reinterpret historical financial rows.
+
+Tax state:
 
 - Tax-enabled Company/settings = **1**.
-- e-Invoice enabled on that setting = **0**.
-- that enabled setting currently has no tax identifier; the engineering gate did not mutate it.
-- if e-Invoice is later enabled without seller identity completion, prevalidation is expected to block readiness.
+- e-Invoice-enabled Company/settings = **0**.
+- the Tax-enabled setting currently has no seller tax identifier = **1**.
+- this is intentionally not mutated; future e-Invoice submission readiness must remain blocked until seller identity is complete.
 
 ---
 
-## 5) Multi-company / security boundary
+## 5) Multi-company / RLS / privileged-function boundary
 
-Accepted baseline:
+Accepted architecture:
 
 - central `CompanyContext` + explicit active Company.
 - Company Portfolio (`شرکت‌های من`).
 - no hidden first-workspace tenant selection.
 - CompanyBoundary over legacy reads.
 - Company creation/lifecycle/member limits enforced at authoritative boundaries.
-- Platform Admin is separate from Company Ledger authority.
-- Support access is Company-bound, reason-required, time-limited and read-only.
-- authenticated-executable public SECURITY DEFINER exposure remains zero.
+- Platform Admin remains separate from Company Ledger authority.
+- Support access remains Company-bound, reason-required, time-limited and read-only.
+
+Final RC read-only verification:
+
+- Public base tables without RLS = **0**.
+- public SECURITY DEFINER functions = **9** total internal/helper/trigger functions.
+- authenticated-executable public SECURITY DEFINER = **0**.
+- anon-executable public SECURITY DEFINER = **0**.
+- real `authenticated` role RLS rehearsal for a one-Company member:
+  - authorized Company visible = **1**.
+  - unrelated Companies visible = **0**.
+  - authorized Company accounts visible = **81**.
+  - unrelated Company accounts visible = **0**.
+
+Supabase Security Advisor:
+
+- `workspace_invitations`: RLS enabled/no policy, but no direct `anon`/`authenticated` table grants; direct Data API access remains closed.
+- built-in Leaked Password Protection = **disabled** under the current provider/zero-charge path; application password/session guards remain compensating controls. Do not mark provider protection fixed.
+
+Performance Advisor findings (unindexed foreign keys, unused indexes and `custom_reports` auth-initplan optimization) are **non-blocking performance debt** and are not being mixed into the frozen release candidate as late database changes.
 
 ---
 
@@ -162,7 +206,7 @@ Inventory:
 - Movement Ledger is quantity/value Source of Truth.
 - posted movements are immutable; correction uses reversal.
 - moving weighted-average costing.
-- all 6 Companies passed the latest reconciliation check.
+- all **7 Companies** pass the current reconciliation view.
 
 ---
 
@@ -187,28 +231,29 @@ Settlement:
 - supported: اعتباری / نقدی / چکی / اقساطی / ترکیبی.
 - schedule total must equal final invoice total exactly.
 - `src/domains/settlement/settlement-plan-contract.js` owns canonical exact validation.
-- locked regression: `151.5 Toman + 15.2 VAT = 166.7 Toman` final, including exact Settlement plan validation.
-- a 0.1-Toman mismatch is rejected; sub-Rial amounts are rejected rather than rounded.
-- legacy v61 fallback may remain as compatibility source code but is inert because the modern operation owner registers first; direct shared-client overwrites = 0.
+- locked regression: `151.5 Toman + 15.2 VAT = 166.7 Toman` final.
+- installment regression `55.6 + 55.6 + 55.5 = 166.7` passes; `166.6` mismatch is rejected.
+- sub-Rial amounts are rejected rather than rounded.
+- legacy v61 fallback may remain as compatibility source but is inert because the modern operation owner registers first; direct shared-client overwrites remain 0.
 
 ---
 
-## 8) Reports / print / Persian UX
+## 8) Reports / print / dashboard UX
 
 - monetary inputs use three-digit grouping where applicable.
 - invoice monetary fields expose Persian amount-in-words.
 - reports/tables/print surfaces carry the active money unit in monetary headings.
 - prepared report cells do not repeat `تومان/ریال` after every number.
-- prepared report headings/titles are centered through the centralized presentation contract where required.
 - receipt/payment/transfer detail views follow heading-only unit presentation.
 - custom reporting includes the safe predefined `composite_events` event-matrix plus individual source catalogs; it is not arbitrary user SQL.
-- user-visible technical errors remain translated to safe Persian messages.
+- Dashboard `کنترل و ریسک` cards use title-above/value-below presentation with overflow protection.
+- Dashboard `تحلیل مالی` cards use the same presentation contract after PR #95.
 
 ---
 
 ## 9) Settings rendering contract
 
-After PR #91, Settings has a single layout owner: `src/ui/settings/settings-layout-v2.js`.
+Settings has a single layout owner: `src/ui/settings/settings-layout-v2.js`.
 
 Deterministic extension order:
 
@@ -217,12 +262,12 @@ Deterministic extension order:
 Invariants:
 
 - `rc13-company-context.js` must not observe/rearrange Settings cards.
-- `rc13-operational-audit.js` must not use a private content MutationObserver or delayed timer to append the Activity card.
-- late Profile/Audit nodes are captured into deterministic slots rather than becoming a competing root-level layout owner.
+- `rc13-operational-audit.js` must not use a private content MutationObserver or delayed timer to append Activity.
+- late Profile/Audit nodes are captured into deterministic slots.
 - Activity Report uses a persistent shell and bounded internal scrolling.
 - regression tests reject return of the old competing-render patterns.
 
-This contract is **Live accepted by the user on 2026-09-10** for the four previously reported jump/breakage symptoms.
+This contract is **explicitly Live accepted** for the previously reported jump/breakage symptoms.
 
 ---
 
@@ -231,54 +276,59 @@ This contract is **Live accepted by the user on 2026-09-10** for the four previo
 - provider-neutral prevalidation only; no external submission enabled.
 - browser contains no provider secret/private credential.
 - preflight validates stable accounting/tax/identity/readiness invariants and reports all findings.
-- volatile provider/regulatory template rules must be versioned in adapters rather than hard-coded into Core.
+- volatile provider/regulatory rules belong in versioned adapters rather than Core.
 - UI explicitly states that no invoice has been transmitted.
-- missing seller tax identity is a readiness blocker when e-Invoice submission becomes relevant.
+- missing seller tax identity is a readiness blocker when submission becomes relevant.
+- user explicitly confirmed the current prevalidation UI works in all discussed exposed locations.
 
 Governing ADR: `docs/adr/0021-electronic-invoice-prevalidation-adapter-boundary.md`.
 
 ---
 
-## 11) Final Web/PWA engineering hardening
+## 11) Web/PWA / Auth / Company UX
 
-PR #86 completed:
+Web/PWA engineering:
 
-- final font stack uses loaded **Vazirmatn** with Apple/system fallbacks.
-- iPhone/PWA presentation includes `100dvh` and safe-area-aware mobile behavior.
-- PWA orientation is `any`, so accounting tables may use landscape.
-- Service Worker uses network-first same-origin caching but HTML shell fallback is **navigation-only**.
-- missing JS/CSS/image resources no longer receive `index.html`, preventing MIME / `Unexpected token <` offline failures.
-- `sw.js` is syntax-checked in CI.
-- final Web/PWA regression is part of `npm run quality`.
-- Actions #105 (PR) and #106 (main) = success.
-- Pages #313 = success.
+- final font stack uses loaded Vazirmatn with Apple/system fallbacks.
+- iPhone/PWA presentation includes `100dvh` and safe-area-aware behavior.
+- PWA orientation is `any`.
+- Service Worker HTML fallback is navigation-only; missing JS/CSS/image does not receive HTML.
+- latest Staging cache before Final RC = `avan-staging-rc1-v90-financial-analysis-layout`.
 
-PR #91 subsequently bumped Staging cache to `avan-staging-rc1-v86-settings-no-layout-shift`; post-merge main Actions #120 and Pages #318 both succeeded.
+Auth/Company:
 
-Evidence: `avan-staging/RC1_5_FINAL_WEB_PWA_GATE_EVIDENCE.md` plus PR #91.
+- login password visibility control is present.
+- zero-company onboarding is explicit.
+- Company Context publishes authoritative refresh after authentication so the Company Shell cannot remain stuck on its pre-login empty snapshot.
+- deterministic company selection avoids parallel focus/open-time refresh loops.
+- the user explicitly confirmed manual refresh is no longer required after the PR #94 fix.
 
 ---
 
-## 12) Auth / Session / password policy
+## 12) Session / password policy
 
 - existing-user login + recovery flow.
-- zero-company onboarding path is explicitly handled.
-- password visibility control is available on the login flow.
 - signup/recovery password guard: minimum 12 chars + letter + number + symbol + local common-password denylist.
 - session guard: 60-minute inactivity + 12-hour maximum browser session + clock-skew protection.
-- Supabase built-in leaked-password screening remains unavailable/disabled under the zero-charge path; application controls are the compensating control and provider protection is not falsely marked fixed.
+- Supabase built-in leaked-password screening remains unavailable/disabled under current zero-charge/provider posture; this is a known limitation.
 
 ---
 
-## 13) Backup / Restore
+## 13) Backup / Restore / rollback
 
 Runbook: `avan-staging/BACKUP_RESTORE_RUNBOOK.md`.
 
-- Free Transactional Recovery Rehearsal = PASS.
-- full external disaster restore = **OPEN / NOT FULL PASS** because no genuinely free isolated restore target is available in the connected environment.
+- Free Transactional Recovery Rehearsal = **PASS**.
+- full external disaster restore = **OPEN / NOT FULL PASS** because no genuinely free isolated restore target is available.
 - never restore against `Avan-production` itself.
 - no paid Supabase branch/project workaround under current policy.
-- if unresolved at release, document this explicitly as a known zero-charge limitation.
+- current Release-readiness baseline is recorded in `avan-staging/RC1_5_FINAL_RC_PROMOTION_READINESS.md`.
+
+Rollback:
+
+- existing `prod-backup-20260907-rc1-4-pre` branch was re-verified to exist.
+- before RC1.5 Production promotion, create `prod-backup-20260910-rc1-5-pre-promotion` from the exact final pre-promotion `main` commit.
+- RC1.5 DB foundations are already applied to the shared backend and current RC1.4 Production runs against that schema; planned RC1.5 rollback is therefore a frontend/root rollback, not destructive DB rollback.
 
 ---
 
@@ -286,52 +336,54 @@ Runbook: `avan-staging/BACKUP_RESTORE_RUNBOOK.md`.
 
 Governing ADR: `docs/adr/0016-modular-runtime-no-monkey-patching.md`.
 
-Current automated gate includes:
+Automated release gate includes:
 
-- syntax validation, including Service Worker.
+- syntax validation including Service Worker and Company Context.
 - Operation Pipeline/lifecycle tests.
 - money precision + report contract tests.
 - VAT + integrated Tax/Settlement regression.
 - reconciliation intelligence tests.
 - Settings stable-shell/no-layout-shift regression.
 - zero-company/auth UX regression.
+- **Company auth→membership hydration behavioral regression** added in Final RC gate.
 - composite custom-report regression.
 - e-Invoice prevalidation tests.
 - full active-runtime release regression.
-- final Web/PWA/iPhone regression.
+- final Web/PWA/iPhone + dashboard presentation regression.
 - architecture audits.
 
-Latest evidence:
+Latest merged evidence before Final RC branch:
 
-- PR #85 Actions #103 = PASS; main #104 = PASS; Pages #312 = PASS.
-- PR #86 Actions #105 = PASS; main #106 = PASS; Pages #313 = PASS.
-- PR #91 Actions #119 = PASS; main #120 = PASS; Pages #318 = PASS.
+- PR #91 Actions #119 / main #120 / Pages #318 = success.
+- PR #94 Actions #126 / main #127 / Pages #323 = success.
+- PR #95 Actions #128 / main #129 / Pages #324 = success.
 - direct shared-client overwrites = 0 under current architecture audit.
+
+Final RC branch must pass the same full `npm run quality` after the new behavioral test and source-of-truth corrections.
 
 ---
 
-## 15) Next operating step
+## 15) Next operating step — remaining explicit RC1.5 Live Gate
 
-The PR #91 Settings Live Gate is closed. The next gate is the **remaining explicit browser/PWA Live acceptance of the accumulated RC1.5 release**; no hidden engineering PASS should be substituted for user acceptance.
+Already accepted items (Settings jump family, e-Invoice prevalidation, Company auth hydration, Financial-analysis layout, previously accepted composite report) should not be re-tested unless a regression is observed.
 
-Remaining Live focus includes:
+The remaining user-observable release scope is:
 
-1. `1515 Rial ↔ 151.5 Toman`, amount-in-words, invoice save and Settlement exactness.
-2. VAT-inclusive final total → Settlement when Tax is enabled.
-3. sale/purchase invoice and all Settlement plan types.
-4. prepared reports plus receipt/payment/transfer detail unit presentation.
-5. iPhone/mobile Persian font, safe-area, keyboard/toast behavior.
-6. installed PWA open/offline shell behavior without JS/CSS MIME errors.
-7. e-Invoice preflight findings and explicit no-transmission message.
-8. composite custom-report behavior as the safe event-stream matrix where relevant.
+1. **One-Rial money** — `1515 Rial ↔ 151.5 Toman`, correct amount-in-words, invoice save with no obsolete divisibility error.
+2. **VAT → final invoice → Settlement** — reference `151.5 + 15.2 = 166.7 Toman` reaches Settlement exactly.
+3. **Invoice/Settlement modes** — sale/purchase plus credit, cash, check and at least installment/mixed; no zeroing or silent rounding.
+4. **Reports/print** — active money unit in headings/print context, not repeated after every numeric cell; receipt/payment/transfer detail follows the same contract.
+5. **iPhone/mobile** — Persian font/fallback, safe-area, forms/keyboard, toast and landscape table usability.
+6. **PWA offline shell** — after one online load, installed PWA reopens offline without white screen, MIME error or `Unexpected token <`.
 
-After explicit user PASS of the remaining release scope:
+After the user explicitly reports PASS for these remaining six items:
 
-- record RC1.5 Live PASS in this file;
-- produce final RC/promotion-readiness evidence;
-- verify rollback path;
-- promote to Production only through the governed release workflow;
-- run Production smoke gate before declaring the Web/PWA release complete.
+- record **RC1.5 Live PASS** in this file;
+- freeze the exact candidate SHA;
+- create/verify the new pre-promotion rollback branch;
+- promote the vetted Staging runtime to Production root with a Production SW cache identity;
+- run Production CI/Pages and Production Smoke Gate;
+- only then declare **RC1.5 — Production Released**.
 
 ---
 
@@ -341,4 +393,4 @@ After final Web/PWA release only:
 
 - Windows `.exe` / desktop packaging.
 - true offline mode requires local persistence plus conflict-aware synchronization; a web wrapper alone is not considered offline support.
-- future areas may include treasury/bank matching, payroll, fixed assets, budgeting, workflow/approval, consolidated reporting and external integrations.
+- future priorities may include treasury/bank reconciliation, cash/check intelligence, advanced reconciliation, payroll, fixed assets, budgeting, workflow/approval, consolidated reporting and external integrations.

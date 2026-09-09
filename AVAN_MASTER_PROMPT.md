@@ -80,11 +80,14 @@
 - orphan journal lines باید صفر بماند.
 
 ### 4.2 واحد پول
-- Canonical Ledger storage: **integer Toman**.
+- Canonical money تحت ADR-0019 برابر است با **Toman با دقت 0.1 Toman = 1 Rial**.
+- ستون‌ها و boundaryهای مالی مهاجرت‌شده باید یک ریال را بدون اتلاف ذخیره کنند؛ در PostgreSQL این قرارداد با `numeric(...,1)` یا representation دقیق هم‌ارز پیاده می‌شود، نه integer-Toman اجباری.
 - تغییر نمایش ریال/تومان نباید داده تاریخی را Rewrite یا Reinterpret کند.
-- Rial display = Toman × 10.
-- Rial input در boundary به Toman تبدیل می‌شود و باید بر 10 بخش‌پذیر باشد.
+- Rial display = Toman × 10 و `1515 Rial` باید بدون اتلاف معادل `151.5 Toman` باشد.
+- ورودی ریالی **نباید** مجبور به مضرب 10 بودن باشد؛ قانون قدیمی `RIAL_NOT_DIVISIBLE_BY_10` برای جریان‌های مهاجرت‌شده منسوخ است.
+- sub-Rial precision مجاز نیست و باید به‌جای silent rounding رد شود.
 - Preference نمایش باید Cloud-backed و per-user/per-workspace باشد، نه داده مالی LocalStorage.
+- ADR-0001 در این بخش با ADR-0019 Superseded شده و نباید به‌عنوان قرارداد فعال بازگردانده شود.
 
 ### 4.3 Workspace و RLS
 - سیستم Workspace-based و Multi-user است.
