@@ -11,6 +11,8 @@ import {
   canonicalTenthsToDecimal,
   formatCanonical,
   formatCanonicalDecimal,
+  displayAmountInWords,
+  canonicalAmountInWords,
   lineCanonicalAmount,
   sumCanonicalDecimals
 } from '../src/core/money/canonical-money.js';
@@ -52,6 +54,13 @@ assert.equal(formatCanonicalDecimal('1000.5', UNIT_RIAL), '10٬005 ریال');
 assert.equal(formatCanonicalDecimal('1000.5', UNIT_TOMAN), '1٬000٫5 تومان');
 assert.equal(formatCanonicalDecimal('151.5', UNIT_RIAL), '1٬515 ریال');
 assert.equal(formatCanonicalDecimal('151.5', UNIT_TOMAN), '151٫5 تومان');
+
+// Persian words follow the active display unit and preserve the one-Rial remainder.
+assert.equal(displayAmountInWords('1515', UNIT_RIAL), 'یک هزار و پانصد و پانزده ریال');
+assert.equal(displayAmountInWords('151.5', UNIT_TOMAN), 'صد و پنجاه و یک تومان و پنج ریال');
+assert.equal(canonicalAmountInWords('151.5', UNIT_RIAL), 'یک هزار و پانصد و پانزده ریال');
+assert.equal(canonicalAmountInWords('151.5', UNIT_TOMAN), 'صد و پنجاه و یک تومان و پنج ریال');
+assert.equal(displayAmountInWords('1515.5', UNIT_RIAL), '', 'sub-Rial input must not get a misleading words projection');
 
 const invoiceLine = lineCanonicalAmount({
   quantity: '1',
