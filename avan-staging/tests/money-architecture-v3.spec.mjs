@@ -30,12 +30,28 @@ assert.equal(taxDate.includes('rc15TaxMetadataReady'), true);
 const invoice = read('src/ui/money/invoice-money-workspace.js');
 assert.equal(invoice.includes("architecture: 'invoice-money-single-writer-v3'"), true);
 assert.equal(invoice.includes('rc15TaxMetadataReady'), true);
-assert.equal(invoice.includes('MoneyRuntime.formatCanonical(subtotal)'), true);
-assert.equal(invoice.includes('MoneyRuntime.formatCanonical(tax)'), true);
+assert.equal(invoice.includes('displayDecimalToCanonicalTenth'), true);
+assert.equal(invoice.includes('canonicalTenthsToDecimal'), true);
+assert.equal(invoice.includes('MoneyRuntime.formatCanonicalDecimal(total)'), true);
+assert.equal(invoice.includes('MoneyRuntime.parseDecimalInput(unitPrice'), true);
+assert.equal(invoice.includes('RIAL_NOT_DIVISIBLE_BY_10'), false);
 
 const inputs = read('src/ui/money/money-inputs.js');
 assert.equal(inputs.includes("const DECIMAL_NAMES = new Set(['cost', 'unit_cost'])"), true);
+assert.equal(inputs.includes("const INVOICE_DECIMAL_NAMES = new Set(['unit_price', 'discount'])"), true);
+assert.equal(inputs.includes("input.closest?.('#invoiceForm') && INVOICE_DECIMAL_NAMES.has"), true);
 assert.equal(inputs.includes("input.dataset.avanMoneyInputMode = mode"), true);
+
+const output = read('src/ui/money/money-output-contract.js');
+assert.equal(output.includes('stripRepeatedUnitsFromReportTables'), true);
+assert.equal(output.includes('inlineUnit: isPreparedReports'), true);
+assert.equal(output.includes('repairTrialBalanceSummary'), true);
+assert.equal(output.includes('VALUE_UNIT_SUFFIX'), true);
+
+const runtime = read('src/ui/money/money-runtime.js');
+assert.equal(runtime.includes('carriesCanonicalFraction'), true);
+assert.equal(runtime.includes('service.formatDecimal(value, options)'), true);
+assert.equal(runtime.includes('service.decimalInputFromCanonical(value)'), true);
 
 const inventory = read('rc14-inventory-operations.js');
 assert.equal(inventory.includes('MoneyRuntime.parseDecimalInput'), true);
