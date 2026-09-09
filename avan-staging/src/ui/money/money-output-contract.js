@@ -17,6 +17,7 @@ function installReportPresentationStyle(documentObject) {
   style.id = 'avanReportPresentationContractStyle';
   style.textContent = `
     #content[data-avan-report-surface="1"]{direction:rtl}
+    #content[data-avan-report-surface="1"] .tabs{justify-content:center!important}
     #content[data-avan-report-surface="1"] .tabs [data-report]{
       text-align:center!important;justify-content:center!important;align-items:center!important;
     }
