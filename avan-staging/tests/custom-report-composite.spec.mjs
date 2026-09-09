@@ -51,7 +51,8 @@ for (const domain of [
   'invoice_settlement_schedule','financial_checks','inventory_movements','inventory_documents','documents'
 ]) assert.equal(sql.includes(domain), true, `composite backend must cover ${domain}`);
 
-assert.match(sw, /avan-staging-rc1-v80-report-live-composite-gate/);
+assert.match(sw, /const CACHE='avan-staging-rc1-v\d+-[^']+'/,
+  'custom report coverage must coexist with any valid versioned staging cache');
 assert.match(sw, /src\/ui\/reports\/custom-report-builder\.js/);
 
 console.log('custom-report-composite.spec.mjs: PASS');

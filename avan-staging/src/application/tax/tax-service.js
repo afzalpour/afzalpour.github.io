@@ -24,7 +24,7 @@ export function createTaxService(client) {
       client.select('workspace_tax_settings', `select=*&workspace_id=eq.${wid}&limit=1`),
       client.select('tax_profiles', `select=id,code,name_fa,treatment,rate,applies_to,rule_version_id,is_active&workspace_id=eq.${wid}&order=code.asc`),
       client.select('tax_rule_versions', 'select=id,name_fa,effective_from,effective_to,standard_vat_rate,status,source_title,source_reference&status=eq.active&order=effective_from.desc'),
-      client.select('inventory_items', `select=id,sku,name,item_type,tax_profile_id,is_active&workspace_id=eq.${wid}&order=name.asc`),
+      client.select('inventory_items', `select=id,sku,name,item_type,tax_profile_id,official_goods_service_id,is_active&workspace_id=eq.${wid}&order=name.asc`),
       client.select('fiscal_years', `select=id,name,date_from,date_to,status&workspace_id=eq.${wid}&order=date_from.desc`),
       client.rpc('workspace_role', { wid })
     ]);
