@@ -19,26 +19,30 @@ function installStyle(documentObject) {
   style.textContent = `
     html[data-avan-settings-layout-active="1"] #content > #currencySettingsCard,
     html[data-avan-settings-layout-active="1"] #content > #rc15TaxSettingsCard,
-    html[data-avan-settings-layout-active="1"] #content > #workspaceAccessCard{
+    html[data-avan-settings-layout-active="1"] #content > #workspaceAccessCard,
+    html[data-avan-settings-layout-active="1"] #content > #avanSupportAccessCard{
       visibility:hidden!important;position:absolute!important;pointer-events:none!important;
     }
     .avan-settings-extension-stack{display:flex;flex-direction:column;gap:18px;margin-top:18px}
-    .avan-settings-extension-slot{display:block;position:relative}
+    .avan-settings-extension-slot{display:block;position:relative;box-sizing:border-box}
     .avan-settings-extension-slot>.section{margin-top:0!important}
-    .avan-account-money-slot{display:block;position:relative;min-height:168px;margin-top:14px}
+    .avan-account-money-slot{display:block;position:relative;min-height:188px;margin-top:14px}
     .avan-settings-extension-slot[data-avan-tax-slot]{min-height:300px}
-    .avan-settings-extension-slot[data-avan-access-slot]{min-height:120px}
+    .avan-settings-extension-slot[data-avan-access-slot]{min-height:410px}
+    .avan-settings-extension-slot[data-avan-support-slot]{min-height:190px}
     .avan-settings-slot-placeholder{
-      width:100%;min-height:100%;border:1px dashed var(--line);border-radius:12px;
+      width:100%;min-height:100%;box-sizing:border-box;border:1px dashed var(--line);border-radius:12px;
       background:var(--surface2);color:var(--faint);display:flex;align-items:center;justify-content:center;
       padding:16px;font-size:12px;text-align:center;
     }
-    .avan-account-money-slot>.avan-settings-slot-placeholder{min-height:168px}
+    .avan-account-money-slot>.avan-settings-slot-placeholder{min-height:188px}
     .avan-settings-extension-slot[data-avan-tax-slot]>.avan-settings-slot-placeholder{min-height:300px}
-    .avan-settings-extension-slot[data-avan-access-slot]>.avan-settings-slot-placeholder{min-height:120px}
+    .avan-settings-extension-slot[data-avan-access-slot]>.avan-settings-slot-placeholder{min-height:410px}
+    .avan-settings-extension-slot[data-avan-support-slot]>.avan-settings-slot-placeholder{min-height:190px}
     .avan-account-money-slot>#currencySettingsCard,
     .avan-settings-extension-slot[data-avan-tax-slot]>#rc15TaxSettingsCard,
-    .avan-settings-extension-slot[data-avan-access-slot]>#workspaceAccessCard{
+    .avan-settings-extension-slot[data-avan-access-slot]>#workspaceAccessCard,
+    .avan-settings-extension-slot[data-avan-support-slot]>#avanSupportAccessCard{
       visibility:visible!important;position:static!important;pointer-events:auto!important;
     }
     .avan-account-money-settings{
@@ -48,6 +52,10 @@ function installStyle(documentObject) {
     .avan-account-money-settings .section-head{align-items:flex-start}
     .avan-account-money-settings h2{font-size:15px;margin:0}
     .avan-account-money-settings .info-box{margin-bottom:0}
+    .avan-access-stable-shell{min-height:410px}
+    .avan-access-stable-body{min-height:310px}
+    .avan-support-stable-shell{min-height:190px}
+    .avan-support-stable-shell [data-avan-support-list]{min-height:72px}
   `;
   documentObject.head.append(style);
 }
@@ -107,7 +115,16 @@ function ensureStableSlots(root, accountCard, documentObject) {
   }
   ensurePlaceholder(accessSlot, 'access', 'کاربران و دسترسی‌ها', '#workspaceAccessCard', documentObject);
 
-  return { moneySlot, taxSlot, accessSlot };
+  let supportSlot = stack.querySelector(':scope > [data-avan-support-slot]');
+  if (!supportSlot) {
+    supportSlot = documentObject.createElement('div');
+    supportSlot.className = 'avan-settings-extension-slot';
+    supportSlot.dataset.avanSupportSlot = '1';
+    stack.append(supportSlot);
+  }
+  ensurePlaceholder(supportSlot, 'support', 'دسترسی پشتیبانی آوان', '#avanSupportAccessCard', documentObject);
+
+  return { moneySlot, taxSlot, accessSlot, supportSlot };
 }
 
 export function prepareSettingsLayout(documentObject = document) {
@@ -129,7 +146,7 @@ export function prepareSettingsLayout(documentObject = document) {
 export function projectSettingsLayout(documentObject = document) {
   const layout = prepareSettingsLayout(documentObject);
   if (!layout) return false;
-  const { root, moneySlot, taxSlot, accessSlot } = layout;
+  const { root, moneySlot, taxSlot, accessSlot, supportSlot } = layout;
 
   const moneyCard = root.querySelector('#currencySettingsCard,[data-avan-money-settings]');
   if (moneyCard) {
@@ -156,6 +173,13 @@ export function projectSettingsLayout(documentObject = document) {
     clearPlaceholder(accessSlot, 'access');
   }
 
+  const supportCard = root.querySelector('#avanSupportAccessCard');
+  if (supportCard) {
+    if (supportCard.parentElement !== supportSlot) supportSlot.append(supportCard);
+    supportCard.dataset.avanSettingsMounted = 'support';
+    clearPlaceholder(supportSlot, 'support');
+  }
+
   return true;
 }
 
@@ -164,8 +188,6 @@ export function installSettingsLayoutV2({ globalObject = window, documentObject 
   installStyle(documentObject);
   const Lifecycle = installUiLifecycle({ globalObject, documentObject });
 
-  // Reserve final destinations before async producers run. Projection remains
-  // late as a compatibility fallback for legacy producers that still append to #content.
   Lifecycle.use('settings:layout-prepare', () => prepareSettingsLayout(documentObject), { priority: 5 });
   Lifecycle.use('settings:layout-v2', () => projectSettingsLayout(documentObject), { priority: 980 });
 
@@ -182,7 +204,11 @@ export function installSettingsLayoutV2({ globalObject = window, documentObject 
     mountTarget(key) {
       const layout = prepareSettingsLayout(documentObject);
       if (!layout) return null;
-      return key === 'money' ? layout.moneySlot : key === 'tax' ? layout.taxSlot : key === 'access' ? layout.accessSlot : null;
+      if (key === 'money') return layout.moneySlot;
+      if (key === 'tax') return layout.taxSlot;
+      if (key === 'access') return layout.accessSlot;
+      if (key === 'support') return layout.supportSlot;
+      return null;
     }
   });
   globalObject.AvanSettingsLayoutV2 = api;
