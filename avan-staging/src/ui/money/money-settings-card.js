@@ -32,54 +32,73 @@ function cardHtml(state) {
   </section>`;
 }
 
-async function render(documentObject = document) {
+function mountReadyCard(state, documentObject = document) {
   const host = settingsHost(documentObject);
-  if (!host) return false;
+  if (!host || !state?.ready) return false;
   const mount = settingsMount(documentObject, host);
-  try {
-    const state = await MoneyRuntime.ready();
-    const existing = host.querySelector('#currencySettingsCard');
-    const signature = `${state.workspaceId}|${state.unit}|${state.revision}`;
-    if (existing?.dataset.signature === signature) return true;
+  const existing = host.querySelector('#currencySettingsCard');
+  const signature = `${state.workspaceId}|${state.unit}|${state.revision}`;
+  if (existing?.dataset.signature === signature) return true;
 
-    const template = documentObject.createElement('template');
-    template.innerHTML = cardHtml(state).trim();
-    const card = template.content.firstElementChild;
-    card.dataset.signature = signature;
-    if (existing) existing.replaceWith(card);
-    else if (mount !== host) mount.append(card);
-    else host.prepend(card);
+  const template = documentObject.createElement('template');
+  template.innerHTML = cardHtml(state).trim();
+  const card = template.content.firstElementChild;
+  card.dataset.signature = signature;
 
-    card.querySelectorAll('[data-avan-money-unit-choice]').forEach(button => {
-      button.addEventListener('click', async () => {
-        const next = button.dataset.avanMoneyUnitChoice;
-        if (!next || next === MoneyRuntime.unit()) return;
-        card.querySelectorAll('button').forEach(node => { node.disabled = true; });
-        try {
-          await MoneyRuntime.setUnit(next, { reload: false });
-          toast(`واحد پول روی ${next === 'rial' ? 'ریال' : 'تومان'} ذخیره شد. صفحه از داده‌های اصلی بازخوانی می‌شود.`);
-          window.setTimeout(() => window.location.reload(), 40);
-        } catch (error) {
-          showError(error, 'money preference save');
-          card.querySelectorAll('button').forEach(node => { node.disabled = false; });
-        }
-      });
-    });
-    return true;
-  } catch (error) {
-    console.warn('[Money settings]', error);
-    return false;
+  if (mount !== host) {
+    card.classList.remove('card', 'section');
+    card.classList.add('avan-account-money-settings');
+    card.dataset.avanSettingsSection = 'account-money';
+    card.dataset.avanSettingsMounted = 'account';
+    mount.querySelector(':scope > [data-avan-settings-placeholder="money"]')?.remove();
   }
+
+  if (existing) existing.replaceWith(card);
+  else if (mount !== host) mount.append(card);
+  else host.prepend(card);
+
+  card.querySelectorAll('[data-avan-money-unit-choice]').forEach(button => {
+    button.addEventListener('click', async () => {
+      const next = button.dataset.avanMoneyUnitChoice;
+      if (!next || next === MoneyRuntime.unit()) return;
+      card.querySelectorAll('button').forEach(node => { node.disabled = true; });
+      try {
+        await MoneyRuntime.setUnit(next, { reload: false });
+        toast(`واحد پول روی ${next === 'rial' ? 'ریال' : 'تومان'} ذخیره شد. صفحه از داده‌های اصلی بازخوانی می‌شود.`);
+        window.setTimeout(() => window.location.reload(), 40);
+      } catch (error) {
+        showError(error, 'money preference save');
+        card.querySelectorAll('button').forEach(node => { node.disabled = false; });
+      }
+    });
+  });
+  return true;
+}
+
+function render(documentObject = document) {
+  if (!settingsHost(documentObject)) return false;
+  if (MoneyRuntime.isReady()) return mountReadyCard(MoneyRuntime.snapshot(), documentObject);
+  void MoneyRuntime.ready()
+    .then(state => mountReadyCard(state, documentObject))
+    .catch(error => console.warn('[Money settings]', error));
+  return false;
 }
 
 export function installMoneySettingsCard({ globalObject = window, documentObject = document } = {}) {
   if (globalObject.AvanMoneySettings?.installed) return globalObject.AvanMoneySettings;
   const Lifecycle = installUiLifecycle({ globalObject, documentObject });
   Lifecycle.use('money:settings-card', () => render(documentObject), { priority: 40 });
-  globalObject.addEventListener('avan:page-rendered', () => Lifecycle.schedule('money-settings-page'));
+
+  globalObject.addEventListener('avan:page-rendered', () => {
+    // settings-layout-v2 creates the final slot synchronously in the same event.
+    // A microtask mounts this ready-state card before the browser paints, avoiding
+    // the previous visible prepend -> move cycle.
+    globalObject.queueMicrotask?.(() => render(documentObject));
+  });
+
   const api = Object.freeze({ installed: true, render: () => render(documentObject) });
   globalObject.AvanMoneySettings = api;
-  Lifecycle.schedule('money-settings-ready');
+  if (MoneyRuntime.isReady()) render(documentObject);
   return api;
 }
 
