@@ -41,6 +41,7 @@ const index = read('index.html');
 const invoiceMoney = read('src/ui/money/invoice-money-workspace.js');
 const moneyInputs = read('src/ui/money/money-inputs.js');
 const moneyOutput = read('src/ui/money/money-output-contract.js');
+const settlementContract = read('src/domains/settlement/settlement-plan-contract.js');
 const settlementSave = read('src/ui/settlement/settlement-save-boundary-v3.js');
 const settlementV2 = read('src/ui/settlement/settlement-workspace-v2.js');
 const finalPolish = read('rc13-final-polish.js');
@@ -106,9 +107,16 @@ assert.doesNotMatch(settlementV2, /MoneyRuntime\.parseInput/,
 assert.doesNotMatch(settlementV2, /BigInt\(form\.dataset\.avanCanonicalInvoiceTotalToman/,
   '151.5 canonical Toman must never collapse to zero in settlement');
 
+assert.match(settlementContract, /canonicalDecimalToTenths/,
+  'the settlement domain contract must own exact canonical one-Rial parsing');
+assert.match(settlementContract, /validateSettlementPlanTotal/,
+  'the settlement domain contract must own schedule-total validation');
 assert.match(settlementSave, /settlement-save-boundary-v3/);
 assert.match(settlementSave, /C\.operations\.use\('rpc', 'settlement:invoice-plan'/);
-assert.match(settlementSave, /canonicalDecimalToTenths/);
+assert.match(settlementSave, /canonicalSettlementAmount/,
+  'save boundary must delegate exact parsing to the settlement domain contract');
+assert.match(settlementSave, /validateSettlementPlanTotal\(total\.value, rows\)/,
+  'save boundary must validate the persisted VAT-inclusive invoice total through the domain contract');
 assert.match(settlementSave, /String\(persisted\?\.\[0\]\?\.total_amount/,
   'persisted numeric(...,1) invoice totals must remain decimal canonical strings');
 assert.doesNotMatch(settlementSave, /integerBig/,
@@ -119,6 +127,7 @@ assert.match(sw, /const CACHE='avan-staging-rc1-v\d+-[^']+'/,
   'PWA cache must keep a versioned Avan staging marker without coupling money tests to one release');
 assert.match(sw, /src\/core\/money\/canonical-money\.js/);
 assert.match(sw, /src\/core\/reconciliation\/transaction-journal-suggestion\.js/);
+assert.match(sw, /src\/domains\/settlement\/settlement-plan-contract\.js/);
 assert.match(sw, /src\/ui\/money\/invoice-money-workspace\.js/);
 assert.match(sw, /src\/ui\/settlement\/settlement-save-boundary-v3\.js/);
 assert.match(sw, /src\/ui\/reports\/reconciliation-workspace\.js/);
