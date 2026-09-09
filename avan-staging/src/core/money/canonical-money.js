@@ -272,17 +272,36 @@ export function integerToPersianWords(value) {
   return negative ? `منفی ${phrase}` : phrase;
 }
 
+export function canonicalDecimalAmountInWords(value, unit) {
+  const normalizedUnit = normalizeUnitOrNull(unit);
+  let tenths = canonicalDecimalToTenths(value);
+  if (!normalizedUnit || tenths === null) return '';
+  const negative = tenths < 0n;
+  if (negative) tenths = -tenths;
+
+  let phrase = '';
+  if (normalizedUnit === UNIT_RIAL) {
+    phrase = `${integerToPersianWords(tenths)} ریال`;
+  } else {
+    const toman = tenths / RIAL_PER_TOMAN;
+    const rial = tenths % RIAL_PER_TOMAN;
+    const parts = [];
+    if (toman > 0n || rial === 0n) parts.push(`${integerToPersianWords(toman)} تومان`);
+    if (rial > 0n) parts.push(`${integerToPersianWords(rial)} ریال`);
+    phrase = parts.join(' و ');
+  }
+  return negative && phrase ? `منفی ${phrase}` : phrase;
+}
+
 export function displayAmountInWords(value, unit) {
   const normalizedUnit = normalizeUnitOrNull(unit);
-  const amount = typeof value === 'bigint' ? value : integerFromText(value);
-  if (!normalizedUnit || amount === null) return '';
-  const words = integerToPersianWords(amount);
-  return words ? `${words} ${unitLabel(normalizedUnit)}` : '';
+  if (!normalizedUnit) return '';
+  const parsed = displayDecimalToCanonicalTenth(value, normalizedUnit);
+  return parsed.ok ? canonicalDecimalAmountInWords(parsed.value, normalizedUnit) : '';
 }
 
 export function canonicalAmountInWords(value, unit) {
-  const displayed = canonicalToDisplay(value, unit);
-  return displayed === null ? '' : displayAmountInWords(displayed, unit);
+  return canonicalDecimalAmountInWords(value, unit);
 }
 
 export function lineCanonicalAmount({ quantity, unitPrice, discount = '0', unit = UNIT_TOMAN }) {

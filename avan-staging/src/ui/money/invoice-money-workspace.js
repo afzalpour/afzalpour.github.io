@@ -99,6 +99,28 @@ function setMoneyError(input, code) {
   input.setAttribute('aria-invalid', 'true');
 }
 
+function projectInputWords(input, valid) {
+  if (!input) return;
+  const field = input.closest('.field') || input.parentElement;
+  if (!field) return;
+  let note = field.querySelector(':scope > [data-avan-money-words]');
+  const raw = String(input.value || '').trim();
+  const words = valid && raw ? MoneyRuntime.inputWords(raw) : '';
+  if (!words) {
+    note?.remove();
+    return;
+  }
+  if (!note) {
+    note = document.createElement('small');
+    note.dataset.avanMoneyWords = '1';
+    note.className = 'avan-money-words';
+    note.setAttribute('aria-live', 'polite');
+    field.append(note);
+  }
+  const next = `به حروف: ${words}`;
+  if (note.textContent !== next) note.textContent = next;
+}
+
 function formatTenths(value) {
   const canonical = canonicalTenthsToDecimal(value);
   return canonical === null ? '—' : MoneyRuntime.formatCanonicalDecimal(canonical);
@@ -119,6 +141,8 @@ function renderLine(row) {
   const discountResult = displayDecimalToCanonicalTenth(discount?.value || '0', unit);
   setMoneyError(unitPrice, unitPrice?.value ? priceResult.code : null);
   setMoneyError(discount, discount?.value ? discountResult.code : null);
+  projectInputWords(unitPrice, priceResult.ok);
+  projectInputWords(discount, discountResult.ok);
 
   const target = row.querySelector('[data-line-amount]');
   if (target) {
