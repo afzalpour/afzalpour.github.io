@@ -28,8 +28,11 @@ assert.match(css, /safe-area-inset-right/);
 assert.equal(manifest.display, 'standalone');
 assert.equal(manifest.orientation, 'any', 'financial tables must not be locked to portrait mode');
 
-// Offline correctness: HTML shell fallback is navigation-only.
-assert.match(sw, /const CACHE='avan-staging-rc1-v85-settings-stable-shells'/);
+// Offline correctness: cache identity must be versioned, but this regression must
+// not hard-code one release number and break every legitimate cache bump.
+assert.match(sw, /const CACHE_PREFIX='avan-staging-rc1-'/);
+assert.match(sw, /const CACHE='avan-staging-rc1-v\d+[^']*'/,
+  'PWA cache must keep an explicit versioned Avan staging identity');
 assert.match(sw, /\.\/rc15-final-web-pwa\.css/);
 assert.match(sw, /\.\/src\/ui\/settings\/settings-layout-v2\.js/);
 assert.match(sw, /\.\/src\/ui\/settings\/workspace-access-settings\.js/);
