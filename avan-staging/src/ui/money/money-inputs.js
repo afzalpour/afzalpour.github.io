@@ -2,19 +2,22 @@
 
 import { installUiLifecycle } from '../runtime/lifecycle.js';
 import { MoneyRuntime } from './money-runtime.js';
-import { integerFromText, groupInteger } from '../../core/money/canonical-money.js';
+import { latinDigits, integerFromText, groupInteger } from '../../core/money/canonical-money.js';
 
-const DEFAULT_NAMES = new Set([
+const INTEGER_NAMES = new Set([
   'amount', 'debit', 'credit', 'unit_price', 'discount',
-  'opening_balance', 'total_amount', 'v2_amount_display',
-  'cost', 'unit_cost'
+  'opening_balance', 'total_amount', 'v2_amount_display'
 ]);
+const DECIMAL_NAMES = new Set(['cost', 'unit_cost']);
 
-function isMoneyInput(input) {
-  if (!(input instanceof HTMLInputElement)) return false;
-  if (input.dataset.moneyInput === 'false' || input.dataset.money === 'false') return false;
-  if (input.dataset.moneyInput === 'true' || input.dataset.money === 'true') return true;
-  return DEFAULT_NAMES.has(input.name || '');
+function moneyMode(input) {
+  if (!(input instanceof HTMLInputElement)) return null;
+  if (input.dataset.moneyInput === 'false' || input.dataset.money === 'false') return null;
+  if (input.dataset.moneyDecimalInput === 'true') return 'decimal';
+  if (input.dataset.moneyInput === 'true' || input.dataset.money === 'true') return 'integer';
+  if (DECIMAL_NAMES.has(input.name || '')) return 'decimal';
+  if (INTEGER_NAMES.has(input.name || '')) return 'integer';
+  return null;
 }
 
 function caretForDigits(value, count) {
@@ -45,39 +48,66 @@ function wordsHost(input) {
   return node;
 }
 
-function refreshWords(input) {
+function refreshWords(input, mode) {
   const node = wordsHost(input);
   if (!node) return;
-  const next = input.value && MoneyRuntime?.isReady() ? MoneyRuntime.inputWords(input.value) : '';
+  const next = mode === 'integer' && input.value && MoneyRuntime?.isReady()
+    ? MoneyRuntime.inputWords(input.value)
+    : '';
   if (node.textContent !== next) node.textContent = next;
   node.hidden = !next;
 }
 
+function decimalInputText(value) {
+  const normalized = latinDigits(value)
+    .replace(/[٬\s]/g, '')
+    .replace(/٫|,/g, '.');
+  const dot = normalized.indexOf('.');
+  const rawWhole = (dot >= 0 ? normalized.slice(0, dot) : normalized).replace(/\D/g, '');
+  const rawFraction = dot >= 0
+    ? normalized.slice(dot + 1).replace(/\D/g, '').slice(0, 6)
+    : '';
+  const hasDecimal = dot >= 0;
+  const whole = rawWhole.replace(/^0+(?=\d)/, '') || (hasDecimal ? '0' : '');
+  const grouped = whole ? whole.replace(/\B(?=(\d{3})+(?!\d))/g, '٬') : '';
+  return hasDecimal ? `${grouped}٫${rawFraction}` : grouped;
+}
+
 function format(input, preserveCaret = false) {
+  const mode = moneyMode(input);
+  if (!mode) return;
   if (!input.value) {
-    refreshWords(input);
+    refreshWords(input, mode);
     return;
   }
+
   const old = input.value;
   const caret = preserveCaret && typeof input.selectionStart === 'number' ? input.selectionStart : null;
   const count = caret === null ? null : digitsBefore(old.slice(0, caret));
-  const amount = integerFromText(old);
-  if (amount !== null) {
-    const next = groupInteger(amount);
-    if (input.value !== next) input.value = next;
-    if (count !== null && document.activeElement === input) {
-      const nextCaret = caretForDigits(next, count);
-      try { input.setSelectionRange(nextCaret, nextCaret); } catch {}
-    }
+  let next = old;
+
+  if (mode === 'decimal') {
+    next = decimalInputText(old);
+  } else {
+    const amount = integerFromText(old);
+    if (amount !== null) next = groupInteger(amount);
   }
-  refreshWords(input);
+
+  if (input.value !== next) input.value = next;
+  if (count !== null && document.activeElement === input) {
+    const nextCaret = caretForDigits(next, count);
+    try { input.setSelectionRange(nextCaret, nextCaret); } catch {}
+  }
+  refreshWords(input, mode);
 }
 
 function enhance(input) {
-  if (!isMoneyInput(input) || input.dataset.avanMoneyInputBound === '1') return;
+  const mode = moneyMode(input);
+  if (!mode || input.dataset.avanMoneyInputBound === '1') return;
   input.dataset.avanMoneyInputBound = '1';
+  input.dataset.avanMoneyInputMode = mode;
   input.classList.add('money-input-enhanced');
-  if (!input.inputMode) input.inputMode = 'numeric';
+  input.inputMode = mode === 'decimal' ? 'decimal' : 'numeric';
   input.autocomplete = 'off';
   input.addEventListener('input', () => format(input, true));
   input.addEventListener('change', () => format(input, false));
@@ -91,7 +121,9 @@ export function enhanceMoneyInputs(root = document) {
 }
 
 function refreshWordsForAll() {
-  document.querySelectorAll('input[data-avan-money-input-bound="1"]').forEach(refreshWords);
+  document.querySelectorAll('input[data-avan-money-input-bound="1"]').forEach(input => {
+    refreshWords(input, input.dataset.avanMoneyInputMode || moneyMode(input));
+  });
 }
 
 export function installMoneyInputs({ globalObject = window, documentObject = document } = {}) {
@@ -100,7 +132,12 @@ export function installMoneyInputs({ globalObject = window, documentObject = doc
   Lifecycle.use('money:input-enhancer', () => enhanceMoneyInputs(documentObject), { priority: 25 });
   globalObject.addEventListener('avan:page-rendered', () => Lifecycle.schedule('money-input-page'));
   documentObject.addEventListener('avan:ui-changed', () => Lifecycle.schedule('money-input-ui'));
-  const api = Object.freeze({ installed: true, enhance: enhanceMoneyInputs, refreshWords: refreshWordsForAll });
+  const api = Object.freeze({
+    installed: true,
+    enhance: enhanceMoneyInputs,
+    refreshWords: refreshWordsForAll,
+    modeFor: moneyMode
+  });
   globalObject.AvanMoneyInputs = api;
   Lifecycle.schedule('money-input-ready');
   return api;
