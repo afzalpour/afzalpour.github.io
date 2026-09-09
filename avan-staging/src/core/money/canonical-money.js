@@ -91,7 +91,8 @@ export function canonicalTenthsToDecimal(tenths) {
 
 export function canonicalDecimalToTenths(value) {
   const micros = signedDecimalMoneyMicros(value);
-  return micros === null ? null : roundRatio(micros, CANONICAL_TENTH_SCALE);
+  if (micros === null || micros % CANONICAL_TENTH_SCALE !== 0n) return null;
+  return micros / CANONICAL_TENTH_SCALE;
 }
 
 export function displayDecimalToCanonical(value, unit = UNIT_TOMAN) {
@@ -118,12 +119,21 @@ export function displayDecimalToCanonical(value, unit = UNIT_TOMAN) {
 export function displayDecimalToCanonicalTenth(value, unit = UNIT_TOMAN) {
   const parsed = displayDecimalToCanonical(value, unit);
   if (!parsed.ok) return { ...parsed, tenths: null };
-  const tenths = roundRatio(parsed.micros, CANONICAL_TENTH_SCALE);
-  const canonicalMicros = tenths * CANONICAL_TENTH_SCALE;
+  if (parsed.micros % CANONICAL_TENTH_SCALE !== 0n) {
+    return {
+      ok: false,
+      value: null,
+      micros: null,
+      tenths: null,
+      code: 'CANONICAL_TENTH_PRECISION_EXCEEDED',
+      message: 'در تومان حداکثر یک رقم اعشار و در ریال فقط مبلغ صحیح قابل ثبت است.'
+    };
+  }
+  const tenths = parsed.micros / CANONICAL_TENTH_SCALE;
   return {
     ok: true,
-    value: decimalMicrosToPlainString(canonicalMicros),
-    micros: canonicalMicros,
+    value: decimalMicrosToPlainString(parsed.micros),
+    micros: parsed.micros,
     tenths,
     code: null
   };
