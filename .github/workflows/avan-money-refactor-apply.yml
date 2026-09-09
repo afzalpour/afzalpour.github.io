@@ -7,6 +7,7 @@ on:
     paths:
       - 'avan-staging/scripts/apply-money-architecture-refactor.mjs'
       - 'avan-staging/scripts/apply-money-architecture-phase2.mjs'
+      - 'avan-staging/scripts/apply-money-architecture-phase3.mjs'
       - '.github/workflows/avan-money-refactor-apply.yml'
   workflow_dispatch:
 
@@ -48,16 +49,23 @@ jobs:
         run: |
           node avan-staging/scripts/apply-money-architecture-refactor.mjs
           node avan-staging/scripts/apply-money-architecture-phase2.mjs
+          node avan-staging/scripts/apply-money-architecture-phase3.mjs
       - name: Syntax check transformed runtime
         run: |
           node --check avan-staging/app.js
+          node --check avan-staging/rc12-print-export.js
           node --check avan-staging/rc14-catalog-settlement-v61.js
           node --check avan-staging/rc14-inventory-operations.js
           node --check avan-staging/rc13-final-polish.js
           node --check avan-staging/rc15-tax-ux-v3.js
+          node --check avan-staging/src/core/money/canonical-money.js
+          node --check avan-staging/src/application/money/money-service.js
+          node --check avan-staging/src/ui/money/money-runtime.js
+          node --check avan-staging/src/ui/money/money-inputs.js
+          node --check avan-staging/src/ui/money/invoice-money-workspace.js
           node --check avan-staging/src/ui/settlement/settlement-workspace-v2.js
           node --check avan-staging/src/ui/tax/tax-workspace-v2.js
-          node --check avan-staging/src/ui/money/money-runtime.js
+          node --check avan-staging/src/ui/tax/tax-date-aware.js
       - name: Commit transformed sources
         run: |
           if git diff --quiet; then
@@ -66,6 +74,6 @@ jobs:
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add avan-staging/app.js avan-staging/rc14-catalog-settlement-v61.js avan-staging/rc14-inventory-operations.js avan-staging/rc13-final-polish.js avan-staging/rc15-tax-ux-v3.js avan-staging/src/ui/settlement/settlement-workspace-v2.js avan-staging/index.html avan-staging/sw.js
-          git commit -m 'Activate unified money runtime across Web and PWA'
+          git add avan-staging/app.js avan-staging/rc12-print-export.js avan-staging/rc14-catalog-settlement-v61.js avan-staging/rc14-inventory-operations.js avan-staging/rc13-final-polish.js avan-staging/rc15-tax-ux-v3.js avan-staging/src/core/money/canonical-money.js avan-staging/src/ui/settlement/settlement-workspace-v2.js avan-staging/index.html avan-staging/sw.js
+          git commit -m 'Complete unified money boundaries for print and inventory'
           git push origin HEAD:rc1.5-money-architecture-refactor
