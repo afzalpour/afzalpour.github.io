@@ -8,6 +8,10 @@ on:
       - 'avan-staging/scripts/apply-money-architecture-refactor.mjs'
       - 'avan-staging/scripts/apply-money-architecture-phase2.mjs'
       - 'avan-staging/scripts/apply-money-architecture-phase3.mjs'
+      - 'avan-staging/scripts/money-architecture-audit.mjs'
+      - 'avan-staging/tests/money-*.spec.mjs'
+      - 'avan-staging/tests/c2-money-contract-v2.spec.mjs'
+      - 'avan-staging/package.json'
       - '.github/workflows/avan-money-refactor-apply.yml'
   workflow_dispatch:
 
