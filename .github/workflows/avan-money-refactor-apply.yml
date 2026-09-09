@@ -50,22 +50,9 @@ jobs:
           node avan-staging/scripts/apply-money-architecture-refactor.mjs
           node avan-staging/scripts/apply-money-architecture-phase2.mjs
           node avan-staging/scripts/apply-money-architecture-phase3.mjs
-      - name: Syntax check transformed runtime
-        run: |
-          node --check avan-staging/app.js
-          node --check avan-staging/rc12-print-export.js
-          node --check avan-staging/rc14-catalog-settlement-v61.js
-          node --check avan-staging/rc14-inventory-operations.js
-          node --check avan-staging/rc13-final-polish.js
-          node --check avan-staging/rc15-tax-ux-v3.js
-          node --check avan-staging/src/core/money/canonical-money.js
-          node --check avan-staging/src/application/money/money-service.js
-          node --check avan-staging/src/ui/money/money-runtime.js
-          node --check avan-staging/src/ui/money/money-inputs.js
-          node --check avan-staging/src/ui/money/invoice-money-workspace.js
-          node --check avan-staging/src/ui/settlement/settlement-workspace-v2.js
-          node --check avan-staging/src/ui/tax/tax-workspace-v2.js
-          node --check avan-staging/src/ui/tax/tax-date-aware.js
+      - name: Full architecture quality gate
+        working-directory: avan-staging
+        run: npm run quality
       - name: Commit transformed sources
         run: |
           if git diff --quiet; then
