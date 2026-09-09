@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { createCompanyContext } from '../src/application/company/company-context.js';
 
 const read = rel => fs.readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
 const company = read('rc13-company-context.js');
+const companyCore = read('src/application/company/company-context.js');
 const lifecycle = read('rc13-company-lifecycle.js');
 const auth = read('src/ui/auth/auth-view.js');
 const risk = read('src/ui/intelligence/risk-audit-view.js');
@@ -18,6 +20,10 @@ assert.doesNotMatch(company, /window\.addEventListener\('focus'/,'browser focus 
 assert.match(company, /selectCompany\(id,\s*\{\s*emit:\s*false\s*\}\)/,'company selection must persist once without emitting a competing refresh before reload');
 assert.match(company, /location\.reload\(\)/,'successful company selection must complete with a single controlled reload');
 assert.match(company, /if \(resolved\) syncRequiredPortfolio\(\)/,'page render must wait for authoritative company state before required selection UI');
+assert.match(company, /avan:company-context-refreshed/,'company shell must consume authoritative core refreshes after auth changes');
+assert.match(company, /onAuthoritativeRefresh/,'company shell must hydrate from the core event instead of requiring a browser refresh');
+assert.match(companyCore, /avan:company-context-refreshed/,'core company context must publish each settled authoritative refresh');
+assert.match(companyCore, /publishRefresh\(settled\)/,'refresh event must be emitted only from settled state');
 assert.match(company, /در حال خواندن شرکت‌های شما/);
 assert.match(company, /اولین شرکت خود را ایجاد کنید/);
 assert.match(lifecycle, /avanCreateCompanyButton/);
@@ -38,5 +44,45 @@ assert.match(css, /\.avan-risk-factor-card\{[\s\S]*overflow:hidden/);
 assert.match(css, /\.avan-risk-factor-value\{[\s\S]*width:100%/);
 assert.match(css, /\.avan-risk-factor-number\{[\s\S]*max-width:100%/);
 assert.match(css, /overflow-wrap:anywhere/,'long risk values/titles must remain inside the card');
+
+if (typeof globalThis.CustomEvent === 'undefined') {
+  globalThis.CustomEvent = class CustomEvent extends Event {
+    constructor(type, init = {}) { super(type); this.detail = init.detail; }
+  };
+}
+
+const storage = new Map();
+const bus = new EventTarget();
+bus.sessionStorage = {
+  getItem: key => storage.has(key) ? storage.get(key) : null,
+  setItem: (key, value) => storage.set(key, String(value)),
+  removeItem: key => storage.delete(key)
+};
+let signedInUser = null;
+const fakeClient = {
+  user: async () => signedInUser,
+  rpc: async () => null
+};
+const memberships = [
+  { id:'company-a', display_name:'شرکت الف', role:'owner', access_allowed:true, status:'active' },
+  { id:'company-b', display_name:'شرکت ب', role:'accountant', access_allowed:true, status:'active' }
+];
+const refreshEvents = [];
+bus.addEventListener('avan:company-context-refreshed', event => refreshEvents.push(event.detail));
+const context = createCompanyContext({
+  client: fakeClient,
+  listWorkspaces: async () => memberships,
+  globalObject: bus
+});
+
+await context.refresh({ force:true });
+assert.equal(context.snapshot().companies.length, 0, 'pre-auth context starts empty');
+signedInUser = { id:'user-1' };
+const afterAuth = await context.ensure();
+assert.equal(afterAuth.companies.length, 2, 'auth transition must resolve memberships without browser refresh');
+assert.equal(afterAuth.selection_required, true, 'multi-company user must be offered company selection immediately');
+assert.equal(refreshEvents.at(-1)?.companies?.length, 2, 'settled auth refresh must push the two-company snapshot to the shell');
+assert.equal(refreshEvents.at(-1)?.user_id, 'user-1');
+assert.equal(refreshEvents.at(-1)?.loading, false, 'published snapshot must be settled, never a loading intermediate');
 
 console.log('zero-company-auth-ux.spec.mjs: PASS');
