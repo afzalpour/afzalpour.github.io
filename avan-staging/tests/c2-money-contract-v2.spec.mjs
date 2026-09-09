@@ -71,7 +71,7 @@ assert.match(invoiceMoney, /CANONICAL_TENTH_PRECISION_EXCEEDED/,
 assert.match(invoiceMoney, /MoneyRuntime\.formatCanonicalDecimal/);
 assert.match(invoiceMoney, /MoneyRuntime\.inputWords\(raw\)/,
   'invoice price and discount must expose the shared Persian money-words projection');
-assert.match(invoiceMoney, /data-avan-money-words/,
+assert.match(invoiceMoney, /avanMoneyWords/,
   'invoice must render the amount-in-words hint under monetary inputs');
 assert.doesNotMatch(invoiceMoney, /RIAL_NOT_DIVISIBLE_BY_10/);
 assert.match(invoiceMoney, /avanCanonicalInvoiceTotalToman/);
