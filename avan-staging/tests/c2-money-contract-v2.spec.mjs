@@ -41,6 +41,7 @@ const index = read('index.html');
 const invoiceMoney = read('src/ui/money/invoice-money-workspace.js');
 const moneyInputs = read('src/ui/money/money-inputs.js');
 const moneyOutput = read('src/ui/money/money-output-contract.js');
+const settlementSave = read('src/ui/settlement/settlement-save-boundary-v3.js');
 const settlementV2 = read('src/ui/settlement/settlement-workspace-v2.js');
 const finalPolish = read('rc13-final-polish.js');
 const sw = read('sw.js');
@@ -48,7 +49,12 @@ const sw = read('sw.js');
 assert.match(index, /src\/ui\/money\/money-runtime\.js/);
 assert.match(index, /src\/ui\/money\/money-inputs\.js/);
 assert.match(index, /src\/ui\/money\/invoice-money-workspace\.js/);
+assert.match(index, /src\/ui\/settlement\/settlement-save-boundary-v3\.js/);
 assert.match(index, /src\/ui\/settlement\/settlement-workspace-v2\.js/);
+assert.ok(
+  index.indexOf('src/ui/settlement/settlement-save-boundary-v3.js') < index.indexOf('rc14-catalog-settlement-v61.js'),
+  'decimal-safe settlement save owner must register before the v61 compatibility shell'
+);
 assert.doesNotMatch(index, /src="rc11-currency\.js"/);
 assert.doesNotMatch(index, /src="rc11-money\.js"/);
 assert.doesNotMatch(index, /src="rc11-unit-density\.js"/);
@@ -63,21 +69,50 @@ assert.match(invoiceMoney, /displayDecimalToCanonicalTenth\(unitPrice\?\.value/,
 assert.match(invoiceMoney, /CANONICAL_TENTH_PRECISION_EXCEEDED/,
   'sub-Rial / over-precise Toman values must be rejected rather than rounded silently');
 assert.match(invoiceMoney, /MoneyRuntime\.formatCanonicalDecimal/);
+assert.match(invoiceMoney, /MoneyRuntime\.inputWords\(raw\)/,
+  'invoice price and discount must expose the shared Persian money-words projection');
+assert.match(invoiceMoney, /data-avan-money-words/,
+  'invoice must render the amount-in-words hint under monetary inputs');
 assert.doesNotMatch(invoiceMoney, /RIAL_NOT_DIVISIBLE_BY_10/);
 assert.match(invoiceMoney, /avanCanonicalInvoiceTotalToman/);
 assert.match(invoiceMoney, /rc15TaxMetadataReady/);
 assert.match(moneyInputs, /INVOICE_DECIMAL_NAMES/);
+
 assert.match(moneyOutput, /stripRepeatedUnitsFromReportTables/);
 assert.match(moneyOutput, /inlineUnit: isPreparedReports/);
 assert.match(moneyOutput, /repairTrialBalanceSummary/);
+assert.match(moneyOutput, /centerReportHeaders\(content\)/,
+  'all prepared report headings must be centered');
+assert.match(moneyOutput, /annotateHeaders\(modal, unitLabel, \{ inlineUnit: true \}\)/,
+  'financial detail headings must carry the unit instead of each amount cell');
+assert.match(moneyOutput, /stripRepeatedUnitsFromReportTables\(modal\)/,
+  'receipt/payment/transfer detail rows must not repeat the unit per amount');
 
 assert.match(settlementV2, /form\.dataset\.v60Settlement = '1'/);
 assert.match(settlementV2, /type="hidden" name="v60_amount"/);
-assert.match(settlementV2, /MoneyRuntime\.parseInput/);
+assert.match(settlementV2, /canonicalDecimalToTenths/,
+  'settlement totals must accept fractional canonical Toman values');
+assert.match(settlementV2, /displayDecimalToCanonicalTenth\(visible\.value/,
+  'editable settlement rows must preserve exact one-Rial precision');
+assert.match(settlementV2, /MoneyRuntime\.formatCanonicalDecimal/);
+assert.doesNotMatch(settlementV2, /MoneyRuntime\.parseInput/,
+  'settlement must not fall back to the old integer Rial boundary');
+assert.doesNotMatch(settlementV2, /BigInt\(form\.dataset\.avanCanonicalInvoiceTotalToman/,
+  '151.5 canonical Toman must never collapse to zero in settlement');
+
+assert.match(settlementSave, /settlement-save-boundary-v3/);
+assert.match(settlementSave, /C\.operations\.use\('rpc', 'settlement:invoice-plan'/);
+assert.match(settlementSave, /canonicalDecimalToTenths/);
+assert.match(settlementSave, /String\(persisted\?\.\[0\]\?\.total_amount/,
+  'persisted numeric(...,1) invoice totals must remain decimal canonical strings');
+assert.doesNotMatch(settlementSave, /integerBig/,
+  'save boundary must not coerce one-Rial precision totals to integer Toman');
+
 assert.match(finalPolish, /AvanMoneyOutput/);
-assert.match(sw, /avan-staging-rc1-v77-money-architecture-gate/);
+assert.match(sw, /avan-staging-rc1-v78-live-regression-gate/);
 assert.match(sw, /src\/core\/money\/canonical-money\.js/);
 assert.match(sw, /src\/ui\/money\/invoice-money-workspace\.js/);
+assert.match(sw, /src\/ui\/settlement\/settlement-save-boundary-v3\.js/);
 assert.doesNotMatch(sw, /invoice-canonical-input-boundary\.js/);
 
 console.log('c2-money-contract-v2.spec.mjs: PASS (unified runtime compatibility)');
