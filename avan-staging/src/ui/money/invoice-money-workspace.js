@@ -3,26 +3,13 @@
 import { installAvanCloud } from '../../infrastructure/supabase/avan-cloud-bootstrap.js';
 import { installUiLifecycle } from '../runtime/lifecycle.js';
 import { calculateVatAmount } from '../../domains/tax/vat-calculator.js';
-import { amountInWords } from '../../../rc11-money.js';
-import {
-  UNIT_RIAL,
-  normalizeUnit,
-  displayToCanonical,
-  canonicalToDisplay,
-  lineCanonicalAmount,
-  formatCanonical,
-  groupInteger,
-  latinDigits
-} from '../../core/money/canonical-money.js';
+import { MoneyRuntime } from './money-runtime.js';
+import { lineCanonicalAmount } from '../../core/money/canonical-money.js';
 
 const C = installAvanCloud();
 const Lifecycle = installUiLifecycle();
 const MONEY_FIELDS = new Set(['unit_price', 'discount']);
 let queued = false;
-
-function currentUnit() {
-  return normalizeUnit(window.AVAN_MONEY_DISPLAY_UNIT);
-}
 
 function rowUsed(row) {
   return Boolean(
@@ -32,48 +19,34 @@ function rowUsed(row) {
   );
 }
 
-function selectedRate(row) {
-  const select = row.querySelector('[data-rc15-tax-profile]');
-  if (!select?.value) return '0';
-  const label = String(select.selectedOptions?.[0]?.textContent || '');
-  if (/معاف|نرخ صفر/.test(label)) return '0';
-  const normalized = latinDigits(label).replace(/٫/g, '.');
-  const match = normalized.match(/(\d+(?:\.\d{1,4})?)\s*٪/);
-  return match?.[1] || '0';
+function selectedTax(row) {
+  const option = row.querySelector('[data-rc15-tax-profile]')?.selectedOptions?.[0];
+  return {
+    rate: option?.dataset?.taxRate || '0',
+    ruleName: option?.dataset?.taxRuleName || ''
+  };
 }
 
-function wordsElement(input) {
-  const field = input?.closest?.('.field') || input?.parentElement;
-  return field?.querySelector?.('.money-in-words') || null;
-}
-
-function refreshInputWords(input, unit) {
-  const words = wordsElement(input);
-  if (!words) return;
-  const next = input.value ? amountInWords(input.value, unit) : '';
-  if (words.textContent !== next) words.textContent = next;
-  words.hidden = !next;
+function hydrateCanonicalInput(input) {
+  if (!input || input.dataset.avanMoneyHydrated === '1') return;
+  input.dataset.moneyInput = 'true';
+  if (input.value) input.value = MoneyRuntime.inputFromCanonical(input.value);
+  input.dataset.avanMoneyHydrated = '1';
 }
 
 function prepareInvoiceInputs(form) {
-  if (form.dataset.avanMoneyInputsPrepared === '1') return;
-  // Existing invoice rows arrive from the backend in canonical Toman. Let the
-  // currency boundary perform that one initial projection before this workspace
-  // takes ownership and freezes inputs in display-unit semantics.
-  window.AvanCurrency?.prepare?.(form);
-  form.dataset.avanMoneyInputsPrepared = '1';
+  form.querySelectorAll('[data-invoice-line]').forEach(row => {
+    for (const name of MONEY_FIELDS) hydrateCanonicalInput(row.querySelector(`[name="${name}"]`));
+  });
 }
 
-function ensureFieldUnitLabels(form, unit) {
-  const label = unit === UNIT_RIAL ? 'ریال' : 'تومان';
+function ensureFieldUnitLabels(form) {
+  const label = MoneyRuntime.unitLabel();
   form.querySelectorAll('[data-invoice-line]').forEach(row => {
     for (const name of MONEY_FIELDS) {
       const input = row.querySelector(`[name="${name}"]`);
       if (!input) continue;
-      // The generic currency submit-boundary must never mutate invoice values.
-      // Invoice values stay display-unit values until the RPC middleware.
-      input.dataset.money = 'false';
-      input.dataset.avanInvoiceMoneyInput = '1';
+      input.dataset.moneyInput = 'true';
       const fieldLabel = input.closest('.field')?.querySelector('label');
       if (!fieldLabel) continue;
       const base = name === 'unit_price' ? 'فی' : 'تخفیف';
@@ -83,7 +56,7 @@ function ensureFieldUnitLabels(form, unit) {
   });
 }
 
-function ensureStableUnitBadge(form, unit) {
+function ensureStableUnitBadge(form) {
   form.querySelectorAll(':scope > .money-form-unit').forEach(node => node.remove());
   let badge = form.querySelector(':scope > [data-avan-invoice-unit]');
   if (!badge) {
@@ -92,7 +65,7 @@ function ensureStableUnitBadge(form, unit) {
     badge.dataset.avanInvoiceUnit = '1';
     form.prepend(badge);
   }
-  const next = `واحد مبالغ: ${unit === UNIT_RIAL ? 'ریال' : 'تومان'}`;
+  const next = `واحد مبالغ: ${MoneyRuntime.unitLabel()}`;
   if (badge.textContent !== next) badge.textContent = next;
 }
 
@@ -114,108 +87,111 @@ function setMoneyError(input, code) {
   }
   note.textContent = code === 'RIAL_NOT_DIVISIBLE_BY_10'
     ? 'مبلغ ریالی باید مضرب ۱۰ باشد.'
-    : 'مبلغ معتبر نیست.';
+    : code === 'DISCOUNT_EXCEEDS_GROSS'
+      ? 'تخفیف نمی‌تواند از مبلغ ردیف بیشتر باشد.'
+      : 'مبلغ معتبر نیست.';
   input.setAttribute('aria-invalid', 'true');
 }
 
-function disableLegacyInvoiceCalculator(form) {
-  form.querySelectorAll('[data-invoice-line] input,[data-invoice-line] select').forEach(control => {
-    if (typeof control.oninput === 'function') control.oninput = null;
-  });
-}
-
-function renderLine(row, unit) {
+function renderLine(row) {
   const unitPrice = row.querySelector('[name="unit_price"]');
   const discount = row.querySelector('[name="discount"]');
   const result = lineCanonicalAmount({
     quantity: row.querySelector('[name="quantity"]')?.value || '1',
     unitPrice: unitPrice?.value || '0',
     discount: discount?.value || '0',
-    unit
+    unit: MoneyRuntime.unit()
   });
 
-  const priceResult = displayToCanonical(unitPrice?.value || '0', unit);
-  const discountResult = displayToCanonical(discount?.value || '0', unit);
+  const priceResult = MoneyRuntime.parseInput(unitPrice?.value || '0');
+  const discountResult = MoneyRuntime.parseInput(discount?.value || '0');
   setMoneyError(unitPrice, unitPrice?.value ? priceResult.code : null);
   setMoneyError(discount, discount?.value ? discountResult.code : null);
-  refreshInputWords(unitPrice, unit);
-  refreshInputWords(discount, unit);
 
   const target = row.querySelector('[data-line-amount]');
   if (target) {
-    target.dataset.avanMoneyOwned = '1';
-    const next = result.ok ? formatCanonical(result.value, unit) : 'نامعتبر';
+    target.dataset.avanMoneyOwned = 'invoice';
+    const next = result.ok ? MoneyRuntime.formatCanonical(result.value) : 'نامعتبر';
     if (target.textContent !== next) target.textContent = next;
     target.classList.toggle('neg', !result.ok);
   }
   return result;
 }
 
-function renderTaxSummary(form, subtotal, tax, unit, valid) {
+function renderTaxSummary(form, subtotal, tax, valid, taxReady) {
   const summary = form.querySelector('[data-rc15-invoice-tax-summary]');
   if (!summary) return;
-  summary.dataset.avanMoneyOwned = '1';
+  summary.dataset.avanMoneyOwned = 'invoice';
+
   if (!valid) {
     const next = '<div class="info-box neg">ابتدا مبلغ‌های نامعتبر را اصلاح کنید.</div>';
     if (summary.innerHTML !== next) summary.innerHTML = next;
     return;
   }
-  const enabled = form.dataset.rc15TaxEnabled === '1';
-  if (!enabled) {
+  if (form.dataset.rc15TaxEnabled !== '1') {
     const next = '<div class="info-box">مالیات برای این شرکت غیرفعال است؛ جمع فاکتور بدون مالیات محاسبه می‌شود.</div>';
     if (summary.innerHTML !== next) summary.innerHTML = next;
     return;
   }
+  if (!taxReady) {
+    const next = '<div class="info-box">در حال تعیین قاعده مالیاتی مؤثر برای تاریخ فاکتور…</div>';
+    if (summary.innerHTML !== next) summary.innerHTML = next;
+    return;
+  }
+
   const total = subtotal + tax;
-  const next = `<div class="rc15-invoice-totals"><span><small>جمع قبل از مالیات</small><b>${formatCanonical(subtotal, unit)}</b></span><span><small>مالیات</small><b>${formatCanonical(tax, unit)}</b></span><span class="rc15-grand"><small>جمع نهایی</small><b>${formatCanonical(total, unit)}</b></span></div>`;
+  const next = `<div class="rc15-invoice-totals"><span><small>جمع قبل از مالیات</small><b>${MoneyRuntime.formatCanonical(subtotal)}</b></span><span><small>مالیات</small><b>${MoneyRuntime.formatCanonical(tax)}</b></span><span class="rc15-grand"><small>جمع نهایی</small><b>${MoneyRuntime.formatCanonical(total)}</b></span></div>`;
   if (summary.innerHTML !== next) summary.innerHTML = next;
 }
 
 export function projectInvoiceMoney(form = document.getElementById('invoiceForm')) {
-  if (!form) return null;
-  const unit = currentUnit();
+  if (!form || !MoneyRuntime?.isReady()) return null;
   prepareInvoiceInputs(form);
-  disableLegacyInvoiceCalculator(form);
-  ensureStableUnitBadge(form, unit);
-  ensureFieldUnitLabels(form, unit);
+  ensureStableUnitBadge(form);
+  ensureFieldUnitLabels(form);
 
   let subtotal = 0n;
   let tax = 0n;
   let valid = true;
   const taxEnabled = form.dataset.rc15TaxEnabled === '1';
+  const taxReady = !taxEnabled || form.dataset.rc15TaxMetadataReady === '1';
 
   form.querySelectorAll('[data-invoice-line]').forEach(row => {
     if (!rowUsed(row)) return;
-    const line = renderLine(row, unit);
+    const line = renderLine(row);
     if (!line.ok) {
       valid = false;
       return;
     }
     subtotal += line.value;
-    if (taxEnabled) {
-      const rowTax = calculateVatAmount({ taxableAmount: line.value, rate: selectedRate(row) }) ?? 0n;
+
+    if (taxEnabled && taxReady) {
+      const taxMeta = selectedTax(row);
+      const rowTax = calculateVatAmount({ taxableAmount: line.value, rate: taxMeta.rate }) ?? 0n;
       tax += rowTax;
       const note = row.querySelector('[data-rc15-line-tax-note]');
       if (note) {
-        const next = `مالیات این ردیف: ${formatCanonical(rowTax, unit)}`;
+        const prefix = taxMeta.ruleName ? `براساس ${taxMeta.ruleName} · ` : '';
+        const next = `${prefix}مالیات این ردیف: ${MoneyRuntime.formatCanonical(rowTax)}`;
         if (note.textContent !== next) note.textContent = next;
       }
     }
   });
 
+  const complete = valid && taxReady;
   const total = subtotal + tax;
   const invoiceTotal = form.querySelector('#invoiceTotal');
   if (invoiceTotal) {
-    invoiceTotal.dataset.avanMoneyOwned = '1';
-    const next = valid ? formatCanonical(total, unit) : 'نامعتبر';
+    invoiceTotal.dataset.avanMoneyOwned = 'invoice';
+    const next = !valid ? 'نامعتبر' : !taxReady ? '—' : MoneyRuntime.formatCanonical(total);
     if (invoiceTotal.textContent !== next) invoiceTotal.textContent = next;
   }
   const grand = form.querySelector('.invoice-grand-total');
-  if (grand) grand.dataset.avanMoneyOwned = '1';
+  if (grand) grand.dataset.avanMoneyOwned = 'invoice';
 
-  renderTaxSummary(form, subtotal, tax, unit, valid);
+  renderTaxSummary(form, subtotal, tax, valid, taxReady);
 
-  if (valid) {
+  if (complete) {
     form.dataset.avanCanonicalInvoiceSubtotalToman = subtotal.toString();
     form.dataset.avanCanonicalInvoiceTaxToman = tax.toString();
     form.dataset.avanCanonicalInvoiceTotalToman = total.toString();
@@ -227,14 +203,14 @@ export function projectInvoiceMoney(form = document.getElementById('invoiceForm'
     delete form.dataset.avanInvoiceTotal;
   }
 
-  const signature = `${unit}|${valid ? 1 : 0}|${subtotal}|${tax}|${total}`;
+  const signature = `${MoneyRuntime.unit()}|${valid ? 1 : 0}|${taxReady ? 1 : 0}|${subtotal}|${tax}|${total}`;
   if (form.dataset.avanMoneySignature !== signature) {
     form.dataset.avanMoneySignature = signature;
     document.dispatchEvent(new CustomEvent('avan:invoice-money-changed', {
-      detail: { unit, valid, subtotal, tax, total }
+      detail: { unit: MoneyRuntime.unit(), valid, taxReady, subtotal, tax, total }
     }));
   }
-  return { unit, valid, subtotal, tax, total };
+  return { unit: MoneyRuntime.unit(), valid, taxReady, subtotal, tax, total };
 }
 
 function queueProject() {
@@ -246,18 +222,18 @@ function queueProject() {
   });
 }
 
-function canonicalizeInvoicePayload(payload) {
+export function canonicalizeInvoicePayload(payload) {
   if (!payload || !Array.isArray(payload.p_lines)) return payload;
-  const unit = currentUnit();
-  if (unit !== UNIT_RIAL) return payload;
   return {
     ...payload,
     p_lines: payload.p_lines.map(line => {
-      const price = displayToCanonical(line.unit_price, unit);
-      const discount = displayToCanonical(line.discount || '0', unit);
+      const price = MoneyRuntime.parseInput(line.unit_price);
+      const discount = MoneyRuntime.parseInput(line.discount || '0');
       if (!price.ok || !discount.ok) {
-        const error = new Error('RIAL_NOT_DIVISIBLE_BY_10');
-        error.userMessage = 'مبلغ ریالی باید مضرب ۱۰ باشد.';
+        const error = new Error(price.code || discount.code || 'INVALID_AMOUNT');
+        error.userMessage = price.code === 'RIAL_NOT_DIVISIBLE_BY_10' || discount.code === 'RIAL_NOT_DIVISIBLE_BY_10'
+          ? 'مبلغ ریالی باید مضرب ۱۰ باشد.'
+          : 'مبلغ یکی از ردیف‌های فاکتور معتبر نیست.';
         throw error;
       }
       return {
@@ -267,24 +243,6 @@ function canonicalizeInvoicePayload(payload) {
       };
     })
   };
-}
-
-function convertOpenInvoiceInputs(previous, next) {
-  const form = document.getElementById('invoiceForm');
-  if (!form || previous === next) return;
-  form.querySelectorAll('[data-invoice-line]').forEach(row => {
-    for (const name of MONEY_FIELDS) {
-      const input = row.querySelector(`[name="${name}"]`);
-      if (!input?.value) continue;
-      const canonical = displayToCanonical(input.value, previous);
-      if (!canonical.ok) continue;
-      const displayed = canonicalToDisplay(canonical.value, next);
-      if (displayed === null) continue;
-      input.value = groupInteger(displayed);
-      input.dataset.currencyPreparedUnit = next;
-      refreshInputWords(input, next);
-    }
-  });
 }
 
 if (!C.operations.has('rpc', 'money.invoice-canonical-payload')) {
@@ -303,18 +261,9 @@ document.addEventListener('input', event => {
 document.addEventListener('change', event => {
   if (!event.target?.closest?.('#invoiceForm')) return;
   queueProject();
-  if (event.target.matches?.('[data-e-item]')) {
-    // Tax profile follows the selected item in a zero-delay callback. Run once
-    // after that callback so the canonical projection remains the final writer.
-    setTimeout(projectInvoiceMoney, 0);
-  }
+  if (event.target.matches?.('[data-e-item]')) setTimeout(queueProject, 0);
 });
-document.addEventListener('avan:money-unit-changed', event => {
-  const previous = normalizeUnit(event.detail?.previous);
-  const next = normalizeUnit(event.detail?.unit);
-  convertOpenInvoiceInputs(previous, next);
-  projectInvoiceMoney();
-});
+document.addEventListener('avan:invoice-tax-metadata-changed', queueProject);
 document.addEventListener('avan:ui-changed', queueProject);
 window.addEventListener('avan:page-rendered', () => Lifecycle.schedule('invoice-money-page-rendered'));
 
@@ -325,7 +274,7 @@ if (document.readyState === 'loading') {
 }
 
 window.AvanInvoiceMoney = Object.freeze({
+  architecture: 'invoice-money-single-writer-v3',
   project: projectInvoiceMoney,
-  currentUnit,
   canonicalizeInvoicePayload
 });

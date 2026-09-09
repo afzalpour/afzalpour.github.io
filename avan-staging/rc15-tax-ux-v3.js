@@ -1,7 +1,5 @@
 'use strict';
 
-import { installTaxWorkspace } from './src/ui/tax/tax-workspace.js';
-import { installTaxSettingsSingleton } from './src/ui/tax/tax-settings-singleton.js';
+import { installTaxWorkspaceV2 } from './src/ui/tax/tax-workspace-v2.js';
 
-installTaxWorkspace();
-installTaxSettingsSingleton();
+installTaxWorkspaceV2();

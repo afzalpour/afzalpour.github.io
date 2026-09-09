@@ -3,14 +3,7 @@
 import { installAvanCloud } from '../../infrastructure/supabase/avan-cloud-bootstrap.js';
 import { installUiLifecycle } from '../runtime/lifecycle.js';
 import { jalalizeDateInputs } from '../date/jalali-picker.js';
-import {
-  UNIT_RIAL,
-  normalizeUnit,
-  displayToCanonical,
-  canonicalToDisplay,
-  formatCanonical,
-  groupInteger
-} from '../../core/money/canonical-money.js';
+import { MoneyRuntime } from '../money/money-runtime.js';
 
 const C = installAvanCloud();
 const Lifecycle = installUiLifecycle();
@@ -22,9 +15,6 @@ const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 }[ch]));
 
-function currentUnit() {
-  return normalizeUnit(window.AVAN_MONEY_DISPLAY_UNIT);
-}
 
 async function activeCompany() {
   const snapshot = await C.companyContext.ensure();
@@ -70,9 +60,8 @@ function canonicalTotal(form) {
   catch { return 0n; }
 }
 
-function displayValue(canonical, unit = currentUnit()) {
-  const value = canonicalToDisplay(canonical, unit);
-  return value === null ? '' : groupInteger(value);
+function displayValue(canonical) {
+  return MoneyRuntime.inputFromCanonical(canonical);
 }
 
 function updateVisibleAmount(row) {
@@ -80,7 +69,7 @@ function updateVisibleAmount(row) {
   const hidden = row.querySelector('[name="v60_amount"]');
   const note = row.querySelector('[data-v2-amount-error]');
   if (!visible || !hidden) return;
-  const converted = displayToCanonical(visible.value || '0', currentUnit());
+  const converted = MoneyRuntime.parseInput(visible.value || '0');
   if (!converted.ok) {
     hidden.value = '';
     visible.setAttribute('aria-invalid', 'true');
@@ -96,7 +85,7 @@ function rowHtml(meta, row = {}, mixed = false) {
   const canonical = BigInt(row.amount || 0);
   const method = row.planned_method || 'open';
   return `<div class="rc14v60-plan-row" data-v60-plan-row data-avan-settlement-row-v2>
-    <div class="field"><label>مبلغ (${currentUnit() === UNIT_RIAL ? 'ریال' : 'تومان'})</label>
+    <div class="field"><label>مبلغ (${MoneyRuntime.unitLabel()})</label>
       <input name="v2_amount_display" data-money="false" inputmode="numeric" value="${displayValue(canonical)}" required>
       <input type="hidden" name="v60_amount" value="${canonical}">
       <small class="neg" data-v2-amount-error></small>
@@ -142,7 +131,7 @@ function updatePlanTotal(form, box) {
   const host = box.querySelector('[data-v60-plan-total]');
   if (!host) return;
   const balanced = scheduled === total;
-  const next = `جمع برنامه: <b>${formatCanonical(scheduled, currentUnit())}</b> از <b>${formatCanonical(total, currentUnit())}</b> ${balanced ? '<span class="pos">✓ برابر</span>' : '<span class="neg">مغایرت</span>'}`;
+  const next = `جمع برنامه: <b>${MoneyRuntime.formatCanonical(scheduled)}</b> از <b>${MoneyRuntime.formatCanonical(total)}</b> ${balanced ? '<span class="pos">✓ برابر</span>' : '<span class="neg">مغایرت</span>'}`;
   if (host.innerHTML !== next) host.innerHTML = next;
   host.dataset.avanMoneyOwned = '1';
 }
@@ -184,11 +173,11 @@ function renderBody(form, box, meta, state) {
   let schedules = state.schedules || [];
 
   if (type === 'credit') {
-    body.innerHTML = `<div class="rc14v60-simple-plan"><div class="field"><label>مبلغ اعتباری (${currentUnit() === UNIT_RIAL ? 'ریال' : 'تومان'})</label><input data-v60-fixed-amount data-money="false" value="${displayValue(total)}" disabled></div><div class="field"><label>سررسید</label><input type="date" name="v60_credit_due" value="${esc(schedules[0]?.due_date || due)}"></div></div>`;
+    body.innerHTML = `<div class="rc14v60-simple-plan"><div class="field"><label>مبلغ اعتباری (${MoneyRuntime.unitLabel()})</label><input data-v60-fixed-amount data-money="false" value="${displayValue(total)}" disabled></div><div class="field"><label>سررسید</label><input type="date" name="v60_credit_due" value="${esc(schedules[0]?.due_date || due)}"></div></div>`;
   } else if (type === 'cash') {
-    body.innerHTML = `<div class="rc14v60-simple-plan"><div class="field"><label>مبلغ نقدی (${currentUnit() === UNIT_RIAL ? 'ریال' : 'تومان'})</label><input data-v60-fixed-amount data-money="false" value="${displayValue(total)}" disabled></div><div class="field"><label>صندوق / بانک</label><select name="v60_cash_account">${financialOptions(meta, schedules[0]?.financial_account_id || '')}</select></div></div>`;
+    body.innerHTML = `<div class="rc14v60-simple-plan"><div class="field"><label>مبلغ نقدی (${MoneyRuntime.unitLabel()})</label><input data-v60-fixed-amount data-money="false" value="${displayValue(total)}" disabled></div><div class="field"><label>صندوق / بانک</label><select name="v60_cash_account">${financialOptions(meta, schedules[0]?.financial_account_id || '')}</select></div></div>`;
   } else if (type === 'check') {
-    body.innerHTML = `<div class="rc14v60-check-plan"><div class="field"><label>مبلغ چک (${currentUnit() === UNIT_RIAL ? 'ریال' : 'تومان'})</label><input data-v60-fixed-amount data-money="false" value="${displayValue(total)}" disabled></div><div class="field"><label>سررسید چک</label><input type="date" name="v60_check_due" value="${esc(schedules[0]?.due_date || due)}"></div><div class="field"><label>شماره چک</label><input name="v60_check_no" value="${esc(schedules[0]?.check_number || '')}"></div><div class="field"><label>بانک چک</label><input name="v60_check_bank" value="${esc(schedules[0]?.check_bank_name || '')}"></div><div class="field"><label>شعبه</label><input name="v60_check_branch" value="${esc(schedules[0]?.check_branch || '')}"></div></div>`;
+    body.innerHTML = `<div class="rc14v60-check-plan"><div class="field"><label>مبلغ چک (${MoneyRuntime.unitLabel()})</label><input data-v60-fixed-amount data-money="false" value="${displayValue(total)}" disabled></div><div class="field"><label>سررسید چک</label><input type="date" name="v60_check_due" value="${esc(schedules[0]?.due_date || due)}"></div><div class="field"><label>شماره چک</label><input name="v60_check_no" value="${esc(schedules[0]?.check_number || '')}"></div><div class="field"><label>بانک چک</label><input name="v60_check_bank" value="${esc(schedules[0]?.check_bank_name || '')}"></div><div class="field"><label>شعبه</label><input name="v60_check_branch" value="${esc(schedules[0]?.check_branch || '')}"></div></div>`;
   } else {
     const mixed = type === 'mixed';
     if (!schedules.length) schedules = type === 'installment'
@@ -277,7 +266,7 @@ function refreshSettlementWorkspace() {
     if (!hidden || !visible || visible === document.activeElement) return;
     try { visible.value = displayValue(BigInt(hidden.value || '0')); } catch { /* keep visible value */ }
     const label = visible.closest('.field')?.querySelector('label');
-    if (label) label.textContent = `مبلغ (${currentUnit() === UNIT_RIAL ? 'ریال' : 'تومان'})`;
+    if (label) label.textContent = `مبلغ (${MoneyRuntime.unitLabel()})`;
   });
   updatePlanTotal(form, box);
 }
