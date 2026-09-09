@@ -82,7 +82,11 @@ assert.match(moneyOutput, /stripRepeatedUnitsFromReportTables/);
 assert.match(moneyOutput, /inlineUnit: isPreparedReports/);
 assert.match(moneyOutput, /repairTrialBalanceSummary/);
 assert.match(moneyOutput, /centerReportHeaders\(content\)/,
-  'all prepared report headings must be centered');
+  'all prepared report column headings must be centered');
+assert.match(moneyOutput, /centerPreparedReportTitles\(content\)/,
+  'all visible prepared report titles must be centered');
+assert.match(moneyOutput, /\[data-r\]/,
+  'money/report projection must rerun after prepared report tab changes');
 assert.match(moneyOutput, /annotateHeaders\(modal, unitLabel, \{ inlineUnit: true \}\)/,
   'financial detail headings must carry the unit instead of each amount cell');
 assert.match(moneyOutput, /stripRepeatedUnitsFromReportTables\(modal\)/,
@@ -109,10 +113,12 @@ assert.doesNotMatch(settlementSave, /integerBig/,
   'save boundary must not coerce one-Rial precision totals to integer Toman');
 
 assert.match(finalPolish, /AvanMoneyOutput/);
-assert.match(sw, /avan-staging-rc1-v78-live-regression-gate/);
+assert.match(sw, /avan-staging-rc1-v79-reconciliation-intelligence-gate/);
 assert.match(sw, /src\/core\/money\/canonical-money\.js/);
+assert.match(sw, /src\/core\/reconciliation\/transaction-journal-suggestion\.js/);
 assert.match(sw, /src\/ui\/money\/invoice-money-workspace\.js/);
 assert.match(sw, /src\/ui\/settlement\/settlement-save-boundary-v3\.js/);
+assert.match(sw, /src\/ui\/reports\/reconciliation-workspace\.js/);
 assert.doesNotMatch(sw, /invoice-canonical-input-boundary\.js/);
 
 console.log('c2-money-contract-v2.spec.mjs: PASS (unified runtime compatibility)');

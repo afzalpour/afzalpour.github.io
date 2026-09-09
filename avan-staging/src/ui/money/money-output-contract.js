@@ -39,6 +39,13 @@ function centerReportHeaders(root) {
   });
 }
 
+function centerPreparedReportTitles(root) {
+  root?.querySelectorAll?.('#reportOut h2, #reportOut h3').forEach(heading => {
+    heading.style.textAlign = 'center';
+    heading.dataset.avanReportTitleAlign = 'center';
+  });
+}
+
 function cleanMoneyCellText(raw) {
   return String(raw ?? '').replace(VALUE_UNIT_SUFFIX, '').trim();
 }
@@ -145,6 +152,7 @@ export function projectMoneyOutput(documentObject = document) {
       repairTrialBalanceSummary(content);
       stripRepeatedUnitsFromReportTables(content);
       centerReportHeaders(content);
+      centerPreparedReportTitles(content);
     }
   }
 
@@ -169,7 +177,7 @@ export function installMoneyOutputContract({ globalObject = window, documentObje
   globalObject.addEventListener('avan:page-rendered', () => Lifecycle.schedule('money-output-page'));
   documentObject.addEventListener('avan:ui-changed', () => Lifecycle.schedule('money-output-ui'));
   documentObject.addEventListener('click', event => {
-    if (event.target.closest?.('[data-page],[data-view-invoice],[data-view-journal],[data-action]')) {
+    if (event.target.closest?.('[data-page],[data-view-invoice],[data-view-journal],[data-action],[data-r]')) {
       window.setTimeout(() => Lifecycle.schedule('money-output-click'), 0);
     }
   }, true);
@@ -178,6 +186,7 @@ export function installMoneyOutputContract({ globalObject = window, documentObje
     project: () => projectMoneyOutput(documentObject),
     annotateHeaders,
     centerReportHeaders,
+    centerPreparedReportTitles,
     stripRepeatedUnitsFromReportTables
   });
   globalObject.AvanMoneyOutput = api;

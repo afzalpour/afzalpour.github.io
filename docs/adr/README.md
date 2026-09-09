@@ -55,6 +55,7 @@
 | [0017](0017-windows-desktop-offline-direction.md) | جهت Windows Desktop و Offline-capable architecture | Proposed |
 | [0018](0018-unified-money-runtime.md) | Unified Money Runtime و single-owner money projection | Proposed |
 | [0019](0019-canonical-toman-one-rial-precision.md) | Canonical Toman با دقت یک ریال (۰٫۱ تومان) | Accepted |
+| [0020](0020-human-controlled-reconciliation-intelligence.md) | مغایرت‌یابی چندمنبعی با Evidence و پیشنهاد اصلاح Human-controlled | Accepted |
 
 ## اصل حاکم
 
