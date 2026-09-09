@@ -48,7 +48,6 @@ function installStyle(documentObject) {
     #workspaceAccessCard[data-avan-settings-mounted="access"]{
       visibility:visible!important;position:static!important;pointer-events:auto!important;
     }
-    .avan-settings-extension-slot:has(>[data-avan-settings-mounted]){min-height:0!important}
   `;
   documentObject.head.append(style);
 }
@@ -67,6 +66,7 @@ function ensurePlaceholder(slot, key, label, documentObject) {
 
 function clearPlaceholder(slot, key) {
   slot.querySelector(`:scope > [data-avan-settings-placeholder="${key}"]`)?.remove();
+  slot.style.minHeight = '0px';
 }
 
 function ensureStableSlots(root, accountCard, documentObject) {
