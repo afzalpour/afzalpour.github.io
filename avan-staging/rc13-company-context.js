@@ -24,6 +24,16 @@ const appVisible = () => {
   return Boolean(app && !app.hidden);
 };
 
+function adoptState(state) {
+  if (!state || state.ready !== true) return false;
+  companies = Array.isArray(state.companies) ? state.companies : [];
+  current = state.active_company || null;
+  selectionRequired = Boolean(state.selection_required);
+  loading = false;
+  resolved = true;
+  return true;
+}
+
 async function loadState(force = false) {
   if (refreshPromise) return refreshPromise;
   refreshPromise = (async () => {
@@ -32,10 +42,7 @@ async function loadState(force = false) {
       const state = force
         ? await companyContext.refresh({ force: true })
         : await companyContext.ensure();
-      companies = Array.isArray(state?.companies) ? state.companies : [];
-      current = state?.active_company || null;
-      selectionRequired = Boolean(state?.selection_required);
-      resolved = true;
+      adoptState(state);
       return state;
     } catch (error) {
       resolved = false;
@@ -208,11 +215,17 @@ function projectCompanyLabels() {
   });
 }
 
-async function refresh(force = false) {
-  await loadState(force);
+function projectState() {
   renderTopbar();
   syncRequiredPortfolio();
   projectCompanyLabels();
+  const overlay = document.getElementById('avanCompanyPortfolio');
+  if (overlay && overlay.dataset.required !== 'true') openPortfolio({ required: false });
+}
+
+async function refresh(force = false) {
+  await loadState(force);
+  projectState();
 }
 
 function onPageRendered() {
@@ -221,18 +234,21 @@ function onPageRendered() {
   if (resolved) syncRequiredPortfolio();
 }
 
+function onAuthoritativeRefresh(event) {
+  if (!adoptState(event?.detail)) return;
+  projectState();
+}
+
+function syncFromContextSnapshot() {
+  if (adoptState(companyContext.snapshot())) projectState();
+}
+
 function install() {
   window.addEventListener('avan:page-rendered', onPageRendered);
+  window.addEventListener('avan:company-context-refreshed', onAuthoritativeRefresh);
   window.addEventListener('avan:company-profile-updated', () => void refresh(true));
-  window.addEventListener('avan:company-context-changed', () => void refresh(true));
-  window.addEventListener('avan:company-context-cleared', () => {
-    companies = [];
-    current = null;
-    selectionRequired = false;
-    resolved = false;
-    document.getElementById('avanCompanyContextHost')?.remove();
-    void refresh(true);
-  });
+  window.addEventListener('avan:company-context-changed', syncFromContextSnapshot);
+  window.addEventListener('avan:company-context-cleared', syncFromContextSnapshot);
   void refresh(true);
 }
 
