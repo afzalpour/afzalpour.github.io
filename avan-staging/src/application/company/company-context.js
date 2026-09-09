@@ -16,8 +16,32 @@ export function createCompanyContext({client,listWorkspaces,globalObject=window,
   function reorderById(rows,activeId){const items=normalizeRows(rows);if(!activeId)return items;const index=items.findIndex(item=>item.id===activeId);if(index<=0)return items;return[items[index],...items.slice(0,index),...items.slice(index+1)]}
   function resolveFullActiveId(rows){const items=allowedRows(rows);const preferred=storedId();if(preferred&&items.some(item=>item.id===preferred))return preferred;if(preferred)persistId(null);if(items.length===1){persistId(items[0].id);return items[0].id}return null}
   function orderWorkspaces(rows){return reorderById(rows,storedId())}
+  function publishRefresh(snapshot){
+    try{globalObject.dispatchEvent(new CustomEvent('avan:company-context-refreshed',{detail:snapshot}))}catch{}
+  }
   async function enrich(workspace){let role=workspace.role||'';let profile=null;if(!role&&workspace.access_allowed!==false){try{role=await client.rpc('workspace_role',{wid:workspace.id})||''}catch{}}if(!workspace.display_name&&workspace.access_allowed!==false){try{profile=await client.rpc('get_workspace_print_profile',{wid:workspace.id})}catch{}}return Object.freeze({...workspace,role,status:workspace.status||'active',access_allowed:workspace.access_allowed!==false,display_name:String(workspace.display_name||profile?.display_name||workspace.name||'شرکت بدون نام').trim(),legal_name:String(workspace.legal_name||profile?.legal_name||'').trim()})}
-  async function refresh({force=false}={}){if(refreshPromise&&!force)return refreshPromise;if(refreshPromise&&force){try{await refreshPromise}catch{}}refreshPromise=(async()=>{state.loading=true;try{const user=await client.user();if(!user?.id){Object.assign(state,{ready:true,userId:null,activeId:null,selectionRequired:false,companies:[]});return cloneState(state)}const rawRows=normalizeRows(await listWorkspaces());const activeId=resolveFullActiveId(rawRows);const orderedRows=reorderById(rawRows,activeId);const companies=await Promise.all(orderedRows.map(enrich));Object.assign(state,{userId:user.id,companies,activeId,selectionRequired:companies.length>0&&!activeId,ready:true});return cloneState(state)}finally{state.loading=false}})();try{return await refreshPromise}finally{refreshPromise=null}}
+  async function refresh({force=false}={}){
+    if(refreshPromise&&!force)return refreshPromise;
+    if(refreshPromise&&force){try{await refreshPromise}catch{}}
+    refreshPromise=(async()=>{
+      state.loading=true;
+      try{
+        const user=await client.user();
+        if(!user?.id){Object.assign(state,{ready:true,userId:null,activeId:null,selectionRequired:false,companies:[]});return;}
+        const rawRows=normalizeRows(await listWorkspaces());
+        const activeId=resolveFullActiveId(rawRows);
+        const orderedRows=reorderById(rawRows,activeId);
+        const companies=await Promise.all(orderedRows.map(enrich));
+        Object.assign(state,{userId:user.id,companies,activeId,selectionRequired:companies.length>0&&!activeId,ready:true});
+      }finally{state.loading=false}
+    })();
+    try{
+      await refreshPromise;
+      const settled=cloneState(state);
+      publishRefresh(settled);
+      return settled;
+    }finally{refreshPromise=null}
+  }
   function active(){return cloneCompany(state.companies.find(c=>c.id===state.activeId)||null)}
   function list(){return state.companies.map(cloneCompany)}
   function snapshot(){return cloneState(state)}
