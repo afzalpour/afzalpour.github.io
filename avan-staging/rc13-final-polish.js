@@ -125,13 +125,6 @@ function ensureJournalTotals(modal){
 
 function preparePageOutput(){window.AvanMoneyOutput?.project?.()}
 
-function prepareDetailOutput(){
-  window.AvanMoneyOutput?.project?.();
-  const backdrop=document.getElementById('modalBackdrop'),modal=document.getElementById('modal');
-  if(!modal||backdrop?.hidden)return;
-  ensureJournalTotals(modal);
-}
-
 function strongPassword(password){
   const p=String(password||'');
   if(p.length<12)return false;

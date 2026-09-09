@@ -121,6 +121,16 @@ export function formatCanonicalDecimal(value, unit = UNIT_TOMAN, { withUnit = tr
   return withUnit ? `${formatted} ${unitLabel(unit)}` : formatted;
 }
 
+export function sumCanonicalDecimals(values = []) {
+  let totalMicros = 0n;
+  for (const value of values) {
+    const micros = signedDecimalMoneyMicros(value);
+    if (micros === null) throw new Error('INVALID_CANONICAL_DECIMAL_AMOUNT');
+    totalMicros += micros;
+  }
+  return decimalMicrosToPlainString(totalMicros);
+}
+
 export function displayToCanonical(value, unit = UNIT_TOMAN) {
   const normalizedUnit = normalizeUnitOrNull(unit);
   if (!normalizedUnit) return { ok: false, value: null, code: 'MONEY_UNIT_NOT_READY' };

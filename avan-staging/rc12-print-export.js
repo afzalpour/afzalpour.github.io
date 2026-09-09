@@ -1,6 +1,7 @@
 'use strict';
 
 import { toast } from './src/ui/feedback/toast.js';
+import { MoneyRuntime } from './src/ui/money/money-runtime.js';
 
 const PRINTABLE_PAGES = new Set([
   'گزارش‌ها',
@@ -84,6 +85,12 @@ function printableClone(source) {
     control.replaceWith(replacement);
   });
 
+  clone.querySelectorAll('th[data-avan-money-unit]').forEach(th => {
+    const base = text(th.dataset.avanMoneyHeaderBase || th.textContent);
+    const unit = text(th.dataset.avanMoneyUnit);
+    if (base && unit) th.textContent = `${base} (${unit})`;
+  });
+
   localizePrintDigits(clone);
   return clone;
 }
@@ -124,6 +131,7 @@ function companyAddressHtml(profile) {
 
 function printHeaderHtml(title, detail, now) {
   const profile = companyProfile();
+  const moneyUnit = MoneyRuntime?.unitLabel?.() || '—';
   const displayName = text(profile.display_name || profile.workspace_name || 'آوان');
   const legalName = text(profile.legal_name);
   const logo = text(profile.logo_url);
@@ -144,6 +152,7 @@ function printHeaderHtml(title, detail, now) {
       <div class="avan-print-document-meta">
         ${detail ? '' : `<div class="avan-print-title">${escapeHtml(toPersianDigits(title))}</div>`}
         <div class="avan-print-meta">${escapeHtml(toPersianDigits(now))}</div>
+        <div class="avan-print-money-unit"><b>واحد مبالغ:</b> ${escapeHtml(moneyUnit)}</div>
         <div class="avan-print-powered">تهیه‌شده با آوان</div>
       </div>
     </header>
@@ -306,7 +315,12 @@ function csvCell(value) {
 
 function tableRows(table) {
   return [...table.querySelectorAll('tr')].map(row =>
-    [...row.querySelectorAll('th,td')].map(cell => csvCell(cell.innerText))
+    [...row.querySelectorAll('th,td')].map(cell => {
+      const raw = text(cell.innerText);
+      const unit = text(cell.dataset?.avanMoneyUnit);
+      const value = unit ? `${raw} (${unit})` : raw;
+      return csvCell(value);
+    })
   );
 }
 
@@ -361,7 +375,13 @@ function exportCurrentReportCsv() {
     return;
   }
 
-  const csv = '\uFEFF' + rows.map(row => row.join(',')).join('\r\n');
+  const profile = companyProfile();
+  const metaRows = [
+    [csvCell('شرکت'), csvCell(profile.display_name || profile.workspace_name || 'آوان')],
+    [csvCell('واحد مبالغ'), csvCell(MoneyRuntime?.unitLabel?.() || '—')],
+    []
+  ];
+  const csv = '\uFEFF' + [...metaRows, ...rows].map(row => row.join(',')).join('\r\n');
   const stamp = new Date().toISOString().slice(0, 10);
   downloadBlob(
     new Blob([csv], { type: 'text/csv;charset=utf-8' }),
