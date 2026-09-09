@@ -3,10 +3,13 @@
 import { installAvanCloud } from '../../infrastructure/supabase/avan-cloud-bootstrap.js';
 import { MoneyRuntime } from '../money/money-runtime.js';
 import {
-  canonicalDecimalToTenths,
   canonicalTenthsToDecimal,
   displayDecimalToCanonicalTenth
 } from '../../core/money/canonical-money.js';
+import {
+  canonicalSettlementAmount,
+  validateSettlementPlanTotal
+} from '../../domains/settlement/settlement-plan-contract.js';
 
 const C = installAvanCloud();
 
@@ -23,8 +26,7 @@ function canonicalFromTenths(tenths) {
 }
 
 function exactCanonical(raw) {
-  const tenths = canonicalDecimalToTenths(raw);
-  return tenths === null ? null : { tenths, value: canonicalFromTenths(tenths) };
+  return canonicalSettlementAmount(raw);
 }
 
 function settlementRowCanonical(row, isV2) {
@@ -118,14 +120,11 @@ async function gatherPlan(form, totalCanonical, company) {
     }
   }
 
-  let scheduledTenths = 0n;
-  for (const row of rows) {
-    const parsed = exactCanonical(row.amount);
-    if (!parsed) throw new Error('مبلغ یکی از ردیف‌های تسویه معتبر نیست');
-    scheduledTenths += parsed.tenths;
-  }
-  if (scheduledTenths !== total.tenths) {
-    throw new Error('جمع شرایط تسویه باید دقیقاً با جمع نهایی فاکتور برابر باشد');
+  const validation = validateSettlementPlanTotal(total.value, rows);
+  if (!validation.ok) {
+    throw new Error(validation.code === 'SETTLEMENT_TOTAL_MISMATCH'
+      ? 'جمع شرایط تسویه باید دقیقاً با جمع نهایی فاکتور برابر باشد'
+      : 'مبلغ یکی از ردیف‌های تسویه معتبر نیست');
   }
   return { type, rows };
 }
@@ -169,5 +168,6 @@ if (!C.operations.has('rpc', 'settlement:invoice-plan')) {
 
 export const SettlementSaveBoundaryV3 = Object.freeze({
   architecture: 'settlement-save-boundary-v3',
-  gatherPlan
+  gatherPlan,
+  validateSettlementPlanTotal
 });
