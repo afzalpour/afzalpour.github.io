@@ -1,6 +1,6 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: **2026-09-08 — AC-1 Engineering PASS / RC1.5-C Backend PASS + Frontend STAGING READY / Live Gate pending**.
+آخرین به‌روزرسانی مرجع: **2026-09-09 — RC1.5 Money Precision / Report Unit Regression ENGINEERING PASS (PR #76 / Actions #70) / RC1.5-C Live Gate pending**.
 
 این فایل Source of Truth وضعیت جاری پروژه است. Gateهای Live فقط با تأیید صریح کاربر PASS می‌شوند.
 
@@ -27,6 +27,7 @@ Repository: `afzalpour/afzalpour.github.io`
 - **RC1.5-B — VAT Calculation & Invoice Accounting Bridge = BACKEND PASS**.
 - **AC-1 — Frontend Architecture Consolidation = ENGINEERING PASS**.
 - **RC1.5-C — Tax UX & VAT Reports = BACKEND PASS / FRONTEND ENGINEERING READY / LIVE PENDING**.
+- **RC1.5 Money Precision / Report Unit Regression Fix = ENGINEERING PASS in Staging (PR #76 / Actions #70)**.
 - Tax remains disabled for all current Companies. No legacy invoice/item was silently reclassified.
 - Next user gate: **RC1.5-C Staging Live Gate**.
 - Next development gate after C Live PASS: **RC1.5-D — e-Invoice pre-validation / adapter contract**.
@@ -62,6 +63,8 @@ RC1.4 Backend migrations were applied before frontend promotion to the shared Pr
 
 RC1.5-A/B/C backend migrations and the targeted performance migration are backward-compatible. Tax remains disabled for all Companies until explicit activation, so the stable Production runtime continues to follow RC1.4 behavior.
 
+The 2026-09-09 money precision/report-unit fix is **Staging-only**; Production root runtime is unchanged.
+
 ---
 
 ## 3) Explicit Live PASS / acceptance history
@@ -89,7 +92,7 @@ RC1.4 user-accepted behavior includes:
 - Persian-only user-visible terminology/error policy accepted.
 - mixed/installment settlement money inputs use three-digit grouping in v64.
 
-RC1.5-A/B/C and AC-1 are **engineering/backend PASS states only** unless separately listed above; RC1.5-C is not recorded as user Live PASS yet.
+RC1.5-A/B/C, AC-1 and the 2026-09-09 Money Precision / Report Unit Regression Fix are **engineering/backend PASS states only** unless separately listed above; RC1.5-C is not recorded as user Live PASS yet.
 
 ---
 
@@ -99,7 +102,9 @@ RC1.5-A/B/C and AC-1 are **engineering/backend PASS states only** unless separat
 - Company/RLS boundary is mandatory; cross-company leakage = Blocker/Critical.
 - Avan is Multi-tenant / Multi-company SaaS.
 - Journal lifecycle = `Draft → Posted → Reversed`; Posted entries/lines immutable.
-- Canonical Ledger storage = integer **Toman**; Rial/Toman is presentation only.
+- Canonical Ledger unit = **Toman with 0.1-Toman precision (1 Rial)** under ADR-0019; Rial/Toman remains a presentation/input-boundary concern.
+- Whole-Rial invoice amounts such as `1515 Rial` must convert losslessly to `151.5 Toman` Canonical; they must not be rejected merely for not being divisible by 10.
+- Generic integer-money flows may retain their integer contract until explicitly migrated; they must not reinterpret decimal Canonical values.
 - Posted/Reversed journal debit and credit totals must remain equal.
 - orphan journal lines must remain zero.
 - same-Company authorized users share the Company ledger.
@@ -201,6 +206,11 @@ RC1.5 tax bridge:
 - Posted/Reversed immutability includes tax totals.
 - RC1.5-C preserves tax treatment/code/Persian profile-name snapshots for historical reporting.
 
+RC1.5 invoice money precision:
+- `unit_price`, `discount`, line total, invoice totals and journal debit/credit Backend columns support one decimal Toman.
+- invoice UI uses a decimal-safe boundary and one-tenth-Toman calculation unit so whole-Rial input remains exact.
+- no database migration was required for the 2026-09-09 precision fix.
+
 ---
 
 ## 9) RC1.4 Inventory / Warehouse / Costing — Production
@@ -209,7 +219,7 @@ Architecture:
 - posted movement is immutable; correction uses reversal.
 - quantity supports controlled decimal precision; core quantity column supports up to 6 decimals.
 - moving weighted-average costing.
-- deterministic integer-Toman Ledger boundary.
+- deterministic integer-Toman Inventory valuation boundary in the released RC1.4 flow.
 - composite Company-scoped FK/RLS boundaries.
 - browser does not write stock movements directly.
 
@@ -248,7 +258,7 @@ Check identity rule:
 - same Bank + same Check Number can coexist when Account Number differs.
 - if Account Number is absent, same Company + direction + Bank + Check Number remains protected from duplicate registration.
 
-RC1.5 tax amounts become part of final invoice `total_amount`; integrated Tax + Settlement regression is required before C Production promotion. The final legacy settlement RPC bridge remains quarantined until that migration is regression-tested against VAT-inclusive totals.
+RC1.5 tax amounts become part of final invoice `total_amount`; integrated Tax + Settlement regression is required before C Production promotion. The final legacy settlement RPC bridge remains quarantined until that migration is regression-tested against VAT-inclusive totals, including one-Rial precision totals introduced by ADR-0019.
 
 ---
 
@@ -262,6 +272,8 @@ Frozen product rule:
 Money UX:
 - numeric money inputs use three-digit grouping where applicable, including mixed/installment settlement rows.
 - reports/tables/prints include active money unit in monetary headings.
+- prepared report tables (e.g. Trial Balance / Journal) show the active unit in monetary column headings and do **not** repeat `تومان/ریال` beside every numeric cell.
+- invoice `unit_price` and `discount` are decimal-safe across Rial/Toman switching; a whole-Rial input such as `1515` is valid and lossless.
 - Rial/Toman presentation follows workspace/user preference without rewriting canonical Toman history.
 
 RC1.5-C extends the same rules to Tax/VAT settings, invoice tax fields, VAT reports, print-visible tax sections and validation messages.
@@ -387,9 +399,12 @@ Migrated away from direct shared-client overwrites:
 - RC1.5 tax bridge.
 
 Latest CI evidence:
-- GitHub Actions run `34184751258` = **success**.
+- AC-1 GitHub Actions run `34184751258` = **success**.
+- RC1.5 Money Precision / Report Unit regression GitHub Actions run `34323179845` (Run #70, PR #76) = **success**.
 - Operation Pipeline test = PASS.
 - VAT calculator test = PASS.
+- money-core / unified-money-contract / money-architecture regression tests = PASS under Run #70.
+- syntax checks + architecture audit = PASS under Run #70.
 - unauthorized direct client overwrites = **0**.
 - one legacy Settlement overwrite remains explicitly quarantined with exact-count allowlist.
 - new direct monkey patches are CI-blocked.
@@ -403,6 +418,7 @@ Evidence:
 ## 20) RC1.5 — Tax / VAT / e-invoicing cycle — IN PROGRESS
 Governing ADR:
 - `docs/adr/0007-versioned-tax-rules.md` — Accepted.
+- `docs/adr/0019-canonical-toman-one-rial-precision.md` — Accepted for Canonical money precision.
 
 Verified regulatory direction at cycle start (2026-09-08):
 - current general VAT rate for 1405 is 10%, but tax values must never be permanently hard-coded in scattered UI/business logic.
@@ -434,7 +450,7 @@ Applied migrations:
 - `20260907212157 — rc1_5_b_vat_invoice_engine`
 
 Verified behavior:
-- deterministic integer-Toman VAT calculation.
+- deterministic VAT calculation at the persisted money precision.
 - standard / exempt / zero-rate line handling.
 - date-effective rule validation and line snapshots.
 - VAT-inclusive invoice total with separate subtotal/tax total.
@@ -479,6 +495,29 @@ Evidence:
 - `avan-staging/RC1_5_C_GATE_EVIDENCE.md`
 - `avan-staging/APPLIED_RC1_5_C_TAX_UX_REPORTING_CONTRACT.sql`
 
+### RC1.5 Money Precision / Report Unit Regression — ENGINEERING PASS
+Trigger:
+- user-reported staging regression on 2026-09-09.
+
+Verified / implemented:
+- whole-Rial invoice values are accepted even when not divisible by 10; `1515 Rial → 151.5 Toman` Canonical exactly.
+- invoice line totals, VAT preview and invoice totals use one-tenth-Toman BigInt calculation units aligned with Backend `numeric(...,1)` persistence.
+- invoice `unit_price` / `discount` inputs remain decimal-safe when switching to Toman.
+- MoneyRuntime detects fractional Canonical values and routes them to Decimal formatting instead of integer coercion.
+- prepared report monetary columns show the active unit in the Heading; repeated unit suffixes are removed from individual table cells.
+- Trial Balance summary is recomputed from decimal-safe Canonical values so fractional Ledger amounts cannot be misread by legacy BigInt formatting.
+- no Supabase migration was required.
+- Production root unchanged.
+
+Engineering evidence:
+- PR `#76` — `RC1.5 staging: exact Rial invoice precision and report unit headings`.
+- GitHub Actions run `34323179845` / Run #70 = **success**.
+- `npm run quality` = syntax + tests + architecture audit PASS.
+- ADR-0019 supersedes ADR-0001 precision/divisibility rule.
+
+Live status:
+- **not yet user Live PASS**; remains part of the next RC1.5-C Staging Live Gate.
+
 ### RC1.5 performance hardening
 Applied migration:
 - `rc1_5_performance_hot_path_indexes`
@@ -494,7 +533,7 @@ Evidence:
 - `avan-staging/APPLIED_RC1_5_PERFORMANCE_HOT_PATH_INDEXES.sql`
 
 ### Remaining RC1.5 gates
-1. **RC1.5-C Staging Live Gate** — explicit user browser/PWA acceptance; not yet PASS.
+1. **RC1.5-C Staging Live Gate** — explicit user browser/PWA acceptance; includes the 2026-09-09 Money Precision / Report Unit regression fix and is not yet PASS.
 2. **RC1.5-D — e-Invoice pre-validation / adapter contract** — no paid dependency; no automatic legal submission without explicit user action.
 3. integrated Tax + Settlement regression and removal of the last quarantined Settlement monkey patch.
 4. full regression + final Staging Live/Release Candidate gate before any Production promotion.
@@ -518,9 +557,3 @@ Candidate future product areas:
 - Workflow & Approval.
 - Consolidated multi-company reporting.
 - external integrations/API/Excel/POS/banks.
-- stronger document intelligence using free/local paths where feasible.
-- CFO Autopilot / Continuous Audit / Collections / Close automation.
-- Persian Voice AI with explicit consent and human-controlled financial actions.
-
-Governing principle:
-**اعتماد مالی + UX حرفه‌ای + اتوماسیون + هوش توضیح‌پذیر + تصمیم‌سازی مدیریتی.**

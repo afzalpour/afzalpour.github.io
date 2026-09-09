@@ -32,11 +32,11 @@
 - گزینه‌های ردشده
 - ارتباط با Gateها یا فایل‌های اجرایی
 
-## ADRهای فعال
+## ADRهای ثبت‌شده
 
 | ADR | تصمیم | وضعیت |
 |---|---|---|
-| [0001](0001-canonical-ledger-toman.md) | Canonical Ledger = integer Toman | Accepted |
+| [0001](0001-canonical-ledger-toman.md) | Canonical Ledger = integer Toman | Superseded by 0019 |
 | [0002](0002-journal-lifecycle-immutability.md) | Draft → Posted → Reversed و immutability سند قطعی | Accepted |
 | [0003](0003-workspace-rls-security-boundary.md) | Workspace + RLS مرز امنیت داده | Accepted |
 | [0004](0004-staging-gate-release-workflow.md) | Staging-first و Gate-based release | Accepted |
@@ -53,6 +53,8 @@
 | [0015](0015-central-company-context-application-boundary.md) | CompanyContext مرکزی + Company Portfolio به‌عنوان مرز Application Tenant | Accepted |
 | [0016](0016-modular-runtime-no-monkey-patching.md) | Runtime ماژولار، Composition صریح و ممنوعیت monkey-patch جدید | Accepted |
 | [0017](0017-windows-desktop-offline-direction.md) | جهت Windows Desktop و Offline-capable architecture | Proposed |
+| [0018](0018-unified-money-runtime.md) | Unified Money Runtime و single-owner money projection | Proposed |
+| [0019](0019-canonical-toman-one-rial-precision.md) | Canonical Toman با دقت یک ریال (۰٫۱ تومان) | Accepted |
 
 ## اصل حاکم
 

@@ -8,6 +8,7 @@ const PERSIAN_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
 const ARABIC_DIGITS = '٠١٢٣٤٥٦٧٨٩';
 const QUANTITY_SCALE = 1000000n;
 const DECIMAL_MONEY_SCALE = 1000000n;
+const CANONICAL_TENTH_SCALE = DECIMAL_MONEY_SCALE / 10n;
 const RIAL_PER_TOMAN = 10n;
 
 const ONES = [
@@ -73,6 +74,27 @@ function decimalMicrosToPlainString(micros, { trim = true } = {}) {
   return `${sign}${whole}${fraction ? `.${fraction}` : ''}`;
 }
 
+function roundRatio(numerator, denominator) {
+  if (denominator <= 0n) throw new Error('INVALID_ROUND_DENOMINATOR');
+  if (numerator < 0n) return -roundRatio(-numerator, denominator);
+  return (numerator + denominator / 2n) / denominator;
+}
+
+export function canonicalTenthsToDecimal(tenths) {
+  try {
+    const value = typeof tenths === 'bigint' ? tenths : BigInt(tenths ?? 0);
+    return decimalMicrosToPlainString(value * CANONICAL_TENTH_SCALE);
+  } catch {
+    return null;
+  }
+}
+
+export function canonicalDecimalToTenths(value) {
+  const micros = signedDecimalMoneyMicros(value);
+  if (micros === null || micros % CANONICAL_TENTH_SCALE !== 0n) return null;
+  return micros / CANONICAL_TENTH_SCALE;
+}
+
 export function displayDecimalToCanonical(value, unit = UNIT_TOMAN) {
   const normalizedUnit = normalizeUnitOrNull(unit);
   if (!normalizedUnit) return { ok: false, value: null, code: 'MONEY_UNIT_NOT_READY' };
@@ -92,6 +114,29 @@ export function displayDecimalToCanonical(value, unit = UNIT_TOMAN) {
   }
   const canonicalMicros = displayMicros / RIAL_PER_TOMAN;
   return { ok: true, value: decimalMicrosToPlainString(canonicalMicros), micros: canonicalMicros, code: null };
+}
+
+export function displayDecimalToCanonicalTenth(value, unit = UNIT_TOMAN) {
+  const parsed = displayDecimalToCanonical(value, unit);
+  if (!parsed.ok) return { ...parsed, tenths: null };
+  if (parsed.micros % CANONICAL_TENTH_SCALE !== 0n) {
+    return {
+      ok: false,
+      value: null,
+      micros: null,
+      tenths: null,
+      code: 'CANONICAL_TENTH_PRECISION_EXCEEDED',
+      message: 'در تومان حداکثر یک رقم اعشار و در ریال فقط مبلغ صحیح قابل ثبت است.'
+    };
+  }
+  const tenths = parsed.micros / CANONICAL_TENTH_SCALE;
+  return {
+    ok: true,
+    value: decimalMicrosToPlainString(parsed.micros),
+    micros: parsed.micros,
+    tenths,
+    code: null
+  };
 }
 
 export function canonicalDecimalToDisplay(value, unit = UNIT_TOMAN) {
@@ -242,16 +287,23 @@ export function canonicalAmountInWords(value, unit) {
 
 export function lineCanonicalAmount({ quantity, unitPrice, discount = '0', unit = UNIT_TOMAN }) {
   const q = decimalMicros(quantity);
-  const p = displayToCanonical(unitPrice, unit);
-  const d = displayToCanonical(discount || '0', unit);
+  const p = displayDecimalToCanonicalTenth(unitPrice, unit);
+  const d = displayDecimalToCanonicalTenth(discount || '0', unit);
   if (q === null || !p.ok || !d.ok) {
     return {
       ok: false,
       value: null,
+      tenths: null,
       code: !p.ok ? p.code : !d.ok ? d.code : 'INVALID_QUANTITY'
     };
   }
-  const gross = (q * p.value + QUANTITY_SCALE / 2n) / QUANTITY_SCALE;
-  if (d.value > gross) return { ok: false, value: null, code: 'DISCOUNT_EXCEEDS_GROSS' };
-  return { ok: true, value: gross - d.value, code: null };
+  const grossTenths = roundRatio(q * p.tenths, QUANTITY_SCALE);
+  if (d.tenths > grossTenths) return { ok: false, value: null, tenths: null, code: 'DISCOUNT_EXCEEDS_GROSS' };
+  const lineTenths = grossTenths - d.tenths;
+  return {
+    ok: true,
+    value: canonicalTenthsToDecimal(lineTenths),
+    tenths: lineTenths,
+    code: null
+  };
 }

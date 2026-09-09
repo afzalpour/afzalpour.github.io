@@ -9,11 +9,13 @@ const INTEGER_NAMES = new Set([
   'opening_balance', 'total_amount', 'v2_amount_display'
 ]);
 const DECIMAL_NAMES = new Set(['cost', 'unit_cost']);
+const INVOICE_DECIMAL_NAMES = new Set(['unit_price', 'discount']);
 
 function moneyMode(input) {
   if (!(input instanceof HTMLInputElement)) return null;
   if (input.dataset.moneyInput === 'false' || input.dataset.money === 'false') return null;
   if (input.dataset.moneyDecimalInput === 'true') return 'decimal';
+  if (input.closest?.('#invoiceForm') && INVOICE_DECIMAL_NAMES.has(input.name || '')) return 'decimal';
   if (input.dataset.moneyInput === 'true' || input.dataset.money === 'true') return 'integer';
   if (DECIMAL_NAMES.has(input.name || '')) return 'decimal';
   if (INTEGER_NAMES.has(input.name || '')) return 'integer';

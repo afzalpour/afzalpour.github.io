@@ -52,9 +52,18 @@ export function installMoneyRuntime({ globalObject = window, documentObject = do
     return next;
   }
 
+  function carriesCanonicalFraction(value) {
+    if (typeof value === 'number') return !Number.isInteger(value);
+    if (typeof value === 'bigint') return false;
+    return /[.٫]/.test(String(value ?? ''));
+  }
+
   function safeFormatCanonical(value, options) {
-    try { return service.format(value, options); }
-    catch { return '—'; }
+    try {
+      return carriesCanonicalFraction(value)
+        ? service.formatDecimal(value, options)
+        : service.format(value, options);
+    } catch { return '—'; }
   }
 
   function safeFormatCanonicalDecimal(value, options) {
@@ -63,8 +72,11 @@ export function installMoneyRuntime({ globalObject = window, documentObject = do
   }
 
   function safeInputFromCanonical(value) {
-    try { return service.inputFromCanonical(value); }
-    catch { return ''; }
+    try {
+      return carriesCanonicalFraction(value)
+        ? service.decimalInputFromCanonical(value)
+        : service.inputFromCanonical(value);
+    } catch { return ''; }
   }
 
   function safeDecimalInputFromCanonical(value) {
