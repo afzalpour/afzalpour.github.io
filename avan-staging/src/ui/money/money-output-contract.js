@@ -177,7 +177,7 @@ export function installMoneyOutputContract({ globalObject = window, documentObje
   globalObject.addEventListener('avan:page-rendered', () => Lifecycle.schedule('money-output-page'));
   documentObject.addEventListener('avan:ui-changed', () => Lifecycle.schedule('money-output-ui'));
   documentObject.addEventListener('click', event => {
-    if (event.target.closest?.('[data-page],[data-view-invoice],[data-view-journal],[data-action]')) {
+    if (event.target.closest?.('[data-page],[data-view-invoice],[data-view-journal],[data-action],[data-r]')) {
       window.setTimeout(() => Lifecycle.schedule('money-output-click'), 0);
     }
   }, true);
