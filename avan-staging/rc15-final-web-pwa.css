@@ -27,6 +27,50 @@ body{
   min-height:100dvh;
 }
 
+.avan-risk-factor-grid{
+  align-items:stretch;
+}
+
+.avan-risk-factor-card{
+  min-width:0;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.avan-risk-factor-copy,
+.avan-risk-factor-title,
+.avan-risk-factor-description{
+  min-width:0;
+  max-width:100%;
+}
+
+.avan-risk-factor-title{
+  margin-block:4px 0;
+  overflow-wrap:anywhere;
+}
+
+.avan-risk-factor-value{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.avan-risk-factor-number{
+  display:block;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  text-align:center;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  font-variant-numeric:tabular-nums;
+}
+
 @media(max-width:900px){
   .toast{
     bottom:calc(86px + env(safe-area-inset-bottom));
