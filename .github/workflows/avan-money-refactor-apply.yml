@@ -1,76 +1,24 @@
-name: Avan Money Refactor Apply
+name: Avan Money Refactor Cleanup Gate
 
 on:
   push:
     branches:
       - rc1.5-money-architecture-refactor
-    paths:
-      - 'avan-staging/scripts/apply-money-architecture-refactor.mjs'
-      - 'avan-staging/scripts/apply-money-architecture-phase2.mjs'
-      - 'avan-staging/scripts/apply-money-architecture-phase3.mjs'
-      - 'avan-staging/scripts/apply-money-architecture-phase4.mjs'
-      - 'avan-staging/scripts/money-architecture-audit.mjs'
-      - 'avan-staging/tests/money-*.spec.mjs'
-      - 'avan-staging/tests/c2-money-contract-v2.spec.mjs'
-      - 'avan-staging/package.json'
-      - '.github/workflows/avan-money-refactor-apply.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply:
+  quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: rc1.5-money-architecture-refactor
-          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Harden phase 1 regex cardinality helper
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('avan-staging/scripts/apply-money-architecture-refactor.mjs')
-          s=p.read_text()
-          old="""function replaceRegexOnce(source, re, after, label) {
-            const matches = source.match(re);
-            if (!matches || matches.length !== 1) throw new Error(`${label}: expected exactly one match`);
-            return source.replace(re, after);
-          }"""
-          new="""function replaceRegexOnce(source, re, after, label) {
-            const flags = re.flags.includes('g') ? re.flags : `${re.flags}g`;
-            const matches = [...source.matchAll(new RegExp(re.source, flags))];
-            if (matches.length !== 1) throw new Error(`${label}: expected exactly one match, found ${matches.length}`);
-            return source.replace(re, after);
-          }"""
-          if old in s:
-              p.write_text(s.replace(old,new))
-          PY
-      - name: Apply money refactor migrations
-        run: |
-          node avan-staging/scripts/apply-money-architecture-refactor.mjs
-          node avan-staging/scripts/apply-money-architecture-phase2.mjs
-          node avan-staging/scripts/apply-money-architecture-phase3.mjs
-          node avan-staging/scripts/apply-money-architecture-phase4.mjs
-      - name: Full architecture quality gate
+      - name: Final architecture quality gate
         working-directory: avan-staging
         run: npm run quality
-      - name: Commit transformed sources
-        run: |
-          if git diff --quiet; then
-            echo 'No generated changes.'
-            exit 0
-          fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -u avan-staging
-          if git diff --cached --quiet; then
-            echo 'No tracked runtime changes to commit.'
-            exit 0
-          fi
-          git commit -m 'Retire remaining legacy money runtime paths'
-          git push origin HEAD:rc1.5-money-architecture-refactor
