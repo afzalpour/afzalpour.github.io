@@ -23,7 +23,11 @@ assert.equal(core.includes("querySelectorAll('[data-report]')"), true, 'core rep
 assert.equal(output.includes('[data-report]'), true, 'report presentation must follow the native report selector');
 assert.equal(output.includes('data-avan-report-surface'), true);
 assert.equal(output.includes("setProperty('text-align', 'center', 'important')"), true,
-  'web report headings must beat legacy right-aligned CSS, not only print CSS');
+  'web report presentation must beat legacy right-aligned CSS, not only print CSS');
+assert.equal(output.includes('centerReportNumericCells'), true,
+  'prepared report numeric body/footer cells must be centered explicitly');
+assert.equal(output.includes('data-avan-report-number-cell'), true,
+  'numeric report cells must carry a stable presentation marker');
 assert.equal(output.includes('avanReportPresentationContractStyle'), true);
 assert.equal(output.includes('[data-r]'), false, 'obsolete report selector must not drive report presentation');
 
@@ -35,8 +39,14 @@ assert.equal(settings.includes('data-avan-account-money-slot'), true,
   'currency must mount into a stable account-card slot');
 assert.equal(settings.includes('data-avan-tax-slot'), true);
 assert.equal(settings.includes('data-avan-access-slot'), true);
-assert.equal(settings.includes('visibility:hidden!important'), true,
-  'async settings cards must remain hidden until mounted in their final slot');
+assert.equal(settings.includes('avan-settings-slot-placeholder'), true,
+  'async settings extensions must reserve their final layout before data arrives');
+assert.equal(settings.includes('position:absolute!important'), true,
+  'transient async cards must be removed from layout before final mounting');
+assert.equal(settings.includes('accountCard.after(stack)'), true,
+  'async settings stack must extend below the stable account card instead of pushing core sections');
+assert.equal(settings.includes('installStyle(documentObject);\n  const Lifecycle'), true,
+  'anti-jump CSS must install eagerly before async settings cards can flash in temporary locations');
 assert.equal(settings.includes('[0, 120, 420, 1000, 2400]'), false,
   'settings layout must not repeatedly move cards on delayed timers');
 

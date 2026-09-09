@@ -10,6 +10,7 @@ const FINANCIAL_PAGES = new Set([
 const MONEY_HEADING = /(بدهکار|بستانکار|مبلغ|مانده|خالص|جمع|فی|قیمت|بهای|ارزش|فروش|خرید|درآمد|هزینه|دارایی|بدهی|حقوق مالکانه|سود|زیان|مالیات|تخفیف)/;
 const TRAILING_UNIT = /(?:\s*\((?:تومان|ریال)\))+\s*$/;
 const VALUE_UNIT_SUFFIX = /\s+(?:تومان|ریال)\s*$/u;
+const NUMERIC_CELL = /^[\s+\-−]?[0-9۰-۹٠-٩][0-9۰-۹٠-٩\s٬,٫.\/%٪:()\-−+]*$/u;
 
 function installReportPresentationStyle(documentObject) {
   if (documentObject.getElementById('avanReportPresentationContractStyle')) return;
@@ -29,9 +30,12 @@ function installReportPresentationStyle(documentObject) {
       display:block!important;width:100%!important;text-align:center!important;
     }
     #content[data-avan-report-surface="1"] td.num,
-    #content[data-avan-report-surface="1"] .num{
-      direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums;
+    #content[data-avan-report-surface="1"] .num,
+    #content[data-avan-report-surface="1"] [data-avan-report-number-cell="1"]{
+      text-align:center!important;unicode-bidi:isolate;font-variant-numeric:tabular-nums;
     }
+    #content[data-avan-report-surface="1"] td.num,
+    #content[data-avan-report-surface="1"] .num{direction:ltr}
   `;
   documentObject.head.append(style);
 }
@@ -99,6 +103,22 @@ function stripRepeatedUnitsFromReportTables(root) {
         if (!cell || cell.children.length) return;
         const next = cleanMoneyCellText(cell.textContent);
         if (cell.textContent !== next) cell.textContent = next;
+      });
+    });
+  });
+}
+
+function centerReportNumericCells(root) {
+  root?.querySelectorAll?.('table').forEach(table => {
+    const moneyIndexes = new Set(moneyColumnIndexes(table));
+    table.querySelectorAll('tbody tr, tfoot tr').forEach(row => {
+      [...row.children].forEach((cell, index) => {
+        const raw = cleanMoneyCellText(cell.textContent).trim();
+        const numeric = cell.classList?.contains('num') || moneyIndexes.has(index) || NUMERIC_CELL.test(raw);
+        if (!numeric) return;
+        cell.style.setProperty('text-align', 'center', 'important');
+        cell.style.setProperty('vertical-align', 'middle', 'important');
+        cell.dataset.avanReportNumberCell = '1';
       });
     });
   });
@@ -186,6 +206,7 @@ export function projectMoneyOutput(documentObject = document) {
       stripRepeatedUnitsFromReportTables(content);
       centerReportHeaders(content);
       centerPreparedReportTitles(content);
+      centerReportNumericCells(content);
     }
   }
 
@@ -198,6 +219,7 @@ export function projectMoneyOutput(documentObject = document) {
       annotateHeaders(modal, unitLabel, { inlineUnit: true });
       stripRepeatedUnitsFromReportTables(modal);
       centerReportHeaders(modal);
+      centerReportNumericCells(modal);
     }
   }
   return true;
@@ -220,6 +242,7 @@ export function installMoneyOutputContract({ globalObject = window, documentObje
     annotateHeaders,
     centerReportHeaders,
     centerPreparedReportTitles,
+    centerReportNumericCells,
     stripRepeatedUnitsFromReportTables
   });
   globalObject.AvanMoneyOutput = api;
