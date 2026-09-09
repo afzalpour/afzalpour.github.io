@@ -36,6 +36,16 @@ assert.equal(oneRialPrecision.tenths, 1515n);
 assert.equal(canonicalDecimalToTenths('151.5'), 1515n);
 assert.equal(canonicalTenthsToDecimal(1515n), '151.5');
 
+// Persistence supports exactly 0.1 Toman = 1 Rial. Sub-Rial input must never be rounded silently.
+const subRial = displayDecimalToCanonicalTenth('1515.5', UNIT_RIAL);
+assert.equal(subRial.ok, false);
+assert.equal(subRial.code, 'CANONICAL_TENTH_PRECISION_EXCEEDED');
+const tooPreciseToman = displayDecimalToCanonicalTenth('151.55', UNIT_TOMAN);
+assert.equal(tooPreciseToman.ok, false);
+assert.equal(tooPreciseToman.code, 'CANONICAL_TENTH_PRECISION_EXCEEDED');
+assert.equal(displayDecimalToCanonicalTenth('151.5', UNIT_TOMAN).value, '151.5');
+assert.equal(canonicalDecimalToTenths('151.55'), null);
+
 assert.equal(formatCanonical(10005n, UNIT_RIAL), '100٬050 ریال');
 assert.equal(formatCanonical(10005n, UNIT_TOMAN), '10٬005 تومان');
 assert.equal(formatCanonicalDecimal('1000.5', UNIT_RIAL), '10٬005 ریال');
@@ -72,5 +82,14 @@ const rialDiscount = lineCanonicalAmount({
 assert.equal(rialDiscount.ok, true);
 assert.equal(rialDiscount.value, '151');
 assert.equal(rialDiscount.tenths, 1510n);
+
+const subRialLine = lineCanonicalAmount({
+  quantity: '1',
+  unitPrice: '1515.5',
+  discount: '0',
+  unit: UNIT_RIAL
+});
+assert.equal(subRialLine.ok, false);
+assert.equal(subRialLine.code, 'CANONICAL_TENTH_PRECISION_EXCEEDED');
 
 console.log('money-core-v3: PASS');
