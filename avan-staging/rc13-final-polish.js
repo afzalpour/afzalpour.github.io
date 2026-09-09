@@ -124,13 +124,6 @@ function ensureJournalTotals(modal){
 }
 
 function preparePageOutput(){window.AvanMoneyOutput?.project?.()}
-
-function strongPassword(password){
-  const p=String(password||'');
-  if(p.length<12)return false;
-  if(!/[A-Za-zآ-ی]/.test(p)||!/[0-9۰-۹]/.test(p)||!/[!@#$%^&*()_+\-=\[\]{};:'"\\|,.<>?\/`~]/.test(p))return false;
-  return !COMMON_PASSWORDS.has(p.toLowerCase());
-}
 function passwordError(){return 'رمز جدید باید حداقل ۱۲ کاراکتر و شامل حرف، عدد و نماد باشد و از الگوهای بسیار رایج استفاده نکند.'}
 function installPasswordGuard(){
   document.addEventListener('submit',event=>{

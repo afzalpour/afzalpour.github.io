@@ -12,8 +12,9 @@ function replaceOnce(source, before, after, label) {
   return source.replace(before, after);
 }
 function replaceRegexOnce(source, re, after, label) {
-  const matches = source.match(re);
-  if (!matches || matches.length !== 1) throw new Error(`${label}: expected exactly one match`);
+  const flags = re.flags.includes('g') ? re.flags : `${re.flags}g`;
+  const matches = [...source.matchAll(new RegExp(re.source, flags))];
+  if (matches.length !== 1) throw new Error(`${label}: expected exactly one match, found ${matches.length}`);
   return source.replace(re, after);
 }
 

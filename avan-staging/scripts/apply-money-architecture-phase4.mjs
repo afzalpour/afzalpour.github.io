@@ -21,7 +21,6 @@ function retireLiveMoneyImports() {
     const source = fs.readFileSync(file, 'utf8');
     const next = source
       .split(/\r?\n/)
-      .filter(line => !(line.includes('import') && line.includes('live-money-inputs.js')))
       .join('\n');
     if (next !== source) {
       fs.writeFileSync(file, next);
