@@ -32,6 +32,13 @@ function annotateHeaders(root, unitLabel, { inlineUnit = false } = {}) {
   });
 }
 
+function centerReportHeaders(root) {
+  root?.querySelectorAll?.('table thead th').forEach(th => {
+    th.style.textAlign = 'center';
+    th.dataset.avanReportHeaderAlign = 'center';
+  });
+}
+
 function cleanMoneyCellText(raw) {
   return String(raw ?? '').replace(VALUE_UNIT_SUFFIX, '').trim();
 }
@@ -137,6 +144,7 @@ export function projectMoneyOutput(documentObject = document) {
     if (isPreparedReports) {
       repairTrialBalanceSummary(content);
       stripRepeatedUnitsFromReportTables(content);
+      centerReportHeaders(content);
     }
   }
 
@@ -146,7 +154,9 @@ export function projectMoneyOutput(documentObject = document) {
     const heading = modal.querySelector('h2')?.textContent?.trim() || '';
     if (/^(فاکتور|سند |دریافت|پرداخت|انتقال|مانده افتتاحیه)/.test(heading)) {
       ensureUnitBadge(modal, unitLabel, true);
-      annotateHeaders(modal, unitLabel);
+      annotateHeaders(modal, unitLabel, { inlineUnit: true });
+      stripRepeatedUnitsFromReportTables(modal);
+      centerReportHeaders(modal);
     }
   }
   return true;
@@ -167,6 +177,7 @@ export function installMoneyOutputContract({ globalObject = window, documentObje
     installed: true,
     project: () => projectMoneyOutput(documentObject),
     annotateHeaders,
+    centerReportHeaders,
     stripRepeatedUnitsFromReportTables
   });
   globalObject.AvanMoneyOutput = api;
