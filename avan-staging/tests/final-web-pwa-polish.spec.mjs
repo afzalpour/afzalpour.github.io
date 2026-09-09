@@ -29,9 +29,11 @@ assert.equal(manifest.display, 'standalone');
 assert.equal(manifest.orientation, 'any', 'financial tables must not be locked to portrait mode');
 
 // Offline correctness: HTML shell fallback is navigation-only.
-assert.match(sw, /const CACHE='avan-staging-rc1-v84-settings-einvoice-live-fix'/);
+assert.match(sw, /const CACHE='avan-staging-rc1-v85-settings-stable-shells'/);
 assert.match(sw, /\.\/rc15-final-web-pwa\.css/);
 assert.match(sw, /\.\/src\/ui\/settings\/settings-layout-v2\.js/);
+assert.match(sw, /\.\/src\/ui\/settings\/workspace-access-settings\.js/);
+assert.match(sw, /\.\/src\/ui\/settings\/support-access-settings\.js/);
 assert.match(sw, /\.\/src\/ui\/einvoice\/einvoice-preflight-ui\.js/);
 assert.match(sw, /async function networkFirst\(request\)/);
 assert.match(sw, /if\(request\.mode==='navigate'\)/,
