@@ -12,7 +12,6 @@ let current = null;
 let selectionRequired = false;
 let loading = false;
 let resolved = false;
-let lastLoadError = null;
 let refreshPromise = null;
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -29,7 +28,6 @@ async function loadState(force = false) {
   if (refreshPromise) return refreshPromise;
   refreshPromise = (async () => {
     loading = true;
-    lastLoadError = null;
     try {
       const state = force
         ? await companyContext.refresh({ force: true })
@@ -40,7 +38,6 @@ async function loadState(force = false) {
       resolved = true;
       return state;
     } catch (error) {
-      lastLoadError = error;
       resolved = false;
       console.warn('[Avan company shell] context load failed', error);
       return null;
@@ -59,7 +56,10 @@ function contextHtml() {
 
 async function chooseCompany(id) {
   try {
-    await companyContext.selectCompany(id);
+    const selected = await companyContext.selectCompany(id, { emit: false });
+    current = selected;
+    selectionRequired = false;
+    companies = companyContext.list();
     location.reload();
   } catch (error) {
     const status = document.getElementById('avanCompanyPortfolioStatus');
@@ -69,7 +69,7 @@ async function chooseCompany(id) {
         ? 'این شرکت آرشیو شده و ورود به آن بسته است.'
         : message.includes('COMPANY_SUSPENDED')
           ? 'این شرکت توسط مدیریت سامانه تعلیق شده است.'
-          : 'ورود به این شرکت انجام نشد.';
+          : 'ورود به این شرکت انجام نشد. دوباره تلاش کنید.';
     }
   }
 }
@@ -108,7 +108,7 @@ function renderTopbar() {
   const button = host.querySelector('#avanOpenCompanyPortfolio');
   if (button && !button.dataset.bound) {
     button.dataset.bound = '1';
-    button.onclick = () => void openPortfolio({ required: false, refreshState: true });
+    button.onclick = () => openPortfolio({ required: false });
   }
 }
 
@@ -124,8 +124,8 @@ function portfolioCompanyHtml(company) {
 
 function portfolioHtml(required) {
   const empty = resolved && companies.length === 0;
-  const status = lastLoadError
-    ? 'خواندن شرکت‌های شما انجام نشد. دوباره تلاش کنید.'
+  const status = !resolved
+    ? 'در حال خواندن شرکت‌های شما…'
     : empty
       ? 'برای شروع، اولین شرکت خود را ایجاد کنید.'
       : required
@@ -141,7 +141,7 @@ function portfolioHtml(required) {
     : empty
       ? 'این حساب هنوز شرکتی ندارد. اولین شرکت را ایجاد کنید تا هسته مالی آوان برای شما راه‌اندازی شود.'
       : 'هر شرکت یک Tenant مستقل است. شرکت تعلیق/آرشیوشده همچنان دیده می‌شود اما دفتر مالی آن قابل ورود نیست.';
-  return `<div class="avan-company-portfolio-panel" role="dialog" aria-modal="true"><div class="avan-company-portfolio-head"><div><span class="eyebrow">آوان · Company Portfolio</span><h2>شرکت‌های من</h2><p>${intro}</p></div>${!required && current ? '<button type="button" class="ghost" id="avanCloseCompanyPortfolio">بستن</button>' : ''}</div><div class="avan-company-portfolio-list">${body}</div><div class="avan-company-portfolio-foot"><span class="muted" id="avanCompanyPortfolioStatus">${status}</span>${lastLoadError ? '<button type="button" class="ghost small" id="avanRetryCompanyPortfolio">تلاش مجدد</button>' : ''}</div></div>`;
+  return `<div class="avan-company-portfolio-panel" role="dialog" aria-modal="true"><div class="avan-company-portfolio-head"><div><span class="eyebrow">آوان · Company Portfolio</span><h2>شرکت‌های من</h2><p>${intro}</p></div>${!required && current ? '<button type="button" class="ghost" id="avanCloseCompanyPortfolio">بستن</button>' : ''}</div><div class="avan-company-portfolio-list">${body}</div><div class="avan-company-portfolio-foot"><span class="muted" id="avanCompanyPortfolioStatus">${status}</span></div></div>`;
 }
 
 function closePortfolio() {
@@ -156,13 +156,12 @@ function bindPortfolio(required) {
     button.onclick = () => void chooseCompany(button.dataset.enterCompany);
   });
   document.getElementById('avanCloseCompanyPortfolio')?.addEventListener('click', closePortfolio);
-  document.getElementById('avanRetryCompanyPortfolio')?.addEventListener('click', () => void openPortfolio({ required, refreshState: true }));
   overlay.onclick = event => {
     if (!required && event.target === overlay) closePortfolio();
   };
 }
 
-function renderPortfolio(required) {
+function openPortfolio({ required = false } = {}) {
   let overlay = document.getElementById('avanCompanyPortfolio');
   if (!overlay) {
     overlay = document.createElement('div');
@@ -177,19 +176,11 @@ function renderPortfolio(required) {
   overlay.querySelector('[data-enter-company]:not(:disabled)')?.focus();
 }
 
-async function openPortfolio({ required = false, refreshState = false } = {}) {
-  if (refreshState || !resolved) {
-    renderPortfolio(required);
-    await loadState(true);
-  }
-  renderPortfolio(required);
-}
-
 function syncRequiredPortfolio() {
   if (loading || !resolved) return;
   const firstCompanyRequired = appVisible() && !current && companies.length === 0;
   if ((selectionRequired && companies.length) || firstCompanyRequired) {
-    void openPortfolio({ required: true, refreshState: false });
+    openPortfolio({ required: true });
     return;
   }
   const overlay = document.getElementById('avanCompanyPortfolio');
@@ -227,20 +218,13 @@ async function refresh(force = false) {
 function onPageRendered() {
   renderTopbar();
   projectCompanyLabels();
-  if (!resolved) {
-    void refresh(true);
-    return;
-  }
-  syncRequiredPortfolio();
+  if (resolved) syncRequiredPortfolio();
 }
 
 function install() {
   window.addEventListener('avan:page-rendered', onPageRendered);
   window.addEventListener('avan:company-profile-updated', () => void refresh(true));
   window.addEventListener('avan:company-context-changed', () => void refresh(true));
-  window.addEventListener('focus', () => {
-    if (appVisible() && (!resolved || (!current && companies.length === 0))) void refresh(true);
-  });
   window.addEventListener('avan:company-context-cleared', () => {
     companies = [];
     current = null;
@@ -256,7 +240,7 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 else install();
 
 window.AvanCompanyShell = Object.freeze({
-  openPortfolio: () => openPortfolio({ required: false, refreshState: true }),
+  openPortfolio: () => openPortfolio({ required: false }),
   refresh: async () => {
     await refresh(true);
     return companyContext.snapshot();
