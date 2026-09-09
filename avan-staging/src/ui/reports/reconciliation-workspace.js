@@ -68,7 +68,7 @@ function proposalHtml(finding, accounts) {
   const proposal = buildTransactionJournalSuggestion(finding);
   if (!proposal) return '';
   return `<div class="avan-recon-proposal">
-    <div class="section-head"><div><h4>پیشنهاد سند اصلاحی — ثبت نشده</h4><span class="muted">این فقط پیش‌نویس پیشنهادی است؛ هیچ سندی خودکار ایجاد یا Post نمی‌شود.</span></div><span class="badge">کنترل انسانی</span></div>
+    <div class="section-head"><div><h4>پیشنهاد سند اصلاحی — ثبت نشده</h4><span class="muted">این فقط پیش‌نویس پیشنهادی است؛ هیچ سندی خودکار ایجاد یا ثبت قطعی نمی‌شود.</span></div><span class="badge">کنترل انسانی</span></div>
     <div class="muted">تاریخ پیشنهادی: ${esc(faDate(proposal.entry_date))} · ${esc(proposal.description)}</div>
     <div class="table-wrap"><table><thead><tr><th>حساب</th><th>بدهکار (${esc(MoneyRuntime.unitLabel())})</th><th>بستانکار (${esc(MoneyRuntime.unitLabel())})</th></tr></thead><tbody>
       ${proposal.lines.map(line => `<tr><td>${esc(accountLabel(line.account_id, accounts))}</td><td class="num">${esc(money(line.debit, false))}</td><td class="num">${esc(money(line.credit, false))}</td></tr>`).join('')}
@@ -114,8 +114,8 @@ function workspaceHtml(snapshot, accounts, severity = '', category = '') {
   const findings = filteredFindings(snapshot, severity, category);
   const categories = [...new Set((snapshot?.findings || []).map(item => item.category).filter(Boolean))];
   return `<section class="avan-reconciliation-workspace" data-avan-reconciliation-workspace="1">
-    <div class="section-head avan-recon-head"><div><h2 data-report-title>مغایرت‌یابی هوشمند</h2><span class="muted">کنترل هم‌زمان دفتر حسابداری، فاکتور، انبار، تسویه، دریافت/پرداخت/انتقال، چک و اسناد هوشمند</span></div><button type="button" class="ghost" data-recon-refresh>اجرای مجدد</button></div>
-    <div class="info-box">این موتور بر پایه شواهد و قواعد حسابداری/یکپارچگی کار می‌کند. موارد «احتمال تکرار» هشدار قطعی نیستند. پیشنهاد سند هرگز به معنی ثبت خودکار نیست و مسیر نهایی همچنان پیش‌نویس → تأیید کاربر → ثبت قطعی است.</div>
+    <div class="section-head avan-recon-head"><div><h2 data-report-title>نتیجه مغایرت‌یابی هوشمند</h2><span class="muted">کنترل هم‌زمان دفتر حسابداری، فاکتور، انبار، تسویه، دریافت/پرداخت/انتقال، چک و اسناد هوشمند</span></div><button type="button" class="ghost" data-recon-refresh>اجرای مجدد</button></div>
+    <div class="info-box">این موتور بر پایه شواهد و قواعد حسابداری/یکپارچگی کار می‌کند. موارد «احتمال تکرار» هشدار قطعی نیستند و هیچ سندی خودکار ثبت نمی‌شود.</div>
     <div class="summary-strip avan-recon-summary">
       <span class="summary-pill"><b>${Number(summary.total || 0).toLocaleString('fa-IR')}</b> کل یافته</span>
       <span class="summary-pill"><b>${Number(summary.critical || 0).toLocaleString('fa-IR')}</b> بحرانی</span>
@@ -136,6 +136,12 @@ function installStyle(documentObject) {
   const style = documentObject.createElement('style');
   style.id = 'avanReconciliationStyle';
   style.textContent = `
+    .avan-reconciliation-card{margin-top:18px;overflow:hidden}
+    .avan-reconciliation-card .avan-recon-card-head{margin-bottom:0}
+    .avan-recon-card-copy{display:flex;align-items:center;gap:12px;min-width:0}
+    .avan-recon-icon{width:44px;height:44px;border-radius:12px;background:var(--brand-soft);color:var(--brand2);display:grid;place-items:center;font-size:23px;font-weight:900;flex:0 0 44px}
+    .avan-recon-card-copy h2{margin:0 0 3px;font-size:16px}
+    .avan-recon-card-host{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
     .avan-reconciliation-workspace{display:flex;flex-direction:column;gap:14px;direction:rtl}
     .avan-recon-head{justify-content:center!important;text-align:center!important}
     .avan-recon-head>div{flex:1;text-align:center!important}.avan-recon-head h2{text-align:center!important;margin:0}
@@ -145,8 +151,7 @@ function installStyle(documentObject) {
     .avan-recon-evidence span{background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:6px 9px}
     .avan-recon-critical{color:var(--bad)!important;background:var(--bad-soft)!important}.avan-recon-high{color:var(--warn)!important;background:var(--warn-soft)!important}
     .avan-recon-proposal{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}.avan-recon-proposal h4{margin:0 0 4px}.avan-recon-proposal th{text-align:center!important}
-    .avan-recon-launcher{display:flex;justify-content:center;margin:10px 0}.avan-recon-launcher button{min-width:190px}
-    @media(max-width:700px){.avan-recon-filters{display:grid;grid-template-columns:1fr}.avan-recon-filters .field{min-width:0}}
+    @media(max-width:700px){.avan-recon-card-head{align-items:stretch;flex-direction:column}.avan-recon-card-head>button{width:100%}.avan-recon-filters{display:grid;grid-template-columns:1fr}.avan-recon-filters .field{min-width:0}}
   `;
   documentObject.head.append(style);
 }
@@ -194,49 +199,38 @@ async function runReconciliation(out, force = false) {
   }
 }
 
-function setStandardReportChrome(content, visible) {
-  content.querySelectorAll('.report-toolbar,.ledger-select').forEach(node => { node.hidden = !visible; });
-}
+function ensureReconciliationCard(documentObject, content) {
+  let card = content.querySelector('[data-avan-reconciliation-card]');
+  if (card) return card;
 
-function activateReconciliation(button, content, out) {
-  content.querySelectorAll('[data-r],[data-avan-reconciliation-tab]').forEach(node => node.classList.remove('active'));
-  button.classList.add('active');
-  out.dataset.avanReconciliationActive = '1';
-  setStandardReportChrome(content, false);
-  void runReconciliation(out, true);
-}
+  card = documentObject.createElement('section');
+  card.className = 'section card avan-reconciliation-card';
+  card.dataset.avanReconciliationCard = '1';
+  card.innerHTML = `
+    <div class="section-head avan-recon-card-head">
+      <div class="avan-recon-card-copy">
+        <span class="avan-recon-icon" aria-hidden="true">≋</span>
+        <div><h2>مغایرت‌یابی هوشمند</h2><span class="muted">کشف مغایرت بین حسابداری، فاکتور، انبار، خزانه، تسویه، چک و اسناد هوشمند</span></div>
+      </div>
+      <button type="button" class="primary" data-recon-run>اجرای مغایرت‌یابی</button>
+    </div>
+    <div class="avan-recon-card-host" data-recon-host><div class="muted">برای تحلیل اسناد شرکت فعال، «اجرای مغایرت‌یابی» را بزنید.</div></div>`;
 
-function ensureEntryPoint(documentObject, content, out) {
-  const existing = content.querySelector('[data-avan-reconciliation-tab]');
-  if (existing) return existing;
+  const customReports = content.querySelector('[data-custom-report-builder]');
+  if (customReports) customReports.before(card);
+  else content.append(card);
 
-  const standardTabs = [...content.querySelectorAll('[data-r]')];
-  const button = documentObject.createElement('button');
-  button.type = 'button';
-  button.dataset.avanReconciliationTab = '1';
-  button.textContent = 'مغایرت‌یابی هوشمند';
-  button.addEventListener('click', () => activateReconciliation(button, content, out));
-
-  if (standardTabs.length) {
-    const last = standardTabs[standardTabs.length - 1];
-    last.insertAdjacentElement('afterend', button);
-  } else {
-    const launcher = documentObject.createElement('div');
-    launcher.className = 'avan-recon-launcher card';
-    launcher.dataset.avanReconciliationLauncher = '1';
-    launcher.append(button);
-    out.before(launcher);
-  }
-  return button;
+  const host = card.querySelector('[data-recon-host]');
+  card.querySelector('[data-recon-run]')?.addEventListener('click', () => runReconciliation(host, true));
+  return card;
 }
 
 export function projectReconciliationWorkspace(documentObject = document) {
   if (!isReports(documentObject)) return false;
   const content = documentObject.getElementById('content');
-  const out = documentObject.getElementById('reportOut');
-  if (!content || !out) return false;
+  if (!content) return false;
   installStyle(documentObject);
-  ensureEntryPoint(documentObject, content, out);
+  ensureReconciliationCard(documentObject, content);
   return true;
 }
 
@@ -244,38 +238,28 @@ export function installReconciliationWorkspace({ globalObject = window, document
   if (globalObject.AvanReconciliation?.installed) return globalObject.AvanReconciliation;
   const Lifecycle = installUiLifecycle({ globalObject, documentObject });
   Lifecycle.use('reports:reconciliation-workspace', () => projectReconciliationWorkspace(documentObject), { priority: 960 });
-  const scheduleBurst = reason => [0, 60, 180, 500].forEach(delay => globalObject.setTimeout(() => Lifecycle.schedule(`${reason}-${delay}`), delay));
-  globalObject.addEventListener('avan:page-rendered', () => scheduleBurst('reconciliation-page'));
+  globalObject.addEventListener('avan:page-rendered', () => Lifecycle.schedule('reconciliation-page'));
   documentObject.addEventListener('avan:ui-changed', () => Lifecycle.schedule('reconciliation-ui'));
   documentObject.addEventListener('click', event => {
-    const standardTab = event.target.closest?.('[data-r]');
-    if (standardTab && isReports(documentObject)) {
-      const content = documentObject.getElementById('content');
-      const out = documentObject.getElementById('reportOut');
-      content?.querySelector('[data-avan-reconciliation-tab]')?.classList.remove('active');
-      if (out) delete out.dataset.avanReconciliationActive;
-      if (content) setStandardReportChrome(content, true);
-      scheduleBurst('reconciliation-standard-tab');
-      globalObject.AvanMoneyOutput?.project?.();
-      return;
+    if (event.target.closest?.('[data-report],[data-page="reports"]')) {
+      globalObject.setTimeout(() => Lifecycle.schedule('reconciliation-native-report-change'), 0);
     }
-    if (event.target.closest?.('[data-page="reports"]')) scheduleBurst('reconciliation-nav');
   }, true);
   globalObject.addEventListener('avan:company-context-changed', () => {
     latestSnapshot = null;
     latestAccounts = new Map();
-    scheduleBurst('reconciliation-company');
+    Lifecycle.schedule('reconciliation-company');
   });
   const api = Object.freeze({
     installed: true,
     project: () => projectReconciliationWorkspace(documentObject),
     refresh: () => {
-      const out = documentObject.getElementById('reportOut');
+      const out = documentObject.querySelector('[data-avan-reconciliation-card] [data-recon-host]');
       return out ? runReconciliation(out, true) : null;
     }
   });
   globalObject.AvanReconciliation = api;
-  scheduleBurst('reconciliation-ready');
+  Lifecycle.schedule('reconciliation-ready');
   return api;
 }
 

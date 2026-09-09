@@ -16,28 +16,21 @@ function installReportPresentationStyle(documentObject) {
   const style = documentObject.createElement('style');
   style.id = 'avanReportPresentationContractStyle';
   style.textContent = `
-    #reportOut{direction:rtl;text-align:right}
-    #reportOut table thead th{ text-align:center!important; vertical-align:middle!important; }
-    #reportOut > h1,#reportOut > h2,#reportOut > h3,
-    #reportOut .report-title,#reportOut [data-report-title]{
+    #content[data-avan-report-surface="1"]{direction:rtl}
+    #content[data-avan-report-surface="1"] .tabs{justify-content:center!important}
+    #content[data-avan-report-surface="1"] .tabs [data-report]{
+      text-align:center!important;justify-content:center!important;align-items:center!important;
+    }
+    #content[data-avan-report-surface="1"] table thead th{
+      text-align:center!important;vertical-align:middle!important;
+    }
+    #content[data-avan-report-surface="1"] [data-report-title],
+    #content[data-avan-report-surface="1"] .report-title{
       display:block!important;width:100%!important;text-align:center!important;
     }
-    #reportOut > .section-head,
-    #reportOut > .card > .section-head,
-    #reportOut .report-head{
-      justify-content:center!important;text-align:center!important;
-    }
-    #reportOut > .section-head > div,
-    #reportOut > .card > .section-head > div,
-    #reportOut .report-head > div{
-      flex:1 1 auto!important;text-align:center!important;
-    }
-    #reportOut .section-head h1,#reportOut .section-head h2,#reportOut .section-head h3,
-    #reportOut .section-head strong:first-child{
-      text-align:center!important;
-    }
-    #reportOut td.num,#reportOut .num{
-      direction:ltr;unicode-bidi:isolate;text-align:center;font-variant-numeric:tabular-nums;
+    #content[data-avan-report-surface="1"] td.num,
+    #content[data-avan-report-surface="1"] .num{
+      direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums;
     }
   `;
   documentObject.head.append(style);
@@ -73,20 +66,16 @@ function centerReportHeaders(root) {
 }
 
 function centerPreparedReportTitles(root) {
-  const out = root?.querySelector?.('#reportOut') || (root?.id === 'reportOut' ? root : null);
-  if (!out) return;
-  out.querySelectorAll('h1,h2,h3,.report-title,[data-report-title]').forEach(heading => {
+  if (!root) return;
+  root.querySelectorAll('[data-report-title],.report-title').forEach(heading => {
     heading.style.setProperty('text-align', 'center', 'important');
+    heading.style.setProperty('width', '100%', 'important');
     heading.dataset.avanReportTitleAlign = 'center';
   });
-  out.querySelectorAll(':scope > .section-head,:scope > .card > .section-head,.report-head').forEach(head => {
-    head.style.setProperty('justify-content', 'center', 'important');
-    head.style.setProperty('text-align', 'center', 'important');
-    const copy = head.firstElementChild;
-    if (copy) {
-      copy.style.setProperty('text-align', 'center', 'important');
-      copy.style.setProperty('flex', '1 1 auto', 'important');
-    }
+  root.querySelectorAll('.tabs [data-report]').forEach(button => {
+    button.style.setProperty('text-align', 'center', 'important');
+    button.style.setProperty('justify-content', 'center', 'important');
+    button.dataset.avanReportTitleAlign = 'center';
   });
 }
 
@@ -184,6 +173,10 @@ export function projectMoneyOutput(documentObject = document) {
   const unitLabel = MoneyRuntime.unitLabel();
   const title = documentObject.getElementById('pageTitle')?.textContent?.trim() || '';
   const content = documentObject.getElementById('content');
+  if (content) {
+    if (title === 'گزارش‌ها') content.dataset.avanReportSurface = '1';
+    else delete content.dataset.avanReportSurface;
+  }
   if (content && FINANCIAL_PAGES.has(title)) {
     ensureUnitBadge(content, unitLabel, false);
     const isPreparedReports = title === 'گزارش‌ها';
@@ -217,8 +210,8 @@ export function installMoneyOutputContract({ globalObject = window, documentObje
   globalObject.addEventListener('avan:page-rendered', () => Lifecycle.schedule('money-output-page'));
   documentObject.addEventListener('avan:ui-changed', () => Lifecycle.schedule('money-output-ui'));
   documentObject.addEventListener('click', event => {
-    if (event.target.closest?.('[data-page],[data-view-invoice],[data-view-journal],[data-action],[data-r],[data-run-custom-report]')) {
-      [0, 40, 140].forEach(delay => window.setTimeout(() => Lifecycle.schedule(`money-output-click-${delay}`), delay));
+    if (event.target.closest?.('[data-page],[data-view-invoice],[data-view-journal],[data-action],[data-report],[data-run-custom-report]')) {
+      [0, 40, 140].forEach(delay => globalObject.setTimeout(() => Lifecycle.schedule(`money-output-click-${delay}`), delay));
     }
   }, true);
   const api = Object.freeze({
