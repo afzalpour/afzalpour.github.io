@@ -11,8 +11,6 @@ const Lifecycle = installUiLifecycle();
 let reports = [];
 let loading = false;
 
-const C = installAvanCloud();
-
 const c = (key, label, group = 'عمومی') => [key, label, group];
 const SOURCES = Object.freeze({
   composite_events: {
@@ -88,10 +86,16 @@ async function context() {
   return { company, user };
 }
 
-function currentColumns(source, definition = {}) {
+function selectedKeysFor(source, definition = {}) {
   const all = SOURCES[source]?.columns || [];
-  const selected = Array.isArray(definition.columns) && definition.columns.length ? definition.columns : (SOURCES[source]?.defaultColumns || all.map(([key]) => key));
-  return all.filter(([key]) => selected.includes(key));
+  return Array.isArray(definition.columns) && definition.columns.length
+    ? definition.columns
+    : (SOURCES[source]?.defaultColumns || all.map(([key]) => key));
+}
+
+function currentColumns(source, definition = {}) {
+  const selected = selectedKeysFor(source, definition);
+  return (SOURCES[source]?.columns || []).filter(([key]) => selected.includes(key));
 }
 
 function formatCell(key, value) {
@@ -148,56 +152,45 @@ async function render(force = false) {
   } catch (error) { showError(error, 'custom report builder'); }
 }
 
-function columnOptions(source, selected = null, query = '') {
+function columnOptions(source, selected = null) {
   const columns = SOURCES[source]?.columns || [];
-  const chosen = selected || SOURCES[source]?.defaultColumns || columns.map(([key]) => key);
+  const chosen = selected || selectedKeysFor(source);
+  const groups = [...new Set(columns.map(([, , group]) => group || 'عمومی'))];
+  return groups.map(group => `<div class="avan-report-variable-group" data-variable-group><strong>${esc(group)}</strong><div class="avan-report-columns">${columns.filter(([, , g]) => (g || 'عمومی') === group).map(([key,label]) => `<label class="avan-report-column" data-variable-label="${esc(`${label} ${group}`)}"><input type="checkbox" name="columns" value="${key}" ${chosen.includes(key) ? 'checked' : ''}><span>${esc(label)}</span></label>`).join('')}</div></div>`).join('');
+}
+
+function filterVariableList(host, query) {
   const q = String(query || '').trim().toLocaleLowerCase('fa-IR');
-  const visible = columns.filter(([, label, group]) => !q || `${label} ${group}`.toLocaleLowerCase('fa-IR').includes(q));
-  const groups = [...new Set(visible.map(([, , group]) => group || 'عمومی'))];
-  return groups.map(group => `<div class="avan-report-variable-group"><strong>${esc(group)}</strong><div class="avan-report-columns">${visible.filter(([, , g]) => (g || 'عمومی') === group).map(([key,label]) => `<label class="avan-report-column"><input type="checkbox" name="columns" value="${key}" ${chosen.includes(key) ? 'checked' : ''}><span>${esc(label)}</span></label>`).join('')}</div></div>`).join('') || '<div class="empty">متغیری با این جستجو پیدا نشد.</div>';
+  host.querySelectorAll('[data-variable-label]').forEach(label => {
+    label.hidden = Boolean(q) && !String(label.dataset.variableLabel || '').toLocaleLowerCase('fa-IR').includes(q);
+  });
+  host.querySelectorAll('[data-variable-group]').forEach(group => {
+    group.hidden = ![...group.querySelectorAll('[data-variable-label]')].some(label => !label.hidden);
+  });
 }
 
 function openBuilder() {
   installStyle();
   const initialSource = 'composite_events';
-  openModal(`<div class="avan-custom-report-modal"><div class="section-head"><div><h2>ساخت گزارش دلخواه</h2><span class="muted">«گزارش ترکیبی — همه متغیرها» امکان انتخاب هم‌زمان متغیرهای چند حوزه را می‌دهد.</span></div></div><form id="customReportForm"><div class="form-grid"><div class="field"><label>نام گزارش</label><input name="name" maxlength="120" required placeholder="مثلاً فروش، وصول و گردش کالا به تفکیک طرف حساب"></div><div class="field"><label>دسترسی</label><select name="visibility"><option value="private">فقط من</option><option value="company">کاربران مجاز شرکت</option></select></div></div><div class="section avan-report-source-section"><h3>نوع گزارش / منبع داده</h3>${sourceCatalog()}</div><div class="section"><div class="section-head"><div><h3>متغیرهای گزارش</h3><span class="muted">تمام متغیرهای امن و قابل گزارش این منبع در این بخش نمایش داده می‌شوند.</span></div></div><div class="avan-report-columns-toolbar"><div class="field"><label>جستجوی متغیر</label><input id="customReportVariableSearch" placeholder="مثلاً طرف حساب، مالیات، انبار، چک…"></div><button type="button" class="ghost" id="selectAllReportVariables">انتخاب همه</button><button type="button" class="ghost" id="clearReportVariables">پاک کردن انتخاب‌ها</button></div><div id="customReportColumns">${columnOptions(initialSource)}</div></div><div class="info-box">گزارش‌ساز فقط از منابع و Joinهای امن ازپیش‌تعریف‌شده آوان استفاده می‌کند؛ هیچ SQL یا دستور مستقیم پایگاه داده از کاربر دریافت نمی‌شود.</div><div class="form-actions"><button type="button" class="ghost" id="cancelModal">انصراف</button><button class="primary">ذخیره گزارش</button></div></form></div>`);
+  openModal(`<div class="avan-custom-report-modal"><div class="section-head"><div><h2>ساخت گزارش دلخواه</h2><span class="muted">«گزارش ترکیبی — همه متغیرها» امکان انتخاب هم‌زمان متغیرهای چند حوزه را می‌دهد.</span></div></div><form id="customReportForm"><div class="form-grid"><div class="field"><label>نام گزارش</label><input name="name" maxlength="120" required placeholder="مثلاً فروش، وصول و گردش کالا به تفکیک طرف حساب"></div><div class="field"><label>دسترسی</label><select name="visibility"><option value="private">فقط من</option><option value="company">کاربران مجاز شرکت</option></select></div></div><div class="section avan-report-source-section"><h3>نوع گزارش / منبع داده</h3>${sourceCatalog()}</div><div class="section"><div class="section-head"><div><h3>متغیرهای گزارش</h3><span class="muted">تمام متغیرهای امن و قابل گزارش این منبع در این بخش نمایش داده می‌شوند.</span></div></div><div class="avan-report-columns-toolbar"><div class="field"><label>جستجوی متغیر</label><input id="customReportVariableSearch" placeholder="مثلاً طرف حساب، مالیات، انبار، چک…"></div><button type="button" class="ghost" id="selectAllReportVariables">انتخاب همه</button><button type="button" class="ghost" id="clearReportVariables">پاک کردن انتخاب‌ها</button></div><div id="customReportColumns">${columnOptions(initialSource)}</div></div><div class="info-box">گزارش‌ساز فقط از منابع و ارتباط‌های امن ازپیش‌تعریف‌شده آوان استفاده می‌کند؛ هیچ SQL یا دستور مستقیم پایگاه داده از کاربر دریافت نمی‌شود.</div><div class="form-actions"><button type="button" class="ghost" id="cancelModal">انصراف</button><button class="primary">ذخیره گزارش</button></div></form></div>`);
   document.getElementById('cancelModal').onclick = closeModal;
   const form = document.getElementById('customReportForm');
   const host = document.getElementById('customReportColumns');
   const search = document.getElementById('customReportVariableSearch');
-  let selected = new Map();
-
-  const snapshotChecks = source => new Set([...host.querySelectorAll('[name="columns"]:checked')].map(node => node.value));
-  const draw = source => {
-    const chosen = selected.get(source) || SOURCES[source]?.defaultColumns || [];
-    host.innerHTML = columnOptions(source, [...chosen], search.value);
-  };
   const currentSource = () => form.querySelector('[name="source"]:checked')?.value || initialSource;
 
   form.querySelectorAll('[name="source"]').forEach(input => input.addEventListener('change', () => {
-    const previous = [...form.querySelectorAll('[name="source"]')].find(node => node !== input && selected.has(node.value));
-    if (previous) selected.set(previous.value, selected.get(previous.value));
     search.value = '';
-    draw(input.value);
+    host.innerHTML = columnOptions(input.value);
   }));
-  search.addEventListener('input', () => {
-    const source = currentSource();
-    selected.set(source, snapshotChecks(source));
-    draw(source);
-  });
-  document.getElementById('selectAllReportVariables').onclick = () => {
-    const source = currentSource();
-    selected.set(source, new Set((SOURCES[source]?.columns || []).map(([key]) => key)));
-    draw(source);
-  };
-  document.getElementById('clearReportVariables').onclick = () => {
-    const source = currentSource(); selected.set(source, new Set()); draw(source);
-  };
+  search.addEventListener('input', () => filterVariableList(host, search.value));
+  document.getElementById('selectAllReportVariables').onclick = () => host.querySelectorAll('[name="columns"]').forEach(node => { node.checked = true; });
+  document.getElementById('clearReportVariables').onclick = () => host.querySelectorAll('[name="columns"]').forEach(node => { node.checked = false; });
 
   form.addEventListener('submit', async event => {
     event.preventDefault();
     const data = new FormData(form);
-    const source = String(data.get('source') || initialSource);
+    const source = currentSource();
     const columns = [...host.querySelectorAll('[name="columns"]:checked')].map(node => node.value);
     if (!columns.length) return toast('حداقل یک متغیر را انتخاب کنید');
     try {
@@ -253,7 +246,9 @@ async function runReport(id) {
     }
   };
   if (source?.dated) document.getElementById('runCustomReportRange').addEventListener('submit', event => {
-    event.preventDefault(); const fd = new FormData(event.target); void execute(fd.get('from') || null, fd.get('to') || null);
+    event.preventDefault();
+    const fd = new FormData(event.target);
+    void execute(fd.get('from') || null, fd.get('to') || null);
   });
   else document.getElementById('runCustomReportNow').onclick = () => void execute();
 }
