@@ -57,14 +57,29 @@ export function installMoneyRuntime({ globalObject = window, documentObject = do
     catch { return '—'; }
   }
 
+  function safeFormatCanonicalDecimal(value, options) {
+    try { return service.formatDecimal(value, options); }
+    catch { return '—'; }
+  }
+
   function safeInputFromCanonical(value) {
     try { return service.inputFromCanonical(value); }
+    catch { return ''; }
+  }
+
+  function safeDecimalInputFromCanonical(value) {
+    try { return service.decimalInputFromCanonical(value); }
     catch { return ''; }
   }
 
   function safeParseInput(value) {
     try { return service.parseInput(value); }
     catch { return { ok: false, value: null, code: 'MONEY_UNIT_NOT_READY' }; }
+  }
+
+  function safeParseDecimalInput(value) {
+    try { return service.parseDecimalInput(value); }
+    catch { return { ok: false, value: null, micros: null, code: 'MONEY_UNIT_NOT_READY' }; }
   }
 
   function safeUnitLabel() {
@@ -91,8 +106,11 @@ export function installMoneyRuntime({ globalObject = window, documentObject = do
     isReady: () => service.snapshot().ready,
     setUnit,
     parseInput: safeParseInput,
+    parseDecimalInput: safeParseDecimalInput,
     inputFromCanonical: safeInputFromCanonical,
+    decimalInputFromCanonical: safeDecimalInputFromCanonical,
     formatCanonical: safeFormatCanonical,
+    formatCanonicalDecimal: safeFormatCanonicalDecimal,
     formatInput: value => {
       try { return service.formatInput(value); }
       catch { return formatLooseDisplay(value); }
