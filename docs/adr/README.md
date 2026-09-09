@@ -56,6 +56,7 @@
 | [0018](0018-unified-money-runtime.md) | Unified Money Runtime و single-owner money projection | Proposed |
 | [0019](0019-canonical-toman-one-rial-precision.md) | Canonical Toman با دقت یک ریال (۰٫۱ تومان) | Accepted |
 | [0020](0020-human-controlled-reconciliation-intelligence.md) | مغایرت‌یابی چندمنبعی با Evidence و پیشنهاد اصلاح Human-controlled | Accepted |
+| [0021](0021-electronic-invoice-prevalidation-adapter-boundary.md) | پیش‌اعتبارسنجی صورتحساب الکترونیکی + Provider-neutral adapter و Server-side submission boundary | Accepted |
 
 ## اصل حاکم
 
