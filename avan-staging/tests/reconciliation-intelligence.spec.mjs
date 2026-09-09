@@ -18,8 +18,9 @@ for (const required of [
 ]) assert.equal(index.includes(`src="${required}"`), true, `${required} must be active in staging`);
 
 assert.equal(output.includes('centerPreparedReportTitles'), true);
-assert.equal(output.includes("'#reportOut h2, #reportOut h3'"), true,
-  'prepared report visible titles must be centered, not only table headers');
+assert.equal(output.includes("setProperty('text-align', 'center', 'important')"), true,
+  'web report headings must beat legacy right-aligned CSS, not only print CSS');
+assert.equal(output.includes('avanReportPresentationContractStyle'), true);
 
 assert.equal(settings.includes("'حساب کاربری'"), true);
 assert.equal(settings.includes('#currencySettingsCard'), true);
@@ -27,6 +28,10 @@ assert.equal(settings.includes('#rc15TaxSettingsCard'), true);
 assert.equal(settings.includes('[data-rc11-access-card]'), true);
 assert.equal(settings.includes('accessCard.before(taxCard)'), true,
   'tax settings must be projected immediately before users/access');
+assert.equal(settings.includes('visibility:hidden!important'), true,
+  'async settings cards must remain hidden until placed to prevent visible jumping');
+assert.equal(settings.includes('[0, 120, 420, 1000, 2400]'), false,
+  'settings layout must not repeatedly move cards on delayed timers');
 
 for (const code of ['orphan_journal_line', 'posted_invoice_missing_journal', 'invoice_total_mismatch']) {
   assert.equal(health.includes(code), true, `health drilldown must expose ${code}`);
@@ -38,6 +43,12 @@ assert.equal(reconciliation.includes('مغایرت‌یابی هوشمند'), tr
 assert.equal(reconciliation.includes("C.rpc('avan_reconciliation_findings'"), true);
 assert.equal(reconciliation.includes('پیشنهاد سند اصلاحی — ثبت نشده'), true);
 assert.equal(reconciliation.includes('هیچ سندی خودکار ایجاد یا Post نمی‌شود'), true);
+assert.equal(reconciliation.includes("content.querySelectorAll('[data-r]')"), true,
+  'reconciliation entry must locate real report tabs instead of depending on a CSS class name');
+assert.equal(reconciliation.includes('avan-recon-launcher'), true,
+  'reconciliation must have a fallback entry point even when report tab markup changes');
+assert.equal(reconciliation.includes("closest('.tabs"), false,
+  'reconciliation visibility must not depend on a specific .tabs wrapper');
 assert.equal(reconciliation.includes('post_journal_entry'), false,
   'reconciliation UI must never auto-post journal entries');
 assert.equal(reconciliation.includes("C.insert('journal"), false,

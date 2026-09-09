@@ -83,6 +83,10 @@ assert.match(moneyOutput, /inlineUnit: isPreparedReports/);
 assert.match(moneyOutput, /repairTrialBalanceSummary/);
 assert.match(moneyOutput, /centerReportHeaders\(content\)/,
   'all prepared report headings must be centered');
+assert.match(moneyOutput, /setProperty\('text-align', 'center', 'important'\)/,
+  'web report centering must override legacy right-aligned CSS');
+assert.match(moneyOutput, /avanReportPresentationContractStyle/,
+  'web report presentation must have an explicit CSS contract');
 assert.match(moneyOutput, /annotateHeaders\(modal, unitLabel, \{ inlineUnit: true \}\)/,
   'financial detail headings must carry the unit instead of each amount cell');
 assert.match(moneyOutput, /stripRepeatedUnitsFromReportTables\(modal\)/,
@@ -109,7 +113,7 @@ assert.doesNotMatch(settlementSave, /integerBig/,
   'save boundary must not coerce one-Rial precision totals to integer Toman');
 
 assert.match(finalPolish, /AvanMoneyOutput/);
-assert.match(sw, /avan-staging-rc1-v79-reconciliation-intelligence-gate/);
+assert.match(sw, /avan-staging-rc1-v80-report-live-composite-gate/);
 assert.match(sw, /src\/core\/money\/canonical-money\.js/);
 assert.match(sw, /src\/ui\/money\/invoice-money-workspace\.js/);
 assert.match(sw, /src\/ui\/settlement\/settlement-save-boundary-v3\.js/);

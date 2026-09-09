@@ -11,6 +11,38 @@ const MONEY_HEADING = /(بدهکار|بستانکار|مبلغ|مانده|خال
 const TRAILING_UNIT = /(?:\s*\((?:تومان|ریال)\))+\s*$/;
 const VALUE_UNIT_SUFFIX = /\s+(?:تومان|ریال)\s*$/u;
 
+function installReportPresentationStyle(documentObject) {
+  if (documentObject.getElementById('avanReportPresentationContractStyle')) return;
+  const style = documentObject.createElement('style');
+  style.id = 'avanReportPresentationContractStyle';
+  style.textContent = `
+    #reportOut{direction:rtl;text-align:right}
+    #reportOut table thead th{ text-align:center!important; vertical-align:middle!important; }
+    #reportOut > h1,#reportOut > h2,#reportOut > h3,
+    #reportOut .report-title,#reportOut [data-report-title]{
+      display:block!important;width:100%!important;text-align:center!important;
+    }
+    #reportOut > .section-head,
+    #reportOut > .card > .section-head,
+    #reportOut .report-head{
+      justify-content:center!important;text-align:center!important;
+    }
+    #reportOut > .section-head > div,
+    #reportOut > .card > .section-head > div,
+    #reportOut .report-head > div{
+      flex:1 1 auto!important;text-align:center!important;
+    }
+    #reportOut .section-head h1,#reportOut .section-head h2,#reportOut .section-head h3,
+    #reportOut .section-head strong:first-child{
+      text-align:center!important;
+    }
+    #reportOut td.num,#reportOut .num{
+      direction:ltr;unicode-bidi:isolate;text-align:center;font-variant-numeric:tabular-nums;
+    }
+  `;
+  documentObject.head.append(style);
+}
+
 function cleanHeading(raw) {
   return String(raw ?? '').replace(/\s+/g, ' ').trim().replace(TRAILING_UNIT, '').trim();
 }
@@ -34,15 +66,27 @@ function annotateHeaders(root, unitLabel, { inlineUnit = false } = {}) {
 
 function centerReportHeaders(root) {
   root?.querySelectorAll?.('table thead th').forEach(th => {
-    th.style.textAlign = 'center';
+    th.style.setProperty('text-align', 'center', 'important');
+    th.style.setProperty('vertical-align', 'middle', 'important');
     th.dataset.avanReportHeaderAlign = 'center';
   });
 }
 
 function centerPreparedReportTitles(root) {
-  root?.querySelectorAll?.('#reportOut h2, #reportOut h3').forEach(heading => {
-    heading.style.textAlign = 'center';
+  const out = root?.querySelector?.('#reportOut') || (root?.id === 'reportOut' ? root : null);
+  if (!out) return;
+  out.querySelectorAll('h1,h2,h3,.report-title,[data-report-title]').forEach(heading => {
+    heading.style.setProperty('text-align', 'center', 'important');
     heading.dataset.avanReportTitleAlign = 'center';
+  });
+  out.querySelectorAll(':scope > .section-head,:scope > .card > .section-head,.report-head').forEach(head => {
+    head.style.setProperty('justify-content', 'center', 'important');
+    head.style.setProperty('text-align', 'center', 'important');
+    const copy = head.firstElementChild;
+    if (copy) {
+      copy.style.setProperty('text-align', 'center', 'important');
+      copy.style.setProperty('flex', '1 1 auto', 'important');
+    }
   });
 }
 
@@ -52,9 +96,7 @@ function cleanMoneyCellText(raw) {
 
 function moneyColumnIndexes(table) {
   const headers = [...(table.querySelectorAll?.('thead tr:last-child th') || [])];
-  return headers
-    .map((th, index) => th.dataset.avanMoneyColumn === '1' ? index : -1)
-    .filter(index => index >= 0);
+  return headers.map((th, index) => th.dataset.avanMoneyColumn === '1' ? index : -1).filter(index => index >= 0);
 }
 
 function stripRepeatedUnitsFromReportTables(root) {
@@ -93,16 +135,13 @@ function repairTrialBalanceSummary(root) {
     return bases.includes('گردش بدهکار') && bases.includes('گردش بستانکار');
   });
   if (!table) return;
-
   const headers = [...table.querySelectorAll('thead tr:last-child th')];
   const debitIndex = headers.findIndex(th => (th.dataset.avanMoneyHeaderBase || cleanHeading(th.textContent)) === 'گردش بدهکار');
   const creditIndex = headers.findIndex(th => (th.dataset.avanMoneyHeaderBase || cleanHeading(th.textContent)) === 'گردش بستانکار');
   if (debitIndex < 0 || creditIndex < 0) return;
-
   const debit = canonicalColumnSum(table, debitIndex);
   const credit = canonicalColumnSum(table, creditIndex);
   if (debit === null || credit === null) return;
-
   const summary = root.querySelector('.summary-strip');
   if (!summary) return;
   const pills = [...summary.querySelectorAll('.summary-pill')];
@@ -141,6 +180,7 @@ function ensureUnitBadge(root, unitLabel, detail = false) {
 
 export function projectMoneyOutput(documentObject = document) {
   if (!MoneyRuntime?.isReady()) return false;
+  installReportPresentationStyle(documentObject);
   const unitLabel = MoneyRuntime.unitLabel();
   const title = documentObject.getElementById('pageTitle')?.textContent?.trim() || '';
   const content = documentObject.getElementById('content');
@@ -160,7 +200,7 @@ export function projectMoneyOutput(documentObject = document) {
   const modal = documentObject.getElementById('modal');
   if (modal && !backdrop?.hidden) {
     const heading = modal.querySelector('h2')?.textContent?.trim() || '';
-    if (/^(فاکتور|سند |دریافت|پرداخت|انتقال|مانده افتتاحیه)/.test(heading)) {
+    if (/^(فاکتور|سند |دریافت|پرداخت|انتقال|مانده افتتاحیه|گزارش)/.test(heading)) {
       ensureUnitBadge(modal, unitLabel, true);
       annotateHeaders(modal, unitLabel, { inlineUnit: true });
       stripRepeatedUnitsFromReportTables(modal);
@@ -177,8 +217,8 @@ export function installMoneyOutputContract({ globalObject = window, documentObje
   globalObject.addEventListener('avan:page-rendered', () => Lifecycle.schedule('money-output-page'));
   documentObject.addEventListener('avan:ui-changed', () => Lifecycle.schedule('money-output-ui'));
   documentObject.addEventListener('click', event => {
-    if (event.target.closest?.('[data-page],[data-view-invoice],[data-view-journal],[data-action],[data-r]')) {
-      window.setTimeout(() => Lifecycle.schedule('money-output-click'), 0);
+    if (event.target.closest?.('[data-page],[data-view-invoice],[data-view-journal],[data-action],[data-r],[data-run-custom-report]')) {
+      [0, 40, 140].forEach(delay => window.setTimeout(() => Lifecycle.schedule(`money-output-click-${delay}`), delay));
     }
   }, true);
   const api = Object.freeze({

@@ -113,7 +113,7 @@ assert.doesNotMatch(settlementSave, /integerBig/,
   'save boundary must not coerce one-Rial precision totals to integer Toman');
 
 assert.match(finalPolish, /AvanMoneyOutput/);
-assert.match(sw, /avan-staging-rc1-v79-reconciliation-intelligence-gate/);
+assert.match(sw, /avan-staging-rc1-v80-report-live-composite-gate/);
 assert.match(sw, /src\/core\/money\/canonical-money\.js/);
 assert.match(sw, /src\/core\/reconciliation\/transaction-journal-suggestion\.js/);
 assert.match(sw, /src\/ui\/money\/invoice-money-workspace\.js/);
