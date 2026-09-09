@@ -15,7 +15,7 @@ function cardHtml(state) {
     <div class="section-head">
       <div>
         <h2>واحد پول</h2>
-        <span class="muted">واحد انتخابی برای ورود، نمایش، گزارش و چاپ شرکت فعال استفاده می‌شود. هسته حسابداری همچنان تومان صحیح است.</span>
+        <span class="muted">واحد انتخابی برای ورود، نمایش، گزارش و چاپ شرکت فعال استفاده می‌شود. هسته حسابداری تومان با دقت یک ریال است.</span>
       </div>
       <span class="badge">هسته: تومان</span>
     </div>
@@ -24,7 +24,7 @@ function cardHtml(state) {
       <button type="button" class="${unit === 'rial' ? 'active' : ''}" data-avan-money-unit-choice="rial">ریال</button>
     </div>
     <p class="muted currency-status">این تنظیم برای شرکت فعال در Cloud ذخیره می‌شود.</p>
-    <div class="info-box currency-note">در حالت ریال، مبلغی که دقیقاً به تومان صحیح تبدیل نمی‌شود (مثلاً ۱۰٬۰۰۵ ریال) قابل ثبت نیست؛ ۱۰۰٬۰۵۰ ریال معادل ۱۰٬۰۰۵ تومان است.</div>
+    <div class="info-box currency-note">ورودی ریالی با دقت یک ریال و ورودی تومانی تا یک رقم اعشار، بدون بازنویسی مبالغ تاریخی، به مبلغ Canonical تبدیل می‌شود.</div>
   </section>`;
 }
 
