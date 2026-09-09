@@ -6,7 +6,7 @@ const companyContext=cloud.companyContext;
 const ROLE_FA=Object.freeze({owner:'مالک',manager:'مدیر',financial_manager:'مدیر',accountant:'حسابدار',viewer:'مشاهده‌گر'});
 const STATUS_FA=Object.freeze({active:'فعال',onboarding:'در حال راه‌اندازی',suspended:'تعلیق‌شده',archived:'آرشیوشده'});
 let companies=[],current=null,selectionRequired=false,loading=false,scheduled=null;
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const roleLabel=r=>ROLE_FA[r]||String(r||'—');
 const statusLabel=s=>STATUS_FA[s]||String(s||'—');
 const appVisible=()=>{const app=document.getElementById('appShell');return Boolean(app&&!app.hidden)};
