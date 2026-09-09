@@ -1,10 +1,13 @@
 # AVAN RC1.5 — Final RC / Promotion Readiness Evidence
 
-Status: **ENGINEERING FINAL GATE IN PROGRESS / REMAINING LIVE ACCEPTANCE REQUIRED**  
+Status: **ENGINEERING FINAL GATE PASS / REMAINING LIVE ACCEPTANCE REQUIRED**  
 Date: 2026-09-10  
 Repository: `afzalpour/afzalpour.github.io`  
 Production root: RC1.4, unchanged  
-Staging candidate baseline before this gate: main merge `07b21cd94b7f9f3309460c9855c5546213667488` (PR #95)
+Final RC engineering merge: `57227aa3a321a172c5af2d6749ed1da059336106` (PR #96)  
+PR Architecture Gate #130: **PASS**  
+Post-merge main Architecture Gate #131: **PASS**  
+Post-merge Pages #325: **PASS**
 
 ## 1. Release governance
 
@@ -30,7 +33,7 @@ The following are not to be re-opened unless a regression is observed:
 
 ## 3. Final RC automated regression scope
 
-`npm run quality` must remain the release gate and includes:
+`npm run quality` remains the release gate and includes:
 
 - syntax validation, including `sw.js` and central Company Context;
 - Operation Pipeline/lifecycle contracts;
@@ -40,12 +43,18 @@ The following are not to be re-opened unless a regression is observed:
 - reconciliation intelligence;
 - Settings stable-shell/no-layout-shift regression;
 - zero-company/auth UX regression;
-- **Company Context auth -> membership hydration behavioral regression** (added by this Final RC gate because PR #94 had no durable executable test for that Live regression);
+- **Company Context auth -> membership hydration behavioral regression** added by this Final RC gate because PR #94 had no durable executable test for that Live regression;
 - custom report composite contract;
 - e-Invoice prevalidation/provider-neutral boundary;
 - full active-runtime release regression;
 - final Web/PWA/iPhone and dashboard presentation regression;
 - architecture audits / no new shared-client monkey-patching.
+
+Final gate result:
+
+- PR #96 Architecture Gate #130 = **PASS**.
+- main Architecture Gate #131 = **PASS**.
+- GitHub Pages #325 = **PASS**.
 
 ## 4. Read-only production-backend integrity snapshot — 2026-09-10
 
@@ -54,7 +63,7 @@ No financial mutation was performed by this gate.
 Current counts:
 
 - Companies/Workspaces: **7**
-- active membership rows: repository-wide table count **8**
+- workspace membership rows: **8**
 - accounts: **546**
 - journal entries: **64**
 - journal lines: **144**
@@ -132,12 +141,14 @@ Current release-point snapshot above supersedes the older row-count baseline onl
 Production root remains RC1.4:
 
 - Production Service Worker marker: `avan-prod-rc1-4-v1`
-- RC1.5 Staging Service Worker marker before this Final RC gate: `avan-staging-rc1-v90-financial-analysis-layout`
+- RC1.5 Staging Service Worker marker: `avan-staging-rc1-v90-financial-analysis-layout`
 - existing rollback branch `prod-backup-20260907-rc1-4-pre` exists and resolves successfully
 
 Before Production promotion, create a new branch from the exact final pre-promotion `main` commit:
 
 `prod-backup-20260910-rc1-5-pre-promotion`
+
+That branch is deliberately **not created before the remaining Live Gate**, because any Live-fix commit must be included in the exact pre-promotion recovery point.
 
 The RC1.5 database foundations are already applied to the shared Supabase backend and current RC1.4 Production is operating against that schema. Therefore the planned release rollback is a **frontend/root rollback to the pre-promotion branch**, not a destructive database rollback.
 
