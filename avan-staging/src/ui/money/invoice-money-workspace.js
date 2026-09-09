@@ -91,9 +91,11 @@ function setMoneyError(input, code) {
   }
   note.textContent = code === 'DISCOUNT_EXCEEDS_GROSS'
     ? 'تخفیف نمی‌تواند از مبلغ ردیف بیشتر باشد.'
-    : code === 'RIAL_DECIMAL_PRECISION_EXCEEDED'
-      ? 'مبلغ ریالی باید با دقت حداقل یک ریال وارد شود.'
-      : 'مبلغ معتبر نیست.';
+    : code === 'CANONICAL_TENTH_PRECISION_EXCEEDED'
+      ? 'در تومان حداکثر یک رقم اعشار و در ریال فقط مبلغ صحیح قابل ثبت است.'
+      : code === 'RIAL_DECIMAL_PRECISION_EXCEEDED'
+        ? 'مبلغ ریالی باید با دقت حداقل یک ریال وارد شود.'
+        : 'مبلغ معتبر نیست.';
   input.setAttribute('aria-invalid', 'true');
 }
 
@@ -103,17 +105,18 @@ function formatTenths(value) {
 }
 
 function renderLine(row) {
+  const unit = MoneyRuntime.unit();
   const unitPrice = row.querySelector('[name="unit_price"]');
   const discount = row.querySelector('[name="discount"]');
   const result = lineCanonicalAmount({
     quantity: row.querySelector('[name="quantity"]')?.value || '1',
     unitPrice: unitPrice?.value || '0',
     discount: discount?.value || '0',
-    unit: MoneyRuntime.unit()
+    unit
   });
 
-  const priceResult = MoneyRuntime.parseDecimalInput(unitPrice?.value || '0');
-  const discountResult = MoneyRuntime.parseDecimalInput(discount?.value || '0');
+  const priceResult = displayDecimalToCanonicalTenth(unitPrice?.value || '0', unit);
+  const discountResult = displayDecimalToCanonicalTenth(discount?.value || '0', unit);
   setMoneyError(unitPrice, unitPrice?.value ? priceResult.code : null);
   setMoneyError(discount, discount?.value ? discountResult.code : null);
 
@@ -264,7 +267,9 @@ export function canonicalizeInvoicePayload(payload) {
       const discount = displayDecimalToCanonicalTenth(line.discount || '0', unit);
       if (!price.ok || !discount.ok) {
         const error = new Error(price.code || discount.code || 'INVALID_AMOUNT');
-        error.userMessage = 'مبلغ یکی از ردیف‌های فاکتور معتبر نیست.';
+        error.userMessage = price.code === 'CANONICAL_TENTH_PRECISION_EXCEEDED' || discount.code === 'CANONICAL_TENTH_PRECISION_EXCEEDED'
+          ? 'در تومان حداکثر یک رقم اعشار و در ریال فقط مبلغ صحیح قابل ثبت است.'
+          : 'مبلغ یکی از ردیف‌های فاکتور معتبر نیست.';
         throw error;
       }
       return {
