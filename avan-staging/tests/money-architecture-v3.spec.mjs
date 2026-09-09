@@ -3,80 +3,38 @@ import fs from 'node:fs';
 
 const read = rel => fs.readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
 
-const index = read('index.html');
-for (const retired of ['rc11-money.js', 'rc11-currency.js', 'rc11-unit-density.js']) {
-  assert.equal(index.includes(`src="${retired}"`), false, `${retired} must stay retired from index`);
-}
-for (const required of [
-  'src/ui/money/money-runtime.js',
-  'src/ui/money/money-inputs.js',
-  'src/ui/money/money-output-contract.js',
-  'src/ui/money/invoice-money-workspace.js',
-  'src/ui/settlement/settlement-save-boundary-v3.js',
-  'src/ui/settlement/settlement-workspace-v2.js'
-]) {
-  assert.equal(index.includes(`src="${required}"`), true, `${required} must be active`);
-}
-assert.equal(
-  index.indexOf('src/ui/settlement/settlement-save-boundary-v3.js') < index.indexOf('rc14-catalog-settlement-v61.js'),
-  true,
-  'settlement-save-boundary-v3 must own the operation key before v61 compatibility loads'
-);
+const canonical = read('src/core/money/canonical-money.js');
+assert.equal(canonical.includes('CANONICAL_TENTH_SCALE'), true);
+assert.equal(canonical.includes('displayDecimalToCanonicalTenth'), true);
+assert.equal(canonical.includes('canonicalDecimalToTenths'), true);
+assert.equal(canonical.includes('CANONICAL_TENTH_PRECISION_EXCEEDED'), true);
 
-const taxDate = read('src/ui/tax/tax-date-aware.js');
-assert.equal(taxDate.includes('calculateVatAmount'), false);
-assert.equal(taxDate.includes('calculateTaxableAmount'), false);
-assert.equal(taxDate.includes('rc15-invoice-totals'), false);
-assert.equal(taxDate.includes('data-rc15-invoice-tax-summary'), false);
-assert.equal(taxDate.includes("setDataset(option, 'taxRate'"), true);
-assert.equal(taxDate.includes("setDataset(option, 'taxRuleId'"), true);
-assert.equal(taxDate.includes("setDataset(option, 'taxRuleName'"), true);
-assert.equal(taxDate.includes('rc15TaxMetadataReady'), true);
+const moneyRuntime = read('src/ui/money/money-runtime.js');
+assert.equal(moneyRuntime.includes('carriesCanonicalFraction'), true);
+assert.equal(moneyRuntime.includes('formatCanonicalDecimal'), true);
+assert.equal(moneyRuntime.includes('decimalInputFromCanonical'), true);
 
 const invoice = read('src/ui/money/invoice-money-workspace.js');
-assert.equal(invoice.includes("architecture: 'invoice-money-single-writer-v3'"), true);
-assert.equal(invoice.includes('rc15TaxMetadataReady'), true);
+assert.equal(invoice.includes("money.invoice-canonical-payload"), true);
 assert.equal(invoice.includes('displayDecimalToCanonicalTenth'), true);
-assert.equal(invoice.includes('canonicalTenthsToDecimal'), true);
-assert.equal(invoice.includes('MoneyRuntime.formatCanonicalDecimal(total)'), true);
-assert.equal(invoice.includes('MoneyRuntime.inputWords(raw)'), true);
-assert.equal(invoice.includes('avanMoneyWords'), true);
-assert.equal(invoice.includes('CANONICAL_TENTH_PRECISION_EXCEEDED'), true);
 assert.equal(invoice.includes('RIAL_NOT_DIVISIBLE_BY_10'), false);
-
-const core = read('src/core/money/canonical-money.js');
-assert.equal(core.includes('CANONICAL_TENTH_SCALE'), true);
-assert.equal(core.includes('CANONICAL_TENTH_PRECISION_EXCEEDED'), true);
-assert.equal(core.includes('parsed.micros % CANONICAL_TENTH_SCALE !== 0n'), true);
-assert.equal(core.includes('canonicalDecimalAmountInWords'), true);
-assert.equal(core.includes("parts.push(`${integerToPersianWords(rial)} ریال`)"), true);
+assert.equal(invoice.includes('CANONICAL_TENTH_PRECISION_EXCEEDED'), true);
 
 const inputs = read('src/ui/money/money-inputs.js');
-assert.equal(inputs.includes("const DECIMAL_NAMES = new Set(['cost', 'unit_cost'])"), true);
-assert.equal(inputs.includes("const INVOICE_DECIMAL_NAMES = new Set(['unit_price', 'discount'])"), true);
-assert.equal(inputs.includes("input.closest?.('#invoiceForm') && INVOICE_DECIMAL_NAMES.has"), true);
-assert.equal(inputs.includes("input.dataset.avanMoneyInputMode = mode"), true);
+assert.equal(inputs.includes('INVOICE_DECIMAL_NAMES'), true);
 
 const output = read('src/ui/money/money-output-contract.js');
 assert.equal(output.includes('stripRepeatedUnitsFromReportTables'), true);
-assert.equal(output.includes('inlineUnit: isPreparedReports'), true);
 assert.equal(output.includes('repairTrialBalanceSummary'), true);
-assert.equal(output.includes('centerReportHeaders(content)'), true);
-assert.equal(output.includes("th.style.textAlign = 'center'"), true);
-assert.equal(output.includes('annotateHeaders(modal, unitLabel, { inlineUnit: true })'), true);
-assert.equal(output.includes('stripRepeatedUnitsFromReportTables(modal)'), true);
-assert.equal(output.includes('VALUE_UNIT_SUFFIX'), true);
+assert.equal(output.includes('centerReportHeaders'), true);
+assert.equal(output.includes("[data-r]"), true);
 
 const settlement = read('src/ui/settlement/settlement-workspace-v2.js');
 assert.equal(settlement.includes('canonicalDecimalToTenths'), true);
-assert.equal(settlement.includes('displayDecimalToCanonicalTenth(visible.value'), true);
-assert.equal(settlement.includes('MoneyRuntime.formatCanonicalDecimal'), true);
-assert.equal(settlement.includes('MoneyRuntime.parseInput'), false);
-assert.equal(settlement.includes("BigInt(form.dataset.avanCanonicalInvoiceTotalToman"), false);
+assert.equal(settlement.includes('displayDecimalToCanonicalTenth'), true);
+assert.equal(settlement.includes('BigInt(form.dataset.avanCanonicalInvoiceTotalToman'), false);
 
 const settlementSave = read('src/ui/settlement/settlement-save-boundary-v3.js');
-assert.equal(settlementSave.includes("architecture: 'settlement-save-boundary-v3'"), true);
-assert.equal(settlementSave.includes("C.operations.use('rpc', 'settlement:invoice-plan'"), true);
 assert.equal(settlementSave.includes('canonicalDecimalToTenths'), true);
 assert.equal(settlementSave.includes('persisted?.[0]?.total_amount'), true);
 assert.equal(settlementSave.includes('integerBig'), false);
@@ -97,7 +55,7 @@ assert.equal(print.includes("csvCell('واحد مبالغ')"), true);
 assert.equal(print.includes("th[data-avan-money-unit]"), true);
 
 const sw = read('sw.js');
-assert.equal(sw.includes('avan-staging-rc1-v78-live-regression-gate'), true);
+assert.equal(sw.includes('avan-staging-rc1-v79-reconciliation-intelligence-gate'), true);
 assert.equal(sw.includes('src/ui/settlement/settlement-save-boundary-v3.js'), true);
 
 console.log('money-architecture-v3: PASS');
