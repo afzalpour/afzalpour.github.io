@@ -33,8 +33,13 @@ assert.equal(invoice.includes('rc15TaxMetadataReady'), true);
 assert.equal(invoice.includes('displayDecimalToCanonicalTenth'), true);
 assert.equal(invoice.includes('canonicalTenthsToDecimal'), true);
 assert.equal(invoice.includes('MoneyRuntime.formatCanonicalDecimal(total)'), true);
-assert.equal(invoice.includes('MoneyRuntime.parseDecimalInput(unitPrice'), true);
+assert.equal(invoice.includes("CANONICAL_TENTH_PRECISION_EXCEEDED"), true);
 assert.equal(invoice.includes('RIAL_NOT_DIVISIBLE_BY_10'), false);
+
+const core = read('src/core/money/canonical-money.js');
+assert.equal(core.includes('CANONICAL_TENTH_SCALE'), true);
+assert.equal(core.includes('CANONICAL_TENTH_PRECISION_EXCEEDED'), true);
+assert.equal(core.includes('parsed.micros % CANONICAL_TENTH_SCALE !== 0n'), true);
 
 const inputs = read('src/ui/money/money-inputs.js');
 assert.equal(inputs.includes("const DECIMAL_NAMES = new Set(['cost', 'unit_cost'])"), true);
