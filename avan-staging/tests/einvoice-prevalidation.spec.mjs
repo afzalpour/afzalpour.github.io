@@ -81,6 +81,7 @@ await assert.rejects(
 );
 
 const read = rel => fs.readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
+const index = read('index.html');
 const adapter = read('src/domains/einvoice/adapter-contract.js');
 const service = read('src/application/einvoice/einvoice-service.js');
 const ui = read('src/ui/einvoice/einvoice-preflight-ui.js');
@@ -92,6 +93,18 @@ for (const source of [adapter, service, ui]) {
 }
 assert.doesNotMatch(adapter, /fetch\s*\(/, 'provider-neutral adapter must perform no network submission');
 assert.doesNotMatch(service, /fetch\s*\(/, 'preflight service must perform no external network submission');
+assert.match(index, /src\/ui\/einvoice\/einvoice-preflight-ui\.js/,
+  'preflight UI must be loaded by the active staging shell');
+assert.match(ui, /data-einvoice-preflight-entry/,
+  'Invoices page must expose a persistent, discoverable preflight entry');
+assert.match(ui, /data-einvoice-row-preflight/,
+  'sale invoice rows must expose a direct preflight action');
+assert.match(ui, /title !== 'فاکتورها'/,
+  'discoverable entry must be projected on the invoices page');
+assert.match(ui, /heading\.includes\('فاکتور'\)/,
+  'invoice modal enhancement must tolerate actual invoice heading variants');
+assert.match(ui, /einvoice-injected-actions/,
+  'preflight action must have a fallback host when legacy invoice detail lacks form-actions');
 assert.match(ui, /هیچ صورتحسابی .* ارسال نشده است/);
 assert.match(prevalidation, /GOODS_SERVICE_ID/);
 assert.match(prevalidation, /LINE_TAX_SNAPSHOT_MISSING/);
