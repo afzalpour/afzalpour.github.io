@@ -22,7 +22,10 @@ assert.equal(taxDate.includes('calculateVatAmount'), false);
 assert.equal(taxDate.includes('calculateTaxableAmount'), false);
 assert.equal(taxDate.includes('rc15-invoice-totals'), false);
 assert.equal(taxDate.includes('data-rc15-invoice-tax-summary'), false);
-assert.equal(taxDate.includes('dataset.taxRate'), true);
+assert.equal(taxDate.includes("setDataset(option, 'taxRate'"), true);
+assert.equal(taxDate.includes("setDataset(option, 'taxRuleId'"), true);
+assert.equal(taxDate.includes("setDataset(option, 'taxRuleName'"), true);
+assert.equal(taxDate.includes('rc15TaxMetadataReady'), true);
 
 const invoice = read('src/ui/money/invoice-money-workspace.js');
 assert.equal(invoice.includes("architecture: 'invoice-money-single-writer-v3'"), true);
