@@ -19,9 +19,12 @@ function rowUsed(row) {
   );
 }
 
-function selectedRate(row) {
+function selectedTax(row) {
   const option = row.querySelector('[data-rc15-tax-profile]')?.selectedOptions?.[0];
-  return option?.dataset?.taxRate || '0';
+  return {
+    rate: option?.dataset?.taxRate || '0',
+    ruleName: option?.dataset?.taxRuleName || ''
+  };
 }
 
 function hydrateCanonicalInput(input) {
@@ -93,12 +96,11 @@ function setMoneyError(input, code) {
 function renderLine(row) {
   const unitPrice = row.querySelector('[name="unit_price"]');
   const discount = row.querySelector('[name="discount"]');
-  const unit = MoneyRuntime.unit();
   const result = lineCanonicalAmount({
     quantity: row.querySelector('[name="quantity"]')?.value || '1',
     unitPrice: unitPrice?.value || '0',
     discount: discount?.value || '0',
-    unit
+    unit: MoneyRuntime.unit()
   });
 
   const priceResult = MoneyRuntime.parseInput(unitPrice?.value || '0');
@@ -116,10 +118,11 @@ function renderLine(row) {
   return result;
 }
 
-function renderTaxSummary(form, subtotal, tax, valid) {
+function renderTaxSummary(form, subtotal, tax, valid, taxReady) {
   const summary = form.querySelector('[data-rc15-invoice-tax-summary]');
   if (!summary) return;
   summary.dataset.avanMoneyOwned = 'invoice';
+
   if (!valid) {
     const next = '<div class="info-box neg">ابتدا مبلغ‌های نامعتبر را اصلاح کنید.</div>';
     if (summary.innerHTML !== next) summary.innerHTML = next;
@@ -130,6 +133,12 @@ function renderTaxSummary(form, subtotal, tax, valid) {
     if (summary.innerHTML !== next) summary.innerHTML = next;
     return;
   }
+  if (!taxReady) {
+    const next = '<div class="info-box">در حال تعیین قاعده مالیاتی مؤثر برای تاریخ فاکتور…</div>';
+    if (summary.innerHTML !== next) summary.innerHTML = next;
+    return;
+  }
+
   const total = subtotal + tax;
   const next = `<div class="rc15-invoice-totals"><span><small>جمع قبل از مالیات</small><b>${MoneyRuntime.formatCanonical(subtotal)}</b></span><span><small>مالیات</small><b>${MoneyRuntime.formatCanonical(tax)}</b></span><span class="rc15-grand"><small>جمع نهایی</small><b>${MoneyRuntime.formatCanonical(total)}</b></span></div>`;
   if (summary.innerHTML !== next) summary.innerHTML = next;
@@ -145,6 +154,7 @@ export function projectInvoiceMoney(form = document.getElementById('invoiceForm'
   let tax = 0n;
   let valid = true;
   const taxEnabled = form.dataset.rc15TaxEnabled === '1';
+  const taxReady = !taxEnabled || form.dataset.rc15TaxMetadataReady === '1';
 
   form.querySelectorAll('[data-invoice-line]').forEach(row => {
     if (!rowUsed(row)) return;
@@ -154,47 +164,53 @@ export function projectInvoiceMoney(form = document.getElementById('invoiceForm'
       return;
     }
     subtotal += line.value;
-    if (taxEnabled) {
-      const rowTax = calculateVatAmount({ taxableAmount: line.value, rate: selectedRate(row) }) ?? 0n;
+
+    if (taxEnabled && taxReady) {
+      const taxMeta = selectedTax(row);
+      const rowTax = calculateVatAmount({ taxableAmount: line.value, rate: taxMeta.rate }) ?? 0n;
       tax += rowTax;
       const note = row.querySelector('[data-rc15-line-tax-note]');
       if (note) {
-        const next = `مالیات این ردیف: ${MoneyRuntime.formatCanonical(rowTax)}`;
+        const prefix = taxMeta.ruleName ? `براساس ${taxMeta.ruleName} · ` : '';
+        const next = `${prefix}مالیات این ردیف: ${MoneyRuntime.formatCanonical(rowTax)}`;
         if (note.textContent !== next) note.textContent = next;
       }
     }
   });
 
+  const complete = valid && taxReady;
   const total = subtotal + tax;
   const invoiceTotal = form.querySelector('#invoiceTotal');
   if (invoiceTotal) {
     invoiceTotal.dataset.avanMoneyOwned = 'invoice';
-    const next = valid ? MoneyRuntime.formatCanonical(total) : 'نامعتبر';
+    const next = !valid ? 'نامعتبر' : !taxReady ? '—' : MoneyRuntime.formatCanonical(total);
     if (invoiceTotal.textContent !== next) invoiceTotal.textContent = next;
   }
   const grand = form.querySelector('.invoice-grand-total');
   if (grand) grand.dataset.avanMoneyOwned = 'invoice';
 
-  renderTaxSummary(form, subtotal, tax, valid);
+  renderTaxSummary(form, subtotal, tax, valid, taxReady);
 
-  if (valid) {
+  if (complete) {
     form.dataset.avanCanonicalInvoiceSubtotalToman = subtotal.toString();
     form.dataset.avanCanonicalInvoiceTaxToman = tax.toString();
     form.dataset.avanCanonicalInvoiceTotalToman = total.toString();
+    form.dataset.avanInvoiceTotal = total.toString();
   } else {
     delete form.dataset.avanCanonicalInvoiceSubtotalToman;
     delete form.dataset.avanCanonicalInvoiceTaxToman;
     delete form.dataset.avanCanonicalInvoiceTotalToman;
+    delete form.dataset.avanInvoiceTotal;
   }
 
-  const signature = `${MoneyRuntime.unit()}|${valid ? 1 : 0}|${subtotal}|${tax}|${total}`;
+  const signature = `${MoneyRuntime.unit()}|${valid ? 1 : 0}|${taxReady ? 1 : 0}|${subtotal}|${tax}|${total}`;
   if (form.dataset.avanMoneySignature !== signature) {
     form.dataset.avanMoneySignature = signature;
     document.dispatchEvent(new CustomEvent('avan:invoice-money-changed', {
-      detail: { unit: MoneyRuntime.unit(), valid, subtotal, tax, total }
+      detail: { unit: MoneyRuntime.unit(), valid, taxReady, subtotal, tax, total }
     }));
   }
-  return { unit: MoneyRuntime.unit(), valid, subtotal, tax, total };
+  return { unit: MoneyRuntime.unit(), valid, taxReady, subtotal, tax, total };
 }
 
 function queueProject() {
@@ -258,7 +274,7 @@ if (document.readyState === 'loading') {
 }
 
 window.AvanInvoiceMoney = Object.freeze({
-  architecture: 'invoice-money-single-writer-v2',
+  architecture: 'invoice-money-single-writer-v3',
   project: projectInvoiceMoney,
   canonicalizeInvoicePayload
 });
