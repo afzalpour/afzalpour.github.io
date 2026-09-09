@@ -39,6 +39,13 @@ function centerReportHeaders(root) {
   });
 }
 
+function centerPreparedReportTitles(root) {
+  root?.querySelectorAll?.('#reportOut h2, #reportOut h3').forEach(heading => {
+    heading.style.textAlign = 'center';
+    heading.dataset.avanReportTitleAlign = 'center';
+  });
+}
+
 function cleanMoneyCellText(raw) {
   return String(raw ?? '').replace(VALUE_UNIT_SUFFIX, '').trim();
 }
@@ -145,6 +152,7 @@ export function projectMoneyOutput(documentObject = document) {
       repairTrialBalanceSummary(content);
       stripRepeatedUnitsFromReportTables(content);
       centerReportHeaders(content);
+      centerPreparedReportTitles(content);
     }
   }
 
@@ -178,6 +186,7 @@ export function installMoneyOutputContract({ globalObject = window, documentObje
     project: () => projectMoneyOutput(documentObject),
     annotateHeaders,
     centerReportHeaders,
+    centerPreparedReportTitles,
     stripRepeatedUnitsFromReportTables
   });
   globalObject.AvanMoneyOutput = api;
