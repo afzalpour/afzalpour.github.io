@@ -6,6 +6,7 @@ const read = rel => fs.readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8
 const index = read('index.html');
 const core = read('app.js');
 const output = read('src/ui/money/money-output-contract.js');
+const moneySettings = read('src/ui/money/money-settings-card.js');
 const settings = read('src/ui/settings/settings-layout-v2.js');
 const health = read('src/ui/health/core-health-drilldown.js');
 const reconciliation = read('src/ui/reports/reconciliation-workspace.js');
@@ -47,6 +48,16 @@ assert.equal(settings.includes('accountCard.after(stack)'), true,
   'async settings stack must extend below the stable account card instead of pushing core sections');
 assert.equal(settings.includes('installStyle(documentObject);\n  const Lifecycle'), true,
   'anti-jump CSS must install eagerly before async settings cards can flash in temporary locations');
+assert.equal(settings.includes("priority: 5"), true,
+  'final settings slots must be prepared before async money/tax/access producers run');
+assert.equal(settings.includes('#content > #currencySettingsCard'), true,
+  'only transient root-level cards should be hidden; replacements inside final slots must stay visible');
+assert.equal(moneySettings.includes('[data-avan-account-money-slot]'), true,
+  'money settings producer must use the final account slot directly when available');
+assert.doesNotMatch(settings, /addEventListener\('avan:ui-changed'.*Lifecycle\.schedule/s,
+  'settings layout must not feed lifecycle output back into lifecycle scheduling');
+assert.doesNotMatch(moneySettings, /addEventListener\('avan:ui-changed'.*Lifecycle\.schedule/s,
+  'money settings must not create a ui-changed scheduling loop');
 assert.equal(settings.includes('[0, 120, 420, 1000, 2400]'), false,
   'settings layout must not repeatedly move cards on delayed timers');
 

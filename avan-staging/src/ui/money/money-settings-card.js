@@ -9,6 +9,10 @@ function settingsHost(documentObject) {
   return title === 'تنظیمات' ? documentObject.getElementById('content') : null;
 }
 
+function settingsMount(documentObject, host) {
+  return documentObject.querySelector('[data-avan-account-money-slot]') || host;
+}
+
 function cardHtml(state) {
   const unit = state.unit;
   return `<section class="section card currency-settings-card" id="currencySettingsCard" data-avan-money-settings="1">
@@ -31,6 +35,7 @@ function cardHtml(state) {
 async function render(documentObject = document) {
   const host = settingsHost(documentObject);
   if (!host) return false;
+  const mount = settingsMount(documentObject, host);
   try {
     const state = await MoneyRuntime.ready();
     const existing = host.querySelector('#currencySettingsCard');
@@ -42,6 +47,7 @@ async function render(documentObject = document) {
     const card = template.content.firstElementChild;
     card.dataset.signature = signature;
     if (existing) existing.replaceWith(card);
+    else if (mount !== host) mount.append(card);
     else host.prepend(card);
 
     card.querySelectorAll('[data-avan-money-unit-choice]').forEach(button => {
@@ -71,7 +77,6 @@ export function installMoneySettingsCard({ globalObject = window, documentObject
   const Lifecycle = installUiLifecycle({ globalObject, documentObject });
   Lifecycle.use('money:settings-card', () => render(documentObject), { priority: 40 });
   globalObject.addEventListener('avan:page-rendered', () => Lifecycle.schedule('money-settings-page'));
-  documentObject.addEventListener('avan:ui-changed', () => Lifecycle.schedule('money-settings-ui'));
   const api = Object.freeze({ installed: true, render: () => render(documentObject) });
   globalObject.AvanMoneySettings = api;
   Lifecycle.schedule('money-settings-ready');
