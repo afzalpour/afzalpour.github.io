@@ -1,6 +1,6 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: **2026-09-09 — RC1.5 Full Staging Regression + Final Web/PWA Engineering PASS (PR #85 / #86; Actions #103–#106; Pages #312 / #313) — explicit browser/PWA Live acceptance pending**.
+آخرین به‌روزرسانی مرجع: **2026-09-10 — Settings no-layout-shift Live PASS (PR #91 / PR Actions #119 / main Actions #120 / Pages #318)**. broader RC1.5 browser/PWA Live acceptance is still pending.
 
 این فایل Source of Truth وضعیت جاری پروژه است. **Engineering/Backend PASS جایگزین Live PASS نیست** و Live فقط با تأیید صریح کاربر ثبت می‌شود.
 
@@ -30,21 +30,26 @@ Repository: `afzalpour/afzalpour.github.io`
 - RC1.5-A — Versioned Tax Data Foundation = **BACKEND PASS**.
 - RC1.5-B — VAT Calculation & Invoice Accounting Bridge = **BACKEND PASS**.
 - AC-1 — Frontend Architecture Consolidation = **ENGINEERING PASS**.
-- RC1.5-C — Tax UX & VAT Reports = **BACKEND PASS / FRONTEND ENGINEERING PASS / LIVE PENDING**.
+- RC1.5-C — Tax UX & VAT Reports = **BACKEND PASS / FRONTEND ENGINEERING PASS / broader LIVE PENDING**.
 - ADR-0019 one-Rial money precision + report/settlement fixes = **ENGINEERING PASS**.
 - RC1.5-D e-Invoice pre-validation / provider-neutral adapter = **ENGINEERING PASS** via PR #82 / Actions #95.
 - Integrated Tax + Settlement precision = **ENGINEERING PASS** via PR #83 / Actions #99 and #100.
 - Full active-runtime regression = **ENGINEERING PASS** via PR #85 / Actions #103 and #104 / Pages #312.
 - Final Web/PWA + iPhone hardening = **ENGINEERING PASS** via PR #86 / Actions #105 and #106 / Pages #313.
-- latest Staging merge commit: `5cf9cc9676d8b9af188b3c150be1c8bb32c6d726`.
-- latest Staging SW cache: `avan-staging-rc1-v83-final-web-pwa`.
+- Settings no-layout-shift root fix = **ENGINEERING PASS + EXPLICIT USER LIVE PASS** via PR #91.
+- PR #91 merge commit on main: `8115f36ccc4d3e970ade5d7f363eb178b176d7c1`.
+- PR #91 Architecture Gate #119 = success.
+- post-merge main Architecture Gate #120 = success.
+- GitHub Pages #318 = success.
+- latest Staging SW cache: `avan-staging-rc1-v86-settings-no-layout-shift`.
 
 ### Next gate
 
-1. **Explicit RC1.5 browser/PWA Live acceptance by user**.
-2. If PASS: record Live acceptance and create final RC / promotion-readiness evidence.
-3. Production promotion only after final RC, rollback verification and Production smoke gate.
-4. Full external disaster restore remains OPEN under the current zero-charge constraint unless a genuinely free isolated restore target becomes available.
+1. Continue explicit RC1.5 browser/PWA Live acceptance for the remaining release scope.
+2. Do **not** re-test the PR #91 Settings jump family unless a regression is observed; that package is accepted.
+3. If the remaining Live scope passes: record RC1.5 Live acceptance and create final RC / promotion-readiness evidence.
+4. Production promotion only after final RC, rollback verification and Production smoke gate.
+5. Full external disaster restore remains OPEN under the current zero-charge constraint unless a genuinely free isolated restore target becomes available.
 
 ---
 
@@ -58,7 +63,20 @@ Previously accepted gates remain valid, including:
 - RC1.3 Production Smoke Gate.
 - RC1.4 inventory/invoice/settlement behavior previously accepted by user.
 
-**Not Live PASS yet:** the accumulated RC1.5 A/B/C/D, one-Rial invoice/report/settlement changes, integrated VAT+Settlement, full regression, and final Web/PWA/iPhone polish.
+### 2026-09-10 — PR #91 Settings no-layout-shift Live PASS
+
+User explicitly confirmed the deployed Staging behavior is correct for the four reported regressions:
+
+- **واحد پول**: no visible jump/regression.
+- **کاربران و دسترسی‌ها**: no visible jump/regression.
+- **متن زیر «دسترسی پشتیبانی آوان»**: stable; no visible jump/regression.
+- **گزارش فعالیت**: stable and no longer broken by the competing Settings render paths.
+
+This acceptance closes the PR #91 Live Gate only. It does **not** by itself declare the entire accumulated RC1.5 release Live PASS.
+
+Core Health drill-down remains engineering-covered when counters are zero; no claim is made that a nonzero drill-down was browser-verified by the user.
+
+**Still pending broader RC1.5 Live acceptance:** accumulated A/B/C/D release behavior, one-Rial invoice/report/settlement paths, integrated VAT+Settlement, full regression, final Web/PWA/iPhone polish, and e-Invoice preflight as a full release gate.
 
 ---
 
@@ -77,7 +95,7 @@ Previously accepted gates remain valid, including:
 - account hierarchy is structural; only valid leaves are postable.
 - user-visible UI/errors are Persian-first except unavoidable standards such as PDF/CSV/SKU.
 - Frontend migration follows Strangler Pattern; no full rewrite.
-- no new shared-client monkey patching; Operation Pipeline / lifecycle composition are the extension boundaries.
+- no new shared-client monkey patching; Operation Pipeline / central lifecycle composition are the extension boundaries.
 - business calculation/validation logic should be pure/domain-level and regression-testable where practical.
 - AI/automation remains Human-controlled and explainable.
 
@@ -183,11 +201,32 @@ Settlement:
 - prepared report cells do not repeat `تومان/ریال` after every number.
 - prepared report headings/titles are centered through the centralized presentation contract where required.
 - receipt/payment/transfer detail views follow heading-only unit presentation.
+- custom reporting includes the safe predefined `composite_events` event-matrix plus individual source catalogs; it is not arbitrary user SQL.
 - user-visible technical errors remain translated to safe Persian messages.
 
 ---
 
-## 9) e-Invoice boundary — RC1.5-D
+## 9) Settings rendering contract
+
+After PR #91, Settings has a single layout owner: `src/ui/settings/settings-layout-v2.js`.
+
+Deterministic extension order:
+
+`Account (Money inside) → Tax → Users/Access → Support Access → Activity Report → Company Profile`
+
+Invariants:
+
+- `rc13-company-context.js` must not observe/rearrange Settings cards.
+- `rc13-operational-audit.js` must not use a private content MutationObserver or delayed timer to append the Activity card.
+- late Profile/Audit nodes are captured into deterministic slots rather than becoming a competing root-level layout owner.
+- Activity Report uses a persistent shell and bounded internal scrolling.
+- regression tests reject return of the old competing-render patterns.
+
+This contract is **Live accepted by the user on 2026-09-10** for the four previously reported jump/breakage symptoms.
+
+---
+
+## 10) e-Invoice boundary — RC1.5-D
 
 - provider-neutral prevalidation only; no external submission enabled.
 - browser contains no provider secret/private credential.
@@ -200,11 +239,11 @@ Governing ADR: `docs/adr/0021-electronic-invoice-prevalidation-adapter-boundary.
 
 ---
 
-## 10) Final Web/PWA engineering hardening
+## 11) Final Web/PWA engineering hardening
 
 PR #86 completed:
 
-- final font stack now actually uses loaded **Vazirmatn** with Apple/system fallbacks; legacy unavailable `IRAN` family no longer owns final presentation.
+- final font stack uses loaded **Vazirmatn** with Apple/system fallbacks.
 - iPhone/PWA presentation includes `100dvh` and safe-area-aware mobile behavior.
 - PWA orientation is `any`, so accounting tables may use landscape.
 - Service Worker uses network-first same-origin caching but HTML shell fallback is **navigation-only**.
@@ -212,22 +251,26 @@ PR #86 completed:
 - `sw.js` is syntax-checked in CI.
 - final Web/PWA regression is part of `npm run quality`.
 - Actions #105 (PR) and #106 (main) = success.
-- Pages #313 build/deploy = success.
+- Pages #313 = success.
 
-Evidence: `avan-staging/RC1_5_FINAL_WEB_PWA_GATE_EVIDENCE.md`.
+PR #91 subsequently bumped Staging cache to `avan-staging-rc1-v86-settings-no-layout-shift`; post-merge main Actions #120 and Pages #318 both succeeded.
+
+Evidence: `avan-staging/RC1_5_FINAL_WEB_PWA_GATE_EVIDENCE.md` plus PR #91.
 
 ---
 
-## 11) Auth / Session / password policy
+## 12) Auth / Session / password policy
 
 - existing-user login + recovery flow.
+- zero-company onboarding path is explicitly handled.
+- password visibility control is available on the login flow.
 - signup/recovery password guard: minimum 12 chars + letter + number + symbol + local common-password denylist.
 - session guard: 60-minute inactivity + 12-hour maximum browser session + clock-skew protection.
 - Supabase built-in leaked-password screening remains unavailable/disabled under the zero-charge path; application controls are the compensating control and provider protection is not falsely marked fixed.
 
 ---
 
-## 12) Backup / Restore
+## 13) Backup / Restore
 
 Runbook: `avan-staging/BACKUP_RESTORE_RUNBOOK.md`.
 
@@ -239,7 +282,7 @@ Runbook: `avan-staging/BACKUP_RESTORE_RUNBOOK.md`.
 
 ---
 
-## 13) Architecture quality gate
+## 14) Architecture quality gate
 
 Governing ADR: `docs/adr/0016-modular-runtime-no-monkey-patching.md`.
 
@@ -250,6 +293,9 @@ Current automated gate includes:
 - money precision + report contract tests.
 - VAT + integrated Tax/Settlement regression.
 - reconciliation intelligence tests.
+- Settings stable-shell/no-layout-shift regression.
+- zero-company/auth UX regression.
+- composite custom-report regression.
 - e-Invoice prevalidation tests.
 - full active-runtime release regression.
 - final Web/PWA/iPhone regression.
@@ -257,20 +303,18 @@ Current automated gate includes:
 
 Latest evidence:
 
-- PR #85 Actions #103 = PASS.
-- main Actions #104 = PASS.
-- PR #86 Actions #105 = PASS.
-- main Actions #106 = PASS.
-- Pages #313 = PASS.
+- PR #85 Actions #103 = PASS; main #104 = PASS; Pages #312 = PASS.
+- PR #86 Actions #105 = PASS; main #106 = PASS; Pages #313 = PASS.
+- PR #91 Actions #119 = PASS; main #120 = PASS; Pages #318 = PASS.
 - direct shared-client overwrites = 0 under current architecture audit.
 
 ---
 
-## 14) Next operating step
+## 15) Next operating step
 
-**The next gate is not another hidden engineering change. It is explicit browser/PWA Live acceptance of the deployed Staging build.**
+The PR #91 Settings Live Gate is closed. The next gate is the **remaining explicit browser/PWA Live acceptance of the accumulated RC1.5 release**; no hidden engineering PASS should be substituted for user acceptance.
 
-Required Live focus:
+Remaining Live focus includes:
 
 1. `1515 Rial ↔ 151.5 Toman`, amount-in-words, invoice save and Settlement exactness.
 2. VAT-inclusive final total → Settlement when Tax is enabled.
@@ -279,8 +323,9 @@ Required Live focus:
 5. iPhone/mobile Persian font, safe-area, keyboard/toast behavior.
 6. installed PWA open/offline shell behavior without JS/CSS MIME errors.
 7. e-Invoice preflight findings and explicit no-transmission message.
+8. composite custom-report behavior as the safe event-stream matrix where relevant.
 
-After explicit user PASS:
+After explicit user PASS of the remaining release scope:
 
 - record RC1.5 Live PASS in this file;
 - produce final RC/promotion-readiness evidence;
@@ -290,7 +335,7 @@ After explicit user PASS:
 
 ---
 
-## 15) Deferred roadmap
+## 16) Deferred roadmap
 
 After final Web/PWA release only:
 
