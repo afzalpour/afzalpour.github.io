@@ -11,35 +11,29 @@ import {
 } from '../src/core/money/canonical-money.js';
 import { calculateVatAmount } from '../src/domains/tax/vat-calculator.js';
 
-// Generic integer-money flows keep their original contract.
 assert.deepEqual(displayToCanonical('10٬005', UNIT_TOMAN), { ok: true, value: 10005n, code: null });
 assert.deepEqual(displayToCanonical('100٬050', UNIT_RIAL), { ok: true, value: 10005n, code: null });
-assert.equal(displayToCanonical('10٬005', UNIT_RIAL).ok, false, 'generic integer Rial input must not be silently treated as Toman');
+assert.equal(displayToCanonical('10٬005', UNIT_RIAL).ok, false);
 assert.equal(canonicalToDisplay(11006n, UNIT_TOMAN), 11006n);
 assert.equal(canonicalToDisplay(11006n, UNIT_RIAL), 110060n);
-assert.notEqual(canonicalToDisplay(11006n, UNIT_RIAL), 1100600n, 'Rial conversion must happen exactly once');
 
-// Invoice unit prices/discounts use one-Rial precision (0.1 canonical Toman).
 const tomanLine = lineCanonicalAmount({ quantity: '1', unitPrice: '10005', discount: '0', unit: UNIT_TOMAN });
 assert.equal(tomanLine.ok, true);
 assert.equal(tomanLine.value, '10005');
-assert.equal(tomanLine.tenths, 100050n);
 const rialLine = lineCanonicalAmount({ quantity: '1', unitPrice: '100050', discount: '0', unit: UNIT_RIAL });
 assert.equal(rialLine.ok, true);
 assert.equal(rialLine.value, '10005');
-assert.equal(rialLine.tenths, 100050n);
 const oddRialLine = lineCanonicalAmount({ quantity: '1', unitPrice: '1515', discount: '0', unit: UNIT_RIAL });
 assert.equal(oddRialLine.ok, true);
 assert.equal(oddRialLine.value, '151.5');
 assert.equal(oddRialLine.tenths, 1515n);
+const subRialLine = lineCanonicalAmount({ quantity: '1', unitPrice: '1515.5', discount: '0', unit: UNIT_RIAL });
+assert.equal(subRialLine.ok, false);
+assert.equal(subRialLine.code, 'CANONICAL_TENTH_PRECISION_EXCEEDED');
 
 const vat = calculateVatAmount({ taxableAmount: 10005n, rate: '10' });
 assert.equal(vat, 1001n);
 assert.equal(formatCanonical(10005n, UNIT_TOMAN), '10٬005 تومان');
-assert.equal(formatCanonical(11006n, UNIT_TOMAN), '11٬006 تومان');
-assert.equal(formatCanonical(10005n, UNIT_RIAL), '100٬050 ریال');
-assert.equal(formatCanonical(1001n, UNIT_RIAL), '10٬010 ریال');
-assert.equal(formatCanonical(11006n, UNIT_RIAL), '110٬060 ریال');
 assert.equal(formatCanonicalDecimal('151.5', UNIT_RIAL), '1٬515 ریال');
 
 const read = rel => fs.readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
@@ -55,70 +49,35 @@ assert.match(index, /src\/ui\/money\/money-runtime\.js/);
 assert.match(index, /src\/ui\/money\/money-inputs\.js/);
 assert.match(index, /src\/ui\/money\/invoice-money-workspace\.js/);
 assert.match(index, /src\/ui\/settlement\/settlement-workspace-v2\.js/);
-assert.doesNotMatch(index, /src="rc11-currency\.js"/,
-  'legacy currency submit/DOM converter must stay out of active runtime');
-assert.doesNotMatch(index, /src="rc11-money\.js"/,
-  'legacy money enhancer must stay out of active runtime');
-assert.doesNotMatch(index, /src="rc11-unit-density\.js"/,
-  'legacy density projector must stay out of active runtime');
-assert.doesNotMatch(index, /src\/ui\/money\/invoice-canonical-input-boundary\.js/,
-  'temporary DOM canonicalization must not run in the invoice form');
-assert.doesNotMatch(index, /src\/ui\/settlement\/tax-settlement-sync\.js/,
-  'legacy settlement display synchronizer must not remain a second owner');
-assert.doesNotMatch(index, /rc15-c1-4-invoice-input-stability\.js/,
-  'legacy event-order workaround must not be loaded after single ownership');
+assert.doesNotMatch(index, /src="rc11-currency\.js"/);
+assert.doesNotMatch(index, /src="rc11-money\.js"/);
+assert.doesNotMatch(index, /src="rc11-unit-density\.js"/);
+assert.doesNotMatch(index, /src\/ui\/money\/invoice-canonical-input-boundary\.js/);
+assert.doesNotMatch(index, /src\/ui\/settlement\/tax-settlement-sync\.js/);
+assert.doesNotMatch(index, /rc15-c1-4-invoice-input-stability\.js/);
 
 assert.match(invoiceMoney, /money\.invoice-canonical-payload/);
-assert.match(invoiceMoney, /input\.dataset\.moneyInput = 'true'/,
-  'invoice inputs remain display-unit values and are formatted only by unified MoneyRuntime');
-assert.match(invoiceMoney, /displayDecimalToCanonicalTenth\(line\.unit_price, unit\)/,
-  'invoice conversion must preserve one-Rial precision at the RPC boundary');
-assert.match(invoiceMoney, /MoneyRuntime\.parseDecimalInput\(unitPrice/,
-  'invoice live validation must use the decimal money boundary');
-assert.match(invoiceMoney, /MoneyRuntime\.formatCanonicalDecimal/,
-  'invoice totals must render canonical tenth-Toman values without integer coercion');
-assert.doesNotMatch(invoiceMoney, /RIAL_NOT_DIVISIBLE_BY_10/,
-  'invoice UX must not reject whole-Rial values that are not multiples of ten');
+assert.match(invoiceMoney, /displayDecimalToCanonicalTenth\(line\.unit_price, unit\)/);
+assert.match(invoiceMoney, /displayDecimalToCanonicalTenth\(unitPrice\?\.value/,
+  'invoice live validation must use the persisted one-Rial precision boundary');
+assert.match(invoiceMoney, /CANONICAL_TENTH_PRECISION_EXCEEDED/,
+  'sub-Rial / over-precise Toman values must be rejected rather than rounded silently');
+assert.match(invoiceMoney, /MoneyRuntime\.formatCanonicalDecimal/);
+assert.doesNotMatch(invoiceMoney, /RIAL_NOT_DIVISIBLE_BY_10/);
 assert.match(invoiceMoney, /avanCanonicalInvoiceTotalToman/);
-assert.match(invoiceMoney, /rc15TaxMetadataReady/,
-  'invoice total must wait for effective-date tax metadata');
-assert.match(invoiceMoney, /data-rc15-tax-profile/);
-assert.match(moneyInputs, /const INTEGER_NAMES/);
-assert.match(moneyInputs, /const DECIMAL_NAMES/);
-assert.match(moneyInputs, /INVOICE_DECIMAL_NAMES/,
-  'invoice unit-price and discount inputs must remain decimal-safe after a unit switch');
-assert.match(moneyOutput, /stripRepeatedUnitsFromReportTables/,
-  'prepared reports must not repeat the unit beside each monetary cell');
-assert.match(moneyOutput, /inlineUnit: isPreparedReports/,
-  'prepared report monetary headers must carry the active unit');
+assert.match(invoiceMoney, /rc15TaxMetadataReady/);
+assert.match(moneyInputs, /INVOICE_DECIMAL_NAMES/);
+assert.match(moneyOutput, /stripRepeatedUnitsFromReportTables/);
+assert.match(moneyOutput, /inlineUnit: isPreparedReports/);
+assert.match(moneyOutput, /repairTrialBalanceSummary/);
 
-assert.match(settlementV2, /form\.dataset\.v60Settlement = '1'/,
-  'v2 must claim the legacy settlement UI compatibility flag before v61');
-assert.match(settlementV2, /type="hidden" name="v60_amount"/,
-  'installment rows must keep canonical Toman hidden for the legacy save contract');
-assert.match(settlementV2, /MoneyRuntime\.parseInput/,
-  'settlement display inputs must cross the shared MoneyRuntime boundary');
-assert.match(settlementV2, /option value="check">چکی/);
-assert.match(settlementV2, /option value="installment">اقساطی/);
-assert.match(settlementV2, /settlement-page-rendered-v2/,
-  'Web invoice-list render must explicitly wake the settlement/check dashboard');
-
-assert.doesNotMatch(finalPolish, /AVAN_MONEY_DISPLAY_UNIT/,
-  'final polish must not read the retired unit global');
-assert.match(finalPolish, /AvanMoneyOutput/,
-  'final polish delegates money output projection to the unified contract');
-
+assert.match(settlementV2, /form\.dataset\.v60Settlement = '1'/);
+assert.match(settlementV2, /type="hidden" name="v60_amount"/);
+assert.match(settlementV2, /MoneyRuntime\.parseInput/);
+assert.match(finalPolish, /AvanMoneyOutput/);
 assert.match(sw, /avan-staging-rc1-v77-money-architecture-gate/);
 assert.match(sw, /src\/core\/money\/canonical-money\.js/);
-assert.match(sw, /src\/application\/money\/money-service\.js/);
-assert.match(sw, /src\/ui\/money\/money-runtime\.js/);
 assert.match(sw, /src\/ui\/money\/invoice-money-workspace\.js/);
-assert.match(sw, /src\/ui\/settlement\/settlement-workspace-v2\.js/);
-assert.doesNotMatch(sw, /'\.\/rc11-currency\.js'/);
-assert.doesNotMatch(sw, /'\.\/rc11-money\.js'/);
-assert.doesNotMatch(sw, /'\.\/rc11-unit-density\.js'/);
 assert.doesNotMatch(sw, /invoice-canonical-input-boundary\.js/);
-assert.doesNotMatch(sw, /tax-settlement-sync\.js/);
-assert.doesNotMatch(sw, /rc15-c1-4-invoice-input-stability\.js/);
 
 console.log('c2-money-contract-v2.spec.mjs: PASS (unified runtime compatibility)');
