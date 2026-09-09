@@ -6,24 +6,32 @@ import {
   displayToCanonical,
   canonicalToDisplay,
   lineCanonicalAmount,
-  formatCanonical
+  formatCanonical,
+  formatCanonicalDecimal
 } from '../src/core/money/canonical-money.js';
 import { calculateVatAmount } from '../src/domains/tax/vat-calculator.js';
 
-// Canonical invariant: Ledger/invoice amounts are integer Toman.
+// Generic integer-money flows keep their original contract.
 assert.deepEqual(displayToCanonical('10٬005', UNIT_TOMAN), { ok: true, value: 10005n, code: null });
 assert.deepEqual(displayToCanonical('100٬050', UNIT_RIAL), { ok: true, value: 10005n, code: null });
-assert.equal(displayToCanonical('10٬005', UNIT_RIAL).ok, false, 'non-divisible Rial must not be silently treated as Toman');
+assert.equal(displayToCanonical('10٬005', UNIT_RIAL).ok, false, 'generic integer Rial input must not be silently treated as Toman');
 assert.equal(canonicalToDisplay(11006n, UNIT_TOMAN), 11006n);
 assert.equal(canonicalToDisplay(11006n, UNIT_RIAL), 110060n);
 assert.notEqual(canonicalToDisplay(11006n, UNIT_RIAL), 1100600n, 'Rial conversion must happen exactly once');
 
+// Invoice unit prices/discounts use one-Rial precision (0.1 canonical Toman).
 const tomanLine = lineCanonicalAmount({ quantity: '1', unitPrice: '10005', discount: '0', unit: UNIT_TOMAN });
 assert.equal(tomanLine.ok, true);
-assert.equal(tomanLine.value, 10005n);
+assert.equal(tomanLine.value, '10005');
+assert.equal(tomanLine.tenths, 100050n);
 const rialLine = lineCanonicalAmount({ quantity: '1', unitPrice: '100050', discount: '0', unit: UNIT_RIAL });
 assert.equal(rialLine.ok, true);
-assert.equal(rialLine.value, 10005n);
+assert.equal(rialLine.value, '10005');
+assert.equal(rialLine.tenths, 100050n);
+const oddRialLine = lineCanonicalAmount({ quantity: '1', unitPrice: '1515', discount: '0', unit: UNIT_RIAL });
+assert.equal(oddRialLine.ok, true);
+assert.equal(oddRialLine.value, '151.5');
+assert.equal(oddRialLine.tenths, 1515n);
 
 const vat = calculateVatAmount({ taxableAmount: 10005n, rate: '10' });
 assert.equal(vat, 1001n);
@@ -32,11 +40,13 @@ assert.equal(formatCanonical(11006n, UNIT_TOMAN), '11٬006 تومان');
 assert.equal(formatCanonical(10005n, UNIT_RIAL), '100٬050 ریال');
 assert.equal(formatCanonical(1001n, UNIT_RIAL), '10٬010 ریال');
 assert.equal(formatCanonical(11006n, UNIT_RIAL), '110٬060 ریال');
+assert.equal(formatCanonicalDecimal('151.5', UNIT_RIAL), '1٬515 ریال');
 
 const read = rel => fs.readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
 const index = read('index.html');
 const invoiceMoney = read('src/ui/money/invoice-money-workspace.js');
 const moneyInputs = read('src/ui/money/money-inputs.js');
+const moneyOutput = read('src/ui/money/money-output-contract.js');
 const settlementV2 = read('src/ui/settlement/settlement-workspace-v2.js');
 const finalPolish = read('rc13-final-polish.js');
 const sw = read('sw.js');
@@ -61,15 +71,26 @@ assert.doesNotMatch(index, /rc15-c1-4-invoice-input-stability\.js/,
 assert.match(invoiceMoney, /money\.invoice-canonical-payload/);
 assert.match(invoiceMoney, /input\.dataset\.moneyInput = 'true'/,
   'invoice inputs remain display-unit values and are formatted only by unified MoneyRuntime');
-assert.match(invoiceMoney, /MoneyRuntime\.parseInput\(line\.unit_price\)/,
-  'canonical conversion must occur at the RPC boundary');
+assert.match(invoiceMoney, /displayDecimalToCanonicalTenth\(line\.unit_price, unit\)/,
+  'invoice conversion must preserve one-Rial precision at the RPC boundary');
+assert.match(invoiceMoney, /MoneyRuntime\.parseDecimalInput\(unitPrice/,
+  'invoice live validation must use the decimal money boundary');
+assert.match(invoiceMoney, /MoneyRuntime\.formatCanonicalDecimal/,
+  'invoice totals must render canonical tenth-Toman values without integer coercion');
+assert.doesNotMatch(invoiceMoney, /RIAL_NOT_DIVISIBLE_BY_10/,
+  'invoice UX must not reject whole-Rial values that are not multiples of ten');
 assert.match(invoiceMoney, /avanCanonicalInvoiceTotalToman/);
 assert.match(invoiceMoney, /rc15TaxMetadataReady/,
   'invoice total must wait for effective-date tax metadata');
-assert.match(invoiceMoney, /RIAL_NOT_DIVISIBLE_BY_10/);
 assert.match(invoiceMoney, /data-rc15-tax-profile/);
 assert.match(moneyInputs, /const INTEGER_NAMES/);
 assert.match(moneyInputs, /const DECIMAL_NAMES/);
+assert.match(moneyInputs, /INVOICE_DECIMAL_NAMES/,
+  'invoice unit-price and discount inputs must remain decimal-safe after a unit switch');
+assert.match(moneyOutput, /stripRepeatedUnitsFromReportTables/,
+  'prepared reports must not repeat the unit beside each monetary cell');
+assert.match(moneyOutput, /inlineUnit: isPreparedReports/,
+  'prepared report monetary headers must carry the active unit');
 
 assert.match(settlementV2, /form\.dataset\.v60Settlement = '1'/,
   'v2 must claim the legacy settlement UI compatibility flag before v61');
