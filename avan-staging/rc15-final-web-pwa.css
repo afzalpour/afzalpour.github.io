@@ -71,6 +71,55 @@ body{
   font-variant-numeric:tabular-nums;
 }
 
+/* Financial analysis / Avan Intelligence cards: title first, value below.
+   Scoped to the intelligence block so no other dashboard grid is affected. */
+.section.card > .section-head:has(.cloud-badge) + .grid4.section{
+  align-items:stretch;
+}
+
+.section.card > .section-head:has(.cloud-badge) + .grid4.section > .card{
+  min-width:0;
+  overflow:hidden;
+}
+
+.section.card > .section-head:has(.cloud-badge) + .grid4.section > .card > .section-head{
+  min-width:0;
+  max-width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:10px;
+}
+
+.section.card > .section-head:has(.cloud-badge) + .grid4.section > .card > .section-head > div,
+.section.card > .section-head:has(.cloud-badge) + .grid4.section > .card > .section-head h3{
+  min-width:0;
+  max-width:100%;
+}
+
+.section.card > .section-head:has(.cloud-badge) + .grid4.section > .card > .section-head h3{
+  margin-block:4px 0;
+  overflow-wrap:anywhere;
+}
+
+.section.card > .section-head:has(.cloud-badge) + .grid4.section > .card > .section-head .summary-pill{
+  display:block;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+  text-align:center;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  font-variant-numeric:tabular-nums;
+}
+
+.section.card > .section-head:has(.cloud-badge) + .grid4.section > .card > p.muted{
+  min-width:0;
+  max-width:100%;
+  overflow-wrap:anywhere;
+}
+
 @media(max-width:900px){
   .toast{
     bottom:calc(86px + env(safe-area-inset-bottom));
