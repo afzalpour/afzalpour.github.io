@@ -55,8 +55,8 @@ assert.doesNotMatch(audit, /new MutationObserver|MutationObserver\s*\(/,
   'activity report must not install a private content observer');
 assert.doesNotMatch(audit, /setTimeout\s*\(/,
   'activity report must not appear through a delayed timer');
-assert.doesNotMatch(audit, /insertAdjacentHTML\(['"]beforeend/,
-  'activity report must not append itself to the end of Settings');
+assert.doesNotMatch(audit, /content\.(?:append|appendChild|insertAdjacentHTML)\s*\(/,
+  'activity report must never append its card directly to the Settings root');
 
 assert.match(layout, /data-avan-tax-slot/);
 assert.match(layout, /data-avan-access-slot/);
