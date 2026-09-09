@@ -1,6 +1,6 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: **2026-09-10 — RC1.5 Final RC Engineering Gate در حال بسته‌شدن روی `release/rc15-final-gate`؛ broader RC1.5 Live acceptance هنوز کامل نشده است.**
+آخرین به‌روزرسانی مرجع: **2026-09-10 — RC1.5 Final RC Engineering Gate = PASS via PR #96 / PR Actions #130 / main Actions #131 / Pages #325. Full RC1.5 Live acceptance is still pending on six remaining user-observable items.**
 
 این فایل Source of Truth وضعیت جاری پروژه است. **Engineering/Backend PASS جایگزین Live PASS نیست** و Live فقط با تأیید صریح کاربر ثبت می‌شود.
 
@@ -40,19 +40,27 @@ Repository: `afzalpour/afzalpour.github.io`
 - Company Context / multi-company entry regressions fixed through PR #93 and PR #94; PR #94 merge commit `328c868e3468f769b2ad93f9ea7ed8900a8f2890`; user explicitly confirmed the refresh problem resolved.
 - Dashboard Risk presentation was hardened in PR #92.
 - Financial-analysis cards were aligned to the accepted Risk presentation pattern in PR #95; merge commit `07b21cd94b7f9f3309460c9855c5546213667488`; user explicitly accepted the result.
-- latest Staging SW cache before Final RC gate: `avan-staging-rc1-v90-financial-analysis-layout`.
+- latest Staging SW cache: `avan-staging-rc1-v90-financial-analysis-layout`.
 
-### Final RC gate now in progress
+### Final RC engineering gate — PASS
 
-Branch: `release/rc15-final-gate`
+PR #96: **RC1.5: Final RC engineering and promotion-readiness gate**
 
-This gate:
+- PR #96 merge commit: `57227aa3a321a172c5af2d6749ed1da059336106`.
+- PR Architecture Gate #130 = **PASS**.
+- post-merge main Architecture Gate #131 = **PASS**.
+- GitHub Pages #325 = **PASS**.
+- Production root remained RC1.4 and unchanged.
 
-- adds the missing executable `company-context-auth-sync.spec.mjs` behavioral regression to `npm run quality`;
-- aligns `AVAN_MASTER_PROMPT.md` money contract with Accepted ADR-0019 so the obsolete `integer Toman / Rial divisible by 10` rule cannot be reintroduced from the highest-priority source-of-truth file;
-- records the current backend/RLS/security/recovery baseline;
-- creates `avan-staging/RC1_5_FINAL_RC_PROMOTION_READINESS.md`;
-- leaves Production root unchanged.
+The Final RC gate:
+
+- added executable `company-context-auth-sync.spec.mjs` behavioral regression to `npm run quality`;
+- aligned `AVAN_MASTER_PROMPT.md` money contract with Accepted ADR-0019 so the obsolete `integer Toman / Rial divisible by 10` rule cannot be reintroduced from the highest-priority source-of-truth file;
+- recorded the current backend/RLS/security/recovery baseline;
+- created `avan-staging/RC1_5_FINAL_RC_PROMOTION_READINESS.md`;
+- verified the existing rollback branch and defined the exact pre-promotion rollback procedure.
+
+The **whole RC1.5 Live Gate is not yet PASS**. Six remaining explicit Live items are listed in section 15.
 
 ---
 
@@ -111,7 +119,7 @@ The safe composite custom-report/event-matrix behavior was previously user-accep
 
 ## 4) Latest accounting / security integrity baseline — 2026-09-10
 
-Read-only snapshot; this Final RC gate performed **no financial mutation**.
+Read-only snapshot; the Final RC gate performed **no financial mutation**.
 
 Current data counts:
 
@@ -141,7 +149,7 @@ Legacy invoice note:
 
 - a raw generic comparison finds **25 historical invoices with `subtotal_amount IS NULL`** and populated historical `total_amount`.
 - these are legacy pre-Tax-bridge rows and are not current VAT-total mismatches; the authoritative integrity function reports zero mismatch in every Company.
-- this Final RC gate does not backfill or reinterpret historical financial rows.
+- the Final RC gate does not backfill or reinterpret historical financial rows.
 
 Tax state:
 
@@ -293,7 +301,7 @@ Web/PWA engineering:
 - iPhone/PWA presentation includes `100dvh` and safe-area-aware behavior.
 - PWA orientation is `any`.
 - Service Worker HTML fallback is navigation-only; missing JS/CSS/image does not receive HTML.
-- latest Staging cache before Final RC = `avan-staging-rc1-v90-financial-analysis-layout`.
+- latest Staging cache = `avan-staging-rc1-v90-financial-analysis-layout`.
 
 Auth/Company:
 
@@ -301,6 +309,7 @@ Auth/Company:
 - zero-company onboarding is explicit.
 - Company Context publishes authoritative refresh after authentication so the Company Shell cannot remain stuck on its pre-login empty snapshot.
 - deterministic company selection avoids parallel focus/open-time refresh loops.
+- `company-context-auth-sync.spec.mjs` now permanently covers the pre-auth-empty → authenticated-multi-company hydration scenario in `npm run quality`.
 - the user explicitly confirmed manual refresh is no longer required after the PR #94 fix.
 
 ---
@@ -326,8 +335,9 @@ Runbook: `avan-staging/BACKUP_RESTORE_RUNBOOK.md`.
 
 Rollback:
 
-- existing `prod-backup-20260907-rc1-4-pre` branch was re-verified to exist.
+- existing `prod-backup-20260907-rc1-4-pre` branch was re-verified to exist and resolve successfully.
 - before RC1.5 Production promotion, create `prod-backup-20260910-rc1-5-pre-promotion` from the exact final pre-promotion `main` commit.
+- do **not** create that final branch before the remaining Live Gate, because any Live-fix commit must be included in the exact recovery point.
 - RC1.5 DB foundations are already applied to the shared backend and current RC1.4 Production runs against that schema; planned RC1.5 rollback is therefore a frontend/root rollback, not destructive DB rollback.
 
 ---
@@ -345,21 +355,22 @@ Automated release gate includes:
 - reconciliation intelligence tests.
 - Settings stable-shell/no-layout-shift regression.
 - zero-company/auth UX regression.
-- **Company auth→membership hydration behavioral regression** added in Final RC gate.
+- Company auth→membership hydration behavioral regression.
 - composite custom-report regression.
 - e-Invoice prevalidation tests.
 - full active-runtime release regression.
 - final Web/PWA/iPhone + dashboard presentation regression.
 - architecture audits.
 
-Latest merged evidence before Final RC branch:
+Latest evidence:
 
 - PR #91 Actions #119 / main #120 / Pages #318 = success.
 - PR #94 Actions #126 / main #127 / Pages #323 = success.
 - PR #95 Actions #128 / main #129 / Pages #324 = success.
+- **PR #96 Actions #130 / main #131 / Pages #325 = success.**
 - direct shared-client overwrites = 0 under current architecture audit.
 
-Final RC branch must pass the same full `npm run quality` after the new behavioral test and source-of-truth corrections.
+**Final RC Engineering Gate = PASS.**
 
 ---
 
