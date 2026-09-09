@@ -6,7 +6,7 @@ const company = read('rc13-company-context.js');
 const lifecycle = read('rc13-company-lifecycle.js');
 const auth = read('src/ui/auth/auth-view.js');
 
-assert.match(company, /companies\.length===0/,
+assert.match(company, /companies\.length\s*===\s*0/,
   'zero-company accounts must be handled explicitly');
 assert.match(company, /firstCompanyRequired/,
   'zero-company state must open required onboarding instead of leaving the user stranded');
