@@ -8,6 +8,7 @@ on:
       - 'avan-staging/scripts/apply-money-architecture-refactor.mjs'
       - 'avan-staging/scripts/apply-money-architecture-phase2.mjs'
       - 'avan-staging/scripts/apply-money-architecture-phase3.mjs'
+      - 'avan-staging/scripts/apply-money-architecture-phase4.mjs'
       - 'avan-staging/scripts/money-architecture-audit.mjs'
       - 'avan-staging/tests/money-*.spec.mjs'
       - 'avan-staging/tests/c2-money-contract-v2.spec.mjs'
@@ -54,6 +55,7 @@ jobs:
           node avan-staging/scripts/apply-money-architecture-refactor.mjs
           node avan-staging/scripts/apply-money-architecture-phase2.mjs
           node avan-staging/scripts/apply-money-architecture-phase3.mjs
+          node avan-staging/scripts/apply-money-architecture-phase4.mjs
       - name: Full architecture quality gate
         working-directory: avan-staging
         run: npm run quality
@@ -65,6 +67,10 @@ jobs:
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add avan-staging/app.js avan-staging/rc12-print-export.js avan-staging/rc14-catalog-settlement-v61.js avan-staging/rc14-inventory-operations.js avan-staging/rc13-final-polish.js avan-staging/rc15-tax-ux-v3.js avan-staging/src/core/money/canonical-money.js avan-staging/src/ui/settlement/settlement-workspace-v2.js avan-staging/index.html avan-staging/sw.js
-          git commit -m 'Complete unified money boundaries for print and inventory'
+          git add -u avan-staging
+          if git diff --cached --quiet; then
+            echo 'No tracked runtime changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Retire remaining legacy money runtime paths'
           git push origin HEAD:rc1.5-money-architecture-refactor
