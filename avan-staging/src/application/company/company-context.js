@@ -11,6 +11,8 @@ export function createCompanyContext({client,listWorkspaces,globalObject=window,
   function sessionStore(){try{return globalObject.sessionStorage||null}catch{return null}}
   function storedId(){try{return sessionStore()?.getItem(activeKey)||null}catch{return null}}
   function persistId(id){try{if(id)sessionStore()?.setItem(activeKey,id);else sessionStore()?.removeItem(activeKey)}catch{}}
+  function hasSessionAccessor(){return typeof client.session==='function'}
+  function sessionUser(){try{return hasSessionAccessor()?client.session()?.user||null:null}catch{return null}}
   function normalizeRows(rows){return Array.isArray(rows)?rows.filter(row=>row?.id):[]}
   function allowedRows(rows){return normalizeRows(rows).filter(row=>row.access_allowed!==false)}
   function reorderById(rows,activeId){const items=normalizeRows(rows);if(!activeId)return items;const index=items.findIndex(item=>item.id===activeId);if(index<=0)return items;return[items[index],...items.slice(0,index),...items.slice(index+1)]}
@@ -26,7 +28,7 @@ export function createCompanyContext({client,listWorkspaces,globalObject=window,
     refreshPromise=(async()=>{
       state.loading=true;
       try{
-        const user=await client.user();
+        const user=sessionUser()||await client.user();
         if(!user?.id){Object.assign(state,{ready:true,userId:null,activeId:null,selectionRequired:false,companies:[]});return;}
         const rawRows=normalizeRows(await listWorkspaces());
         const activeId=resolveFullActiveId(rawRows);
@@ -45,7 +47,20 @@ export function createCompanyContext({client,listWorkspaces,globalObject=window,
   function active(){return cloneCompany(state.companies.find(c=>c.id===state.activeId)||null)}
   function list(){return state.companies.map(cloneCompany)}
   function snapshot(){return cloneState(state)}
-  async function ensure(){const user=await client.user();const uid=user?.id||null;if(!state.ready||uid!==state.userId)await refresh({force:true});return snapshot()}
+  async function ensure(){
+    if(hasSessionAccessor()){
+      const hydrated=sessionUser();
+      const uid=hydrated?.id||null;
+      if(state.ready&&uid&&uid===state.userId)return snapshot();
+      if(state.ready&&!uid&&!state.userId)return snapshot();
+      if(uid&&uid!==state.userId){await refresh({force:true});return snapshot();}
+      if(!state.ready){await refresh({force:true});return snapshot();}
+    }
+    const user=await client.user();
+    const remoteUid=user?.id||null;
+    if(!state.ready||remoteUid!==state.userId)await refresh({force:true});
+    return snapshot();
+  }
   async function selectCompany(companyId,{emit=true}={}){const id=String(companyId||'').trim();if(!id)throw new Error('COMPANY_REQUIRED');await ensure();const target=state.companies.find(c=>c.id===id);if(!target){persistId(null);state.activeId=null;state.selectionRequired=state.companies.length>0;throw new Error('COMPANY_ACCESS_REQUIRED')}if(target.access_allowed===false){if(storedId()===id)persistId(null);state.activeId=null;state.selectionRequired=true;throw new Error(target.status==='archived'?'COMPANY_ARCHIVED':'COMPANY_SUSPENDED')}persistId(id);state.activeId=id;state.selectionRequired=false;state.companies=[target,...state.companies.filter(c=>c.id!==id)];if(emit){const detail={company:cloneCompany(target),company_id:id};globalObject.dispatchEvent(new CustomEvent('avan:company-context-changed',{detail}));globalObject.dispatchEvent(new CustomEvent('avan:workspace-changed',{detail:{workspace_id:id}}))}return cloneCompany(target)}
   function clearSelection({emit=true}={}){persistId(null);state.activeId=null;state.selectionRequired=state.companies.length>0;if(emit)globalObject.dispatchEvent(new CustomEvent('avan:company-context-cleared'))}
   return Object.freeze({activeKey,orderWorkspaces,refresh,ensure,snapshot,active,list,selectCompany,clearSelection,needsSelection:()=>Boolean(state.selectionRequired),hasSelection:()=>Boolean(state.activeId)});

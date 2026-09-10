@@ -116,9 +116,11 @@ assert.match(settlementSave, /C\.operations\.use\('rpc', 'settlement:invoice-pla
 assert.match(settlementSave, /canonicalSettlementAmount/,
   'save boundary must delegate exact parsing to the settlement domain contract');
 assert.match(settlementSave, /validateSettlementPlanTotal\(total\.value, rows\)/,
-  'save boundary must validate the persisted VAT-inclusive invoice total through the domain contract');
-assert.match(settlementSave, /String\(persisted\?\.\[0\]\?\.total_amount/,
-  'persisted numeric(...,1) invoice totals must remain decimal canonical strings');
+  'save boundary must validate the VAT-inclusive exact canonical invoice total through the domain contract');
+assert.match(settlementSave, /form\.dataset\.avanCanonicalInvoiceTotalToman/,
+  'settlement save must consume the already-computed decimal canonical invoice total');
+assert.doesNotMatch(settlementSave, /select=total_amount/,
+  'frontend must not add a redundant invoice-total readback; the backend settlement function remains the authoritative persisted-total check');
 assert.doesNotMatch(settlementSave, /integerBig/,
   'save boundary must not coerce one-Rial precision totals to integer Toman');
 

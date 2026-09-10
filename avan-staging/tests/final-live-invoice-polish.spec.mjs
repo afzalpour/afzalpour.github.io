@@ -46,7 +46,8 @@ assert.match(settlement, /replace\(\/\\B\(\?=\(\\d\{3\}\)\+\(\?!\\d\)\)\/g, '٬'
   'settlement presenter must apply three-digit grouping');
 assert.match(index, /src\/ui\/invoices\/invoice-base-save-normalizer\.js/);
 assert.match(index, /src\/ui\/settlement\/settlement-money-presentation\.js/);
-assert.match(sw, /avan-staging-rc1-v92-final-live-polish/);
+assert.match(sw, /const CACHE='avan-staging-rc1-v\d+[^']*'/,
+  'the PWA cache must stay explicitly versioned without pinning an obsolete release number');
 assert.match(sw, /src\/ui\/invoices\/invoice-base-save-normalizer\.js/);
 assert.match(sw, /src\/ui\/settlement\/settlement-money-presentation\.js/);
 

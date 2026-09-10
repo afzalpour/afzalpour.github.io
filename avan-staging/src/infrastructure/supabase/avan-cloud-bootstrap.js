@@ -46,7 +46,11 @@ export function installAvanCloud({ globalObject = window, storage = localStorage
 
   async function claimInvitationsForCurrentUser() {
     let user = null;
-    try { user = await client.user(); } catch { return; }
+    try {
+      user = client.session?.()?.user || null;
+      if (user?.id && claimedForUserId === user.id) return;
+      if (!user?.id) user = await client.user();
+    } catch { return; }
     if (!user?.id || claimedForUserId === user.id) return;
     claimedForUserId = user.id;
     try {
