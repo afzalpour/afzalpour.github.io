@@ -88,7 +88,7 @@ function partyLedgerHtml({ party, ledger }) {
     <div class="section-head">
       <div>
         <h2>صورتحساب مالی — ${esc(party.name)}</h2>
-        <span class="muted">از ${dateFa(ledger.from)} تا ${dateFa(ledger.to)} · مبتنی بر Ledger و شناسه واقعی طرف‌حساب</span>
+        <span class="muted">از ${dateFa(ledger.from)} تا ${dateFa(ledger.to)} · مبتنی بر دفترکل و شناسه واقعی طرف‌حساب</span>
       </div>
       <span class="cloud-badge">قابل ردیابی</span>
     </div>
@@ -111,7 +111,7 @@ function partyLedgerHtml({ party, ledger }) {
     </div>
 
     <div class="section">
-      <div class="section-head"><div><h3>ریز گردش دریافتنی/پرداختنی</h3><span class="muted">فقط خطوط حساب‌های کنترلی که party_id آن‌ها دقیقاً متعلق به این شخص است.</span></div></div>
+      <div class="section-head"><div><h3>ریز گردش دریافتنی/پرداختنی</h3><span class="muted">فقط خطوط حساب‌های کنترلی که شناسه طرف‌حساب آن‌ها دقیقاً متعلق به این شخص است.</span></div></div>
       ${rows ? `
         <div style="overflow:auto">
           <table>
@@ -168,7 +168,7 @@ async function openPartyLedger(partyId, requestedRange = null) {
   try {
     const range = requestedRange || await defaultRange();
     if (!range.from || !range.to || range.from > range.to) return toast('بازه تاریخ معتبر نیست.');
-    openModal('<h2>صورتحساب مالی طرف‌حساب</h2><div class="loading">در حال محاسبه از Ledger…</div>');
+    openModal('<h2>صورتحساب مالی طرف‌حساب</h2><div class="loading">در حال محاسبه از دفترکل…</div>');
     await MoneyRuntime?.ready?.();
     const result = await loadPartyLedger(partyId, range.from, range.to);
     openModal(partyLedgerHtml(result));
