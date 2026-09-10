@@ -1,6 +1,5 @@
 'use strict';
 
-import { closeModal } from './src/ui/components/modal.js';
 import { toast, showError } from './src/ui/feedback/toast.js';
 import { installAvanCloud } from './src/infrastructure/supabase/avan-cloud-bootstrap.js';
 
@@ -13,20 +12,6 @@ let observer = null;
 const esc = value => String(value ?? '').replace(/[&<>'"]/g, ch => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
 }[ch]));
-
-const faToLatin = value => String(value ?? '')
-  .replace(/[۰-۹]/g, d => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
-  .replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
-
-function cleanInteger(value) {
-  const s = faToLatin(value).trim().replace(/[٬,\s]/g, '');
-  return /^\d+$/.test(s) ? s : null;
-}
-
-function cleanDecimal(value, maxDecimals = 6) {
-  const s = faToLatin(value).trim().replace(/٫|,/g, '.').replace(/\s/g, '');
-  return new RegExp(`^\\d+(?:\\.\\d{1,${maxDecimals}})?$`).test(s) ? s : null;
-}
 
 async function activeData(force = false) {
   const state = await C.companyContext.ensure();
@@ -256,78 +241,6 @@ async function enhance(form) {
   }
 }
 
-async function saveInvoice(form, submitter) {
-  try {
-    const d = await activeData();
-    const type = inferType(form, d);
-    const fd = new FormData(form);
-    const date = String(fd.get('date') || '');
-    const partyId = String(fd.get('party') || '');
-    if (!partyId) return toast('طرف‌حساب را انتخاب یا در همین پنجره ثبت کنید');
-
-    const rows = [];
-    for (const row of form.querySelectorAll('[data-invoice-line]')) {
-      const accountId = row.querySelector('[name="account"]')?.value || '';
-      const description = row.querySelector('[name="description"]')?.value.trim() || '';
-      const rawPrice = row.querySelector('[name="unit_price"]')?.value || '';
-      if (!accountId && !description && !String(rawPrice).trim()) continue;
-
-      const quantity = cleanDecimal(row.querySelector('[name="quantity"]')?.value || '1', 6);
-      const unitPrice = cleanInteger(rawPrice);
-      const discount = cleanInteger(row.querySelector('[name="discount"]')?.value || '0');
-      if (!accountId || !quantity || Number(quantity) <= 0 || !unitPrice || BigInt(unitPrice) <= 0n || discount === null) {
-        return toast('اطلاعات یکی از ردیف‌های فاکتور معتبر نیست');
-      }
-
-      rows.push({
-        account_id: accountId,
-        description,
-        quantity,
-        unit_price: unitPrice,
-        discount,
-        item_id: row.dataset.eItem || row.querySelector('[data-e-item]')?.value || null,
-        unit_id: row.dataset.eUnit || null,
-        warehouse_id: row.querySelector('[data-e-wh]')?.value || null,
-        receipt_line_id: row.querySelector('[data-e-rec]')?.value || null
-      });
-    }
-    if (!rows.length) return toast('حداقل یک ردیف فاکتور وارد کنید');
-
-    let fiscalYearId = null;
-    if (editingInvoiceId) {
-      const inv = d.invoices.find(x => x.id === editingInvoiceId);
-      fiscalYearId = inv?.fiscal_year_id || null;
-      if (editingInvoiceId && !inv) throw new Error('INVOICE_NOT_IN_ACTIVE_COMPANY');
-    }
-    fiscalYearId ||= d.years.find(y => date >= y.date_from && date <= y.date_to)?.id
-      || d.years.find(y => y.status === 'open')?.id;
-    if (!fiscalYearId) return toast('سال مالی معتبر برای تاریخ فاکتور پیدا نشد');
-
-    const id = await C.rpc('save_draft_invoice', {
-      p_workspace_id: d.company.id,
-      p_fiscal_year_id: fiscalYearId,
-      p_invoice_id: editingInvoiceId || null,
-      p_invoice_type: type,
-      p_invoice_date: date,
-      p_due_date: fd.get('due') || null,
-      p_party_id: partyId,
-      p_description: fd.get('description') || null,
-      p_lines: rows
-    });
-
-    const mode = submitter?.dataset?.invoiceSave || 'draft';
-    if (mode === 'post') await C.rpc('post_invoice', { iid: id });
-    closeModal();
-    sessionStorage.setItem(
-      'avan.rc14i.invoice.notice',
-      mode === 'post' ? 'فاکتور ثبت قطعی شد' : 'فاکتور ذخیره شد'
-    );
-    location.reload();
-  } catch (err) {
-    showError(err, 'invoice active-company save');
-  }
-}
-
 function install() {
   document.addEventListener('click', e => {
     if (e.target.closest?.('#newSaleInvoice')) {
@@ -345,22 +258,10 @@ function install() {
     }
   }, true);
 
-  document.addEventListener('submit', e => {
-    const form = e.target;
-    if (form?.id !== 'invoiceForm' || form.dataset.rc14InvoiceWindow !== '1') return;
-
-    // Quantities with >3 decimals are already intercepted earlier by the RC1.4 inventory bridge.
-    const hasHighPrecision = [...form.querySelectorAll('[data-invoice-line]')].some(row => {
-      if (!(row.dataset.eItem || row.querySelector('[data-e-item]')?.value)) return false;
-      const raw = faToLatin(row.querySelector('[name="quantity"]')?.value || '').replace(/٫|,/g, '.');
-      return (raw.split('.')[1] || '').length > 3;
-    });
-    if (hasHighPrecision) return;
-
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    saveInvoice(form, e.submitter);
-  }, true);
+  // Saving is intentionally left to app.js. Its in-app reloadAndRender() keeps
+  // the authenticated shell mounted and returns to the invoices page. Money,
+  // inventory, tax and settlement metadata continue through named RPC pipeline
+  // operations instead of a second submit owner and full-page reload.
 
   observer = new MutationObserver(() => {
     const form = document.getElementById('invoiceForm');
@@ -373,12 +274,6 @@ function install() {
     requestedType = null;
     editingInvoiceId = null;
   });
-
-  const notice = sessionStorage.getItem('avan.rc14i.invoice.notice');
-  if (notice) {
-    sessionStorage.removeItem('avan.rc14i.invoice.notice');
-    setTimeout(() => toast(notice), 700);
-  }
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once: true });
