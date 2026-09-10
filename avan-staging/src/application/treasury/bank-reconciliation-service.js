@@ -10,6 +10,16 @@ function safeIdList(rows = []) {
   return rows.map(row => String(row?.id || '')).filter(Boolean);
 }
 
+export function excludeVoidedCandidatePairs(candidates = [], matches = [], statementLineId = '') {
+  const lineId = String(statementLineId || '');
+  if (!lineId) return Array.isArray(candidates) ? [...candidates] : [];
+  const rejected = new Set((matches || [])
+    .filter(match => match?.voided_at && String(match.statement_line_id || '') === lineId)
+    .map(match => String(match.financial_transaction_id || ''))
+    .filter(Boolean));
+  return (candidates || []).filter(candidate => !rejected.has(String(candidate?.transaction_id || '')));
+}
+
 export function createBankReconciliationService(client) {
   if (!client?.select || !client?.insert || !client?.update || !client?.rpc) {
     throw new Error('BANK_RECONCILIATION_CLIENT_REQUIRED');
@@ -64,11 +74,20 @@ export function createBankReconciliationService(client) {
   }
 
   async function candidates(workspaceId, statementLineId, dateWindow = 3) {
-    return client.rpc('avan_bank_reconciliation_candidates', {
-      wid: required(workspaceId, 'WORKSPACE_REQUIRED'),
-      p_statement_line_id: required(statementLineId, 'BANK_STATEMENT_LINE_REQUIRED'),
-      p_date_window: Math.max(0, Math.min(30, Number(dateWindow) || 0))
-    });
+    const wid = required(workspaceId, 'WORKSPACE_REQUIRED');
+    const lineId = required(statementLineId, 'BANK_STATEMENT_LINE_REQUIRED');
+    const [candidateRows, voidHistory] = await Promise.all([
+      client.rpc('avan_bank_reconciliation_candidates', {
+        wid,
+        p_statement_line_id: lineId,
+        p_date_window: Math.max(0, Math.min(30, Number(dateWindow) || 0))
+      }),
+      client.select(
+        'bank_reconciliation_matches',
+        `select=statement_line_id,financial_transaction_id,voided_at&workspace_id=eq.${wid}&statement_line_id=eq.${lineId}&voided_at=not.is.null&limit=5000`
+      )
+    ]);
+    return excludeVoidedCandidatePairs(candidateRows || [], voidHistory || [], lineId);
   }
 
   async function confirmMatch({ workspaceId, financialAccountId, statementLineId, candidate } = {}) {
