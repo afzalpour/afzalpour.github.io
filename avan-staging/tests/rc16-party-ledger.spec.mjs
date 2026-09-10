@@ -60,6 +60,7 @@ assert.match(ui, /data-party-ledger-launcher/);
 assert.match(index, /src\/ui\/reports\/party-ledger-workspace\.js/);
 assert.match(sw, /src\/reports\/party-ledger\.js/);
 assert.match(sw, /src\/ui\/reports\/party-ledger-workspace\.js/);
-assert.match(sw, /avan-staging-rc1-v99-party-ledger/);
+const cacheVersion = Number(sw.match(/const CACHE='avan-staging-rc1-v(\d+)-/)?.[1] || 0);
+assert.ok(cacheVersion >= 99, 'Party Ledger PWA cache must not regress behind v99');
 
 console.log('rc16-party-ledger.spec.mjs: PASS');
