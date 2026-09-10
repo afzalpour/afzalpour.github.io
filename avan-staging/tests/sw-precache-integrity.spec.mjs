@@ -25,9 +25,13 @@ for (const rel of assets) {
 assert.deepEqual(missing, [], `every precached runtime asset must exist; missing: ${missing.join(', ')}`);
 assert.doesNotMatch(assetBlock[1], /src\/ui\/money\/live-money-inputs\.js/,
   'removed legacy money input runtime must never be precached again');
-assert.match(sw, /const CACHE='avan-staging-rc1-v94-precache-integrity'/,
-  'the stale precache fix must activate a fresh PWA cache identity');
+
+const cacheIdentity = sw.match(/const CACHE='(avan-staging-rc1-v(\d+)-[a-z0-9-]+)'/i);
+assert.ok(cacheIdentity, 'Staging service worker must use a versioned avan-staging-rc1 cache identity');
+assert.ok(Number(cacheIdentity[2]) >= 94,
+  'Staging PWA cache identity must not regress behind the precache-integrity baseline');
+
 assert.match(sw, /if\(request\.mode==='navigate'\)/,
   'HTML fallback must remain navigation-only');
 
-console.log(`sw-precache-integrity: PASS (${assets.length} declared runtime entries)`);
+console.log(`sw-precache-integrity: PASS (${assets.length} declared runtime entries; ${cacheIdentity[1]})`);
