@@ -15,6 +15,11 @@ assert.equal(taxSurfaceNeedsRefresh({ rowCount: 2, taxEnabled: '0', taxFieldCoun
   'tax-disabled companies must not loop trying to create invoice tax selectors');
 assert.equal(taxSurfaceNeedsRefresh({ title: 'تنظیمات', hasSettingsCard: false }), true);
 assert.equal(taxSurfaceNeedsRefresh({ title: 'تنظیمات', hasSettingsCard: true }), false);
+assert.equal(taxSurfaceNeedsRefresh({ hasItemForm: true, hasItemTaxField: false }), true,
+  'inventory item tax metadata must remain available after replacing the generic tax lifecycle');
+assert.equal(taxSurfaceNeedsRefresh({ hasItemForm: true, hasItemTaxField: true }), false);
+assert.equal(taxSurfaceNeedsRefresh({ invoiceViewPending: true }), true,
+  'invoice tax detail must still receive one controlled refresh');
 
 assert.deepEqual(operationChoicesForDirection('credit').map(item => item.kind), ['receipt', 'transfer']);
 assert.deepEqual(operationChoicesForDirection('debit').map(item => item.kind), ['payment', 'transfer']);
@@ -29,8 +34,14 @@ assert.match(v3, /Lifecycle\.remove\('tax:workspace-v2'\)/,
 assert.match(v3, /tax:workspace-v2-stable/);
 assert.match(v3, /select\.dataset\.avanNativeTaxPicker = '1'/,
   'stable native tax selects must not be cloned by the previous compatibility layer');
+assert.match(v3, /rc14ItemForm/,
+  'stable tax lifecycle must preserve inventory item tax fields');
+assert.match(v3, /avanTaxDetailAttempted/,
+  'invoice tax detail rendering must be attempted once per invoice modal instead of looping');
 assert.match(v3, /ستون‌های فایل بانک‌ها لازم نیست یکسان باشند/,
   'bank import guidance must explicitly state that source bank layouts may differ');
+assert.match(v3, /avanBankHistoryManaged/,
+  'history panel must hide by default without immediately overriding the user toggle');
 assert.match(v3, /صورت‌حساب‌های قبلی/,
   'bank import history must remain available as an opt-in compact control');
 assert.match(v3, /ثبت رویداد مالی مناسب/,
