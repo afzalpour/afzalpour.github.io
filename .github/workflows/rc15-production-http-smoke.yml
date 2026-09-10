@@ -1,0 +1,55 @@
+name: RC1.5 Production HTTP Smoke
+
+on:
+  push:
+    branches:
+      - release/rc15-production-promotion-v2
+    paths:
+      - '.github/workflows/rc15-production-http-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout release candidate
+        uses: actions/checkout@v4
+
+      - name: Verify deployed Production over HTTP
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://afzalpour.github.io'
+          fetch() {
+            curl --fail --silent --show-error --location \
+              --retry 8 --retry-all-errors --retry-delay 2 \
+              --connect-timeout 10 --max-time 30 \
+              "$base/$1" -o "$2"
+          }
+
+          fetch 'index.html' /tmp/live-index.html
+          fetch 'sw.js' /tmp/live-sw.js
+          fetch 'config.js' /tmp/live-config.js
+          fetch 'src/ui/invoices/invoice-save-hot-refresh.js' /tmp/live-invoice-save-hot-refresh.js
+          fetch 'src/ui/einvoice/einvoice-preflight-ui.js' /tmp/live-einvoice-preflight-ui.js
+          fetch 'src/ui/settings/settings-layout-v2.js' /tmp/live-settings-layout-v2.js
+
+          cmp -s /tmp/live-index.html index.html
+          cmp -s /tmp/live-sw.js sw.js
+          cmp -s /tmp/live-config.js config.js
+          cmp -s /tmp/live-invoice-save-hot-refresh.js src/ui/invoices/invoice-save-hot-refresh.js
+          cmp -s /tmp/live-einvoice-preflight-ui.js src/ui/einvoice/einvoice-preflight-ui.js
+          cmp -s /tmp/live-settings-layout-v2.js src/ui/settings/settings-layout-v2.js
+
+          grep -Fq "src/ui/invoices/invoice-save-hot-refresh.js" /tmp/live-index.html
+          grep -Fq "src/ui/einvoice/einvoice-preflight-ui.js" /tmp/live-index.html
+          grep -Fq "const CACHE_PREFIX='avan-prod-';" /tmp/live-sw.js
+          grep -Fq "const CACHE='avan-prod-rc1-5-v1';" /tmp/live-sw.js
+          ! grep -Fq 'avan-staging-rc1-' /tmp/live-sw.js
+          ! grep -Fq 'src/ui/money/live-money-inputs.js' /tmp/live-sw.js
+          ! grep -Fq 'src/documents/document-viewer-v2.js' /tmp/live-sw.js
+
+          echo 'RC1.5 Production HTTP smoke: PASS'
