@@ -139,21 +139,21 @@ if (!C.operations.has('rpc', 'settlement:invoice-plan')) {
     const saved = form.dataset.v60DraftId || '';
     if (!payload.p_invoice_id && saved) nextPayload = { ...payload, p_invoice_id: saved };
 
+    const totalCanonical = String(
+      form.dataset.avanCanonicalInvoiceTotalToman ||
+      form.dataset.avanInvoiceTotal ||
+      ''
+    );
+    const total = exactCanonical(totalCanonical);
+    if (!total || total.tenths <= 0n) {
+      throw new Error('جمع نهایی فاکتور برای شرایط تسویه معتبر نیست');
+    }
+
+    const company = await activeCompany();
+    const plan = await gatherPlan(form, total.value, company);
     const result = await next(name, nextPayload);
     form.dataset.v60DraftId = String(result);
 
-    const company = await activeCompany();
-    const persisted = await C.select(
-      'invoices',
-      `select=total_amount&workspace_id=eq.${company.id}&id=eq.${result}&limit=1`
-    );
-    const totalCanonical = String(persisted?.[0]?.total_amount ?? '');
-    const total = exactCanonical(totalCanonical);
-    if (!total) throw new Error('جمع نهایی فاکتور پس از ذخیره قابل خواندن نیست');
-
-    form.dataset.avanInvoiceTotal = total.value;
-    form.dataset.avanCanonicalInvoiceTotalToman = total.value;
-    const plan = await gatherPlan(form, total.value, company);
     if (plan) {
       await C.rpc('save_invoice_settlement_plan', {
         p_invoice_id: result,
