@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 const foundation = readFileSync(new URL('../APPLIED_RC1_6_A_BANK_RECONCILIATION.sql', import.meta.url), 'utf8');
 const compat = readFileSync(new URL('../APPLIED_RC1_6_A_BANK_RECONCILIATION_COMPAT.sql', import.meta.url), 'utf8');
 const allSql = `${foundation}\n${compat}`;
+const executableSql = allSql.replace(/^\s*--.*$/gm, '');
 
 function expect(pattern, source, message) {
   assert.match(source, pattern, message);
@@ -37,9 +38,9 @@ expect(/BANK_RECONCILIATION_MATCH_UPDATE_REQUIRES_VOID/, foundation, 'match chan
 expect(/BANK_RECONCILIATION_VOID_REASON_REQUIRED/, foundation, 'void must retain a reason');
 assert.doesNotMatch(foundation, /create\s+policy\s+\w+\s+on\s+public\.(?:bank_statement_imports|bank_statement_lines|bank_reconciliation_matches)[\s\S]{0,160}?for\s+delete\b/i, 'reconciliation evidence must not expose a DELETE policy');
 
-// Live-schema compatibility: reference is additive; historical tx_no is forbidden.
+// Live-schema compatibility: reference is additive; historical tx_no must not appear in executable SQL.
 expect(/alter\s+table\s+public\.financial_transactions[\s\S]*?add\s+column\s+if\s+not\s+exists\s+reference\s+text/i, compat, 'financial transaction reference column must be additive and nullable');
-assert.doesNotMatch(allSql, /\btx_no\b/i, 'RC1.6 migrations must not depend on nonexistent financial_transactions.tx_no');
+assert.doesNotMatch(executableSql, /\btx_no\b/i, 'RC1.6 migrations must not depend on nonexistent financial_transactions.tx_no');
 
 // Candidate RPC must remain read-only, SECURITY INVOKER and Company-scoped.
 const rpcMatch = compat.match(/create\s+or\s+replace\s+function\s+public\.avan_bank_reconciliation_candidates[\s\S]*?\$\$;/i);
@@ -52,7 +53,7 @@ expect(/t\.workspace_id\s*=\s*l\.workspace_id/i, rpc, 'candidate RPC must remain
 expect(/t\.status\s*=\s*'posted'/i, rpc, 'candidate RPC must only consider Posted transactions');
 expect(/t\.tx_type\s+in\s*\('receipt','payment','transfer'\)/i, rpc, 'candidate RPC must exclude opening_balance and other transaction types');
 expect(/t\.amount\s*=\s*l\.amount/i, rpc, 'candidate RPC must require exact amount equality');
-expect(/l\.direction\s*=\s*'credit'[\s\S]*?t\.to_account_id\s*=\s*l\.ledger_account_id/i, rpc, 'credit candidates must hit the bank debit/credit side correctly');
+expect(/l\.direction\s*=\s*'credit'[\s\S]*?t\.to_account_id\s*=\s*l\.ledger_account_id/i, rpc, 'credit candidates must hit the bank side correctly');
 expect(/l\.direction\s*=\s*'debit'[\s\S]*?t\.from_account_id\s*=\s*l\.ledger_account_id/i, rpc, 'debit candidates must hit the bank side correctly');
 assert.doesNotMatch(rpc, /\b(?:insert|update|delete|merge|truncate)\b/i, 'candidate RPC must never perform financial DML');
 expect(/revoke\s+all\s+on\s+function\s+public\.avan_bank_reconciliation_candidates\(uuid,uuid,integer\)[\s\S]*?from\s+public,\s*anon/i, compat, 'candidate RPC must be revoked from public/anon');
