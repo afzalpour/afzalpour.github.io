@@ -8,9 +8,21 @@ import { toast } from './src/ui/feedback/toast.js';
 const HAS_BROWSER = typeof window !== 'undefined' && typeof document !== 'undefined';
 const C = HAS_BROWSER ? installAvanCloud() : null;
 
-export function taxSurfaceNeedsRefresh({ title = '', taxEnabled = '', rowCount = 0, taxFieldCount = 0, hasSettingsCard = false, hasVatReport = false } = {}) {
+export function taxSurfaceNeedsRefresh({
+  title = '',
+  taxEnabled = '',
+  rowCount = 0,
+  taxFieldCount = 0,
+  hasSettingsCard = false,
+  hasVatReport = false,
+  hasItemForm = false,
+  hasItemTaxField = false,
+  invoiceViewPending = false
+} = {}) {
   if (title === 'تنظیمات') return !hasSettingsCard;
   if (title === 'گزارش‌ها') return !hasVatReport;
+  if (hasItemForm && !hasItemTaxField) return true;
+  if (invoiceViewPending) return true;
   if (!rowCount) return false;
   if (taxEnabled !== '0' && taxEnabled !== '1') return true;
   return taxEnabled === '1' && taxFieldCount < rowCount;
@@ -42,6 +54,8 @@ function stabilizeExistingTaxSelects() {
   document.querySelectorAll('#invoiceForm [data-rc15-tax-profile]').forEach(select => {
     select.disabled = false;
     select.removeAttribute('aria-disabled');
+    // The prior compatibility layer cloned the select once. The stable lifecycle
+    // keeps the actual native node instead so an open picker is not replaced.
     select.dataset.avanNativeTaxPicker = '1';
     select.dataset.avanTaxPickerStable = '1';
   });
@@ -81,18 +95,37 @@ function decorateTaxState() {
   note.textContent = text;
 }
 
+function invoiceViewPending() {
+  const modal = document.getElementById('modal');
+  if (!modal || document.getElementById('invoiceForm')) return false;
+  const heading = modal.querySelector('h2')?.textContent?.replace(/\s+/g, ' ').trim() || '';
+  if (!heading.includes('فاکتور')) return false;
+  if (modal.querySelector('[data-rc15-tax-detail]')) return false;
+  return modal.dataset.avanTaxDetailAttempted !== '1';
+}
+
 function taxRefreshSnapshot() {
   const title = document.getElementById('pageTitle')?.textContent?.trim() || '';
   const form = document.getElementById('invoiceForm');
   const rows = form ? [...form.querySelectorAll('[data-invoice-line]')] : [];
+  const itemForm = document.getElementById('rc14ItemForm');
   return {
     title,
     taxEnabled: form?.dataset?.rc15TaxEnabled || '',
     rowCount: rows.length,
     taxFieldCount: rows.filter(row => row.querySelector('[data-rc15-invoice-tax-field]')).length,
     hasSettingsCard: Boolean(document.querySelector('[data-rc15-tax-settings]')),
-    hasVatReport: Boolean(document.querySelector('[data-rc15-vat-report]'))
+    hasVatReport: Boolean(document.querySelector('[data-rc15-vat-report]')),
+    hasItemForm: Boolean(itemForm),
+    hasItemTaxField: Boolean(itemForm?.querySelector('[data-rc15-item-tax-field]')),
+    invoiceViewPending: invoiceViewPending()
   };
+}
+
+function markInvoiceViewAttempt(snapshot) {
+  if (!snapshot.invoiceViewPending) return;
+  const modal = document.getElementById('modal');
+  if (modal) modal.dataset.avanTaxDetailAttempted = '1';
 }
 
 function installStableTaxLifecycle() {
@@ -101,6 +134,9 @@ function installStableTaxLifecycle() {
   if (window.__avanStableTaxLifecycleV3) return true;
   window.__avanStableTaxLifecycleV3 = true;
 
+  // RC1.5's generic handler was correct functionally but non-idempotent for invoice
+  // tax selects: each lifecycle pass replaced the native <select>. Replace it with
+  // a demand-driven owner that calls the same AvanTax API only for missing surfaces.
   Lifecycle.remove('tax:workspace-v2');
   let busy = false;
   Lifecycle.use('tax:workspace-v2-stable', async () => {
@@ -110,6 +146,7 @@ function installStableTaxLifecycle() {
       decorateTaxState();
       return;
     }
+    markInvoiceViewAttempt(snapshot);
     busy = true;
     try {
       await window.AvanTax.refresh();
@@ -145,14 +182,17 @@ function compactBankHistory(root) {
   if (!hasSelectedImport) return;
 
   grid.classList.add('avan-bank-grid-focused');
-  aside.hidden = true;
+  if (grid.dataset.avanBankHistoryManaged !== '1') {
+    grid.dataset.avanBankHistoryManaged = '1';
+    aside.hidden = true;
+  }
   const header = details.querySelector(':scope > .section-head');
   if (!header || header.querySelector('[data-avan-bank-history-toggle]')) return;
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'ghost small avan-bank-history-toggle';
   button.dataset.avanBankHistoryToggle = '1';
-  button.textContent = 'صورت‌حساب‌های قبلی';
+  button.textContent = aside.hidden ? 'صورت‌حساب‌های قبلی' : 'بستن فهرست صورت‌حساب‌ها';
   button.addEventListener('click', () => {
     aside.hidden = !aside.hidden;
     button.textContent = aside.hidden ? 'صورت‌حساب‌های قبلی' : 'بستن فهرست صورت‌حساب‌ها';
@@ -336,6 +376,11 @@ function install() {
   if (content) observer.observe(content, { childList: true, subtree: true });
   if (modal) observer.observe(modal, { childList: true, subtree: true });
   document.addEventListener('avan:ui-changed', schedule);
+  document.addEventListener('click', event => {
+    if (!event.target.closest?.('[data-view-invoice]')) return;
+    const modalNode = document.getElementById('modal');
+    if (modalNode) delete modalNode.dataset.avanTaxDetailAttempted;
+  }, true);
   window.addEventListener('avan:page-rendered', schedule);
   window.addEventListener('avan:company-context-changed', schedule);
   schedule();
