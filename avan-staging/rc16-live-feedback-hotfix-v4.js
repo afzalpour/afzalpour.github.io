@@ -34,7 +34,7 @@ function fieldFor(select) {
 
 function setFieldLabel(select, text) {
   const label = fieldFor(select)?.querySelector('label');
-  if (label) label.textContent = text;
+  if (label && label.textContent !== text) label.textContent = text;
 }
 
 function decorateBankOperationChoice() {
@@ -91,7 +91,8 @@ function decorateBankPrefilledOperationForm() {
     (existing || form.firstElementChild)?.insertAdjacentElement('afterend', note);
   }
   const effectiveDirection = direction || (counter?.value ? 'credit' : 'debit');
-  note.textContent = counterpartGuidanceForOperation(kind, effectiveDirection);
+  const text = counterpartGuidanceForOperation(kind, effectiveDirection);
+  if (note.textContent !== text) note.textContent = text;
 }
 
 function apply() {
