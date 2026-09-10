@@ -1,6 +1,6 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: **2026-09-10 — RC1.5 = Production Released؛ RC1.6-A Bank Reconciliation = Engineering/Backend PASS.**
+آخرین به‌روزرسانی مرجع: **2026-09-10 — RC1.5 = Production Released؛ RC1.6-A + RC1.6-B Bank Reconciliation = Engineering/Backend PASS؛ RC1.6 Live PASS هنوز اعلام نشده است.**
 
 این فایل Source of Truth وضعیت جاری پروژه است. Engineering/Backend PASS جایگزین Live PASS نیست؛ Live فقط با تأیید صریح کاربر ثبت می‌شود.
 
@@ -35,8 +35,13 @@ Repository: `afzalpour/afzalpour.github.io`
 - PR #105 merged as `db6844b2ff1f273ed0d63ba906740d73e42cdf45`.
 - PR Architecture Gate #156 = PASS.
 - post-merge main Architecture Gate #157 = PASS.
-- RC1.6-A Backend migrations are applied; Production root Frontend/Runtime remains RC1.5.
-- next implementation increment = **RC1.6-B Bank Statement Import + Reconciliation Workspace UI** in `avan-staging/`.
+- **RC1.6-B — Bank Statement Import + Reconciliation Workspace UI = Engineering/Backend PASS; Live PASS PENDING.**
+- PR #106 merged as `ea787f6688fac84fc1c28907542d5a184f9f58fe`.
+- RC1.6-B PR Architecture Gate #161 = PASS.
+- post-merge main Quality = PASS; GitHub Pages build/deploy = PASS.
+- Staging Service Worker cache = `avan-staging-rc1-v95-bank-reconciliation-ui`.
+- RC1.6-A/RC1.6-B Backend migrations are applied; Production root Frontend/Runtime remains RC1.5.
+- immediate next gate = **explicit RC1.6-B browser/PWA Live Gate**; no RC1.6 Production promotion is authorized yet.
 
 ### Rollback
 
@@ -103,7 +108,7 @@ Before Production, stale precache references to retired files were removed:
 - `src/ui/money/live-money-inputs.js`;
 - `src/documents/document-viewer-v2.js`.
 
-A permanent regression guard now verifies every declared Staging precache asset exists.
+A permanent regression guard now verifies every declared Staging precache asset exists. The guard is version-tolerant and rejects regressions behind the accepted precache-integrity baseline instead of hardcoding every legitimate future cache bump.
 
 ---
 
@@ -163,6 +168,7 @@ Legacy note: 25 historical pre-Tax invoices have `subtotal_amount IS NULL`; they
 - Supabase built-in Leaked Password Protection remains unavailable under the current zero-charge/provider posture; application controls remain compensating controls and provider protection must not be falsely marked fixed.
 - Free Transactional Recovery Rehearsal = PASS.
 - full external disaster restore to an isolated fresh target remains OPEN because no genuinely free isolated restore target is available; never restore against `Avan-production` itself.
+- Supabase Security Advisor after RC1.6-B added no RC1.6-specific warning; existing known warnings remain the private-table no-policy informational findings and provider Leaked Password Protection warning.
 
 ---
 
@@ -252,14 +258,41 @@ RC1.6-A evidence:
 **RC1.6-A Engineering/Backend Gate = PASS.**  
 **RC1.6-A Live Gate = PENDING.**
 
+RC1.6-B evidence:
+
+- branch `rc1.6-b-bank-reconciliation-ui` → PR #106.
+- local CSV parser supports comma/semicolon/Tab, Persian/Arabic digits, Jalali/ISO date normalization, split debit/credit or amount/direction mappings, max 5,000 rows and local SHA-256 fingerprints.
+- source file money unit is explicit (`rial` / `toman`) and canonical persistence remains one-Rial Toman precision.
+- split-column parser preserves explicit `SUB_RIAL_VALUE` evidence instead of collapsing it into a generic invalid-amount message.
+- Application service uses the existing bank financial-account master and RC1.6-A candidate RPC; it never invokes Journal posting APIs.
+- atomic import RPC `avan_import_bank_statement` is `SECURITY INVOKER`, Company-scoped, role-gated and grants execute to `authenticated` but not `anon`.
+- real authenticated `ROLLBACK` import rehearsal = PASS: one line inserted, import moved to `ready`, `row_count=1`, then rolled back.
+- UI exposes bank selection, local CSV preview/mapping, import list, statement-line status, ranked candidates, explicit Match confirmation, Ignore with reason, Void with reason and explicit finalization.
+- Persian Human-controlled warning states that even score 100 is a suggestion and no accounting document is posted automatically.
+- no private `MutationObserver` and no shared-runtime monkey-patching are introduced by the RC1.6-B workspace.
+- permanent tests: `rc16-bank-statement-csv.spec.mjs` + `rc16-bank-reconciliation-ui-contract.spec.mjs`, wired into `npm run quality`.
+- Gate #158 correctly exposed a sub-Rial Persian validation-message defect; implementation fixed without weakening the test.
+- Gate #159 = PASS.
+- Staging PWA precache now includes the RC1.6-B Application/Domain/UI modules; cache identity = `avan-staging-rc1-v95-bank-reconciliation-ui`.
+- Gate #160 then correctly exposed a stale hardcoded v94 cache assertion; the test was made version-tolerant while keeping duplicate/missing-asset and navigation-only fallback guards intact.
+- PR Architecture Gate #161 = PASS.
+- post-migration read-only integrity: orphan statement lines = 0; orphan reconciliation matches = 0; active amount mismatches = 0; public executable `SECURITY DEFINER` = 0; all 3 RC1.6 tables have RLS.
+- Supabase Security Advisor introduced no RC1.6-specific warning.
+- PR #106 merge commit = `ea787f6688fac84fc1c28907542d5a184f9f58fe`.
+- post-merge main Quality = PASS; Pages build/deploy = PASS.
+
+**RC1.6-B Engineering/Backend Gate = PASS.**  
+**RC1.6-B Live Gate = PENDING.**
+
 ---
 
-## 11) RC1.6-A Bank Reconciliation contract
+## 11) RC1.6 Bank Reconciliation contract
 
-RC1.6-A deliberately introduces a reconciliation evidence layer, not a second payment subsystem:
+RC1.6 deliberately introduces a reconciliation evidence layer, not a second payment subsystem:
 
 - bank master remains `financial_accounts(kind='bank')` and its existing `ledger_account_id`;
 - statement imports support CSV as the first governed source format;
+- CSV is parsed and mapped locally before any persistence;
 - statement evidence is immutable after import except the controlled Ignore lifecycle;
 - active Match requires exact canonical amount and the correct bank side of an existing Posted financial transaction;
 - Draft, Cancelled and `opening_balance` financial transactions never become candidates;
@@ -268,7 +301,9 @@ RC1.6-A deliberately introduces a reconciliation evidence layer, not a second pa
 - a user must explicitly confirm a Match;
 - confirmed reconciliation never edits Posted Ledger and never creates a financial document automatically;
 - a wrong confirmed Match is corrected by Void with actor/time/reason evidence, not Delete;
-- Company/RLS boundary is mandatory at tables, FKs, RPC and tests.
+- unresolved lines block finalization; opening/closing balance equation is exact when supplied;
+- Company/RLS boundary is mandatory at tables, FKs, RPC, service and tests;
+- Web/PWA presentation preserves Persian-first/RTL and one-Rial monetary contracts.
 
 ---
 
@@ -276,23 +311,24 @@ RC1.6-A deliberately introduces a reconciliation evidence layer, not a second pa
 
 Production RC1.5 remains frozen except for governed hotfixes. RC1.6 feature work stays in `avan-staging/`.
 
-Immediate next increment:
+Immediate next gate:
 
-**RC1.6-B — Bank Statement Import + Reconciliation Workspace UI**
+**RC1.6-B — Browser/PWA Live Gate**
 
-Planned UX boundary:
+Live acceptance must explicitly verify:
 
-1. choose an existing bank financial account;
-2. import CSV with local preview/mapping before persistence;
-3. show statement lines and reconciliation status;
-4. request ranked candidate matches from the Company-scoped RPC;
-5. require explicit user confirmation before creating a Match evidence row;
-6. allow controlled Void with reason;
-7. make «پیشنهاد تطبیق است؛ هیچ سند حسابداری به‌صورت خودکار ثبت نمی‌شود» explicit in Persian UI;
-8. use modular named lifecycle hooks with no new private MutationObserver/monkey-patching;
-9. preserve mobile/PWA and one-Rial presentation contracts.
+1. «خزانه‌داری → مغایرت بانکی» is discoverable and opens without shell/page regressions;
+2. an existing bank account can be selected;
+3. CSV is previewed and column-mapped locally before save;
+4. Rial/Toman source-unit handling preserves one-Rial precision (reference: `1515 Rial = 151.5 Toman`);
+5. persisted statement lines display correct date, direction, amount/reference and reconciliation status;
+6. ranked candidate suggestions appear without creating any Journal automatically;
+7. a Match is saved only after explicit user confirmation;
+8. Ignore requires a reason and Void requires a reason;
+9. unresolved lines block Finalize and a fully resolved valid statement can finalize;
+10. mobile/PWA layout is usable and the updated precache loads without missing-module/MIME/white-screen errors.
 
-After RC1.6-B Engineering Gate, its browser/PWA behavior requires an explicit user Live Gate before any RC1.6 Production promotion.
+No RC1.6 Production promotion may occur until explicit user Live PASS and a separate governed promotion approval.
 
 Longer direction remains:
 
