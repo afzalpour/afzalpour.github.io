@@ -3,7 +3,6 @@
 import { installAvanCloud } from '../../infrastructure/supabase/avan-cloud-bootstrap.js';
 import { MoneyRuntime } from '../money/money-runtime.js';
 import { openModal, closeModal } from '../components/modal.js';
-import { jalalizeDateInputs } from '../date/jalali-picker.js';
 import { toast } from '../feedback/toast.js';
 import { buildPartyLedger } from '../../reports/party-ledger.js';
 
@@ -78,10 +77,7 @@ function rangeFormHtml(ledger) {
   return `
     <form class="card party-ledger-range" data-party-ledger-range-form>
       <div class="section-head">
-        <div>
-          <h3>بازه صورتحساب</h3>
-          <span class="muted">تاریخ‌ها را به‌صورت شمسی انتخاب کنید.</span>
-        </div>
+        <div><h3>بازه صورتحساب</h3></div>
       </div>
       <div class="party-ledger-range-grid">
         <div class="field">
@@ -330,14 +326,9 @@ async function enhanceReports() {
   reportEnhancing = true;
   try {
     const workspace = await activeWorkspace();
-    const [parties, fiscal] = await Promise.all([
-      C.select('parties', `select=id,name,is_active&workspace_id=eq.${workspace.id}&order=name.asc`),
-      C.select('fiscal_years', `select=date_from,date_to&workspace_id=eq.${workspace.id}&order=date_from.desc&limit=1`)
-    ]);
+    const parties = await C.select('parties', `select=id,name,is_active&workspace_id=eq.${workspace.id}&order=name.asc`);
     if (document.getElementById('pageTitle')?.textContent?.trim() !== 'گزارش‌ها' || content.querySelector('[data-party-ledger-launcher]')) return;
 
-    const currentFrom = document.getElementById('reportFrom')?.value || fiscal?.[0]?.date_from || today();
-    const currentTo = document.getElementById('reportTo')?.value || today();
     const card = document.createElement('div');
     card.className = 'card section';
     card.dataset.partyLedgerLauncher = '1';
@@ -346,7 +337,7 @@ async function enhanceReports() {
         <div><h2>گردش و مانده طرف‌حساب</h2><span class="muted">صورتحساب یک شخص بر اساس حساب‌های دریافتنی/پرداختنی و شناسه واقعی طرف‌حساب</span></div>
       </div>
       <form data-party-ledger-launcher-form>
-        <div class="form-grid">
+        <div class="party-ledger-launcher-grid">
           <div class="field">
             <label>طرف‌حساب</label>
             <select name="party" required>
@@ -354,25 +345,19 @@ async function enhanceReports() {
               ${(parties || []).map(p => `<option value="${esc(p.id)}">${esc(p.name)}${p.is_active ? '' : ' — بایگانی'}</option>`).join('')}
             </select>
           </div>
-          <div class="field"><label>از تاریخ</label><input type="date" name="from" value="${esc(currentFrom)}" required></div>
-          <div class="field"><label>تا تاریخ</label><input type="date" name="to" value="${esc(currentTo)}" required></div>
+          <button type="submit" class="primary">مشاهده صورتحساب</button>
         </div>
-        <div class="form-actions"><button type="submit" class="primary">مشاهده صورتحساب</button></div>
       </form>
     `;
     content.prepend(card);
-    jalalizeDateInputs(card);
 
     const form = card.querySelector('[data-party-ledger-launcher-form]');
     form.addEventListener('submit', event => {
       event.preventDefault();
       const values = new FormData(form);
       const partyId = String(values.get('party') || '');
-      const from = String(values.get('from') || '');
-      const to = String(values.get('to') || '');
       if (!partyId) return toast('یک طرف‌حساب انتخاب کنید.');
-      if (!from || !to || from > to) return toast('بازه تاریخ معتبر نیست.');
-      void openPartyLedger(partyId, { from, to });
+      void openPartyLedger(partyId);
     });
   } catch (error) {
     console.warn('[Avan party ledger launcher]', error);
