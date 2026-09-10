@@ -1,6 +1,6 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: **2026-09-10 — RC1.5 = Production Released.**
+آخرین به‌روزرسانی مرجع: **2026-09-10 — RC1.5 = Production Released؛ RC1.6-A Bank Reconciliation = Engineering/Backend PASS.**
 
 این فایل Source of Truth وضعیت جاری پروژه است. Engineering/Backend PASS جایگزین Live PASS نیست؛ Live فقط با تأیید صریح کاربر ثبت می‌شود.
 
@@ -28,6 +28,15 @@ Repository: `afzalpour/afzalpour.github.io`
 - GitHub Pages #332 = PASS.
 - external Production HTTP Smoke #1 = PASS.
 - formal release record: `PRODUCTION_RELEASE_RC1_5.md`.
+
+### Staging / RC1.6
+
+- **RC1.6-A — Bank Reconciliation Foundation = Engineering/Backend PASS; Live PASS not yet claimed.**
+- PR #105 merged as `db6844b2ff1f273ed0d63ba906740d73e42cdf45`.
+- PR Architecture Gate #156 = PASS.
+- post-merge main Architecture Gate #157 = PASS.
+- RC1.6-A Backend migrations are applied; Production root Frontend/Runtime remains RC1.5.
+- next implementation increment = **RC1.6-B Bank Statement Import + Reconciliation Workspace UI** in `avan-staging/`.
 
 ### Rollback
 
@@ -60,6 +69,8 @@ Earlier granular Live acceptances remain valid:
 - Company Context post-auth hydration/company entry without manual refresh;
 - Dashboard Risk presentation;
 - Dashboard Financial Analysis title-above/value-below presentation.
+
+No RC1.6 Live PASS has been reported yet.
 
 ---
 
@@ -110,6 +121,7 @@ A permanent regression guard now verifies every declared Staging precache asset 
 - Persian-first / RTL.
 - no new shared-client monkey patching; named Operation Pipeline / central Lifecycle are extension boundaries.
 - AI/automation remains Human-controlled and explainable.
+- applied DB migration history is immutable; compatibility corrections are additive follow-up migrations rather than rewrites of already-applied migration files.
 
 ---
 
@@ -199,7 +211,7 @@ RC1.5 is provider-neutral prevalidation only. No external invoice submission is 
 
 ## 10) Quality / release evidence
 
-Key final evidence:
+Key RC1.5 evidence:
 
 - PR #101 invoice save latency optimization = merged; Architecture Gate #144 PASS; main #145 PASS; Pages #330 PASS.
 - PR #102 PWA precache integrity = merged `38fb915cfe98ecc82015c1f1e46fc4a7827a9613`; PR Gate #148 PASS; main #149 PASS; Pages #331 PASS.
@@ -215,13 +227,74 @@ Key final evidence:
 **RC1.5 Full Live Gate = PASS by explicit user report.**  
 **RC1.5 Production Release = PASS.**
 
+RC1.6-A evidence:
+
+- ADR-0022 = bank-statement reconciliation boundary.
+- branch `rc1.6-a-bank-reconciliation` → PR #105.
+- domain matcher requires same Company, bank account, exact one-Rial amount, correct bank-side direction, Posted receipt/payment/transfer and bounded date distance.
+- Persian/Arabic digits in bank references normalize deterministically.
+- Backend tables: `bank_statement_imports`, `bank_statement_lines`, `bank_reconciliation_matches`.
+- all three tables have RLS; writes are restricted to owner/manager/accountant and reads remain Company-scoped.
+- candidate RPC `avan_bank_reconciliation_candidates` is `SECURITY INVOKER` and read-only; no autonomous financial DML.
+- `financial_transactions.reference` was added as a nullable backward-compatible field; effective compat RPC does not depend on historical nonexistent `tx_no`.
+- matching is Human-controlled; no auto-confirm and no automatic Journal/financial-transaction posting.
+- void/audit lifecycle replaces destructive match deletion.
+- unresolved lines block finalization; exact opening/closing bank balance equation is enforced when balances are provided.
+- real authenticated transaction rehearsals with `ROLLBACK`: positive Match PASS; wrong direction REJECT; 0.1 Toman mismatch REJECT; cross-Company insert REJECT; unresolved finalize REJECT; closing-balance mismatch REJECT; valid finalize PASS.
+- final read-only Backend integrity: 3/3 RC1.6 tables present; 4/4 bank monetary columns = `numeric(20,1)`; orphan statement lines = 0; orphan match refs = 0; duplicate active matches = 0; active amount mismatch = 0; active wrong-direction matches = 0; authenticated-executable public `SECURITY DEFINER` = 0.
+- permanent CI tests: `rc16-bank-reconciliation.spec.mjs` + `rc16-bank-reconciliation-backend-contract.spec.mjs`.
+- early Gate #150 found Persian reference normalization defect and failed correctly; fixed in matcher.
+- Gate #154/#155 found static-contract false assumption / historical migration compatibility issue; final guard now respects immutable applied migration history and validates the effective compat contract.
+- PR Architecture Gate #156 = PASS.
+- PR #105 merge commit = `db6844b2ff1f273ed0d63ba906740d73e42cdf45`.
+- post-merge main Architecture Gate #157 = PASS.
+
+**RC1.6-A Engineering/Backend Gate = PASS.**  
+**RC1.6-A Live Gate = PENDING.**
+
 ---
 
-## 11) Next cycle
+## 11) RC1.6-A Bank Reconciliation contract
 
-Production RC1.5 is frozen except for governed hotfixes. New feature work returns to `avan-staging/` first.
+RC1.6-A deliberately introduces a reconciliation evidence layer, not a second payment subsystem:
 
-Recommended RC1.6 direction:
+- bank master remains `financial_accounts(kind='bank')` and its existing `ledger_account_id`;
+- statement imports support CSV as the first governed source format;
+- statement evidence is immutable after import except the controlled Ignore lifecycle;
+- active Match requires exact canonical amount and the correct bank side of an existing Posted financial transaction;
+- Draft, Cancelled and `opening_balance` financial transactions never become candidates;
+- file SHA-256 prevents duplicate import of the same statement for the same bank account;
+- ranked candidates are explainable Evidence only;
+- a user must explicitly confirm a Match;
+- confirmed reconciliation never edits Posted Ledger and never creates a financial document automatically;
+- a wrong confirmed Match is corrected by Void with actor/time/reason evidence, not Delete;
+- Company/RLS boundary is mandatory at tables, FKs, RPC and tests.
+
+---
+
+## 12) Next cycle
+
+Production RC1.5 remains frozen except for governed hotfixes. RC1.6 feature work stays in `avan-staging/`.
+
+Immediate next increment:
+
+**RC1.6-B — Bank Statement Import + Reconciliation Workspace UI**
+
+Planned UX boundary:
+
+1. choose an existing bank financial account;
+2. import CSV with local preview/mapping before persistence;
+3. show statement lines and reconciliation status;
+4. request ranked candidate matches from the Company-scoped RPC;
+5. require explicit user confirmation before creating a Match evidence row;
+6. allow controlled Void with reason;
+7. make «پیشنهاد تطبیق است؛ هیچ سند حسابداری به‌صورت خودکار ثبت نمی‌شود» explicit in Persian UI;
+8. use modular named lifecycle hooks with no new private MutationObserver/monkey-patching;
+9. preserve mobile/PWA and one-Rial presentation contracts.
+
+After RC1.6-B Engineering Gate, its browser/PWA behavior requires an explicit user Live Gate before any RC1.6 Production promotion.
+
+Longer direction remains:
 
 **Treasury / Bank Reconciliation → cash & cheque intelligence → advanced reconciliation → managerial dashboards/reporting.**
 
