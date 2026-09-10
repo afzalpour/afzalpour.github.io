@@ -60,6 +60,8 @@ assert.match(v4, /حساب مقابل \(همه حساب‌های قابل ثبت
 assert.match(v4, /حساب مبدأ نقدی \(بانک\/صندوق\)/);
 assert.match(index, /rc16-live-feedback-hotfix-v4\.js/);
 assert.match(sw, /rc16-live-feedback-hotfix-v4\.js/);
-assert.match(sw, /avan-staging-rc1-v98-void-recovery/);
+const cacheVersion = sw.match(/avan-staging-rc1-v(\d+)-/);
+assert.ok(cacheVersion && Number(cacheVersion[1]) >= 98,
+  'staging cache must not regress behind the accepted v98 void-recovery baseline');
 
 console.log('rc16-void-recovery-and-operation-scope.spec.mjs: PASS');
