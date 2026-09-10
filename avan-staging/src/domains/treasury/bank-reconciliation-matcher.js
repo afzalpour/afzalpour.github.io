@@ -8,8 +8,14 @@ function requiredText(value) {
   return out || null;
 }
 
+function normalizeDigits(value) {
+  return String(value ?? '')
+    .replace(/[۰-۹]/g, d => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
+    .replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
+}
+
 function canonicalTenth(value) {
-  const raw = String(value ?? '').trim().replace(/,/g, '').replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+  const raw = normalizeDigits(value).trim().replace(/,/g, '');
   const match = raw.match(/^([+-]?)(\d+)(?:\.(\d))?$/);
   if (!match) return null;
   const sign = match[1] === '-' ? -1n : 1n;
@@ -17,7 +23,7 @@ function canonicalTenth(value) {
 }
 
 function normalizeReference(value) {
-  return String(value ?? '')
+  return normalizeDigits(value)
     .trim()
     .toLocaleLowerCase('fa')
     .replace(/[ي]/g, 'ی')
@@ -26,7 +32,7 @@ function normalizeReference(value) {
 }
 
 function descriptionTokens(value) {
-  return new Set(String(value ?? '')
+  return new Set(normalizeDigits(value)
     .toLocaleLowerCase('fa')
     .replace(/[ي]/g, 'ی')
     .replace(/[ك]/g, 'ک')
