@@ -44,6 +44,8 @@ assert.match(print, /color:#a83c48!important/,
 
 assert.match(index, /src\/ui\/money\/accounting-negative-presentation\.js/);
 assert.match(sw, /src\/ui\/money\/accounting-negative-presentation\.js/);
-assert.match(sw, /avan-staging-rc1-v101-accounting-negative-display/);
+const cacheVersion = Number(sw.match(/avan-staging-rc1-v(\d+)-/)?.[1] || 0);
+assert.ok(cacheVersion >= 101,
+  'accounting-negative presentation must stay precached in its introducing generation or any later PWA cache');
 
 console.log('accounting-negative-presentation.spec.mjs: PASS');
