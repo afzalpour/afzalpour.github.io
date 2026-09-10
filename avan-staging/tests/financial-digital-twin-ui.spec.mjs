@@ -95,6 +95,7 @@ assert.match(index, /src\/ui\/intelligence\/financial-digital-twin-workspace\.js
 assert.match(sw, /rc17-financial-digital-twin\.css/);
 assert.match(sw, /src\/application\/intelligence\/financial-digital-twin-service\.js/);
 assert.match(sw, /src\/ui\/intelligence\/financial-digital-twin-workspace\.js/);
-assert.match(sw, /avan-staging-rc1-v103-financial-digital-twin/);
+assert.match(sw, /avan-staging-rc1-v\d+-[a-z0-9-]+/,
+  'PWA cache may advance while Digital Twin assets remain precached');
 
 console.log('financial-digital-twin-ui.spec.mjs: PASS');
