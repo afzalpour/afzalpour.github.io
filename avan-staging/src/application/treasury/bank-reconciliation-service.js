@@ -17,7 +17,15 @@ export function createBankReconciliationService(client) {
 
   async function listBankAccounts(workspaceId) {
     const wid = required(workspaceId, 'WORKSPACE_REQUIRED');
-    return client.select('financial_accounts', `select=id,workspace_id,ledger_account_id,kind,is_active&workspace_id=eq.${wid}&kind=eq.bank&is_active=eq.true&order=created_at.asc`);
+    const [financialAccounts, accounts] = await Promise.all([
+      client.select('financial_accounts', `select=id,workspace_id,ledger_account_id,kind,is_active&workspace_id=eq.${wid}&kind=eq.bank&is_active=eq.true&order=created_at.asc`),
+      client.select('accounts', `select=id,code,name,is_active&workspace_id=eq.${wid}&order=code.asc`)
+    ]);
+    const ledger = new Map((accounts || []).map(account => [String(account.id), account]));
+    return (financialAccounts || []).map(account => ({
+      ...account,
+      ledger_account: ledger.get(String(account.ledger_account_id)) || null
+    }));
   }
 
   async function listImports(workspaceId, financialAccountId) {
