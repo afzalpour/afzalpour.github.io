@@ -3,8 +3,6 @@ import { readFileSync } from 'node:fs';
 
 const foundation = readFileSync(new URL('../APPLIED_RC1_6_A_BANK_RECONCILIATION.sql', import.meta.url), 'utf8');
 const compat = readFileSync(new URL('../APPLIED_RC1_6_A_BANK_RECONCILIATION_COMPAT.sql', import.meta.url), 'utf8');
-const allSql = `${foundation}\n${compat}`;
-const executableSql = allSql.replace(/^\s*--.*$/gm, '');
 
 function expect(pattern, source, message) {
   assert.match(source, pattern, message);
@@ -38,14 +36,14 @@ expect(/BANK_RECONCILIATION_MATCH_UPDATE_REQUIRES_VOID/, foundation, 'match chan
 expect(/BANK_RECONCILIATION_VOID_REASON_REQUIRED/, foundation, 'void must retain a reason');
 assert.doesNotMatch(foundation, /create\s+policy\s+\w+\s+on\s+public\.(?:bank_statement_imports|bank_statement_lines|bank_reconciliation_matches)[\s\S]{0,160}?for\s+delete\b/i, 'reconciliation evidence must not expose a DELETE policy');
 
-// Live-schema compatibility: reference is additive; historical tx_no must not appear in executable SQL.
+// Applied migrations are immutable history. The compatibility migration is the effective live-schema contract.
 expect(/alter\s+table\s+public\.financial_transactions[\s\S]*?add\s+column\s+if\s+not\s+exists\s+reference\s+text/i, compat, 'financial transaction reference column must be additive and nullable');
-assert.doesNotMatch(executableSql, /\btx_no\b/i, 'RC1.6 migrations must not depend on nonexistent financial_transactions.tx_no');
 
 // Candidate RPC must remain read-only, SECURITY INVOKER and Company-scoped.
 const rpcMatch = compat.match(/create\s+or\s+replace\s+function\s+public\.avan_bank_reconciliation_candidates[\s\S]*?\$\$;/i);
 assert.ok(rpcMatch, 'candidate RPC definition must exist in compatibility migration');
 const rpc = rpcMatch[0];
+assert.doesNotMatch(rpc, /\btx_no\b/i, 'effective candidate RPC must not depend on nonexistent financial_transactions.tx_no');
 expect(/security\s+invoker/i, rpc, 'candidate RPC must be SECURITY INVOKER');
 expect(/has_workspace_access\(wid\)/i, rpc, 'candidate RPC must check workspace access');
 expect(/fa\.kind\s*=\s*'bank'/i, rpc, 'candidate RPC must only use bank financial accounts');
