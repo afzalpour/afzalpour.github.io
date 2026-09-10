@@ -7,7 +7,9 @@ const testsDir = path.dirname(fileURLToPath(import.meta.url));
 const stagingRoot = path.resolve(testsDir, '..');
 const sw = fs.readFileSync(path.join(stagingRoot, 'sw.js'), 'utf8');
 
-const assets = [...sw.matchAll(/['"]\.\/([^'"]*)['"]/g)].map(match => match[1]);
+const assetBlock = sw.match(/const ASSETS=\[([\s\S]*?)\];/);
+assert.ok(assetBlock, 'service worker must declare a bounded ASSETS array');
+const assets = [...assetBlock[1].matchAll(/['"]\.\/([^'"]*)['"]/g)].map(match => match[1]);
 assert.ok(assets.length > 0, 'service worker must declare runtime assets');
 assert.equal(new Set(assets).size, assets.length, 'precache asset list must not contain duplicates');
 
@@ -21,7 +23,7 @@ for (const rel of assets) {
 }
 
 assert.deepEqual(missing, [], `every precached runtime asset must exist; missing: ${missing.join(', ')}`);
-assert.doesNotMatch(sw, /src\/ui\/money\/live-money-inputs\.js/,
+assert.doesNotMatch(assetBlock[1], /src\/ui\/money\/live-money-inputs\.js/,
   'removed legacy money input runtime must never be precached again');
 assert.match(sw, /const CACHE='avan-staging-rc1-v94-precache-integrity'/,
   'the stale precache fix must activate a fresh PWA cache identity');
