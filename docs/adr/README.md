@@ -57,9 +57,15 @@
 | [0019](0019-canonical-toman-one-rial-precision.md) | Canonical Toman با دقت یک ریال (۰٫۱ تومان) | Accepted |
 | [0020](0020-human-controlled-reconciliation-intelligence.md) | مغایرت‌یابی چندمنبعی با Evidence و پیشنهاد اصلاح Human-controlled | Accepted |
 | [0021](0021-electronic-invoice-prevalidation-adapter-boundary.md) | پیش‌اعتبارسنجی صورتحساب الکترونیکی + Provider-neutral adapter و Server-side submission boundary | Accepted |
+| [0022](0022-bank-statement-reconciliation-boundary.md) | Bank Statement Reconciliation با Human-controlled matching و RLS boundary | Accepted |
+| [0023](0023-intelligent-finance-operating-system.md) | Intelligent Finance OS، ۹ ماژول تمایز و Early Priority برای Control Tower + Digital Twin | Accepted |
 
 ## اصل حاکم
 
 آوان نباید در طول توسعه به یک نرم‌افزار حسابداری معمولی تبدیل شود. معیار معماری ثابت:
 
 **اعتماد مالی + UX حرفه‌ای + اتوماسیون + هوش توضیح‌پذیر + تصمیم‌سازی مدیریتی.**
+
+معیار راهبردی مکمل تحت ADR-0023:
+
+**هر عدد مهم باید قابل ردیابی باشد؛ هر پیش‌بینی باید فرضیات روشن داشته باشد؛ هر اقدام حساس باید Human-controlled بماند.**
