@@ -77,7 +77,7 @@ function readinessHtml(readiness) {
       <div class="section-head">
         <div>
           <h2>آمادگی بستن حساب‌ها</h2>
-          <span class="muted">در Foundation امتیاز ساختگی تولید نمی‌شود؛ فقط مانع‌های واقعی نمایش داده می‌شوند.</span>
+          <span class="muted">در این مرحله امتیاز ساختگی تولید نمی‌شود؛ فقط مانع‌های واقعی نمایش داده می‌شوند.</span>
         </div>
         <span class="cloud-badge">${controlTowerStatusFa(readiness.status)}</span>
       </div>
@@ -112,9 +112,9 @@ export function controlTowerPageHtml({ workspace, snapshot }) {
     <div class="avan-control-tower" data-control-tower-page>
       <section class="card avan-control-tower-hero">
         <div>
-          <div class="eyebrow">نمای واقعی · Evidence-backed</div>
+          <div class="eyebrow">نمای واقعی · مبتنی بر شواهد</div>
           <h2>برج کنترل مالی</h2>
-          <p class="muted">یک نمای مدیریتی از وضعیت مالی «${esc(workspace.name)}»؛ اعداد از Ledger و زیر‌دفترهای معتبر خوانده می‌شوند و توسط AI ساخته نشده‌اند.</p>
+          <p class="muted">یک نمای مدیریتی از وضعیت مالی «${esc(workspace.name)}»؛ اعداد از دفترکل و زیردفترهای معتبر خوانده می‌شوند و توسط هوش مصنوعی ساخته نشده‌اند.</p>
         </div>
         <form data-control-tower-date-form class="avan-control-tower-date-form">
           <div class="field">
@@ -140,11 +140,11 @@ export function controlTowerPageHtml({ workspace, snapshot }) {
         <div class="section-head">
           <div>
             <h2>دوقلوی مالی</h2>
-            <span class="muted">موتور Scenario از Actual جداست و هیچ تغییری در دفترکل ایجاد نمی‌کند.</span>
+            <span class="muted">موتور سناریو از داده واقعی جداست و هیچ تغییری در دفترکل ایجاد نمی‌کند.</span>
           </div>
-          <span class="cloud-badge">Foundation آماده</span>
+          <span class="cloud-badge">زیرساخت آماده</span>
         </div>
-        <p>مرحله بعد همین چرخه: مقایسه Base و Scenario برای فروش، وصول، هزینه و شوک نقدینگی با نمایش فرض‌ها و منشأ هر عدد.</p>
+        <p>مرحله بعد همین چرخه: مقایسه حالت مبنا و سناریو برای فروش، وصول، هزینه و شوک نقدینگی با نمایش فرض‌ها و منشأ هر عدد.</p>
       </section>
 
       <div class="info-box avan-control-tower-contract">
@@ -214,7 +214,7 @@ function bindPageActions() {
     button.addEventListener('click', () => {
       const action = currentResult.snapshot.actions.find(item => item.id === button.dataset.controlTowerActionEvidence);
       if (!action) return;
-      evidenceModal(action.title, 'این اقدام از کنترل‌های deterministic برج کنترل استخراج شده است.', action.evidence);
+      evidenceModal(action.title, 'این اقدام از کنترل‌های قطعی و قاعده‌محور برج کنترل استخراج شده است.', action.evidence);
     });
   });
 }
@@ -224,7 +224,7 @@ export async function openControlTower(asOf = today()) {
   try {
     setTitle('برج کنترل مالی');
     setControlTowerNavActive(true);
-    page('<div class="loading">در حال ساخت Snapshot مالی از Ledger…</div>');
+    page('<div class="loading">در حال ساخت نمای مالی از دفترکل…</div>');
     await MoneyRuntime?.ready?.();
     currentResult = await Service.load({ asOf });
     page(controlTowerPageHtml(currentResult));
@@ -236,7 +236,7 @@ export async function openControlTower(asOf = today()) {
     return currentResult;
   } catch (error) {
     console.error('[Avan Control Tower]', error);
-    page(`<div class="error-box">برج کنترل مالی در این لحظه قابل محاسبه نیست: ${esc(error?.message || error)}</div>`);
+    page('<div class="error-box">برج کنترل مالی در این لحظه قابل محاسبه نیست. دوباره تلاش کنید.</div>');
     return null;
   }
 }
