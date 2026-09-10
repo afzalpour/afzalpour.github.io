@@ -1,0 +1,96 @@
+name: Avan Production Release Gate
+
+on:
+  pull_request:
+    paths:
+      - '*.js'
+      - '*.css'
+      - '*.html'
+      - '*.webmanifest'
+      - '*.png'
+      - 'src/**'
+      - '.github/workflows/avan-production-release-gate.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - '*.js'
+      - '*.css'
+      - '*.html'
+      - '*.webmanifest'
+      - '*.png'
+      - 'src/**'
+      - '.github/workflows/avan-production-release-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  production-release-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Preserve Production-only configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          if ! git diff --quiet origin/main...HEAD -- config.js; then
+            echo 'Production config.js must not change during runtime promotion.' >&2
+            exit 1
+          fi
+          if git diff --name-only origin/main...HEAD | grep -Eq '^[^/]+\.sql$'; then
+            echo 'Root SQL artifacts must not be promoted with frontend runtime.' >&2
+            exit 1
+          fi
+          test ! -d tests
+          test ! -d scripts
+
+      - name: Verify Production runtime is exact vetted Staging projection
+        shell: bash
+        run: |
+          set -euo pipefail
+          diff -qr src avan-staging/src
+
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          const stagingSw = fs.readFileSync('avan-staging/sw.js', 'utf8');
+          const block = stagingSw.match(/const ASSETS=\[([\s\S]*?)\];/);
+          if (!block) throw new Error('STAGING_SW_ASSETS_BLOCK_MISSING');
+          const assets = [...block[1].matchAll(/['"]\.\/([^'"]*)['"]/g)].map(m => m[1]);
+
+          for (const rel of assets) {
+            if (!rel || rel === 'config.js') continue;
+            const staged = path.join('avan-staging', rel);
+            if (!fs.existsSync(staged)) throw new Error(`STAGING_ASSET_MISSING:${rel}`);
+            if (!fs.existsSync(rel)) throw new Error(`PRODUCTION_ASSET_MISSING:${rel}`);
+            if (!fs.readFileSync(staged).equals(fs.readFileSync(rel))) {
+              throw new Error(`PRODUCTION_ASSET_DRIFT:${rel}`);
+            }
+          }
+
+          const expectedSw = stagingSw
+            .replace("const CACHE_PREFIX='avan-staging-rc1-';", "const CACHE_PREFIX='avan-prod-';")
+            .replace(/const CACHE='avan-staging-rc1-v[^']+';/, "const CACHE='avan-prod-rc1-5-v1';");
+          const actualSw = fs.readFileSync('sw.js', 'utf8');
+          if (actualSw !== expectedSw) throw new Error('PRODUCTION_SW_NOT_EXACT_TRANSFORM');
+          if (!actualSw.includes("const CACHE_PREFIX='avan-prod-';")) throw new Error('PRODUCTION_SW_PREFIX_INVALID');
+          if (!actualSw.includes("const CACHE='avan-prod-rc1-5-v1';")) throw new Error('PRODUCTION_SW_CACHE_INVALID');
+          if (!actualSw.includes("if(request.mode==='navigate')")) throw new Error('PRODUCTION_SW_NAVIGATION_FALLBACK_INVALID');
+          NODE
+
+      - name: Re-run Staging engineering gate
+        working-directory: avan-staging
+        run: npm run quality
