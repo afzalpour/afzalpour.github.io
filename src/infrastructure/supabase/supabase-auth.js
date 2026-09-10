@@ -25,11 +25,11 @@ export function createSupabaseAuth({
     saveSession
   } = sessionStore;
 
-  async function refreshIfNeeded() {
-    let currentSession = session();
+  let refreshPromise = null;
 
+  function refreshRequired(currentSession) {
     if (!currentSession) {
-      return null;
+      return false;
     }
 
     const expiresAt =
@@ -37,35 +37,63 @@ export function createSupabaseAuth({
         currentSession.expires_at || 0
       ) * 1000;
 
-    if (
+    return !(
       expiresAt &&
       Date.now() < expiresAt - 60000
-    ) {
+    ) && Boolean(currentSession.refresh_token);
+  }
+
+  async function refreshIfNeeded() {
+    const currentSession = session();
+
+    if (!currentSession) {
+      return null;
+    }
+
+    if (!refreshRequired(currentSession)) {
       return currentSession;
     }
 
-    if (!currentSession.refresh_token) {
-      return currentSession;
+    if (refreshPromise) {
+      return refreshPromise;
     }
+
+    refreshPromise = (async () => {
+      const latestSession = session();
+
+      if (!latestSession) {
+        return null;
+      }
+
+      if (!refreshRequired(latestSession)) {
+        return latestSession;
+      }
+
+      try {
+        const data = await raw(
+          '/auth/v1/token?grant_type=refresh_token',
+          {
+            method: 'POST',
+            body: {
+              refresh_token:
+                latestSession.refresh_token
+            }
+          }
+        );
+
+        saveSession(data);
+
+        return data;
+      } catch (error) {
+        saveSession(null);
+        throw error;
+      }
+    })();
 
     try {
-      const data = await raw(
-        '/auth/v1/token?grant_type=refresh_token',
-        {
-          method: 'POST',
-          body: {
-            refresh_token:
-              currentSession.refresh_token
-          }
-        }
-      );
-
-      saveSession(data);
-
-      return data;
-    } catch (error) {
-      saveSession(null);
-      throw error;
+      return await refreshPromise;
+    } finally {
+      refreshPromise = null;
     }
   }
 

@@ -90,33 +90,8 @@ function currentPage(){
   return String(document.getElementById('pageTitle')?.textContent || '').trim();
 }
 
-function moneyUnit(){
-  return window.AVAN_MONEY_DISPLAY_UNIT === 'rial' ? 'ریال' : 'تومان';
-}
-
-function cleanHeader(value){
-  return String(value || '')
-    .replace(/\s*\((?:تومان|ریال)\)\s*$/u, '')
-    .trim();
-}
-
-function isMoneyHeader(label){
-  const t = cleanHeader(label);
-  if (!t) return false;
-  if (/(تعداد|شماره|روز|درصد|٪|امتیاز)/u.test(t)) return false;
-  if (/^موجودی$/u.test(t)) return false;
-  if (/(بدهکار|بستانکار|مبلغ|مانده|ارزش|بها|بهای|فی|درآمد|هزینه|سود|زیان|فروش|خالص|جمع\s*کل|جمع\s*بدهکار|جمع\s*بستانکار)/u.test(t)) return true;
-  if (currentPage() === 'گزارش‌ها' && /^(دارایی|بدهی|حقوق مالکانه|بدهی و حقوق مالکانه)$/u.test(t)) return true;
-  return false;
-}
-
-function annotateMoneyHeaders(root = document){
-  const unit = moneyUnit();
-  root.querySelectorAll?.('th').forEach(th => {
-    const base = cleanHeader(th.textContent);
-    if (!isMoneyHeader(base)) return;
-    th.textContent = `${base} (${unit})`;
-  });
+function annotateMoneyHeaders(){
+  window.AvanMoneyOutput?.project?.();
 }
 
 function replaceTextNode(node, dashboardOnly = false){

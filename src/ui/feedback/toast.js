@@ -1,6 +1,5 @@
 'use strict';
 
-import '../money/live-money-inputs.js';
 import {
   errorMessageFa
 } from '../errors/error-messages-fa.js';

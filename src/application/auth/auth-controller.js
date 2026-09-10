@@ -75,9 +75,17 @@ function getMode() {
     };
   }
 
-  async function user() {
-  return authClient.user();
-}
+  async function user({ force = false } = {}) {
+    const hydrated =
+      authClient.session?.()?.user ||
+      null;
+
+    if (!force && hydrated?.id) {
+      return hydrated;
+    }
+
+    return authClient.user();
+  }
   async function requestPasswordReset(
     email
   ) {
