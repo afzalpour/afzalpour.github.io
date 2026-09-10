@@ -1,0 +1,85 @@
+'use strict';
+
+const EXACT = new Map([
+  ['Document uploaded', 'سند بارگذاری شد'],
+  ['Journal posted', 'سند حسابداری ثبت قطعی شد'],
+  ['Journal reversed', 'سند حسابداری برگشت داده شد'],
+  ['Inventory document posted with financial bridge', 'سند انبار ثبت قطعی شد و سند حسابداری مرتبط ایجاد شد'],
+  ['Inventory document and financial journal reversed', 'سند انبار و سند حسابداری مرتبط برگشت داده شدند'],
+  ['Avan Core standard workspace initialized', 'شرکت با ساختار استاندارد آوان ایجاد شد'],
+  ['Workspace company identity and operational print settings updated', 'مشخصات شرکت و تنظیمات چاپ به‌روزرسانی شد'],
+  ['Workspace print identity updated', 'مشخصات چاپ شرکت به‌روزرسانی شد'],
+  ['Company display identity renamed', 'نام نمایشی شرکت تغییر کرد'],
+  ['Draft journal saved without lines', 'پیش‌نویس سند حسابداری بدون ردیف ذخیره شد'],
+  ['داده‌های مالی از PostgreSQL/Supabase خوانده می‌شوند؛ LocalStorage فقط Session کاربر را نگه می‌دارد.', 'داده‌های مالی از پایگاه داده ابری آوان خوانده می‌شوند؛ حافظه محلی مرورگر فقط اطلاعات ورود کاربر را نگه می‌دارد.'],
+  ['PNG، JPG یا WEBP — حداکثر ۲ مگابایت. لوگو در Storage خصوصی شرکت نگهداری می‌شود.', 'فرمت‌های مجاز: پی‌ان‌جی، جی‌پی‌جی یا وب‌پی — حداکثر ۲ مگابایت. لوگو در فضای ذخیره‌سازی خصوصی شرکت نگهداری می‌شود.'],
+  ['ارسال صورتحساب الکترونیکی در این Gate فعال نیست و در RC1.5-D فقط با اقدام صریح کاربر بررسی می‌شود.', 'ارسال صورتحساب الکترونیکی در این مرحله فعال نیست و در مرحله بعد فقط با تأیید صریح کاربر انجام خواهد شد.'],
+  ['open', 'اعتباری'],
+  ['sales_invoice', 'فاکتور فروش'],
+  ['purchase_invoice', 'فاکتور خرید'],
+  ['inventory_issue', 'حواله انبار'],
+  ['inventory_receipt', 'رسید انبار'],
+  ['inventory_reversal', 'برگشت انبار'],
+  ['check_issue', 'صدور چک'],
+  ['check_receipt', 'دریافت چک'],
+  ['manual', 'دستی'],
+  ['reversal', 'برگشت'],
+  ['receipt', 'دریافت'],
+  ['payment', 'پرداخت'],
+  ['transfer', 'انتقال'],
+  ['cash', 'نقدی'],
+  ['bank', 'بانکی'],
+  ['check', 'چکی'],
+  ['pending', 'در انتظار'],
+  ['settled', 'تسویه‌شده'],
+  ['issued', 'صادرشده'],
+  ['received', 'دریافت‌شده'],
+  ['uploaded', 'بارگذاری‌شده'],
+  ['extracted', 'استخراج‌شده'],
+  ['reviewed', 'بررسی‌شده'],
+  ['linked', 'متصل‌شده']
+]);
+
+const ROLE_FA = Object.freeze({ owner:'مالک', manager:'مدیر', accountant:'حسابدار', viewer:'مشاهده‌گر' });
+const REPLACERS = [
+  [/Invoice draft saved with (\d+) line\(s\)/gi, 'پیش‌نویس فاکتور با $1 ردیف ذخیره شد'],
+  [/Draft journal saved with (\d+) line\(s\)/gi, 'پیش‌نویس سند حسابداری با $1 ردیف ذخیره شد'],
+  [/Invoice posted as journal (\d+)/gi, 'فاکتور ثبت قطعی شد و سند حسابداری شماره $1 ایجاد شد'],
+  [/Fiscal period closed:\s*(.+)/gi, 'دوره مالی بسته شد: $1'],
+  [/Fiscal period reopened:\s*(.+)/gi, 'دوره مالی بازگشایی شد: $1'],
+  [/Document status:\s*uploaded\s*->\s*extracted/gi, 'سند بارگذاری‌شده پردازش شد'],
+  [/Document status:\s*ocr_processing\s*->\s*uploaded/gi, 'پردازش متن سند متوقف و سند به حالت بارگذاری‌شده بازگشت'],
+  [/Document status:\s*uploaded\s*->\s*ocr_processing/gi, 'پردازش متن سند آغاز شد'],
+  [/Document status:\s*extracted\s*->\s*reviewed/gi, 'اطلاعات استخراج‌شده سند بررسی شد'],
+  [/Document status:\s*reviewed\s*->\s*linked/gi, 'سند بررسی‌شده به رکورد حسابداری مرتبط شد'],
+  [/Document status:\s*uploaded\s*->\s*reviewed/gi, 'سند بارگذاری‌شده بررسی شد'],
+  [/Money display\/input unit changed to rial/gi, 'واحد نمایش و ورود مبلغ به ریال تغییر کرد'],
+  [/Money display\/input unit changed to toman/gi, 'واحد نمایش و ورود مبلغ به تومان تغییر کرد'],
+  [/(?:Workspace|Company|شرکت)\s+member added as (owner|manager|accountant|viewer)/gi, (_, role) => `کاربر با نقش ${ROLE_FA[String(role).toLowerCase()] || 'مجاز'} به شرکت افزوده شد`],
+  [/(?:Pending\s+)?(?:workspace|company|شرکت)\s+invitation for .* as (owner|manager|accountant|viewer)/gi, (_, role) => `دعوت کاربر برای نقش ${ROLE_FA[String(role).toLowerCase()] || 'مجاز'} در انتظار پذیرش است`],
+  [/member added as accountant/gi, 'کاربر با نقش حسابدار به شرکت افزوده شد'],
+  [/member added as manager/gi, 'کاربر با نقش مدیر به شرکت افزوده شد'],
+  [/member added as viewer/gi, 'کاربر با نقش مشاهده‌گر به شرکت افزوده شد'],
+  [/Platform Admin/gi, 'مدیر سامانه'], [/SaaS Control Plane/gi, 'مرکز مدیریت سامانه'], [/Control Plane/gi, 'مرکز مدیریت سامانه'],
+  [/Support Session/gi, 'دسترسی پشتیبانی'], [/Support/gi, 'پشتیبانی'], [/Session/gi, 'نشست'],
+  [/Read-only/gi, 'فقط‌خواندنی'], [/Read only/gi, 'فقط‌خواندنی'], [/Viewer/gi, 'مشاهده‌گر'],
+  [/Tenant/gi, 'شرکت'], [/Workspace/gi, 'شرکت'], [/Company/gi, 'شرکت'], [/Onboarding/gi, 'راه‌اندازی'], [/Registry/gi, 'ثبت سامانه'],
+  [/PostgreSQL/gi, 'پایگاه داده'], [/Storage/gi, 'فضای ذخیره‌سازی'], [/Gate/gi, 'مرحله'],
+  [/Ledger/gi, 'دفتر حسابداری'], [/Posted\/Reversed/gi, 'ثبت‌قطعی/برگشتی'], [/Posted/gi, 'ثبت‌قطعی'], [/Reversed/gi, 'برگشتی'], [/Posting/gi, 'ثبت قطعی'],
+  [/Immutable/gi, 'غیرقابل‌تغییر'], [/Database/gi, 'پایگاه داده'], [/LocalStorage/gi, 'حافظه محلی مرورگر'], [/Dashboard/gi, 'داشبورد'],
+  [/Supabase/gi, 'زیرساخت ابری'], [/Core/gi, 'هسته'], [/Enterprise/gi, 'سازمانی'], [/Pro/gi, 'حرفه‌ای'],
+  [/accountant/gi, 'حسابدار'], [/manager/gi, 'مدیر'], [/owner/gi, 'مالک']
+];
+
+export function translateUserFacingText(value) {
+  let text = String(value ?? '');
+  if (EXACT.has(text.trim())) return EXACT.get(text.trim());
+  for (const [pattern, replacement] of REPLACERS) text = text.replace(pattern, replacement);
+  return text;
+}
+
+export function safeUserFacingFa(value, fallback = 'رویداد سامانه') {
+  const text = translateUserFacingText(String(value ?? '').trim());
+  if (!text) return fallback;
+  return /[A-Za-z]/.test(text) ? fallback : text;
+}

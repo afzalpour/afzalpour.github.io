@@ -1,0 +1,117 @@
+/* RC1.5-C.1.3 — tightly scoped live fixes; do not alter global shell/RTL. */
+
+.modal:has(#journalForm){
+  width:min(1040px,calc(100vw - 24px));
+  max-height:calc(100vh - 24px);
+  overflow-x:hidden;
+  padding:16px;
+}
+
+#journalForm{
+  min-width:0;
+}
+
+#journalForm .form-grid{
+  grid-template-columns:minmax(170px,.65fr) minmax(0,2.35fr);
+  gap:8px;
+}
+
+#journalForm .journal-lines{
+  gap:6px;
+}
+
+#journalForm .journal-line{
+  grid-template-columns:
+    minmax(0,2.2fr)
+    minmax(0,1.35fr)
+    minmax(0,1fr)
+    minmax(0,1fr)
+    40px;
+  gap:6px;
+  width:100%;
+  min-width:0;
+}
+
+#journalForm .journal-line>.field,
+#journalForm .form-grid>.field{
+  min-width:0;
+}
+
+#journalForm input,
+#journalForm select{
+  width:100%;
+  min-width:0;
+}
+
+#journalForm .journal-line input,
+#journalForm .journal-line select{
+  min-height:38px;
+  padding-block:8px;
+}
+
+#journalForm .journal-line>[data-remove-line]{
+  width:40px;
+  min-width:40px;
+  min-height:38px;
+  padding-inline:0;
+}
+
+#journalForm .money-in-words{
+  font-size:10.5px;
+  line-height:1.45;
+  min-height:15px;
+  overflow-wrap:anywhere;
+}
+
+#journalForm .line-total{
+  flex-wrap:wrap;
+  row-gap:4px;
+  margin-top:7px;
+}
+
+#journalForm .form-actions{
+  margin-top:10px;
+}
+
+@media(max-width:900px){
+  .modal:has(#journalForm){
+    width:min(760px,calc(100vw - 16px));
+    max-height:calc(100vh - 16px);
+    padding:14px;
+  }
+
+  #journalForm .form-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  #journalForm .journal-line{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  }
+
+  #journalForm .journal-line .field:first-child,
+  #journalForm .journal-line .field:nth-child(2){
+    grid-column:1/-1;
+  }
+
+  #journalForm .journal-line>[data-remove-line]{
+    grid-column:2;
+    justify-self:end;
+  }
+}
+
+@media(max-width:560px){
+  #journalForm .form-grid{
+    grid-template-columns:1fr;
+  }
+
+  #journalForm .journal-line{
+    grid-template-columns:1fr;
+  }
+
+  #journalForm .journal-line .field,
+  #journalForm .journal-line .field:first-child,
+  #journalForm .journal-line .field:nth-child(2),
+  #journalForm .journal-line>[data-remove-line]{
+    grid-column:1;
+  }
+}

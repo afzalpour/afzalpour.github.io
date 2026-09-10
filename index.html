@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#5754D8" />
   <meta name="mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="آوان" />
-<meta name="format-detection" content="telephone=no" />
-    <title>آوان — مدیریت مالی و حسابداری</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="آوان" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>آوان — مدیریت مالی و حسابداری</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="icon" type="image/png" sizes="32x32" href="avan-favicon-32.png" />
@@ -37,6 +37,10 @@
   <link rel="stylesheet" href="rc14-invoice-live-refinements.css" />
   <link rel="stylesheet" href="rc14-account-four-level.css" />
   <link rel="stylesheet" href="rc14-catalog-settlement-v60.css" />
+  <link rel="stylesheet" href="rc15-tax-ux.css" />
+  <link rel="stylesheet" href="rc15-c1.css" />
+  <link rel="stylesheet" href="rc15-c1-3-live-hotfix.css" />
+  <link rel="stylesheet" href="rc15-final-web-pwa.css" />
 </head>
 <body>
   <section class="auth-shell" id="authShell">
@@ -63,21 +67,22 @@
       <section class="content" id="content"><div class="loading">در حال اتصال به فضای مالی…</div></section>
     </main>
     <aside class="sidebar">
-      <div class="brand"><div class="brand-mark">آ</div><div><strong>آوان</strong><span>Core 1.0</span></div></div>
+      <div class="brand"><div class="brand-mark">آ</div><div><strong>آوان</strong><span>هسته ۱٫۰</span></div></div>
       <nav class="nav" id="nav">
         <button data-page="dashboard" class="active"><span>⌂</span>داشبورد</button>
         <div class="nav-label">ثبت مالی</div>
-<button data-action="receipt"><span>↓</span>دریافت</button>
-<button data-action="payment"><span>↑</span>پرداخت</button>
-<button data-action="transfer"><span>↔</span>انتقال</button>
-<button data-page="invoices"><span>▤</span>فاکتورها</button>
-<button data-page="journal"><span>≡</span>اسناد حسابداری</button>
-<button data-page="documents"><span>▧</span>اسناد هوشمند</button>        <div class="nav-label">اطلاعات پایه</div>
+        <button data-action="receipt"><span>↓</span>دریافت</button>
+        <button data-action="payment"><span>↑</span>پرداخت</button>
+        <button data-action="transfer"><span>↔</span>انتقال</button>
+        <button data-page="invoices"><span>▤</span>فاکتورها</button>
+        <button data-page="journal"><span>≡</span>اسناد حسابداری</button>
+        <button data-page="documents"><span>▧</span>اسناد هوشمند</button>
+        <div class="nav-label">اطلاعات پایه</div>
         <button data-page="accounts"><span>▦</span>حساب‌ها</button><button data-page="parties"><span>◎</span>طرف‌حساب‌ها</button>
         <div class="nav-label">گزارش</div>
         <button data-page="reports"><span>▥</span>گزارش‌ها</button><button data-page="settings"><span>⚙</span>تنظیمات</button>
       </nav>
-      <div class="sidebar-foot"><div class="status-dot"></div><span id="cloudStatus">Supabase متصل</span></div>
+      <div class="sidebar-foot"><div class="status-dot"></div><span id="cloudStatus">زیرساخت ابری متصل</span></div>
     </aside>
   </div>
   <nav class="bottom-nav" id="bottomNav" hidden>
@@ -85,38 +90,54 @@
   </nav>
   <div class="modal-backdrop" id="modalBackdrop" hidden><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
   <div class="toast" id="toast" aria-live="polite"></div>
-<script src="config.js"></script>
-<script type="module" src="app.js"></script>
-<script type="module" src="rc11-money.js"></script>
-<script type="module" src="rc11-user-preferences.js"></script>
-<script type="module" src="rc11-currency.js"></script>
-<script type="module" src="rc11-unit-density.js"></script>
-<script type="module" src="rc11-access.js"></script>
-<script type="module" src="rc13-company-boundary-guard.js"></script>
-<script type="module" src="rc11-refinements.js"></script>
-<script type="module" src="rc12-polish.js"></script>
-<script type="module" src="rc12-documents.js"></script>
-<script type="module" src="rc12-company-profile.js"></script>
-<script type="module" src="rc12-print-export.js"></script>
-<script type="module" src="rc12-mobile-navigation.js"></script>
-<script type="module" src="rc13-auth-recovery.js"></script>
-<script type="module" src="rc13-operational-audit.js"></script>
-<script type="module" src="rc13-company-context.js"></script>
-<script type="module" src="rc13-company-lifecycle.js"></script>
-<script type="module" src="rc13-support-access.js"></script>
-<script type="module" src="rc13-platform-admin-entry.js"></script>
-<script type="module" src="rc13-final-polish.js"></script>
-<script type="module" src="rc13-print-controls-recovery.js"></script>
-<script type="module" src="rc13-live-gate-polish.js"></script>
-<script type="module" src="rc13-session-security.js"></script>
-<script type="module" src="rc14-inventory-foundation.js"></script>
-<script type="module" src="rc14-inventory-operations.js"></script>
-<script type="module" src="rc14-inventory-form-stability.js"></script>
-<script type="module" src="rc14-invoice-inventory-ui.js"></script>
-<script type="module" src="rc14-invoice-live-refinements.js"></script>
-<script type="module" src="rc14-inventory-live-refinements.js"></script>
-<script type="module" src="rc14-account-four-level.js"></script>
-<script type="module" src="rc14-purchase-receipt-and-inventory-polish.js"></script>
-<script type="module" src="rc14-catalog-settlement-v60.js"></script>
-<script type="module" src="rc14-settlement-reversal-v60.js"></script>
-</body></html>
+  <script src="config.js"></script>
+  <script src="rc15-c1-4-mutation-stability.js"></script>
+  <script type="module" src="src/ui/money/money-runtime.js"></script>
+  <script type="module" src="app.js"></script>
+  <script type="module" src="src/ui/money/money-inputs.js"></script>
+  <script type="module" src="src/ui/money/money-settings-card.js"></script>
+  <script type="module" src="src/ui/money/money-output-contract.js"></script>
+  <script type="module" src="rc11-user-preferences.js"></script>
+  <script type="module" src="rc11-access.js"></script>
+  <script type="module" src="rc13-company-boundary-guard.js"></script>
+  <script type="module" src="rc11-refinements.js"></script>
+  <script type="module" src="rc12-polish.js"></script>
+  <script type="module" src="rc12-documents.js"></script>
+  <script type="module" src="rc12-company-profile.js"></script>
+  <script type="module" src="rc12-print-export.js"></script>
+  <script type="module" src="rc12-mobile-navigation.js"></script>
+  <script type="module" src="rc13-auth-recovery.js"></script>
+  <script type="module" src="rc13-operational-audit.js"></script>
+  <script type="module" src="rc13-company-context.js"></script>
+  <script type="module" src="rc13-company-lifecycle.js"></script>
+  <script type="module" src="rc13-support-access.js"></script>
+  <script type="module" src="rc13-platform-admin-entry.js"></script>
+  <script type="module" src="rc13-final-polish.js"></script>
+  <script type="module" src="rc13-print-controls-recovery.js"></script>
+  <script type="module" src="rc13-live-gate-polish.js"></script>
+  <script type="module" src="rc13-session-security.js"></script>
+  <script type="module" src="rc14-inventory-foundation.js"></script>
+  <script type="module" src="rc14-inventory-operations.js"></script>
+  <script type="module" src="rc14-inventory-form-stability.js"></script>
+  <script type="module" src="rc14-invoice-inventory-ui.js"></script>
+  <script type="module" src="rc14-invoice-live-refinements.js"></script>
+  <script type="module" src="rc14-inventory-live-refinements.js"></script>
+  <script type="module" src="rc14-account-four-level.js"></script>
+  <script type="module" src="rc14-purchase-receipt-and-inventory-polish.js"></script>
+  <script type="module" src="src/ui/settlement/settlement-save-boundary-v3.js"></script>
+  <script type="module" src="rc14-catalog-settlement-v61.js"></script>
+  <script type="module" src="rc14-settlement-reversal-v60.js"></script>
+  <script type="module" src="rc15-tax-ux-v3.js"></script>
+  <script type="module" src="src/ui/tax/invoice-item-optional.js"></script>
+  <script type="module" src="rc15-c1-bootstrap.js"></script>
+  <script type="module" src="src/ui/invoices/invoice-base-save-normalizer.js"></script>
+  <script type="module" src="src/ui/invoices/invoice-save-hot-refresh.js"></script>
+  <script type="module" src="src/ui/money/invoice-money-workspace.js"></script>
+  <script type="module" src="src/ui/settlement/settlement-workspace-v2.js"></script>
+  <script type="module" src="src/ui/settlement/settlement-money-presentation.js"></script>
+  <script type="module" src="src/ui/settings/settings-layout-v2.js"></script>
+  <script type="module" src="src/ui/health/core-health-drilldown.js"></script>
+  <script type="module" src="src/ui/reports/reconciliation-workspace.js"></script>
+  <script type="module" src="src/ui/einvoice/einvoice-preflight-ui.js"></script>
+</body>
+</html>
