@@ -1,0 +1,163 @@
+/* RC1.6-C Live polish — Party Ledger only. */
+
+#modal:has([data-party-ledger-report]){
+  width:min(1180px,98vw);
+  max-height:94vh;
+  padding:22px;
+}
+
+[data-party-ledger-report]{
+  min-width:0;
+}
+
+.party-ledger-launcher-grid{
+  display:grid;
+  grid-template-columns:minmax(260px,520px) auto;
+  gap:12px;
+  align-items:end;
+  justify-content:start;
+}
+
+.party-ledger-launcher-grid .field,
+.party-ledger-launcher-grid select{
+  min-width:0;
+  width:100%;
+}
+
+.party-ledger-range{
+  margin:0 0 16px;
+  box-shadow:none;
+}
+
+.party-ledger-range-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;
+  gap:12px;
+  align-items:end;
+}
+
+.party-ledger-range-grid .field,
+.party-ledger-range-grid input{
+  min-width:0;
+}
+
+.party-ledger-position strong{
+  font-size:15px;
+  line-height:1.9;
+}
+
+.party-ledger-position.party-ledger-debtor strong{
+  color:var(--bad);
+}
+
+.party-ledger-position.party-ledger-creditor strong{
+  color:#2457a6;
+}
+
+.party-ledger-position.party-ledger-settled strong{
+  color:var(--muted);
+}
+
+.party-ledger-kpis{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+}
+
+.party-ledger-kpis > .card{
+  min-width:0;
+  overflow:hidden;
+  padding:16px;
+}
+
+.party-ledger-kpis .kpi-label,
+.party-ledger-kpis .kpi-value,
+.party-ledger-kpis .muted{
+  max-width:100%;
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+
+.party-ledger-kpis .kpi-label{
+  line-height:1.7;
+}
+
+.party-ledger-kpis .kpi-value{
+  font-size:clamp(16px,2vw,23px);
+  line-height:1.55;
+}
+
+.party-ledger-table-head{
+  align-items:flex-end;
+}
+
+.party-ledger-table-head .row-actions{
+  justify-content:flex-end;
+}
+
+.party-ledger-table-wrap{
+  width:100%;
+  overflow:auto;
+}
+
+.party-ledger-table{
+  min-width:920px;
+}
+
+.party-ledger-table th,
+.party-ledger-table td{
+  text-align:center!important;
+  vertical-align:middle!important;
+}
+
+.party-ledger-table td.num{
+  white-space:nowrap;
+  text-align:center!important;
+}
+
+@media(max-width:900px){
+  #modal:has([data-party-ledger-report]){
+    width:min(98vw,1180px);
+    padding:16px;
+  }
+
+  .party-ledger-launcher-grid,
+  .party-ledger-range-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .party-ledger-launcher-grid .field,
+  .party-ledger-range-grid .primary{
+    grid-column:1/-1;
+  }
+
+  .party-ledger-launcher-grid .primary{
+    grid-column:1/-1;
+  }
+
+  .party-ledger-kpis{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:560px){
+  #modal:has([data-party-ledger-report]){
+    width:98vw;
+    max-height:96vh;
+    padding:12px;
+  }
+
+  .party-ledger-launcher-grid,
+  .party-ledger-range-grid,
+  .party-ledger-kpis{
+    grid-template-columns:1fr;
+  }
+
+  .party-ledger-table-head{
+    align-items:stretch;
+    flex-direction:column;
+  }
+
+  .party-ledger-table-head .row-actions,
+  .party-ledger-table-head [data-party-ledger-print]{
+    width:100%;
+  }
+}
