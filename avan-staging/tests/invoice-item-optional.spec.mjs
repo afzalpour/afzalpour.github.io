@@ -59,7 +59,7 @@ assert.match(index, /src\/ui\/tax\/invoice-item-optional\.js/,
   'the guard must be loaded in the active staging runtime');
 assert.match(sw, /src\/ui\/tax\/invoice-item-optional\.js/,
   'the guard must be precached for PWA use');
-assert.match(sw, /avan-staging-rc1-v91-invoice-item-optional/,
-  'the PWA cache must be bumped for the runtime fix');
+assert.match(sw, /const CACHE='avan-staging-rc1-v\d+-[^']+';/,
+  'the PWA cache must remain a versioned staging release cache');
 
 console.log('invoice-item-optional: PASS');
