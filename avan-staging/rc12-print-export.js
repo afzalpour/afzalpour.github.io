@@ -233,7 +233,26 @@ function printCss() {
     th{background:#f3eee6;font-weight:750;text-align:center;vertical-align:middle}
     .avan-detail-print table th,
     .avan-detail-print table td{text-align:center;vertical-align:middle}
+    .party-ledger-table th,
+    .party-ledger-table td{text-align:center!important;vertical-align:middle!important}
     td.num,.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+    .avan-accounting-negative{
+      color:#a83c48!important;
+      font-weight:700!important;
+      white-space:nowrap;
+      unicode-bidi:isolate;
+    }
+    .avan-accounting-negative::before{content:'('}
+    .avan-accounting-negative::after{content:')'}
+    .avan-accounting-negative-sign{
+      display:inline-block!important;
+      width:0!important;
+      max-width:0!important;
+      overflow:hidden!important;
+      font-size:0!important;
+      line-height:0!important;
+      color:transparent!important;
+    }
     .grid4,.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}
     .card{border:1px solid #ddd4c8;border-radius:8px;padding:9px;background:#fff;page-break-inside:avoid}
     .kpi-label{font-size:9px;color:#746f7f;margin-bottom:3px}
@@ -265,6 +284,12 @@ function openPrintWindow(source, title) {
     popup.opener = null;
   } catch {
     // Best-effort opener isolation.
+  }
+
+  try {
+    window.AvanAccountingNegative?.project?.();
+  } catch {
+    // Presentation enhancement is best-effort; print must remain available.
   }
 
   const clone = printableClone(source);
