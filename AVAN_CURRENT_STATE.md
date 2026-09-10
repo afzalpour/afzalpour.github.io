@@ -1,6 +1,6 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: **2026-09-10 — RC1.5 = Production Released؛ RC1.6-A/B/C در Staging توسعه یافته‌اند؛ RC1.6-B دارای Live acceptance تجمیعی است؛ Party Ledger تا PR #112 صراحتاً Live PASS شده؛ آخرین Presentation polish در PR #113 Engineering PASS و Live Gate آن در انتظار تست کاربر است.**
+آخرین به‌روزرسانی مرجع: **2026-09-10 — RC1.5 = Production Released؛ RC1.6-A/B/C در Staging Engineering PASS هستند؛ RC1.6-B و RC1.6-C برای Scope پیاده‌شده Live PASS دارند؛ کاربر PR #113 را نیز با «۴ اصلاح نهایی Live PASS» تأیید کرده است؛ RC1.6 وارد Release Candidate consolidation شده است.**
 
 این فایل Source of Truth وضعیت جاری پروژه است. ترتیب مرجع: `AVAN_MASTER_PROMPT.md` → این فایل → ADRهای Accepted → Repository → گزارش واقعی Live کاربر. Engineering/Backend PASS جایگزین Live PASS نیست.
 
@@ -24,19 +24,22 @@ Repository: `afzalpour/afzalpour.github.io`
 - Production Service Worker cache: `avan-prod-rc1-5-v1`.
 - Production Release Gate #1 = PASS؛ post-merge Release Gate #2 = PASS؛ Pages #332 = PASS؛ external HTTP Smoke #1 = PASS.
 - rollback branch: `prod-backup-20260910-rc1-5-pre-promotion` at `38fb915cfe98ecc82015c1f1e46fc4a7827a9613`.
-- **Production runtime has not been changed by RC1.6 work.** No RC1.6 Production promotion is authorized yet.
+- **Production runtime has not yet been changed by RC1.6 work.**
+- No RC1.6 Production promotion is authorized until Release Candidate Gate and explicit Production Release Gate are complete.
 
 ### Staging / RC1.6
 
-Current Staging merge head after latest functional change: `781ce0418c86a492a656080ac45681b6251804cb`.
+Latest functional Staging merge head: `781ce0418c86a492a656080ac45681b6251804cb` (PR #113).
 
 Current Staging Service Worker cache: `avan-staging-rc1-v101-accounting-negative-display`.
 
-RC1.6 is currently composed of:
+RC1.6 consists of:
 
 1. **RC1.6-A — Bank Reconciliation Foundation** — Engineering/Backend PASS.
-2. **RC1.6-B — Bank Statement Import + Reconciliation UI / Live refinements** — Engineering PASS + accumulated explicit Live confirmations.
-3. **RC1.6-C — Party Ledger / صورتحساب مالی طرف‌حساب** — Engineering PASS; base + PR #112 polish explicitly Live PASS; latest PR #113 polish requires a final Live presentation check.
+2. **RC1.6-B — Bank Statement Import + Reconciliation UI / Live refinements** — Engineering PASS + Live PASS for implemented scope.
+3. **RC1.6-C — Party Ledger / صورتحساب مالی طرف‌حساب** — Engineering PASS + full Live PASS including PR #113 final presentation polish.
+
+Current phase: **RC1.6 Release Candidate consolidation / Production Release Gate preparation**.
 
 ---
 
@@ -50,9 +53,9 @@ User explicitly accepted full RC1.5 Live Gate with:
 
 RC1.5 is already released to Production.
 
-### RC1.6-B — Bank Reconciliation accumulated Live acceptance
+### RC1.6-B — Bank Reconciliation
 
-The user has explicitly confirmed the following live behaviors during RC1.6-B refinements:
+The user explicitly confirmed the implemented scope through granular Live checks:
 
 - real ESC-delimited bank statement import works;
 - exact one-Rial receipt/payment/transfer works;
@@ -61,17 +64,28 @@ The user has explicitly confirmed the following live behaviors during RC1.6-B re
 - receipt/payment counterpart can be any valid active postable account while transfer remains restricted to bank/cash;
 - a transaction explicitly Voided for a statement line no longer returns as a candidate for that same line.
 
-These granular confirmations together establish **RC1.6-B Live PASS for the implemented scope**.
+These confirmations establish **RC1.6-B Live PASS for the implemented scope**.
 
 ### RC1.6-C — Party Ledger
 
-Party Ledger was introduced in PR #111. User then requested Live UX refinements implemented by PR #112 and explicitly reported:
+User first explicitly reported:
 
 **«اصلاحات صورتحساب Live PASS»**
 
-Therefore the Party Ledger implementation through PR #112 is **Live PASS**.
+for the Party Ledger implementation through PR #112.
 
-PR #113 adds four further presentation refinements requested after that PASS. Those refinements are Engineering/Frontend PASS but must not be mislabeled Live PASS until the user checks them in the deployed Staging browser/PWA.
+PR #113 then added four final presentation refinements. The user explicitly reported:
+
+**«۴ اصلاح نهایی Live PASS»**
+
+This accepts:
+
+1. Reports launcher contains only Party selector + `مشاهده صورتحساب` before opening the statement;
+2. Jalali range remains inside statement and redundant instruction is removed;
+3. Party Ledger detail headers/values are centered on screen and Print/PDF;
+4. negative financial output is visually red accounting notation `(amount)` while signed numeric truth/calculations remain unchanged.
+
+Therefore **RC1.6-C Full Live Gate = PASS**.
 
 ---
 
@@ -80,6 +94,7 @@ PR #113 adds four further presentation refinements requested after that PASS. Th
 - PR #105 merged as `db6844b2ff1f273ed0d63ba906740d73e42cdf45`.
 - PR Architecture Gate #156 = PASS.
 - post-merge main Architecture Gate #157 = PASS.
+- ADR-0022 defines Bank Statement Reconciliation boundary.
 - Backend tables: `bank_statement_imports`, `bank_statement_lines`, `bank_reconciliation_matches`.
 - Company/RLS boundary applies to all three tables.
 - candidate RPC is read-only / `SECURITY INVOKER`; no autonomous financial posting.
@@ -95,7 +110,7 @@ PR #113 adds four further presentation refinements requested after that PASS. Th
 
 ## 4) RC1.6-B — Bank Statement Import + Reconciliation UI
 
-Main evidence chain:
+Evidence chain:
 
 - PR #106 merged `ea787f6688fac84fc1c28907542d5a184f9f58fe` — initial Bank Statement Import + Reconciliation workspace.
 - PR #107 merged `229977af2d53118f79528e3c314d485029e53423` — CSV/Persian UI/tax selector/odd-Rial compatibility; Gate #163 PASS.
@@ -103,19 +118,19 @@ Main evidence chain:
 - PR #109 merged `8679f7305d962af0b47ee2a0e01716f23e52108e` — stable tax lifecycle + compact bank history/no-candidate flow; Gates #173/#174 PASS; Pages #346 PASS.
 - PR #110 merged `e49cc33eb35c7f6c54aa139d0c1f02fddf52fc06` — operation-account scope + pair-level Void candidate suppression; Gates #176/#177 PASS; Pages #347 PASS.
 
-Bank file compatibility proven against a real ASCII ESC (`0x1B`) delimited statement containing 106 valid transactions.
+Bank file compatibility was proven against a real ASCII ESC (`0x1B`) delimited statement containing 106 valid transactions.
 
-Accounting scope invariant:
+Accounting invariant:
 
 - receipt/payment counterpart = any valid active postable account;
 - transfer counterpart = bank/cash only.
 
 Reconciliation invariant:
 
-- a candidate explicitly voided for one statement line is suppressed only for that transaction/statement-line pair; unrelated lines are unaffected.
+- a candidate explicitly voided for one statement line is suppressed only for that transaction/statement-line pair; unrelated lines remain unaffected.
 
 **RC1.6-B Engineering Gate = PASS.**  
-**RC1.6-B Live Gate = PASS for implemented scope by accumulated explicit user confirmations.**
+**RC1.6-B Live Gate = PASS for implemented scope.**
 
 ---
 
@@ -129,14 +144,14 @@ Reason: financial operation posting can tag both Journal sides with the party. S
 
 Contract:
 
-- receivable position = debit − credit on the configured `receivable` control account;
-- payable position = credit − debit on the configured `payable` control account;
+- receivable position = debit − credit on configured `receivable` control account;
+- payable position = credit − debit on configured `payable` control account;
 - informational net claim = receivable − payable;
-- gross receivable/payable balances are displayed separately; no automatic offset/net settlement is performed;
-- direct cash activity that creates no AR/AP exposure does not distort outstanding balance;
+- gross receivable/payable balances are shown separately; no automatic offset/net settlement;
+- direct cash activity with no AR/AP exposure does not distort outstanding balance;
 - exact 0.1 Toman / one-Rial precision is preserved.
 
-### PR #111 — Party Ledger foundation
+### PR #111 — foundation
 
 - merged `f5a828d86106e58cff364916335e995b4ee9801c`.
 - PR Gate #180 PASS; post-merge Gate #181 PASS; Pages #348 PASS.
@@ -144,40 +159,40 @@ Contract:
 - Reports exposes `گردش و مانده طرف‌حساب`.
 - report includes opening, period debit/credit, gross receivable/payable, net status and chronological running balance.
 
-### PR #112 — first Live polish
+### PR #112 — Live UX/Print polish
 
 - merged `ec4e1c816c70bad114f53f65788fad81790c00b4`.
 - PR Gate #182 PASS; post-merge Gate #183 PASS; Pages #349 PASS.
 - wider statement surface;
-- Jalali from/to selector inside the statement;
+- Jalali from/to selector inside statement;
 - debtor statement red / creditor statement blue;
 - KPI overflow protection;
-- no repeated money unit beside every detail amount;
-- `چاپ / ذخیره PDF` above detail table using unified Avan print pipeline.
+- no repeated money unit beside detail amounts;
+- `چاپ / ذخیره PDF` using unified Avan print pipeline.
+- Explicit Live PASS reported by user.
 
-User explicitly reported **«اصلاحات صورتحساب Live PASS»**.
-
-### PR #113 — final requested presentation polish
+### PR #113 — final presentation polish
 
 - merged `781ce0418c86a492a656080ac45681b6251804cb`.
 - PR Architecture Gate #184 PASS.
 - post-merge main Architecture Gate #185 PASS.
 - Pages #350 PASS.
-- Reports launcher now contains only Party selector + `مشاهده صورتحساب`; date range remains inside statement.
-- redundant Jalali explanatory sentence removed.
-- Party Ledger detail headings and all values centered on screen and Print/PDF.
+- Reports launcher now contains only Party selector + `مشاهده صورتحساب`;
+- date range remains inside statement;
+- redundant Jalali explanatory sentence removed;
+- Party Ledger detail headings and values centered on screen and Print/PDF;
 - centralized accounting-negative presentation added for financial output surfaces:
   - algebraically negative values remain signed internally;
-  - browser/print visual shows the absolute figure in parentheses and red instead of a visible minus sign;
-  - this is presentation-only and does not rewrite database/Core/API numeric values;
-  - implemented through central UI Lifecycle, not a new generic monetary `MutationObserver`;
-  - Print/PDF reuses the same presentation before cloning;
-  - CSV/raw computational semantics retain signed values rather than converting accounting notation into stored data.
-- permanent regression tests added.
+  - browser/print visual shows absolute figure in parentheses and red instead of visible minus;
+  - presentation-only; no rewrite of database/Core/API numeric values;
+  - uses central UI Lifecycle, not a new generic monetary `MutationObserver`;
+  - Print/PDF receives same presentation before cloning;
+  - CSV/raw computational semantics retain signed numeric values.
 - PWA cache = `avan-staging-rc1-v101-accounting-negative-display`.
+- User explicitly reported **«۴ اصلاح نهایی Live PASS»**.
 
-**PR #113 Engineering/Frontend Gate = PASS.**  
-**PR #113 final Live presentation Gate = PENDING.**
+**RC1.6-C Engineering/Frontend Gate = PASS.**  
+**RC1.6-C Full Live Gate = PASS.**
 
 ---
 
@@ -188,7 +203,7 @@ User explicitly reported **«اصلاحات صورتحساب Live PASS»**.
 - Company/RLS boundary is mandatory; cross-company leakage is Blocker/Critical.
 - Journal lifecycle = `Draft → Posted → Reversed`; Posted entries/lines are immutable.
 - Canonical money = **Toman with 0.1 Toman = 1 Rial** under ADR-0019.
-- `1515 Rial` persists losslessly as `151.5 Toman`; old divisible-by-10 rule is obsolete for migrated exact-money flows.
+- `1515 Rial` persists losslessly as `151.5 Toman`.
 - sub-Rial values are rejected, never silently rounded.
 - browser Local/Session Storage is not a financial datastore.
 - account hierarchy is structural; only valid leaves are postable.
@@ -196,20 +211,22 @@ User explicitly reported **«اصلاحات صورتحساب Live PASS»**.
 - no new shared-client monkey patching; central Operation Pipeline / UI Lifecycle / Money Runtime are extension boundaries.
 - AI/automation remains Human-controlled and explainable.
 - applied DB migration history is immutable; corrections are additive follow-up migrations.
-- negative accounting notation `(amount)` is a Presentation Layer convention only; signed numeric truth remains unchanged in Core/DB.
+- negative accounting notation `(amount)` is Presentation Layer only; signed numeric truth remains unchanged in Core/DB.
 
 ---
 
 ## 7) Security / RLS / recovery posture
 
 - public financial data remains RLS-governed.
-- authenticated-executable public `SECURITY DEFINER` = 0.
-- anon-executable public `SECURITY DEFINER` = 0.
+- authenticated-executable public `SECURITY DEFINER` = 0 at latest verified security baseline.
+- anon-executable public `SECURITY DEFINER` = 0 at latest verified security baseline.
 - Session guard = 60-minute inactivity + 12-hour max + clock-skew protection.
 - password guard = minimum 12 chars + letter + number + symbol + common-password denylist.
 - Supabase built-in Leaked Password Protection remains unavailable under current zero-charge/provider posture; it must not be falsely marked fixed.
 - Free Transactional Recovery Rehearsal = PASS.
 - real external disaster restore to an isolated fresh target remains OPEN because no genuinely free isolated restore target is available; never restore against `Avan-production` itself.
+
+A fresh read-only security/integrity verification is required for the RC1.6 Release Candidate Gate.
 
 ---
 
@@ -228,27 +245,78 @@ Last formal RC1.5 Production read-only baseline on 2026-09-10:
 - unreconciled inventory companies = 0.
 - anon/authenticated-executable public `SECURITY DEFINER` = 0.
 
-This is a Production RC1.5 baseline; RC1.6 frontend work has not changed Production runtime.
+This is a Production RC1.5 baseline. RC1.6 Release Candidate preparation requires a fresh read-only database verification before Production promotion.
 
 ---
 
-## 9) Immediate next gate / release readiness
+## 9) Strategic architecture — ADR-0023
 
-The next governed action is **not automatic Production promotion**.
+The user explicitly approved the nine strategic differentiators and requested them to be stored in architecture. ADR-0023 is therefore **Accepted**.
 
-Immediate next gate:
+Official strategic modules:
 
-**RC1.6-C Final Presentation Live Gate — PR #113**
+1. **Avan Financial Control Tower — برج کنترل مالی**;
+2. **Financial Digital Twin — دوقلوی مالی کسب‌وکار**;
+3. **Working Capital Autopilot — اتوپایلوت سرمایه در گردش**;
+4. **Continuous Close + Continuous Audit — بستن و حسابرسی مستمر**;
+5. **Iran Compliance Radar — رادار هوشمند تعهدات قانونی ایران**;
+6. **Counterparty 360 — پرونده مالی هوشمند طرف‌حساب**;
+7. **Smart Procurement & Spend Control — خرید و کنترل هزینه هوشمند**;
+8. **Avan Evidence Graph — گراف شواهد مالی**;
+9. **Avan Connect / Automation Marketplace — پلتفرم اتصال و اتوماسیون**.
 
-Verify in deployed Staging/PWA:
+Detailed roadmap: `docs/AVAN_INTELLIGENT_FINANCE_ROADMAP.md`.
 
-1. Reports → `گردش و مانده طرف‌حساب` shows only Party selector before opening statement.
-2. Statement date controls remain Jalali and the redundant Jalali instruction is gone.
-3. Party Ledger detail headings/values are centered on screen and Print/PDF.
-4. representative negative financial outputs across reports/detail/inventory/document surfaces display in red accounting notation `(amount)` while calculations/data remain correct.
+### Priority
 
-After explicit PASS of this gate, the next cycle is:
+Modules 1 and 2 are **Early Priority**.
+
+The planned sequence is:
+
+1. finish/freeze RC1.6 release boundary and Production Release Gate;
+2. immediately begin **Control Tower Foundation + Digital Twin Foundation** in the next Staging cycle;
+3. do not mix those new features into the RC1.6 promotion diff;
+4. continue Treasury/Checks → Sales/Purchase completeness → Inventory completeness;
+5. expand Evidence Graph cross-cutting as each new domain is added;
+6. schedule modules 3–9 at the highest-value architectural points rather than by feature-count pressure.
+
+Strategic thesis:
+
+**آوان فقط نمی‌گوید چه اتفاقی افتاده؛ می‌گوید چرا اتفاق افتاده، بعد چه می‌شود، و الان چه اقدام کنترل‌شده‌ای باید انجام شود.**
+
+Guardrails:
+
+- deterministic financial calculation before LLM narrative;
+- evidence before recommendation;
+- Actual vs Forecast vs Scenario explicitly separated;
+- no silent AI posting/payment;
+- every important number should be drillable to evidence;
+- scenario engine cannot mutate Actual Ledger;
+- Company/RLS and one-Rial exactness apply to all intelligence layers.
+
+---
+
+## 10) Immediate next gate
+
+The final RC1.6 feature Live Gate is complete.
+
+Immediate next step:
 
 **RC1.6 Release Candidate consolidation / Production Release Gate preparation**
 
-That preparation must include regression coverage for Bank Reconciliation, Party Ledger, exact one-Rial money, negative display-only notation, Print/PDF, PWA cache integrity, security/RLS invariants and a fresh read-only financial integrity check. Production promotion still requires an explicit Release Gate and must preserve the RC1.5 rollback posture.
+Required actions:
+
+1. synchronize architecture/state docs and freeze an explicit RC1.6 candidate branch/SHA;
+2. run full Staging Architecture/Regression Gate at frozen head;
+3. run PWA precache integrity Gate;
+4. run fresh read-only DB integrity checks for Ledger, invoices, settlement, inventory and bank reconciliation;
+5. verify Company/RLS and `SECURITY DEFINER` security baseline;
+6. verify one-Rial precision, Print/PDF and accounting-negative presentation regressions;
+7. create fresh pre-RC1.6 Production rollback branch/SHA;
+8. build controlled Staging → Production promotion diff preserving Production-only configuration;
+9. execute Production Release Gate before merge;
+10. after Production merge, run post-merge Release Gate + Pages + external HTTP smoke + fresh read-only DB integrity verification.
+
+**Production promotion is not automatic.** A separate explicit Production Release Gate remains required.
+
+After the RC1.6 release boundary is frozen, the next Staging feature cycle starts **Control Tower Foundation + Digital Twin Foundation** under ADR-0023.
