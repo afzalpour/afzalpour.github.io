@@ -52,6 +52,8 @@ assert.match(print, /party-ledger-table th,[\s\S]*?party-ledger-table td\{text-a
 
 assert.match(index, /rc16-party-ledger-live-polish\.css/);
 assert.match(sw, /rc16-party-ledger-live-polish\.css/);
-assert.match(sw, /avan-staging-rc1-v101-accounting-negative-display/);
+const cacheVersion = Number(sw.match(/avan-staging-rc1-v(\d+)-/)?.[1] || 0);
+assert.ok(cacheVersion >= 101,
+  'Party Ledger must remain present in the PWA generation that introduced accounting-negative presentation or any later cache');
 
 console.log('rc16-party-ledger-live-polish.spec.mjs: PASS');
