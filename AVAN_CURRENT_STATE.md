@@ -18,7 +18,7 @@ Repository: `afzalpour/afzalpour.github.io`
 - RC1.6 Production merge commit = `eace3198947da1e87deb5d5512b905b27975c74e`.
 - RC1.6 Production Smoke = **PASS** by explicit user confirmation.
 - pre-RC1.6 rollback branch = `prod-backup-20260910-rc1-6-pre-promotion`.
-- Later RC1.7 commits on `main` modify `avan-staging/**` and/or docs only; **Production root runtime remains RC1.6** until a future explicit Production Release Gate.
+- RC1.7 work remains Staging-only unless a future explicit Production Release Gate authorizes promotion.
 
 Explicit user confirmation:
 
@@ -37,7 +37,7 @@ RC1.6 is released and its implemented scope is accepted:
 5. exact one-Rial receipt/payment/transfer and real ESC-delimited bank statement import — Live accepted.
 6. Party Ledger print/PDF, Jalali range, gross AR/AP without auto-offset — Live accepted.
 
-Production promotion completed only after the RC1.6 Release Candidate / Production Release Gate and explicit user approval:
+Production promotion completed only after Release Candidate Gate and explicit user approval:
 
 **«RC1.6 Production Release APPROVED»**
 
@@ -47,90 +47,95 @@ Production promotion completed only after the RC1.6 Release Candidate / Producti
 
 Status: **Engineering PASS + Live PASS**.
 
-PR: **#118 — Intelligence Foundation: Control Tower + Financial Digital Twin**.
-
-Staging merge commit: `b260c6995c233f097661082092767373416e1fe9`.
-
-Evidence:
-
-- final pre-merge Architecture Gate #202 = PASS;
-- post-merge Architecture Gate #203 = PASS;
-- Pages #355 = PASS;
+- PR #118 merged as `b260c6995c233f097661082092767373416e1fe9`.
+- final pre-merge Architecture Gate #202 = PASS.
+- post-merge Architecture Gate #203 = PASS.
+- Pages #355 = PASS.
 - explicit user Live PASS = **«RC1.6 Production Smoke PASS — Control Tower Live PASS»**.
 
-Implemented Control Tower scope:
+Implemented scope:
 
 - Company/RLS-scoped snapshot service;
 - cash/bank position from active financial-account Ledger lines;
-- gross receivables and payables by real `party_id`, with no cross-party netting;
-- unresolved bank reconciliation metric;
-- inventory financial-reconciliation risk metric;
-- deterministic close-readiness blockers;
-- prioritized control actions;
+- gross receivables/payables by real `party_id`, with no cross-party netting;
+- unresolved bank reconciliation and inventory-control risk;
+- deterministic close-readiness blockers and prioritized control actions;
 - `چرا این عدد؟` evidence drilldown;
 - Persian-first / Jalali / responsive UI;
-- exact 0.1 Toman = 1 Rial precision;
-- no AI-generated financial amounts;
-- no financial write path.
+- exact one-Rial precision;
+- no AI-generated financial amounts and no financial write path.
 
-**RC1.7-A Live Gate = PASS.**
+### Deferred Live polish
+
+After Live PASS the user reported that **Control Tower has several minor issues** and explicitly requested that they be handled later. Exact issue details are not yet supplied. This does **not** revoke the Live PASS; it is tracked as a separate polish backlog and must not be guessed/fixed speculatively.
 
 ---
 
 ## 4) RC1.7-B — Financial Digital Twin / دوقلوی مالی
 
-Status: **Engineering PASS; Live Gate pending user validation**.
+Status: **Engineering PASS + Live PASS**.
 
-PR: **#119 — RC1.7-B: Financial Digital Twin first live workspace**.
-
-Staging merge commit: `d522dd47d825adc7e0458ca3d755c3752ccde069`.
-
-Evidence:
-
-- PR Architecture Gate #204 = PASS;
-- post-merge Architecture Gate #205 = PASS;
-- Pages #356 = PASS;
-- Staging PWA cache = `avan-staging-rc1-v103-financial-digital-twin`.
+- PR #119 merged as `d522dd47d825adc7e0458ca3d755c3752ccde069`.
+- PR Architecture Gate #204 = PASS.
+- post-merge Architecture Gate #205 = PASS.
+- Pages #356 = PASS.
+- Staging cache at this milestone = `avan-staging-rc1-v103-financial-digital-twin`.
+- explicit user acceptance = **«Financial Digital Twin Live PASS»**.
 
 Implemented first-live scope:
 
-- opening cash/bank comes from the real Control Tower/Ledger position through end of the day before the selected scenario horizon;
+- opening cash/bank comes from the real Control Tower/Ledger position through end of the day before the scenario horizon;
 - all future flows are explicit user inputs; the system does not invent forecast amounts;
-- Base inputs:
-  - cash sales from new sales;
-  - collections from existing receivables;
-  - operating cash costs;
-  - payments of payables/debts;
-- Scenario inputs:
-  - percentage change for each Base flow, represented internally in basis points;
-  - optional signed one-off cash impact;
-- cash sales are explicitly separated from accrual/credit sales so sales and collections are not double-counted;
-- results show Base ending cash, Scenario ending cash and delta;
-- liquidity stress is flagged when Scenario ending cash is negative;
-- any proportional sub-Rial remainder is disclosed and rounded by the established nearest-Rial rule; no silent money rounding;
+- Base flows = cash sales, collections, operating cash costs and payable/debt payments;
+- cash sales are separated from accrual sales to prevent double-counting with collections;
+- Scenario inputs = percentage changes represented internally in basis points + optional signed one-off cash impact;
+- Base ending cash, Scenario ending cash, delta and liquidity stress are deterministic;
+- proportional sub-Rial remainder is disclosed before deterministic nearest-Rial rounding; no silent rounding;
 - opening cash exposes evidence references;
-- scenario data is not persisted to browser storage or financial DB;
-- scenario engine cannot mutate Actual Ledger;
-- AI does not generate arithmetic or financial amounts;
-- access points: desktop sidebar, Reports launcher and Control Tower handoff;
-- responsive Persian-first UI; date inputs use the existing Jalali presentation layer.
+- no browser/DB scenario persistence, no Actual Ledger mutation and no AI-generated financial amounts.
 
-### RC1.7-B Live Gate checklist
+### Deferred Live polish
 
-1. Staging Hard Refresh / PWA cache refresh.
-2. `هوشمندی مالی → دوقلوی مالی` opens successfully; mobile access works through Reports.
-3. opening `نقد و بانک ابتدای سناریو` appears and `منشأ این عدد` opens evidence.
-4. enter Base cash flows and percentage changes; calculation returns Base vs Scenario.
-5. negative one-off cash impact works and accounting-negative presentation remains correct.
-6. changing the horizon reloads opening cash for the end of the prior day.
-7. result does not create any document/receipt/payment or change actual balances.
-8. one-Rial inputs remain exact.
-
-Until explicit browser confirmation, **RC1.7-B Live Gate remains PENDING**.
+After Live PASS the user reported that **Financial Digital Twin has several minor issues** and requested that they be handled later. Exact details are pending. This is a polish backlog, not a rollback of Live acceptance.
 
 ---
 
-## 5) Governing accounting / money invariants
+## 5) RC1.7-C — Working Capital + Evidence Foundation
+
+Status: **Engineering PASS + Staging deployed; Live Gate pending**.
+
+- PR #121 merged as `197503177b04b7f0fd30bedd2173645decb944ab`.
+- Gate #206 correctly blocked an obsolete hard-coded PWA cache assertion.
+- Gate #207 then caught a real Shell regression: `rc14-invoice-live-refinements.js` had been omitted during index wiring.
+- the required legacy script was restored; no regression guard was weakened.
+- final pre-merge Architecture Gate #208 = PASS.
+- post-merge Architecture Gate #209 = PASS.
+- Pages #358 = PASS.
+- current Staging PWA cache = `avan-staging-rc1-v104-working-capital-evidence`.
+
+Implemented scope:
+
+- deterministic Working Capital model using the canonical one-Rial Money Core;
+- gross AR/AP derived from configured control accounts and real `party_id`;
+- no cross-party netting;
+- FIFO allocation of reductions against open party exposures;
+- invoice `due_date` used when available, with explicit invoice-date / entry-date fallback provenance;
+- rule-based collection priority by days past due, with no opaque AI score;
+- 30-day payable calendar;
+- cash less overdue + 30-day payable obligations indicator;
+- first Evidence Graph primitive linking open items to party, journal entry, journal line and invoice;
+- Company/RLS-scoped read-only service with explicit `workspace_id` on every Data API query;
+- Persian-first responsive workspace through sidebar and Reports;
+- no autonomous collection message, payment, posting or Actual Ledger mutation;
+- no new DB table/RPC/DDL in this release slice.
+
+Important technical correction: legacy `src/reports/party-aging.js` uses integer-oriented `BigInt(String(value))` assumptions and is **not** the numeric source for RC1.7-C. The new model uses canonical decimal↔tenths helpers so values such as `100.1 Toman` remain exact.
+
+**Current Live blocker = RC1.7-C browser/PWA validation only.**
+
+---
+
+## 6) Governing accounting / money invariants
 
 - PostgreSQL/Supabase is the financial Source of Truth.
 - Canonical money = **Toman with 0.1 Toman = 1 Rial**.
@@ -145,7 +150,7 @@ Until explicit browser confirmation, **RC1.7-B Live Gate remains PENDING**.
 
 ---
 
-## 6) Security / tenancy / recovery invariants
+## 7) Security / tenancy / recovery invariants
 
 - Company/RLS boundary is mandatory; cross-company leakage is Blocker/Critical.
 - browser never receives Service Role/private secrets.
@@ -153,14 +158,14 @@ Until explicit browser confirmation, **RC1.7-B Live Gate remains PENDING**.
 - anon-executable public `SECURITY DEFINER` = 0 at latest verified release security check.
 - Session guard = 60-minute inactivity + 12-hour maximum session + clock-skew protection.
 - password guard = minimum 12 chars + letter + number + symbol + common-password denylist.
-- Supabase built-in Leaked Password Protection remains unavailable under the current zero-charge/provider posture and must not be falsely marked fixed.
+- Supabase built-in Leaked Password Protection remains unavailable under current zero-charge/provider posture and must not be falsely marked fixed.
 - Free Transactional Recovery Rehearsal = PASS.
 - real external disaster restore to an isolated fresh target remains OPEN because no genuinely free isolated restore target is available; never restore against `Avan-production` itself.
-- no new shared-client monkey patching; Operation Pipeline / UI Lifecycle / Money Runtime are the extension boundaries.
+- no new shared-client monkey patching; Operation Pipeline / UI Lifecycle / Money Runtime are extension boundaries.
 
 ---
 
-## 7) Strategic architecture — ADR-0023
+## 8) Strategic architecture — ADR-0023
 
 ADR-0023 is **Accepted**. Official strategic modules:
 
@@ -174,7 +179,12 @@ ADR-0023 is **Accepted**. Official strategic modules:
 8. Avan Evidence Graph — گراف شواهد مالی;
 9. Avan Connect / Automation Marketplace — پلتفرم اتصال و اتوماسیون.
 
-Modules 1 and 2 are Early Priority. Module 1 is now Live accepted; Module 2 is at its first Live Gate.
+Progress against this architecture:
+
+- Module 1 Control Tower: first scope Live PASS.
+- Module 2 Digital Twin: first scope Live PASS.
+- Modules 3 and 8: foundations started in RC1.7-C.
+- Modules 4–7 and 9 remain planned and must be introduced at the highest-value architectural points rather than by feature-count pressure.
 
 Strategic thesis:
 
@@ -192,31 +202,33 @@ Guardrails:
 
 ---
 
-## 8) Immediate next gate
+## 9) Immediate next gate
 
-Immediate gate: **RC1.7-B Financial Digital Twin Live Gate**.
+Immediate gate: **RC1.7-C Working Capital + Evidence Live Gate**.
 
-After explicit Live PASS, next implementation cycle is:
+Live validation must confirm:
 
-**RC1.7-C — Digital Twin evidence/decision layer + Working Capital decision primitives**
+1. `هوشمندی مالی → سرمایه در گردش` opens after Staging hard refresh; mobile access works through Reports.
+2. cash, gross receivables/payables, overdue amounts and 30-day payable view populate without UI failure.
+3. collection priorities are explainable/rule-based and do not silently net different parties.
+4. payable calendar uses visible due dates and open amounts.
+5. `شواهد` opens trace references for priority/open items.
+6. one-Rial amounts remain exact where present.
+7. no receipt/payment/journal/message is created and Actual Ledger remains unchanged.
 
-Planned boundary:
+After RC1.7-C Live PASS, next planned implementation boundary is **RC1.7-D — evidence-backed decision actions / Working Capital controlled recommendations**, while preserving human confirmation and zero autonomous financial mutation.
 
-- enrich scenario evidence and assumption traceability;
-- scenario comparison presets without inventing amounts;
-- controlled decision recommendations built on deterministic results;
-- begin Working Capital primitives using receivable/payable aging and cash constraints;
-- no autonomous posting/payment;
-- Production remains RC1.6 until a separate future Release Candidate + explicit Production Release Gate.
+The minor Control Tower / Digital Twin polish backlog remains open for later exact user-supplied fixes.
 
 ---
 
-## 9) Canonical current pointers
+## 10) Canonical current pointers
 
 - Production runtime release: **RC1.6**.
 - Production release merge: `eace3198947da1e87deb5d5512b905b27975c74e`.
 - Production rollback: `prod-backup-20260910-rc1-6-pre-promotion`.
 - Control Tower Live-accepted Staging merge: `b260c6995c233f097661082092767373416e1fe9`.
-- Latest functional Staging merge: `d522dd47d825adc7e0458ca3d755c3752ccde069`.
-- Staging PWA cache: `avan-staging-rc1-v103-financial-digital-twin`.
-- Current Live blocker: **Financial Digital Twin browser/PWA Live confirmation only**.
+- Financial Digital Twin Live-accepted Staging merge: `d522dd47d825adc7e0458ca3d755c3752ccde069`.
+- Latest functional Staging merge: `197503177b04b7f0fd30bedd2173645decb944ab`.
+- Current Staging PWA cache: `avan-staging-rc1-v104-working-capital-evidence`.
+- Current Live blocker: **RC1.7-C browser/PWA Live confirmation only**.
