@@ -52,8 +52,8 @@ assert.match(app, /kind==='receipt'[\s\S]*?accountOptions\([\s\S]*?a=>a\.is_acti
   'receipt counterpart must use all active postable accounts');
 assert.match(app, /kind==='payment'[\s\S]*?accountOptions\([\s\S]*?a=>a\.is_active&&a\.is_postable/,
   'payment counterpart must use all active postable accounts');
-assert.match(app, /kind==='transfer'[\s\S]*?finIds\.has\(a\.id\)/,
-  'transfer must remain restricted to financial bank/cash accounts');
+assert.ok((app.match(/a=>finIds\.has\(a\.id\)/g) || []).length >= 2,
+  'transfer source/destination must remain restricted to financial bank/cash accounts');
 assert.match(service, /voided_at=not\.is\.null/,
   'candidate service must query rejected void history');
 assert.match(v4, /حساب مقابل \(همه حساب‌های قابل ثبت\)/);
