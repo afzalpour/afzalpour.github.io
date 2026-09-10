@@ -61,8 +61,9 @@ function install(globalObject = window, documentObject = document) {
 
   Lifecycle.use('tax:invoice-item-optional', () => normalizeInvoiceTaxForm(documentObject), { priority: 65 });
 
-  documentObject.addEventListener('avan:invoice-tax-metadata-changed', () => schedule('tax-metadata'));
-  documentObject.addEventListener('avan:ui-changed', () => schedule('ui'));
+  documentObject.addEventListener('avan:invoice-tax-metadata-changed', () => {
+    globalObject.setTimeout(() => normalizeInvoiceTaxForm(documentObject), 0);
+  });
   globalObject.addEventListener('avan:page-rendered', () => schedule('page'));
 
   documentObject.addEventListener('input', event => {
@@ -75,7 +76,7 @@ function install(globalObject = window, documentObject = document) {
     const row = event.target?.closest?.('[data-invoice-line]');
     if (!row) return;
     if (event.target.matches?.('[data-e-item],[data-rc15-tax-profile],[name="account"]')) {
-      setTimeout(() => normalizeInvoiceTaxRow(row), 0);
+      globalObject.setTimeout(() => normalizeInvoiceTaxRow(row), 0);
     }
   }, true);
 
