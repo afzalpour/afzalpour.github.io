@@ -181,6 +181,10 @@ function valueFor(row, header) {
   return header ? row.values?.[header] ?? '' : '';
 }
 
+function moneyErrorMessage(result) {
+  return result?.code === 'SUB_RIAL_VALUE' ? 'مبلغ کمتر از یک ریال مجاز نیست' : 'مبلغ واریز/برداشت معتبر نیست';
+}
+
 export function normalizeBankStatementRows(parsed, { mapping = {}, sourceUnit = 'toman' } = {}) {
   const errors = [];
   const normalized = [];
@@ -201,14 +205,19 @@ export function normalizeBankStatementRows(parsed, { mapping = {}, sourceUnit = 
 
     let direction = null;
     let amountRaw = '';
+    let amount = null;
     if (hasSplit) {
-      const debit = parseBankMoney(valueFor(row, mapping.debit) || '0', { sourceUnit, allowZero: true });
-      const credit = parseBankMoney(valueFor(row, mapping.credit) || '0', { sourceUnit, allowZero: true });
-      if (!debit.ok || !credit.ok) rowErrors.push('مبلغ واریز/برداشت معتبر نیست');
-      else {
+      const debitRaw = valueFor(row, mapping.debit) || '0';
+      const creditRaw = valueFor(row, mapping.credit) || '0';
+      const debit = parseBankMoney(debitRaw, { sourceUnit, allowZero: true });
+      const credit = parseBankMoney(creditRaw, { sourceUnit, allowZero: true });
+      if (!debit.ok || !credit.ok) {
+        if (!debit.ok) rowErrors.push(moneyErrorMessage(debit));
+        if (!credit.ok) rowErrors.push(moneyErrorMessage(credit));
+      } else {
         const d = BigInt(debit.tenths); const c = BigInt(credit.tenths);
-        if (d > 0n && c === 0n) { direction = 'debit'; amountRaw = valueFor(row, mapping.debit); }
-        else if (c > 0n && d === 0n) { direction = 'credit'; amountRaw = valueFor(row, mapping.credit); }
+        if (d > 0n && c === 0n) { direction = 'debit'; amountRaw = debitRaw; amount = debit; }
+        else if (c > 0n && d === 0n) { direction = 'credit'; amountRaw = creditRaw; amount = credit; }
         else rowErrors.push('در هر ردیف دقیقاً یکی از واریز یا برداشت باید بیشتر از صفر باشد');
       }
     } else {
@@ -217,11 +226,13 @@ export function normalizeBankStatementRows(parsed, { mapping = {}, sourceUnit = 
       if (!direction) rowErrors.push('جهت تراکنش معتبر نیست');
     }
 
-    const amount = parseBankMoney(amountRaw, { sourceUnit, allowZero: false });
-    if (!amount.ok) rowErrors.push(amount.code === 'SUB_RIAL_VALUE' ? 'مبلغ کمتر از یک ریال مجاز نیست' : 'مبلغ معتبر نیست');
+    if (!amount) amount = parseBankMoney(amountRaw, { sourceUnit, allowZero: false });
+    if (!amount.ok && !rowErrors.some(message => message.includes('کمتر از یک ریال'))) {
+      rowErrors.push(amount.code === 'SUB_RIAL_VALUE' ? 'مبلغ کمتر از یک ریال مجاز نیست' : 'مبلغ معتبر نیست');
+    }
     const balanceRaw = valueFor(row, mapping.balance);
     const balance = String(balanceRaw).trim() ? parseBankMoney(balanceRaw, { sourceUnit, allowNegative: true }) : null;
-    if (balance && !balance.ok) rowErrors.push('مانده معتبر نیست');
+    if (balance && !balance.ok) rowErrors.push(balance.code === 'SUB_RIAL_VALUE' ? 'مانده با دقت کمتر از یک ریال مجاز نیست' : 'مانده معتبر نیست');
 
     if (rowErrors.length) {
       errors.push({ sourceLine: row.sourceLine, code: 'INVALID_ROW', message: rowErrors.join('؛ ') });
