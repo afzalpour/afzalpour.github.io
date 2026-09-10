@@ -52,7 +52,7 @@ assert.equal(tower.metrics.bank.value, '100.1');
 assert.equal(tower.metrics.bank.count, 1, 'voided match is not an active resolution and ignored line is excluded');
 assert.equal(tower.metrics.inventory.count, 1);
 assert.equal(tower.closeReadiness.status, 'attention');
-assert.deepEqual(tower.closeReadiness.blockers.sort(), [
+assert.deepEqual([...tower.closeReadiness.blockers].sort(), [
   'bank_reconciliation_open',
   'inventory_reconciliation_open',
   'receivable_lines_without_party'
