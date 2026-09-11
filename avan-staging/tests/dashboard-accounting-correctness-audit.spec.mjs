@@ -12,6 +12,7 @@ import {
 } from '../src/ai/business-copilot.js';
 import { businessAnswerHtml } from '../src/ui/intelligence/business-copilot-view.js';
 import { buildCollectionCloseSnapshot } from '../src/ai/collection-close.js';
+import { collectionCloseSectionHtml } from '../src/ui/intelligence/collection-close-view.js';
 import { buildRiskAuditSnapshot } from '../src/ai/risk-audit.js';
 import { computeExactDashboardMetrics } from '../src/ui/intelligence/dashboard-accounting-correctness-hotfix.js';
 
@@ -75,9 +76,12 @@ const fakeMoney = value => `${value} ریال`;
 const fakeEsc = value => String(value ?? '').replace(/[&<>'"]/g, char => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
 }[char]));
+const unitHeader = label => new RegExp(`${label}\\s*(?:<span[^>]*>)?\\(ریال\\)(?:<\\/span>)?`);
 const agingHtml = partyAgingSection(aging, { money: fakeMoney, dateFa: value => value, esc: fakeEsc });
-assert.match(agingHtml, /مبلغ \(ریال\)/, 'Aging amount header must expose the configured money unit');
-assert.match(agingHtml, /مانده باز \(ریال\)/, 'party open-balance header must expose the configured money unit');
+assert.match(agingHtml, unitHeader('مبلغ'), 'Aging amount header must expose the configured money unit');
+assert.match(agingHtml, unitHeader('مانده باز'), 'party open-balance header must expose the configured money unit');
+assert.match(agingHtml, /سررسید مطالبات/);
+assert.match(agingHtml, /سررسید بدهی تجاری/);
 const agingDetail = partyAgingDetailHtml({
   aging,
   sideName: 'receivables',
@@ -86,7 +90,7 @@ const agingDetail = partyAgingDetailHtml({
   dateFa: value => value,
   esc: fakeEsc
 });
-assert.match(agingDetail, /مانده \(ریال\)/, 'Aging detail amount header must expose the configured money unit');
+assert.match(agingDetail, unitHeader('مانده'), 'Aging detail amount header must expose the configured money unit');
 
 const receivableEvidence = buildWhyNumberEvidence({
   metric: 'receivables',
@@ -104,6 +108,8 @@ assert.equal(receivableEvidence.calculatedAmount, '400.1');
 assert.equal(receivableEvidence.sourceReport, 'AR Aging / Ledger');
 assert.equal(receivableEvidence.accountCount, 1);
 assert.ok(receivableEvidence.journalCount >= 2);
+assert.ok(receivableEvidence.journals.some(entry => entry.id === 'e1'), 'open AR origin journal must always be included in evidence');
+assert.equal(receivableEvidence.contracts.agingOpenItemEvidence, true);
 
 const overdueEvidence = buildWhyNumberEvidence({
   metric: 'overdue_receivables',
@@ -118,6 +124,22 @@ const overdueEvidence = buildWhyNumberEvidence({
 });
 assert.equal(overdueEvidence.calculatedAmount, '400.1');
 assert.match(overdueEvidence.calculationNote, /FIFO/);
+assert.ok(overdueEvidence.journals.some(entry => entry.id === 'e1'), 'overdue AR evidence must include its open origin journal');
+
+const overduePayableEvidence = buildWhyNumberEvidence({
+  metric: 'overdue_payables',
+  roles,
+  parties,
+  accounts,
+  entries,
+  lines,
+  invoices,
+  from: '2026-03-21',
+  to: asOf
+});
+assert.equal(overduePayableEvidence.calculatedAmount, '200.1');
+assert.ok(overduePayableEvidence.journals.some(entry => entry.id === 'e3'), 'overdue AP evidence must include its open origin journal');
+assert.equal(overduePayableEvidence.contracts.agingOpenItemEvidence, true);
 
 const expenseEvidence = buildWhyNumberEvidence({
   metric: 'expense',
@@ -212,6 +234,13 @@ assert.equal(collection.collection.total, '400.1');
 assert.equal(collection.collection.overdue, '400.1');
 assert.equal(collection.collection.top3CashOpportunity, '400.1');
 assert.equal(collection.collection.priorities[0].total, '400.1');
+const collectionHtml = collectionCloseSectionHtml(collection, {
+  money: fakeMoney,
+  dateFa: value => value,
+  esc: fakeEsc
+});
+assert.match(collectionHtml, unitHeader('مانده'), 'Smart Collection balance header must expose the configured money unit');
+assert.match(collectionHtml, unitHeader('سررسیدگذشته'), 'Smart Collection overdue header must expose the configured money unit');
 
 const tx = Array.from({ length: 8 }, (_, index) => ({
   id: `tx${index}`,
