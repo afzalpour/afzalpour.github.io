@@ -1,10 +1,16 @@
 import assert from 'node:assert/strict';
 
 import { buildPartyAging } from '../src/reports/party-aging.js';
+import { buildWhyNumberEvidence } from '../src/reports/why-number.js';
+import {
+  partyAgingSection,
+  partyAgingDetailHtml
+} from '../src/ui/reports/party-aging-view.js';
 import {
   buildFinancialCopilotSnapshot,
   answerBusinessQuestion
 } from '../src/ai/business-copilot.js';
+import { businessAnswerHtml } from '../src/ui/intelligence/business-copilot-view.js';
 import { buildCollectionCloseSnapshot } from '../src/ai/collection-close.js';
 import { buildRiskAuditSnapshot } from '../src/ai/risk-audit.js';
 import { computeExactDashboardMetrics } from '../src/ui/intelligence/dashboard-accounting-correctness-hotfix.js';
@@ -16,9 +22,9 @@ const parties = [
   { id: 'p2', name: 'مشتری دو', created_at: '2026-01-01' }
 ];
 const accounts = [
-  { id: 'ar', name: 'دریافتنی', category: 'asset' },
-  { id: 'ap', name: 'پرداختنی', category: 'liability' },
-  { id: 'expense-1', name: 'هزینه آزمایشی', category: 'expense' }
+  { id: 'ar', code: '1101', name: 'دریافتنی', category: 'asset' },
+  { id: 'ap', code: '2101', name: 'پرداختنی', category: 'liability' },
+  { id: 'expense-1', code: '6101', name: 'هزینه آزمایشی', category: 'expense' }
 ];
 const entries = [
   { id: 'e1', journal_no: 1, entry_date: '2026-05-01', status: 'posted', source_type: 'invoice', source_id: 'inv1' },
@@ -65,6 +71,66 @@ assert.throws(
   'sub-Rial aging input must be rejected rather than rounded or zeroed'
 );
 
+const fakeMoney = value => `${value} ریال`;
+const fakeEsc = value => String(value ?? '').replace(/[&<>'"]/g, char => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+}[char]));
+const agingHtml = partyAgingSection(aging, { money: fakeMoney, dateFa: value => value, esc: fakeEsc });
+assert.match(agingHtml, /مبلغ \(ریال\)/, 'Aging amount header must expose the configured money unit');
+assert.match(agingHtml, /مانده باز \(ریال\)/, 'party open-balance header must expose the configured money unit');
+const agingDetail = partyAgingDetailHtml({
+  aging,
+  sideName: 'receivables',
+  partyId: 'p1',
+  money: fakeMoney,
+  dateFa: value => value,
+  esc: fakeEsc
+});
+assert.match(agingDetail, /مانده \(ریال\)/, 'Aging detail amount header must expose the configured money unit');
+
+const receivableEvidence = buildWhyNumberEvidence({
+  metric: 'receivables',
+  roles,
+  parties,
+  accounts,
+  entries,
+  lines,
+  invoices,
+  from: '2026-03-21',
+  to: asOf,
+  targetPartyId: 'p1'
+});
+assert.equal(receivableEvidence.calculatedAmount, '400.1');
+assert.equal(receivableEvidence.sourceReport, 'AR Aging / Ledger');
+assert.equal(receivableEvidence.accountCount, 1);
+assert.ok(receivableEvidence.journalCount >= 2);
+
+const overdueEvidence = buildWhyNumberEvidence({
+  metric: 'overdue_receivables',
+  roles,
+  parties,
+  accounts,
+  entries,
+  lines,
+  invoices,
+  from: '2026-03-21',
+  to: asOf
+});
+assert.equal(overdueEvidence.calculatedAmount, '400.1');
+assert.match(overdueEvidence.calculationNote, /FIFO/);
+
+const expenseEvidence = buildWhyNumberEvidence({
+  metric: 'expense',
+  accounts,
+  entries,
+  lines,
+  from: '2026-03-21',
+  to: asOf,
+  targetAccountId: 'expense-1'
+});
+assert.equal(expenseEvidence.calculatedAmount, '115.1');
+assert.equal(expenseEvidence.accountCount, 1);
+
 const exactMetrics = computeExactDashboardMetrics({
   balance: [
     { category: 'asset', amount: '74082141.5' },
@@ -101,6 +167,35 @@ assert.equal(copilot.metrics.receivables, '400.1');
 assert.equal(copilot.metrics.payables, '200.1');
 assert.equal(copilot.topExpenseAccounts[0].amount, '115.1', 'top expense must preserve one Rial');
 assert.equal(answerBusinessQuestion({ query: 'سود من چقدر است؟', snapshot: copilot }).evidenceAmount, '165582622.6');
+
+const cashAnswerHtml = businessAnswerHtml(
+  answerBusinessQuestion({ query: 'نقدینگی فعلی من چقدر است؟', snapshot: copilot }),
+  { money: fakeMoney, esc: fakeEsc }
+);
+assert.match(cashAnswerHtml, /avan-accounting-negative/, 'negative business money must use accounting-negative presentation');
+assert.match(cashAnswerHtml, /data-avan-sign="negative"/);
+assert.match(cashAnswerHtml, /102329664\.8 ریال/);
+assert.doesNotMatch(cashAnswerHtml, />-102329664\.8 ریال</, 'visible negative sign must not remain in accounting presentation');
+assert.match(cashAnswerHtml, /data-business-evidence-metric="cash"/);
+assert.match(cashAnswerHtml, /چرا این عدد؟/);
+
+const payablesAnswerHtml = businessAnswerHtml(
+  answerBusinessQuestion({ query: 'بدهی تجاری و مبلغ سررسیدگذشته من چقدر است؟', snapshot: copilot }),
+  { money: fakeMoney, esc: fakeEsc }
+);
+assert.equal((payablesAnswerHtml.match(/چرا این عدد؟/g) || []).length, 2, 'each payable amount must have its own evidence action');
+assert.match(payablesAnswerHtml, /data-business-evidence-metric="payables"/);
+assert.match(payablesAnswerHtml, /data-business-evidence-metric="overdue_payables"/);
+
+const cashExplanationHtml = businessAnswerHtml(
+  answerBusinessQuestion({ query: 'چرا با اینکه سود دارم پول ندارم؟', snapshot: copilot }),
+  { money: fakeMoney, esc: fakeEsc }
+);
+assert.equal((cashExplanationHtml.match(/چرا این عدد؟/g) || []).length, 4, 'each numeric cash-explanation metric must be independently drillable');
+assert.match(cashExplanationHtml, /data-business-evidence-metric="profit"/);
+assert.match(cashExplanationHtml, /data-business-evidence-metric="cash"/);
+assert.match(cashExplanationHtml, /data-business-evidence-metric="receivables"/);
+assert.match(cashExplanationHtml, /data-business-evidence-metric="overdue_receivables"/);
 
 const collection = buildCollectionCloseSnapshot({
   asOf,
