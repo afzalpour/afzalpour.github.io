@@ -112,6 +112,11 @@ assert.match(accountingFix, /why\.dataset\.whyAmount = canonical/);
 assert.match(accountingFix, /report_profit_loss/);
 assert.match(accountingFix, /report_balance_sheet/);
 assert.match(accountingFix, /report_cash_bank_balances/);
+assert.match(accountingFix, /buildPartyAging/);
+assert.match(accountingFix, /buildFinancialCopilotSnapshot/);
+assert.match(accountingFix, /buildRiskAuditSnapshot/);
+assert.match(accountingFix, /workspace_id=eq\.\$\{workspaceId\}/);
+assert.match(accountingFix, /writeOperations: 0/);
 assert.doesNotMatch(accountingFix, /\.insert\(|\.update\(|\.delete\(|localStorage|sessionStorage/);
 
 // Shell/PWA wiring and prior regression-sensitive invoice script must remain intact.
@@ -121,7 +126,7 @@ assert.match(index, /rc17-dashboard-intelligence-live-fix-v2\.css/);
 assert.match(index, /dashboard-intelligence-live-fix-v2\.js/);
 assert.match(index, /dashboard-accounting-correctness-hotfix\.js/);
 assert.match(index, /rc14-invoice-live-refinements\.js/);
-assert.match(sw, /avan-staging-rc1-v108-dashboard-accounting-correctness/);
+assert.match(sw, /avan-staging-rc1-v109-dashboard-accounting-correctness-audit/);
 assert.match(sw, /dashboard-accounting-correctness-hotfix\.js/);
 assert.match(sw, /dashboard-intelligence-live-fix-v2\.js/);
 
