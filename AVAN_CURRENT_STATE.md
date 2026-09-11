@@ -113,11 +113,11 @@ Implemented: deterministic collection recommendations; payable sequencing; exact
 
 ---
 
-## 7) Dashboard + Financial Intelligence Live Polish
+## 7) Dashboard + Financial Intelligence Live Polish / Accounting Correctness
 
-Status: **Engineering PASS + Staging deployed; Live validation pending**.
+Status: **Engineering PASS + Staging deployed; latest Live validation pending**.
 
-The first explicit polish pass was implemented through PR **#125** and then a second Live-fix pass was required after the user reported remaining layout/interaction regressions.
+The first explicit polish pass was implemented through PR **#125**, a second layout/interaction pass through PR **#127**, and an accounting-correctness / ten-day-question hotfix through PR **#129**.
 
 Baseline polish:
 
@@ -132,22 +132,59 @@ Second Live-fix pass:
 - pre-merge Architecture Gate #215 = PASS.
 - post-merge Architecture Gate #216 = PASS.
 - Pages #364 = PASS.
-- current Staging PWA cache = `avan-staging-rc1-v107-dashboard-intelligence-live-fix-v2`.
+
+Accounting-correctness / ten-day hotfix:
+
+- PR #129 merge = `10b9d83bef1764626c8fd4f2e8fda31f35bb3f27`.
+- pre-merge Architecture Gate #217 = PASS.
+- post-merge Architecture Gate #218 = PASS.
+- Pages #366 = PASS.
+- current Staging PWA cache = `avan-staging-rc1-v108-dashboard-accounting-correctness`.
 - Production root was not changed.
 
-Implemented / corrected:
+### Critical accounting-correctness finding
 
-- top dashboard KPI cards (دارایی، بانک و صندوق و peer cards) now have their own single-line numeric fit contract; this corrects the prior mistake where only HTML tables were protected;
-- `چرا این عدد؟` amount card now spans the complete grid width and dynamically fits long values rather than breaking inside a narrow grid column;
-- all suggested business questions now only populate the question field; analysis runs only after explicit user action on `تحلیل کن`;
-- user-facing business answers no longer display the technical `منبع` label;
-- the duplicate priority prompts were consolidated: `اولویت‌های امروز` is replaced with `اولویت‌های ده روز آینده`; the result is explicitly framed as a 10-day management attention plan based on current recorded state, not a forecast of future events;
-- the Smart Collection table now uses a stable presentation contract with horizontal containment, minimum table width, no forced breaking of customer name / `قدیمی‌ترین` / amount columns, and no currency-unit text inside amount cells;
-- Continuous Controls `سطح` is protected from word/letter splitting;
-- prior Why Number Persianization, collapsed evidence details, journal-back behavior, risk explanations, centered aging tables and severity color coding remain active;
-- no accounting calculation, DB/RPC behavior, Company/RLS boundary, financial write path, browser financial persistence or Production runtime was changed.
+User questioned the displayed annual P&L value `16,558,262,260 Rial`. Direct verification against the PostgreSQL/Supabase Ledger exposed a legacy Dashboard numeric parser defect: canonical Toman values containing one decimal digit were passed through an integer-only cleanup that removed the decimal point before `BigInt` conversion. Example: `177178123.1` became `1771781231`, creating a factor-of-10 error before Rial presentation.
 
-Regression coverage remains in `tests/dashboard-intelligence-live-polish.spec.mjs` and now includes the second Live-fix contract.
+Verified actual current-year values at the time of the check:
+
+- income = `177,178,123.1 Toman`;
+- expense = `11,595,500.5 Toman`;
+- profit = `165,582,622.6 Toman` = **`1,655,826,226 Rial`**.
+
+The old displayed `16,558,262,260 Rial` was therefore incorrect.
+
+PR #129 adds a read-only exact-money projection for the four primary Dashboard KPIs:
+
+- assets;
+- cash/bank;
+- liabilities;
+- annual profit/loss.
+
+These values are re-read from the authoritative report RPCs and parsed with canonical decimal↔tenths Money Core, preserving exact one-Rial values. The corrected canonical amount is also propagated to each KPI's `چرا این عدد؟` drilldown. Accounting-negative presentation is re-applied after the asynchronous exact refresh.
+
+Regression coverage contains the real-value pattern:
+
+`177178123.1 - 11595500.5 = 165582622.6 Toman = 1,655,826,226 Rial`.
+
+### Ten-day question hang root cause and fix
+
+The `اولویت‌های ده روز آینده` answer had a MutationObserver feedback loop: after rendering, the polish observer rewrote the heading with identical `textContent` on every pass, and that DOM rewrite retriggered the observer indefinitely. PR #129 makes the heading mutation idempotent and retains the one-time explanatory note only once.
+
+### Existing polish kept active
+
+- top KPI cards use a single-line numeric fit contract;
+- `چرا این عدد؟` amount card spans full width and fits long values;
+- all suggested business questions only populate the field and require explicit `تحلیل کن`;
+- business answers hide technical `منبع` labels;
+- the duplicate priority shortcut was consolidated into `اولویت‌های ده روز آینده`;
+- Smart Collection table has stable no-break / horizontal-containment rules and no currency-unit text inside amount cells;
+- Continuous Controls `سطح` is protected from word splitting;
+- prior Why Number Persianization, collapsed evidence details, journal-back behavior, risk explanations, centered aging tables and severity color coding remain active.
+
+### Certification boundary
+
+PR #129 certifies **the four primary Dashboard KPI amounts and their Why Number amounts** for canonical one-Rial exactness. It does **not** yet certify every legacy-derived amount inside Dashboard Aging / old business-intelligence / risk / collection sections. Those paths include legacy integer-oriented assumptions and require a dedicated Dashboard Accounting Correctness Audit before they can be declared fully exact.
 
 ---
 
@@ -210,17 +247,17 @@ Guardrails: deterministic calculation before narrative; evidence before recommen
 
 ## 11) Immediate Live gates
 
-Immediate validation for the second user-observed dashboard/intelligence polish pass:
+Immediate validation after PR #129:
 
-1. the four top dashboard KPI cards keep their full numbers visually inside the card;
-2. `چرا این عدد؟` keeps the report amount unbroken inside a full-width amount box;
-3. every suggested business question only selects/fills the query and waits for explicit `تحلیل کن`;
-4. business answers do not show `منبع`;
-5. only one priority-style shortcut remains and it is `اولویت‌های ده روز آینده`;
-6. Smart Collection table keeps `قدیمی‌ترین`, customer names and amount columns unbroken, with no currency unit inside amount cells;
-7. Continuous Controls `سطح` does not split letters/words.
+1. Hard Refresh Staging and verify the four primary Dashboard KPI amounts update from authoritative report RPCs.
+2. For the current verified Ledger state, annual P&L should display **1,655,826,226 Rial** unless new financial postings occurred after the verification query.
+3. `چرا این عدد؟` for annual P&L must show the same exact amount.
+4. `اولویت‌های ده روز آینده` should only populate the question field; after `تحلیل کن`, the answer must render without a browser hang.
+5. negative primary KPI values must preserve accounting-negative presentation.
 
-Separately, **RC1.7-D Live PASS is still pending** and must not be inferred from this polish validation.
+After these pass, schedule a dedicated **Dashboard Accounting Correctness Audit** for legacy Aging / derived intelligence numbers before certifying the entire Dashboard as exact.
+
+Separately, **RC1.7-D Live PASS is still pending** and must not be inferred from this validation.
 
 ---
 
@@ -233,6 +270,6 @@ Separately, **RC1.7-D Live PASS is still pending** and must not be inferred from
 - Digital Twin Live merge: `d522dd47d825adc7e0458ca3d755c3752ccde069`.
 - Working Capital + Evidence Live merge: `197503177b04b7f0fd30bedd2173645decb944ab`.
 - RC1.7-D Engineering merge: `ba642265a33d43aca25937dac0721358dcb11a5c`.
-- latest functional Staging merge: `bef54fac6494fb96f4f6381d47bef76e992c9423`.
-- current Staging PWA cache: `avan-staging-rc1-v107-dashboard-intelligence-live-fix-v2`.
-- current Live validations pending: **dashboard/intelligence polish v2** and **RC1.7-D**.
+- latest functional Staging merge: `10b9d83bef1764626c8fd4f2e8fda31f35bb3f27`.
+- current Staging PWA cache: `avan-staging-rc1-v108-dashboard-accounting-correctness`.
+- current Live validations pending: **Dashboard exact KPI / ten-day hotfix** and **RC1.7-D**.
