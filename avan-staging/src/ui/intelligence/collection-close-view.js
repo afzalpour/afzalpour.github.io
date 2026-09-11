@@ -19,6 +19,21 @@ function tenths(value) {
   return parsed === null ? 0n : parsed;
 }
 
+function moneyUnitLabel(money) {
+  const sample = String(money?.('0') || '');
+  const match = sample.match(/(تومان|ریال)/);
+  if (match?.[1]) return match[1];
+  if (typeof window !== 'undefined') {
+    const runtime = String(window.AvanMoney?.unitLabel?.() || '').trim();
+    if (runtime === 'تومان' || runtime === 'ریال') return runtime;
+  }
+  return 'تومان';
+}
+
+function headerWithUnit(label, unitLabel) {
+  return `${label} <span class="avan-table-money-unit">(${unitLabel})</span>`;
+}
+
 function collectionMessage(item, money) {
   const overdueText = tenths(item.overdue) > 0n
     ? ` مانده سررسیدگذشته ${money(item.overdue)} است.`
@@ -31,7 +46,7 @@ function collectionMessage(item, money) {
   );
 }
 
-function collectionRows(collection, { money, esc }) {
+function collectionRows(collection, { money, esc, unitLabel }) {
   if (!collection.available) {
     return '<div class="empty">حساب مطالبات در Workspace تعریف نشده است.</div>';
   }
@@ -43,7 +58,7 @@ function collectionRows(collection, { money, esc }) {
     <table>
       <thead>
         <tr>
-          <th>اولویت</th><th>مشتری</th><th>مانده</th><th>سررسیدگذشته</th>
+          <th>اولویت</th><th>مشتری</th><th>${headerWithUnit('مانده', unitLabel)}</th><th>${headerWithUnit('سررسیدگذشته', unitLabel)}</th>
           <th>قدیمی‌ترین</th><th>پیشنهاد آوان</th><th>اقدام</th>
         </tr>
       </thead>
@@ -102,6 +117,7 @@ function monthEndRows(monthEnd, esc) {
 export function collectionCloseSectionHtml(snapshot, { money, dateFa, esc }) {
   const collection = snapshot.collection;
   const monthEnd = snapshot.monthEnd;
+  const unitLabel = moneyUnitLabel(money);
   return `
     <div class="section card">
       <div class="section-head">
@@ -119,7 +135,7 @@ export function collectionCloseSectionHtml(snapshot, { money, dateFa, esc }) {
         <div class="card"><div class="kpi-label">مشتریان اولویت‌دار</div><div class="kpi-value small-kpi">${Number(collection.priorities?.filter(item => item.level === 'high').length || 0).toLocaleString('fa-IR')}</div></div>
       </div>
 
-      <div class="section">${collectionRows(collection, { money, esc })}</div>
+      <div class="section">${collectionRows(collection, { money, esc, unitLabel })}</div>
       <div class="info-box section">آوان فقط اولویت و متن پیشنهادی می‌سازد؛ هیچ پیام یا پیگیری‌ای بدون اقدام صریح کاربر ارسال نمی‌شود.</div>
 
       <div class="section-head section">
