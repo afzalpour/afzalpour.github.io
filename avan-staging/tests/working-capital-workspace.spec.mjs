@@ -35,7 +35,8 @@ assert.match(ui, /data-working-capital-report-launcher/);
 
 assert.match(index, /rc17-working-capital\.css/);
 assert.match(index, /src\/ui\/intelligence\/working-capital-workspace\.js/);
-assert.match(sw, /avan-staging-rc1-v10[4-9]-/,
+const cacheVersion = Number(sw.match(/avan-staging-rc1-v(\d+)-/)?.[1] || 0);
+assert.ok(cacheVersion >= 104,
   'PWA cache must remain at or beyond the RC1.7-C v104 milestone');
 assert.match(sw, /src\/intelligence\/working-capital-foundation\.js/);
 assert.match(sw, /src\/application\/intelligence\/working-capital-service\.js/);
