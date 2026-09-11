@@ -46,6 +46,16 @@ const evidenceTypeFa = Object.freeze({
   invoice: 'فاکتور'
 });
 
+const sourceTypeFa = Object.freeze({
+  invoice: 'فاکتور',
+  receipt: 'دریافت',
+  payment: 'پرداخت',
+  transfer: 'انتقال',
+  manual: 'سند دستی',
+  opening: 'افتتاحیه',
+  reversal: 'برگشت سند'
+});
+
 function summaryHtml(decisions) {
   const s = decisions.summary;
   return `
@@ -103,22 +113,112 @@ function decisionById(id) {
   return [...current.decisions.collections, ...current.decisions.payments].find(item => item.id === id) || null;
 }
 
-function whyModal(item) {
+function allOpenItems() {
+  return [
+    ...(current?.snapshot?.receivables?.openItems || []),
+    ...(current?.snapshot?.payables?.openItems || [])
+  ];
+}
+
+function refMatches(candidate, ref) {
+  return String(candidate?.type || '') === String(ref?.type || '') && String(candidate?.id || '') === String(ref?.id || '');
+}
+
+function relatedOpenItems(ref) {
+  return allOpenItems().filter(item => (item.evidence || []).some(candidate => refMatches(candidate, ref)));
+}
+
+function partyNameFor(ref, fallback = 'طرف‌حساب') {
+  const id = String(ref?.id || '');
+  const rows = [
+    ...(current?.snapshot?.receivables?.parties || []),
+    ...(current?.snapshot?.payables?.parties || []),
+    ...(current?.snapshot?.collectionPriorities || [])
+  ];
+  return rows.find(row => String(row.partyId || '') === id)?.partyName || fallback;
+}
+
+function tenthsToCanonicalDecimal(tenths) {
+  const sign = tenths < 0n ? '-' : '';
+  const abs = tenths < 0n ? -tenths : tenths;
+  return `${sign}${abs / 10n}${abs % 10n ? `.${abs % 10n}` : ''}`;
+}
+
+function sumRelatedAmount(items) {
+  let total = 0n;
+  for (const openItem of items) {
+    const parsed = String(openItem.remaining ?? '0').match(/^(-?)(\d+)(?:\.(\d))?$/);
+    if (!parsed) continue;
+    const tenths = BigInt(parsed[2]) * 10n + BigInt(parsed[3] || '0');
+    total += parsed[1] ? -tenths : tenths;
+  }
+  return total;
+}
+
+function humanEvidenceRef(ref, item) {
+  const related = relatedOpenItems(ref);
+  const row = related[0] || null;
+  const amountText = related.length ? money(tenthsToCanonicalDecimal(sumRelatedAmount(related))) : null;
+
+  if (ref.type === 'party') {
+    return {
+      title: partyNameFor(ref, item?.partyName || 'طرف‌حساب'),
+      meta: 'طرف‌حساب مرتبط با این پیشنهاد'
+    };
+  }
+
+  if (ref.type === 'journal_entry') {
+    const journal = row?.journalNo ?? '—';
+    const parts = [row?.entryDate ? `تاریخ ${dateFa(row.entryDate)}` : null, row?.sourceType ? (sourceTypeFa[row.sourceType] || row.sourceType) : null, amountText ? `مانده مرتبط ${amountText}` : null].filter(Boolean);
+    return { title: `سند حسابداری شماره ${journal}`, meta: parts.join(' · ') || 'سند مؤثر در مانده باز' };
+  }
+
+  if (ref.type === 'journal_line') {
+    const journal = row?.journalNo ?? '—';
+    const parts = [row?.entryDate ? `تاریخ ${dateFa(row.entryDate)}` : null, row?.invoiceNo ? `فاکتور ${row.invoiceNo}` : null, amountText ? `مانده مرتبط ${amountText}` : null].filter(Boolean);
+    return { title: `ردیف مرتبط با سند شماره ${journal}`, meta: parts.join(' · ') || 'ردیف مؤثر در مانده باز' };
+  }
+
+  if (ref.type === 'invoice') {
+    const invoice = row?.invoiceNo ?? '—';
+    const parts = [row?.dueDate ? `سررسید ${dateFa(row.dueDate)}` : null, amountText ? `مانده باز ${amountText}` : null].filter(Boolean);
+    return { title: `فاکتور شماره ${invoice}`, meta: parts.join(' · ') || 'فاکتور مرتبط با این مانده' };
+  }
+
+  return { title: evidenceTypeFa[ref.type] || 'مرجع حسابداری', meta: 'مرجع ثبت‌شده در گراف شواهد' };
+}
+
+function evidenceListHtml(item) {
   const grouped = new Map();
   (item.evidence || []).forEach(ref => {
     if (!ref?.type || !ref?.id) return;
     if (!grouped.has(ref.type)) grouped.set(ref.type, []);
-    grouped.get(ref.type).push(ref.id);
+    grouped.get(ref.type).push(ref);
   });
 
+  if (!grouped.size) return '<div class="empty">مرجع جزئی برای این پیشنهاد موجود نیست.</div>';
+
+  return [...grouped.entries()].map(([type, refs]) => `
+    <div class="card avan-decision-evidence-card">
+      <div class="section-head"><b>${esc(evidenceTypeFa[type] || type)}</b><span class="muted">${Number(refs.length).toLocaleString('fa-IR')} مرجع</span></div>
+      <div class="avan-decision-evidence-human-list">
+        ${refs.slice(0, 12).map(ref => {
+          const human = humanEvidenceRef(ref, item);
+          return `<div class="avan-decision-evidence-human-row"><b>${esc(human.title)}</b><span class="muted">${esc(human.meta)}</span></div>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function whyModal(item) {
   openModal(`
     <div data-decision-why-modal>
-      <div class="section-head"><div><h2>چرا این پیشنهاد؟</h2><span class="muted">قاعده + اثر نقد + شواهد</span></div><span class="cloud-badge">قابل ردیابی</span></div>
+      <div class="section-head"><div><h2>چرا این پیشنهاد؟</h2><span class="muted">قاعده + اثر نقد + شواهد قابل‌فهم</span></div><span class="cloud-badge">قابل ردیابی</span></div>
       <div class="info-box"><b>${esc(item.recommendation.label)}</b><br>${esc(item.recommendation.reason)}</div>
       ${item.kind === 'collection'
         ? `<div class="grid2 section"><div class="card"><span class="kpi-label">مانده باز</span><b data-avan-number-output="1">${money(item.openAmount)}</b></div><div class="card"><span class="kpi-label">سررسیدگذشته</span><b data-avan-number-output="1">${money(item.overdueAmount)}</b></div></div>`
         : `<div class="grid3 section"><div class="card"><span class="kpi-label">تعهد</span><b data-avan-number-output="1">${money(item.amount)}</b></div><div class="card"><span class="kpi-label">نقد قبل از این ردیف</span><b data-avan-number-output="1">${money(item.cashBefore)}</b></div><div class="card"><span class="kpi-label">نقد پس از این ردیف</span><b data-avan-number-output="1">${money(item.projectedCashAfter)}</b></div></div>`}
-      <div class="avan-decision-evidence-list">${grouped.size ? [...grouped.entries()].map(([type, ids]) => `<div class="card"><b>${esc(evidenceTypeFa[type] || type)}</b><span class="muted">${Number(ids.length).toLocaleString('fa-IR')} مرجع</span><div>${ids.slice(0, 12).map(id => `<code>${esc(id)}</code>`).join(' ')}</div></div>`).join('') : '<div class="empty">مرجع جزئی برای این پیشنهاد موجود نیست.</div>'}</div>
+      <div class="avan-decision-evidence-list">${evidenceListHtml(item)}</div>
       <div class="form-actions"><button type="button" class="ghost" data-decision-close>بستن</button></div>
     </div>`);
   document.querySelector('[data-decision-close]')?.addEventListener('click', closeModal, { once: true });
