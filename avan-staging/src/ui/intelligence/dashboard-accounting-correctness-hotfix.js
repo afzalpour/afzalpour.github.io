@@ -2,6 +2,7 @@
 
 import { installAvanCloud } from '../../infrastructure/supabase/avan-cloud-bootstrap.js';
 import { MoneyRuntime } from '../money/money-runtime.js';
+import { projectAccountingNegativeNumbers } from '../money/accounting-negative-presentation.js';
 import {
   canonicalDecimalToTenths,
   canonicalTenthsToDecimal
@@ -145,6 +146,7 @@ async function refresh() {
     const metrics = await loadMetrics();
     if (root !== dashboardRoot()) return false;
     applyMetrics(root, metrics);
+    projectAccountingNegativeNumbers(document);
     window.dispatchEvent(new CustomEvent('avan:dashboard-authoritative-metrics', { detail: metrics }));
     return true;
   } catch (error) {
@@ -174,7 +176,11 @@ export function installDashboardAccountingCorrectnessHotfix() {
   if (content) {
     const observer = new MutationObserver(() => {
       if (!cached?.metrics || !dashboardRoot()) return;
-      queueMicrotask(() => applyMetrics(dashboardRoot(), cached.metrics));
+      queueMicrotask(() => {
+        if (applyMetrics(dashboardRoot(), cached.metrics)) {
+          projectAccountingNegativeNumbers(document);
+        }
+      });
     });
     observer.observe(content, { childList: true, subtree: true });
   }
