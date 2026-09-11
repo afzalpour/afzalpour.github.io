@@ -107,7 +107,11 @@ function removeBusinessAnswerSource(root) {
   if (/ده روز|۱۰ روز|10 روز/.test(query)) {
     const card = answer.querySelector('.card');
     const heading = card?.querySelector('h3');
-    if (heading && /اولویت/.test(heading.textContent || '')) {
+    if (
+      heading &&
+      /اولویت/.test(heading.textContent || '') &&
+      String(heading.textContent || '').trim() !== 'اولویت‌های ده روز آینده'
+    ) {
       heading.textContent = 'اولویت‌های ده روز آینده';
     }
 
