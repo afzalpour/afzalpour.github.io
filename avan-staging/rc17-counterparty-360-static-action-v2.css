@@ -1,6 +1,0 @@
-.avan-counterparty-360-button,[data-counterparty-360]{display:none!important}
-.avan-party-master-table tr[data-party-master-row]>td:last-child{position:relative;white-space:nowrap}
-.avan-party-master-table tr[data-party-master-row]>td:last-child::after{content:'نمای ۳۶۰';display:inline-flex;align-items:center;justify-content:center;margin-inline-start:6px;padding:5px 9px;border:1px solid var(--border,#d7dbe6);border-radius:8px;background:var(--surface,#fff);font-size:.78rem;font-weight:700;line-height:1.2;cursor:pointer;white-space:nowrap}
-.avan-party-master-table tr[data-party-master-row]>td:last-child:hover::after{background:var(--surface-2,#f6f7fb)}
-@media(max-width:760px){.avan-party-master-table tr[data-party-master-row]>td:last-child::after{padding:5px 8px;font-size:.74rem}}
-@media print{.avan-party-master-table tr[data-party-master-row]>td:last-child::after{display:none!important}}
