@@ -146,7 +146,9 @@ assert.match(index, /rc17-dashboard-intelligence-live-fix-v2\.css/);
 assert.match(index, /dashboard-intelligence-live-fix-v2\.js/);
 assert.match(index, /dashboard-accounting-correctness-hotfix\.js/);
 assert.match(index, /rc14-invoice-live-refinements\.js/);
-assert.match(sw, /avan-staging-rc1-v109-dashboard-accounting-correctness-audit/);
+assert.match(sw, /avan-staging-rc1-v110-runtime-cache-live-correction/);
+assert.match(sw, /new Request\(request,\{cache:'reload'\}\)/);
+assert.match(sw, /client\.navigate\(client\.url\)/);
 assert.match(sw, /dashboard-accounting-correctness-hotfix\.js/);
 assert.match(sw, /dashboard-intelligence-live-fix-v2\.js/);
 
