@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { computeExactDashboardMetrics } from '../src/ui/intelligence/dashboard-accounting-correctness-hotfix.js';
 
 const read = rel => fs.readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
 const ui = read('src/ui/intelligence/dashboard-intelligence-live-polish.js');
 const css = read('rc17-dashboard-intelligence-polish.css');
 const fixV2 = read('src/ui/intelligence/dashboard-intelligence-live-fix-v2.js');
 const fixCssV2 = read('rc17-dashboard-intelligence-live-fix-v2.css');
+const accountingFix = read('src/ui/intelligence/dashboard-accounting-correctness-hotfix.js');
 const index = read('index.html');
 const sw = read('sw.js');
 
@@ -45,6 +47,10 @@ assert.match(fixV2, /منبع/);
 assert.match(fixV2, /node\.remove\(\)/);
 assert.match(fixV2, /پیش‌بینی رویدادهای آینده محسوب نمی‌شود/);
 
+// Ten-day answer must not create a MutationObserver feedback loop by rewriting an identical heading forever.
+assert.match(fixV2, /trim\(\) !== 'اولویت‌های ده روز آینده'/);
+assert.match(fixV2, /!card\.querySelector\('\[data-avan-ten-day-note\]'\)/);
+
 // Risk explanations must expose formulas / data origin instead of only a score or percentage.
 assert.match(ui, /بدهی تجاری سررسیدگذشته منهای نقد و بانک فعلی/);
 assert.match(ui, /بزرگ‌ترین بدهکار بر کل مطالبات باز/);
@@ -73,7 +79,7 @@ for (const level of ['critical', 'warning', 'attention', 'info', 'healthy']) {
 assert.match(ui, /\['هشدار', 'warning'\]/);
 assert.match(ui, /\['نیازمند توجه', 'attention'\]/);
 
-// Dashboard numeric overflow: original tables stay safe and primary KPI cards now have their own fit contract.
+// Dashboard numeric overflow: original tables stay safe and primary KPI cards have their own fit contract.
 assert.match(css, /avan-dashboard-polish-table-wrap/);
 assert.match(css, /overflow-x:auto/);
 assert.match(css, /font-variant-numeric:tabular-nums/);
@@ -83,14 +89,40 @@ assert.match(fixCssV2, /avan-dashboard-primary-kpi-card\{min-width:0;overflow:hi
 assert.doesNotMatch(ui + fixV2, /cloud\.(insert|update|delete|rpc)\s*\(/);
 assert.doesNotMatch(ui + fixV2, /localStorage|sessionStorage/);
 
+// Accounting correctness: decimal canonical Toman from report RPCs must remain one-Rial exact.
+const exact = computeExactDashboardMetrics({
+  balance: [
+    { category: 'asset', amount: '74082141.5' },
+    { category: 'liability', amount: '-96000481.1' }
+  ],
+  profitLoss: [
+    { category: 'income', amount: '177178123.1' },
+    { category: 'expense', amount: '11595500.5' }
+  ],
+  cash: [{ amount: '-102329664.8' }]
+});
+assert.equal(exact.assets, '74082141.5');
+assert.equal(exact.liabilities, '-96000481.1');
+assert.equal(exact.cash, '-102329664.8');
+assert.equal(exact.profit, '165582622.6');
+assert.equal(exact.profitTenths, 1655826226n);
+assert.match(accountingFix, /canonicalDecimalToTenths/);
+assert.match(accountingFix, /canonicalTenthsToDecimal/);
+assert.match(accountingFix, /why\.dataset\.whyAmount = canonical/);
+assert.match(accountingFix, /report_profit_loss/);
+assert.match(accountingFix, /report_balance_sheet/);
+assert.match(accountingFix, /report_cash_bank_balances/);
+assert.doesNotMatch(accountingFix, /\.insert\(|\.update\(|\.delete\(|localStorage|sessionStorage/);
+
 // Shell/PWA wiring and prior regression-sensitive invoice script must remain intact.
 assert.match(index, /rc17-dashboard-intelligence-polish\.css/);
 assert.match(index, /dashboard-intelligence-live-polish\.js/);
 assert.match(index, /rc17-dashboard-intelligence-live-fix-v2\.css/);
 assert.match(index, /dashboard-intelligence-live-fix-v2\.js/);
+assert.match(index, /dashboard-accounting-correctness-hotfix\.js/);
 assert.match(index, /rc14-invoice-live-refinements\.js/);
-assert.match(sw, /avan-staging-rc1-v107-dashboard-intelligence-live-fix-v2/);
-assert.match(sw, /rc17-dashboard-intelligence-live-fix-v2\.css/);
+assert.match(sw, /avan-staging-rc1-v108-dashboard-accounting-correctness/);
+assert.match(sw, /dashboard-accounting-correctness-hotfix\.js/);
 assert.match(sw, /dashboard-intelligence-live-fix-v2\.js/);
 
 console.log('dashboard-intelligence-live-polish.spec.mjs: PASS');
