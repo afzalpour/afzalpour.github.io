@@ -52,6 +52,7 @@ assert.equal(snapshot.contracts.crossPartyNetting, false);
 assert.equal(snapshot.contracts.evidenceBacked, true);
 
 const ui = fs.readFileSync(new URL('../src/ui/parties/counterparty-360.js', import.meta.url), 'utf8');
+const css = fs.readFileSync(new URL('../rc17-counterparty-360.css', import.meta.url), 'utf8');
 assert.match(ui, /data-counterparty-360/);
 assert.match(ui, /نمای ۳۶۰/);
 assert.match(ui, /مطالبه باز/);
@@ -71,5 +72,14 @@ assert.match(ui, /localIsoDate/);
 assert.doesNotMatch(ui, /new MutationObserver/);
 assert.doesNotMatch(ui, /requestAnimationFrame/);
 assert.doesNotMatch(ui, /\.insert\(|\.update\(|\.delete\(|service_role/i);
+
+// Live stability contract: visible 360 affordance belongs to the stable action cell,
+// while the injected legacy button is only an invisible hit area. This prevents
+// visible add/remove flashing even if an upstream page rerender occurs.
+assert.match(css, /tr\[data-party-master-row\]>td:last-child::after/);
+assert.match(css, /content:'نمای ۳۶۰'/);
+assert.match(css, /\.avan-counterparty-360-button\{[^}]*opacity:0!important/);
+assert.match(css, /animation:none!important/);
+assert.match(css, /transition:none!important/);
 
 console.log('counterparty-360.spec.mjs: PASS');
