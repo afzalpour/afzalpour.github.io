@@ -47,8 +47,9 @@ assert.match(index, /src\/ui\/parties\/party-master-data\.js/);
 assert.match(css, /overflow-x:auto/);
 assert.match(css, /@media\(max-width:760px\)/);
 
-// PWA must ship the new runtime assets in a distinct cache identity.
-assert.match(sw, /avan-staging-rc1-v109-party-master-data/);
+// PWA cache may advance, but Party Master Data must remain precached and v109+.
+const cacheVersion = Number(sw.match(/const CACHE='avan-staging-rc1-v(\d+)-/)?.[1] || 0);
+assert.ok(cacheVersion >= 109, 'PWA cache must remain at or beyond the Party Master Data v109 milestone');
 assert.match(sw, /rc17-party-master-data\.css/);
 assert.match(sw, /src\/ui\/parties\/party-master-data\.js/);
 assert.match(sw, /cache:'reload'/);
