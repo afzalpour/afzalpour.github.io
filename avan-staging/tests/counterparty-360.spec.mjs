@@ -63,6 +63,13 @@ assert.match(ui, /گردش‌های دفتر طرف‌حساب/);
 assert.match(ui, /شواهد و اسناد مؤثر/);
 assert.match(ui, /تهاتر نمی‌شوند/);
 assert.match(ui, /formatCanonicalDecimal/);
+assert.match(ui, /installUiLifecycle/);
+assert.match(ui, /parties:counterparty-360-actions/);
+assert.match(ui, /data-counterparty-360-loading/);
+assert.match(ui, /در حال بارگذاری اطلاعات طرف‌حساب/);
+assert.match(ui, /localIsoDate/);
+assert.doesNotMatch(ui, /new MutationObserver/);
+assert.doesNotMatch(ui, /requestAnimationFrame/);
 assert.doesNotMatch(ui, /\.insert\(|\.update\(|\.delete\(|service_role/i);
 
 console.log('counterparty-360.spec.mjs: PASS');
