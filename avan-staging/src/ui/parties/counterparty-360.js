@@ -3,19 +3,21 @@
 import { installAvanCloud } from '../../infrastructure/supabase/avan-cloud-bootstrap.js';
 import { MoneyRuntime } from '../money/money-runtime.js';
 import { openModal, closeModal } from '../components/modal.js';
+import { installUiLifecycle } from '../runtime/lifecycle.js';
 import { buildCounterparty360 } from '../../intelligence/counterparty-360.js';
 
 const HAS_BROWSER = typeof window !== 'undefined' && typeof document !== 'undefined';
 const cloud = HAS_BROWSER ? installAvanCloud() : null;
+const Lifecycle = HAS_BROWSER ? installUiLifecycle() : null;
 const KIND_FA = Object.freeze({ customer: 'مشتری', vendor: 'فروشنده', both: 'مشتری و فروشنده', other: 'سایر' });
 const ENTITY_FA = Object.freeze({ individual: 'شخص حقیقی', legal: 'شخص حقوقی', unspecified: 'تعیین‌نشده' });
 const INVOICE_TYPE_FA = Object.freeze({ sale: 'فروش', purchase: 'خرید' });
 const STATUS_FA = Object.freeze({ draft: 'پیش‌نویس', posted: 'ثبت‌شده', reversed: 'برگشتی', cancelled: 'لغوشده' });
 
 let installed = false;
-let scheduled = 0;
 let context = null;
 let contextInflight = null;
+let openSequence = 0;
 
 function esc(value) {
   return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -42,36 +44,33 @@ function pageIsParties() {
   return String(document.getElementById('pageTitle')?.textContent || '').trim() === 'طرف‌حساب‌ها';
 }
 
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+function localIsoDate() {
+  const now = new Date();
+  const year = String(now.getFullYear()).padStart(4, '0');
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function workspaceQuery(fields, workspaceId, suffix = '') {
   return `select=${fields}&workspace_id=eq.${workspaceId}${suffix ? `&${suffix}` : ''}`;
 }
 
-function addButtons() {
+function enhancePartyActions() {
   if (!pageIsParties()) return;
   document.querySelectorAll('tr[data-party-master-row]').forEach(row => {
     if (row.querySelector('[data-counterparty-360]')) return;
     const partyId = String(row.dataset.partyMasterRow || '').trim();
-    if (!partyId) return;
     const cell = row.lastElementChild;
-    if (!cell) return;
+    if (!partyId || !cell) return;
+
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'ghost small avan-counterparty-360-button';
     button.dataset.counterparty360 = partyId;
+    button.setAttribute('aria-label', 'باز کردن نمای ۳۶۰ طرف‌حساب');
     button.textContent = 'نمای ۳۶۰';
     cell.append(' ', button);
-  });
-}
-
-function scheduleButtons() {
-  if (scheduled) return;
-  scheduled = requestAnimationFrame(() => {
-    scheduled = 0;
-    addButtons();
   });
 }
 
@@ -80,7 +79,8 @@ async function loadContext() {
   if (company?.selection_required) throw new Error('COMPANY_SELECTION_REQUIRED');
   const workspaceId = company?.active_company?.id;
   if (!workspaceId) throw new Error('COMPANY_REQUIRED');
-  const asOf = todayIso();
+  const asOf = localIsoDate();
+
   if (context?.workspaceId === workspaceId && context?.asOf === asOf) return context;
   if (contextInflight) return contextInflight;
 
@@ -119,8 +119,11 @@ async function loadContext() {
     return context;
   })();
 
-  try { return await contextInflight; }
-  finally { contextInflight = null; }
+  try {
+    return await contextInflight;
+  } finally {
+    contextInflight = null;
+  }
 }
 
 function profileValue(label, value) {
@@ -194,12 +197,12 @@ function modalHtml(snapshot) {
       <div class="section-head avan-c360-head">
         <div>
           <h2>نمای ۳۶۰ — ${esc(p.name)}</h2>
-          <div class="avan-c360-badges"><span class="badge">${esc(KIND_FA[p.kind] || 'سایر')}</span><span class="badge">${esc(ENTITY_FA[p.entityType] || 'تعیین‌نشده')}</span><span class="cloud-badge">Ledger + Evidence</span></div>
+          <div class="avan-c360-badges"><span class="badge">${esc(KIND_FA[p.kind] || 'سایر')}</span><span class="badge">${esc(ENTITY_FA[p.entityType] || 'تعیین‌نشده')}</span><span class="cloud-badge">دفتر کل + شواهد</span></div>
         </div>
         <button type="button" class="ghost" id="avanCounterparty360Close">بستن</button>
       </div>
 
-      <div class="info-box section">مطالبات و بدهی‌های این طرف‌حساب عمداً جدا نمایش داده می‌شوند و به‌صورت خودکار با هم تهاتر نمی‌شوند. تمام اعداد از Ledger و FIFO دقیق یک‌ریالی خوانده می‌شوند.</div>
+      <div class="info-box section">مطالبات و بدهی‌های این طرف‌حساب جدا نمایش داده می‌شوند و به‌صورت خودکار با هم تهاتر نمی‌شوند. مبالغ از دفتر کل و تخصیص FIFO دقیق یک‌ریالی محاسبه شده‌اند.</div>
 
       <section class="avan-c360-kpis section">
         <div class="card"><div class="kpi-label">مطالبه باز</div><div class="kpi-value">${esc(money(f.receivable))}</div></div>
@@ -236,12 +239,39 @@ function modalHtml(snapshot) {
     </div>`;
 }
 
-async function openCounterparty360(partyId) {
+function loadingModalHtml() {
+  return `
+    <div class="avan-counterparty-360 avan-c360-loading" data-counterparty-360-loading>
+      <div class="section-head avan-c360-head">
+        <div><h2>نمای ۳۶۰ طرف‌حساب</h2><span class="muted">در حال خواندن دفتر کل، سررسیدها و شواهد…</span></div>
+        <button type="button" class="ghost" id="avanCounterparty360Close">بستن</button>
+      </div>
+      <div class="loading section">در حال بارگذاری اطلاعات طرف‌حساب…</div>
+    </div>`;
+}
+
+function errorModalHtml() {
+  return `
+    <div class="avan-counterparty-360">
+      <h2>نمای ۳۶۰ طرف‌حساب</h2>
+      <div class="error-box section">اطلاعات ۳۶۰ این طرف‌حساب در حال حاضر قابل بارگذاری نیست.</div>
+      <div class="form-actions"><button type="button" class="ghost" id="avanCounterparty360Close">بستن</button></div>
+    </div>`;
+}
+
+function bindClose(sequence) {
+  document.getElementById('avanCounterparty360Close')?.addEventListener('click', () => {
+    if (sequence === openSequence) openSequence += 1;
+    closeModal();
+  }, { once: true });
+}
+
+async function buildSnapshot(partyId) {
   await MoneyRuntime?.ready?.();
   const ctx = await loadContext();
   const party = ctx.parties.find(item => String(item.id) === String(partyId));
   if (!party) throw new Error('COUNTERPARTY_360_PARTY_NOT_FOUND');
-  const snapshot = buildCounterparty360({
+  return buildCounterparty360({
     party,
     roles: ctx.roles,
     accounts: ctx.accounts,
@@ -251,10 +281,28 @@ async function openCounterparty360(partyId) {
     fiscalFrom: ctx.fiscalFrom,
     asOf: ctx.asOf
   });
-  openModal(modalHtml(snapshot));
-  document.getElementById('avanCounterparty360Close')?.addEventListener('click', closeModal, { once: true });
-  window.AvanAccountingNegative?.project?.();
-  return snapshot;
+}
+
+async function openCounterparty360(partyId) {
+  const sequence = ++openSequence;
+  openModal(loadingModalHtml());
+  bindClose(sequence);
+
+  try {
+    const snapshot = await buildSnapshot(partyId);
+    if (sequence !== openSequence) return snapshot;
+    openModal(modalHtml(snapshot));
+    bindClose(sequence);
+    window.AvanAccountingNegative?.project?.();
+    return snapshot;
+  } catch (error) {
+    console.warn('[Counterparty 360]', error);
+    if (sequence === openSequence) {
+      openModal(errorModalHtml());
+      bindClose(sequence);
+    }
+    throw error;
+  }
 }
 
 function handleClick(event) {
@@ -262,39 +310,45 @@ function handleClick(event) {
   if (!button) return;
   event.preventDefault();
   event.stopPropagation();
-  const partyId = button.dataset.counterparty360;
+
+  const partyId = String(button.dataset.counterparty360 || '').trim();
   if (!partyId || button.disabled) return;
+
+  const originalText = button.textContent;
   button.disabled = true;
+  button.textContent = 'در حال بارگذاری…';
   openCounterparty360(partyId)
-    .catch(error => {
-      console.warn('[Counterparty 360]', error);
-      openModal('<h2>نمای ۳۶۰ طرف‌حساب</h2><div class="error-box">اطلاعات ۳۶۰ این طرف‌حساب در حال حاضر قابل بارگذاری نیست.</div><div class="form-actions"><button type="button" class="ghost" id="avanCounterparty360Close">بستن</button></div>');
-      document.getElementById('avanCounterparty360Close')?.addEventListener('click', closeModal, { once: true });
-    })
-    .finally(() => { button.disabled = false; });
+    .catch(() => {})
+    .finally(() => {
+      if (!button.isConnected) return;
+      button.disabled = false;
+      button.textContent = originalText || 'نمای ۳۶۰';
+    });
 }
 
 function invalidate() {
   context = null;
   contextInflight = null;
-  scheduleButtons();
+  Lifecycle?.schedule?.('counterparty-360', 'company-context');
 }
 
 export function installCounterparty360() {
   if (!HAS_BROWSER || installed) return false;
   installed = true;
+
   document.addEventListener('click', handleClick, true);
-  window.addEventListener('avan:page-rendered', scheduleButtons);
+  Lifecycle?.use?.('parties:counterparty-360-actions', enhancePartyActions, { priority: 240 });
+  window.addEventListener('avan:page-rendered', () => Lifecycle?.schedule?.('counterparty-360', 'page-rendered'));
   window.addEventListener('avan:company-context-changed', invalidate);
   window.addEventListener('avan:company-context-cleared', invalidate);
-  const content = document.getElementById('content');
-  if (content) new MutationObserver(scheduleButtons).observe(content, { childList: true, subtree: true });
-  scheduleButtons();
+  Lifecycle?.schedule?.('counterparty-360', 'install');
+
   window.AvanCounterparty360 = Object.freeze({
     open: openCounterparty360,
     refresh: invalidate,
     readOnly: true,
-    oneRialExact: true
+    oneRialExact: true,
+    lifecycleManaged: true
   });
   return true;
 }
