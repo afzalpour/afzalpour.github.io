@@ -25,6 +25,20 @@ assert.match(fixCssV2, /avan-why-amount-card-v2\{grid-column:1\/-1!important/);
 assert.match(fixV2, /fitSingleLineValue\(value, 12\)/);
 assert.match(fixCssV2, /white-space:nowrap/);
 
+// Business evidence Live polish: fully Persian, one large answer-number card, accounting negatives and Persian account groups.
+assert.match(fixV2, /ACCOUNT_CATEGORY_FA/);
+for (const label of ['دارایی', 'بدهی', 'حقوق مالکانه', 'درآمد', 'هزینه']) {
+  assert.match(fixV2, new RegExp(label));
+}
+assert.match(fixV2, /Evidence\\b\/g, 'شواهد حسابداری'/);
+assert.match(fixV2, /Ledger\\b\/g, 'دفتر کل'/);
+assert.match(fixV2, /منبع محاسبه\|حساب‌های مرتبط\|شواهد دفتر کل/);
+assert.match(fixV2, /منطق\\s\*:\|بازه\\s\*:/);
+assert.match(fixV2, /avan-business-evidence-answer-card/);
+assert.match(fixV2, /font-size:clamp\(1\.65rem,5vw,2\.6rem\)/);
+assert.match(fixV2, /AvanAccountingNegative\?\.project/);
+assert.match(fixV2, /color:var\(--bad,#b23b3b\)!important/);
+
 // Closing a journal opened from why-number / aging returns to the preserved modal DOM.
 assert.match(ui, /data-aging-journal/);
 assert.match(ui, /data-why-journal/);
@@ -57,9 +71,15 @@ assert.match(ui, /بزرگ‌ترین بدهکار بر کل مطالبات با
 assert.match(ui, /بزرگ‌ترین بستانکار تجاری بر کل بدهی تجاری باز/);
 assert.match(ui, /چرا این عدد؟/);
 
-// Aging tables: centered and unit-stripped in table cells; continuous controls centered.
+// Aging tables: centered, body units remain de-duplicated, but money unit must be restored explicitly in headers.
 assert.match(ui, /avan-aging-centered-table/);
 assert.match(ui, /stripMoneyUnit/);
+assert.match(fixV2, /activeMoneyUnitLabel/);
+assert.match(fixV2, /AvanMoney\?\.unitLabel/);
+assert.match(fixV2, /ensureHeaderUnit\(th, 'مبلغ', unit\)/);
+assert.match(fixV2, /ensureHeaderUnit\(th, 'مانده باز', unit\)/);
+assert.match(fixV2, /ensureHeaderUnit\(th, 'مانده', unit\)/);
+assert.match(fixV2, /`\$\{label\} \(\$\{unit\}\)`/);
 assert.match(css, /\.avan-aging-centered-table th,.avan-aging-centered-table td\{text-align:center!important/);
 assert.match(css, /\.avan-continuous-controls-table th:nth-child\(4\),.avan-continuous-controls-table td:nth-child\(4\)/);
 

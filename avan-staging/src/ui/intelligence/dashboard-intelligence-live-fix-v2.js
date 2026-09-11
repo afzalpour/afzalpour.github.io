@@ -8,6 +8,14 @@ let installed = false;
 const TEN_DAY_QUERY =
   'در ده روز آینده چه چیزهایی نیاز به توجه دارد؟';
 
+const ACCOUNT_CATEGORY_FA = Object.freeze({
+  asset: 'دارایی',
+  liability: 'بدهی',
+  equity: 'حقوق مالکانه',
+  income: 'درآمد',
+  expense: 'هزینه'
+});
+
 function stripMoneyUnit(root) {
   if (!root) return;
   const walker = document.createTreeWalker(
@@ -183,6 +191,170 @@ function strengthenContinuousControls(root) {
   });
 }
 
+function activeMoneyUnitLabel() {
+  const runtimeLabel = String(window.AvanMoney?.unitLabel?.() || '').trim();
+  if (runtimeLabel === 'ریال' || runtimeLabel === 'تومان') return runtimeLabel;
+  const runtimeUnit = String(window.AvanMoney?.unit?.() || '').trim().toLowerCase();
+  if (runtimeUnit === 'rial') return 'ریال';
+  if (runtimeUnit === 'toman') return 'تومان';
+  const pageText = String(document.getElementById('content')?.textContent || '');
+  if (/ریال/.test(pageText)) return 'ریال';
+  return 'تومان';
+}
+
+function ensureHeaderUnit(th, label, unit) {
+  if (!th) return;
+  const text = String(th.textContent || '').trim();
+  const plain = text.replace(/\s*\((?:تومان|ریال)\)\s*$/, '').trim();
+  if (plain !== label) return;
+  const next = `${label} (${unit})`;
+  if (text !== next) th.textContent = next;
+}
+
+function patchAgingMoneyUnitHeaders(root) {
+  if (!root) return;
+  const unit = activeMoneyUnitLabel();
+
+  [...root.querySelectorAll('.section.card')]
+    .filter(section => /مطالبات و بدهی تجاری/.test(section.textContent || ''))
+    .forEach(section => {
+      section.querySelectorAll('table').forEach(table => {
+        table.querySelectorAll('th').forEach(th => {
+          ensureHeaderUnit(th, 'مبلغ', unit);
+          ensureHeaderUnit(th, 'مانده باز', unit);
+        });
+      });
+    });
+
+  if (/ریز مانده باز/.test(root.textContent || '')) {
+    root.querySelectorAll('table th').forEach(th =>
+      ensureHeaderUnit(th, 'مانده', unit)
+    );
+  }
+}
+
+function replaceModalEnglish(root) {
+  if (!root) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  for (const node of nodes) {
+    const parent = node.parentElement;
+    if (!parent || ['SCRIPT', 'STYLE', 'CODE', 'PRE'].includes(parent.tagName)) continue;
+    let text = node.nodeValue || '';
+    text = text
+      .replace(/\bEvidence\b/g, 'شواهد حسابداری')
+      .replace(/\bLedger\b/g, 'دفتر کل');
+    if (node.nodeValue !== text) node.nodeValue = text;
+  }
+}
+
+function translateAccountGroups(modal) {
+  if (!modal) return;
+  modal.querySelectorAll('table').forEach(table => {
+    const headers = [...table.querySelectorAll('thead th')].map(th =>
+      String(th.textContent || '').trim()
+    );
+    const groupIndex = headers.indexOf('گروه');
+    if (groupIndex < 0) return;
+    table.querySelectorAll('tbody tr').forEach(row => {
+      const cell = row.children[groupIndex];
+      if (!cell) return;
+      const raw = String(cell.textContent || '').trim().toLowerCase();
+      const translated = ACCOUNT_CATEGORY_FA[raw];
+      if (translated && cell.textContent.trim() !== translated) {
+        cell.textContent = translated;
+      }
+    });
+  });
+}
+
+function patchBusinessEvidenceModal(modal) {
+  if (!modal || !modal.querySelector('#businessEvidenceClose')) return;
+  if (!/چرا این عدد؟/.test(modal.textContent || '')) return;
+
+  modal.classList.add('avan-business-evidence-fa');
+  replaceModalEnglish(modal);
+
+  const badge = modal.querySelector('.section-head .cloud-badge');
+  if (badge && badge.textContent.trim() !== 'شواهد حسابداری') {
+    badge.textContent = 'شواهد حسابداری';
+  }
+
+  const summaryGrid = [...modal.querySelectorAll('.grid4')].find(grid =>
+    /عدد پاسخ/.test(grid.textContent || '')
+  );
+  if (summaryGrid) {
+    const cards = [...summaryGrid.children].filter(node =>
+      node.classList?.contains('card')
+    );
+    const answerCard = cards.find(card => /عدد پاسخ/.test(card.textContent || ''));
+    cards.forEach(card => {
+      if (card !== answerCard && /منبع محاسبه|حساب‌های مرتبط|شواهد دفتر کل/.test(card.textContent || '')) {
+        card.remove();
+      }
+    });
+    summaryGrid.classList.add('avan-business-evidence-answer-grid');
+    if (answerCard) {
+      answerCard.classList.add('avan-business-evidence-answer-card');
+      const value = answerCard.querySelector('.kpi-value');
+      if (value) {
+        value.classList.add('avan-business-evidence-answer-value');
+        fitSingleLineValue(value, 16);
+      }
+    }
+  }
+
+  modal.querySelectorAll('.info-box.section').forEach(box => {
+    if (/منطق\s*:|بازه\s*:/.test(box.textContent || '')) box.remove();
+  });
+
+  modal.querySelectorAll('.success-box.section,.error-box.section').forEach(box => {
+    if (/Evidence/.test(box.textContent || '')) {
+      box.textContent = String(box.textContent || '').replace(/Evidence/g, 'شواهد حسابداری');
+    }
+  });
+
+  translateAccountGroups(modal);
+  replaceModalEnglish(modal);
+  window.AvanAccountingNegative?.project?.();
+}
+
+function installEvidencePolishStyle() {
+  if (document.getElementById('avanBusinessEvidenceFaPolishStyle')) return;
+  const style = document.createElement('style');
+  style.id = 'avanBusinessEvidenceFaPolishStyle';
+  style.textContent = `
+    .avan-business-evidence-fa .avan-business-evidence-answer-grid{
+      display:block!important;
+      width:100%;
+      margin-block:14px 18px;
+    }
+    .avan-business-evidence-fa .avan-business-evidence-answer-card{
+      width:min(100%,760px);
+      max-width:760px;
+      margin-inline:auto;
+      padding:24px 20px;
+      text-align:center;
+      border:1px solid var(--primary,#5754d8);
+      background:var(--surface-soft,#f7f7fb);
+    }
+    .avan-business-evidence-fa .avan-business-evidence-answer-value{
+      font-size:clamp(1.65rem,5vw,2.6rem)!important;
+      line-height:1.45;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      font-variant-numeric:tabular-nums;
+    }
+    .avan-business-evidence-fa .avan-accounting-negative{
+      color:var(--bad,#b23b3b)!important;
+      font-weight:800!important;
+    }
+  `;
+  document.head.append(style);
+}
+
 function patchAll(root) {
   if (!root) return;
   patchDashboardKpis(root);
@@ -190,6 +362,7 @@ function patchAll(root) {
   standardizeBusinessQuestions(root);
   standardizeCollectionTable(root);
   strengthenContinuousControls(root);
+  patchAgingMoneyUnitHeaders(root);
 }
 
 function selectQuestionOnly(event) {
@@ -224,6 +397,7 @@ export function installDashboardIntelligenceLiveFixV2() {
   if (!HAS_BROWSER || installed) return false;
   installed = true;
 
+  installEvidencePolishStyle();
   document.addEventListener('click', selectQuestionOnly, true);
 
   const content = document.getElementById('content');
@@ -232,17 +406,24 @@ export function installDashboardIntelligenceLiveFixV2() {
   const refresh = () => {
     patchAll(content);
     patchWhyNumberAmount(modal);
+    patchAgingMoneyUnitHeaders(modal);
+    patchBusinessEvidenceModal(modal);
   };
 
   const observer = new MutationObserver(() => queueMicrotask(refresh));
   const modalObserver = new MutationObserver(() =>
-    queueMicrotask(() => patchWhyNumberAmount(modal))
+    queueMicrotask(() => {
+      patchWhyNumberAmount(modal);
+      patchAgingMoneyUnitHeaders(modal);
+      patchBusinessEvidenceModal(modal);
+    })
   );
 
   if (content) observer.observe(content, { childList: true, subtree: true });
   if (modal) modalObserver.observe(modal, { childList: true, subtree: true });
 
   window.addEventListener('avan:page-rendered', () => queueMicrotask(refresh));
+  window.addEventListener('avan:money-unit-changed', () => queueMicrotask(refresh));
   window.addEventListener('resize', () => queueMicrotask(refresh));
 
   refresh();
