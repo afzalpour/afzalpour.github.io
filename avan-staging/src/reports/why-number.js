@@ -97,10 +97,10 @@ function entryInScope(entry, meta, from, to) {
   return entry.status !== 'draft';
 }
 
-function journalEvidence({ evidenceLines, entries }) {
-  const journalIds = new Set(evidenceLines.map(line => line.journal_entry_id));
+function journalEvidence({ evidenceLines, entries, journalIds = null }) {
+  const ids = journalIds || new Set(evidenceLines.map(line => String(line.journal_entry_id)));
   return entries
-    .filter(entry => journalIds.has(entry.id))
+    .filter(entry => ids.has(String(entry.id)))
     .sort((a, b) => {
       const ad = String(a.entry_date || '');
       const bd = String(b.entry_date || '');
@@ -120,6 +120,14 @@ function overdueTenths(party, asOf) {
     if (!item?.dueDate || item.dueDate >= asOf) return sum;
     return sum + toTenths(item.remaining, 'aging_remaining');
   }, 0n);
+}
+
+function selectedOpenItems(parties, { overdueOnly, asOf }) {
+  return parties.flatMap(party =>
+    (party?.openItems || []).filter(item =>
+      !overdueOnly || (item?.dueDate && item.dueDate < asOf)
+    )
+  );
 }
 
 function buildAgingEvidence({
@@ -156,19 +164,31 @@ function buildAgingEvidence({
     return sum + toTenths(party.total, 'aging_party_total');
   }, 0n);
 
-  const contributingPartyIds = new Set(
-    selectedParties
-      .filter(party => !meta.overdueOnly || overdueTenths(party, to) > 0n)
-      .map(party => party.partyId)
+  // Evidence must follow the exact open items that compose the displayed Aging amount.
+  // This avoids a misleading state where a non-zero open amount is shown but the
+  // evidence table is empty because unrelated party-level filtering missed the
+  // originating journal entry.
+  const openItems = selectedOpenItems(selectedParties, {
+    overdueOnly: meta.overdueOnly,
+    asOf: to
+  });
+  const openJournalIds = new Set(
+    openItems
+      .map(item => String(item?.journalEntryId || ''))
+      .filter(Boolean)
   );
-  const entryMap = new Map(entries.map(entry => [entry.id, entry]));
+  const entryMap = new Map(entries.map(entry => [String(entry.id), entry]));
   const evidenceLines = lines.filter(line => {
     if (!accountId || line.account_id !== accountId) return false;
-    if (!line.party_id || !contributingPartyIds.has(line.party_id)) return false;
-    const entry = entryMap.get(line.journal_entry_id);
+    if (!openJournalIds.has(String(line.journal_entry_id))) return false;
+    const entry = entryMap.get(String(line.journal_entry_id));
     return entryInScope(entry, meta, from, to);
   });
-  const journals = journalEvidence({ evidenceLines, entries });
+  const journals = journalEvidence({
+    evidenceLines,
+    entries,
+    journalIds: openJournalIds
+  });
   const matchedParty = targetPartyId
     ? parties.find(party => party.id === targetPartyId) || null
     : null;
@@ -193,7 +213,13 @@ function buildAgingEvidence({
     journals,
     calculatedAmount: decimal(calculatedTenths),
     calculationNote,
-    targetPartyId: targetPartyId || null
+    targetPartyId: targetPartyId || null,
+    openItemCount: openItems.length,
+    contracts: Object.freeze({
+      agingOpenItemEvidence: true,
+      deterministic: true,
+      oneRialExact: true
+    })
   };
 }
 
