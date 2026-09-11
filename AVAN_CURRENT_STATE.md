@@ -50,7 +50,7 @@ Implemented: Company/RLS-scoped cash/bank, gross AR/AP by real `party_id`, bank/
 
 ### Deferred Live polish
 
-User reported several minor Control Tower issues after Live PASS and explicitly requested later correction. Exact details are not yet supplied; do not guess or alter them speculatively.
+User reported several minor Control Tower issues after Live PASS. Any remaining items not covered by later explicit feedback stay in the polish backlog and must not be guessed.
 
 ---
 
@@ -69,7 +69,7 @@ Implemented: real opening cash/bank, explicit user-entered future flows, determi
 
 ### Deferred Live polish
 
-User reported several minor Digital Twin issues after Live PASS and requested later correction. Exact details are pending; Live PASS remains valid.
+User reported several minor Digital Twin issues after Live PASS. Any remaining items not covered by explicit later feedback stay deferred; Live PASS remains valid.
 
 ---
 
@@ -86,25 +86,13 @@ Status: **Engineering PASS + Live PASS**.
 - milestone cache = `avan-staging-rc1-v104-working-capital-evidence`.
 - explicit user confirmation = **«Working Capital + Evidence Live PASS»**.
 
-Implemented:
-
-- canonical one-Rial Working Capital model;
-- gross AR/AP by configured control accounts and real `party_id`;
-- no cross-party netting;
-- FIFO reduction allocation against open exposure;
-- invoice due-date aging with explicit fallbacks;
-- explainable collection priority by days past due;
-- 30-day payable calendar;
-- cash less overdue + 30-day obligations indicator;
-- first Evidence Graph links: open item ↔ party ↔ journal entry ↔ journal line ↔ invoice;
-- explicit `workspace_id` on every Data API query plus RLS boundary;
-- zero autonomous message/collection/payment/posting and zero Actual Ledger mutation.
+Implemented: canonical one-Rial Working Capital model; gross AR/AP by control accounts and real `party_id`; no cross-party netting; FIFO reduction allocation; invoice due-date aging with fallbacks; explainable collection priority; 30-day payable calendar; liquidity indicator; Evidence Graph links; explicit Company/RLS scope; zero autonomous collection/payment/posting and zero Actual Ledger mutation.
 
 Important correction: legacy `src/reports/party-aging.js` remains unsuitable as the numeric source because of integer-oriented assumptions. RC1.7-C uses canonical decimal↔tenths money helpers.
 
 ### Deferred Live polish
 
-User reported a minor Working Capital/Evidence issue after Live PASS and explicitly requested later correction. Exact detail is not yet supplied; do not fix speculatively.
+User reported a minor Working Capital/Evidence issue after Live PASS. Any remaining item not covered by explicit later feedback stays deferred.
 
 ---
 
@@ -114,31 +102,51 @@ Status: **Engineering PASS + Staging deployed; Live Gate pending**.
 
 - PR #123 merged as `ba642265a33d43aca25937dac0721358dcb11a5c`.
 - Gate #210 correctly stopped an obsolete RC1.7-C exact-cache assertion.
-- the old test was changed to preserve the RC1.7-C minimum cache milestone while allowing later valid cache versions; no product/accounting/security guard was weakened.
 - final pre-merge Architecture Gate #211 = PASS.
 - post-merge Architecture Gate #212 = PASS.
 - Pages #360 = PASS.
-- current Staging PWA cache = `avan-staging-rc1-v105-working-capital-decisions`.
+- milestone cache = `avan-staging-rc1-v105-working-capital-decisions`.
 
-Implemented scope:
+Implemented: deterministic collection recommendations; payable sequencing; exact one-Rial `cash before`/`cash after`; liquidity-gap recommendation; `چرا این پیشنهاد؟`; controlled Digital Twin handoff with real open amounts as editable seeds; no auto-run, no autonomous message/payment/posting, no DB write and no Actual Ledger mutation.
 
-- deterministic collection recommendations from actual overdue AR and days past due;
-- deterministic payable sequencing by due date;
-- exact one-Rial `cash before` / `projected cash after` for each payable in sequence;
-- explicit liquidity-gap recommendation when the next obligation is not fully covered by current cash in that sequence;
-- `چرا این پیشنهاد؟` shows rule, monetary effect and accounting evidence;
-- controlled handoff from each collection/payment decision to Financial Digital Twin;
-- Digital Twin seed amounts come from the actual open amount and remain editable by the user;
-- the handoff does **not** auto-run a scenario and does not create a real financial operation;
-- no AI-generated recommendation/amount, no autonomous message, collection or payment;
-- no new DB/RPC/DDL and no Actual Ledger mutation;
-- Persian-first responsive UI and PWA precache coverage.
-
-**Current Live blocker = RC1.7-D browser/PWA validation only.**
+**RC1.7-D Live Gate remains PENDING until explicit user confirmation.**
 
 ---
 
-## 7) Governing accounting / money invariants
+## 7) Dashboard + Financial Intelligence Live Polish
+
+Status: **Engineering PASS + Staging deployed; Live validation pending**.
+
+User supplied concrete dashboard/intelligence observations and requested correction before continuing. They were implemented in Staging through PR **#125**.
+
+- PR #125 merge = `b53f958cb13cd311c63d21b1e44789a162d96747`.
+- pre-merge Architecture Gate #213 = PASS.
+- post-merge Architecture Gate #214 = PASS.
+- Pages #362 = PASS.
+- current Staging PWA cache = `avan-staging-rc1-v106-dashboard-intelligence-polish`.
+- Production root was not changed.
+
+Implemented polish:
+
+- dashboard tables receive safe responsive wrappers so long numeric values cannot visually escape their table;
+- `چرا این عدد؟` is Persian-first and user-facing: report amount is prominent in its own box;
+- technical RPC/data-path explanatory box was removed from the main modal;
+- calculation source, related accounts and ledger evidence remain available under collapsed `جزئیات محاسبه و شواهد` rather than cluttering the primary view;
+- `Ledger Evidence`, `Drill-down`, report RPC names and other visible technical terms are Persianized;
+- opening a journal from Why Number or Aging preserves the parent modal; `بستن` on the journal returns to that previous modal;
+- the business-question area gained additional high-value prompts only for deterministic intents the current Copilot actually supports: AR, AP, cash, P&L and priorities;
+- risk-factor cards now expose `چرا این عدد؟` with the deterministic rule/formula and data origin for liquidity coverage, >90-day receivables, customer concentration, supplier concentration and cash dependence on collections;
+- Month-End / close-readiness visible descriptions are translated to natural Persian;
+- receivable/payable aging tables are centered and currency-unit text is suppressed inside those tables only;
+- Continuous Controls value column is centered and kept on one line;
+- financial-analysis severity labels are color-coded by importance: critical/warning/attention/info/healthy;
+- no accounting calculation, DB write path, local/session financial persistence or Production runtime was changed.
+
+This patch has permanent regression coverage in `tests/dashboard-intelligence-live-polish.spec.mjs`.
+
+---
+
+## 8) Governing accounting / money invariants
 
 - PostgreSQL/Supabase is the financial Source of Truth.
 - canonical money = **Toman with 0.1 Toman = 1 Rial**.
@@ -153,7 +161,7 @@ Implemented scope:
 
 ---
 
-## 8) Security / tenancy / recovery invariants
+## 9) Security / tenancy / recovery invariants
 
 - Company/RLS boundary is mandatory; cross-company leakage is Blocker/Critical.
 - browser never receives Service Role/private secrets.
@@ -167,7 +175,7 @@ Implemented scope:
 
 ---
 
-## 9) Strategic architecture — ADR-0023
+## 10) Strategic architecture — ADR-0023
 
 ADR-0023 is **Accepted**. Official strategic modules:
 
@@ -186,7 +194,7 @@ Progress:
 - Module 1: first scope Live PASS.
 - Module 2: first scope Live PASS.
 - Module 3: foundation Live PASS; controlled decision layer at Live Gate.
-- Module 8: evidence foundation Live PASS and now used by decision recommendations.
+- Module 8: evidence foundation Live PASS and used by decision recommendations.
 - Modules 4–7 and 9 remain planned.
 
 Strategic thesis: **آوان فقط نمی‌گوید چه اتفاقی افتاده؛ می‌گوید چرا اتفاق افتاده، بعد چه می‌شود، و الان چه اقدام کنترل‌شده‌ای باید انجام شود.**
@@ -195,27 +203,25 @@ Guardrails: deterministic calculation before narrative; evidence before recommen
 
 ---
 
-## 10) Immediate next gate
+## 11) Immediate Live gates
 
-Immediate gate: **RC1.7-D Evidence-backed Decision Layer Live Gate**.
+Immediate validation for the user-observed polish:
 
-Live validation should confirm:
+1. Dashboard tables keep all numbers visually inside their table/container on desktop and mobile.
+2. `چرا این عدد؟` is Persian, report amount is boxed, technical RPC/path box is gone, and detailed evidence is collapsed by default.
+3. from Why Number/Aging, `مشاهده سند` → `بستن` returns to the originating modal.
+4. business-question area shows additional useful supported questions.
+5. risk factors expose `چرا این عدد؟` with understandable origin/formula.
+6. Month-End descriptions are natural Persian.
+7. aging tables are centered and do not show currency-unit text inside cells.
+8. Continuous Controls value stays centered on one line.
+9. financial-analysis status words are color-coded by severity.
 
-1. after Staging hard refresh, `مرکز سرمایه در گردش` still opens normally;
-2. new `تصمیم‌یار عملیاتی` section appears;
-3. collection recommendations show real overdue amount and understandable reason;
-4. payment recommendations show actual obligation plus `نقد پس از این ردیف`;
-5. `چرا این پیشنهاد؟` opens rule + evidence;
-6. `آزمایش وصول در دوقلو` opens Digital Twin with the overdue amount prefilled as collections but does not calculate automatically;
-7. `آزمایش پرداخت در دوقلو` opens Digital Twin with the selected obligation prefilled as payments but does not calculate automatically;
-8. one-Rial amounts remain exact;
-9. no message, receipt, payment, journal or Actual Ledger mutation occurs.
-
-Deferred polish backlog remains open for Control Tower, Digital Twin and Working Capital until exact user-supplied observations are provided.
+Separately, **RC1.7-D Live PASS is still pending** and must not be inferred from this polish validation.
 
 ---
 
-## 11) Canonical current pointers
+## 12) Canonical current pointers
 
 - Production runtime: **RC1.6**.
 - Production merge: `eace3198947da1e87deb5d5512b905b27975c74e`.
@@ -223,6 +229,7 @@ Deferred polish backlog remains open for Control Tower, Digital Twin and Working
 - Control Tower Live merge: `b260c6995c233f097661082092767373416e1fe9`.
 - Digital Twin Live merge: `d522dd47d825adc7e0458ca3d755c3752ccde069`.
 - Working Capital + Evidence Live merge: `197503177b04b7f0fd30bedd2173645decb944ab`.
-- latest functional Staging merge: `ba642265a33d43aca25937dac0721358dcb11a5c`.
-- current Staging PWA cache: `avan-staging-rc1-v105-working-capital-decisions`.
-- current Live blocker: **RC1.7-D browser/PWA Live confirmation only**.
+- RC1.7-D Engineering merge: `ba642265a33d43aca25937dac0721358dcb11a5c`.
+- latest functional Staging merge: `b53f958cb13cd311c63d21b1e44789a162d96747`.
+- current Staging PWA cache: `avan-staging-rc1-v106-dashboard-intelligence-polish`.
+- current Live validations pending: **dashboard/intelligence polish** and **RC1.7-D**.
