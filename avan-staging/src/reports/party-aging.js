@@ -32,6 +32,24 @@ function bucketForDays(days) {
   return '90_plus';
 }
 
+function journalOrderValue(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER;
+}
+
+function compareAgingItems(a, b) {
+  const dateCompare = String(a.entryDate || '').localeCompare(String(b.entryDate || ''));
+  if (dateCompare) return dateCompare;
+
+  const journalCompare = journalOrderValue(a.journalNo) - journalOrderValue(b.journalNo);
+  if (journalCompare) return journalCompare;
+
+  const lineCompare = Number(a.lineNo || 0) - Number(b.lineNo || 0);
+  if (lineCompare) return lineCompare;
+
+  return String(a.journalEntryId || '').localeCompare(String(b.journalEntryId || ''));
+}
+
 function allocateFifo(increases, reductions) {
   const open = increases.map(item => ({ ...item, remainingTenths: item.amountTenths }));
   let reduceIndex = 0;
@@ -124,6 +142,7 @@ function buildSide({
     const item = Object.freeze({
       journalEntryId: String(entry.id),
       journalNo: entry.journal_no ?? null,
+      lineNo: line.line_no ?? 0,
       entryDate,
       dueDate,
       dueDateSource: invoice?.due_date
@@ -151,8 +170,8 @@ function buildSide({
   let grandTotalTenths = 0n;
 
   for (const [partyId, group] of byParty.entries()) {
-    group.increases.sort((a, b) => a.entryDate.localeCompare(b.entryDate));
-    group.reductions.sort((a, b) => a.entryDate.localeCompare(b.entryDate));
+    group.increases.sort(compareAgingItems);
+    group.reductions.sort(compareAgingItems);
 
     const remaining = allocateFifo(group.increases, group.reductions);
     const totalTenths = remaining.reduce((sum, item) => sum + item.remainingTenths, 0n);
@@ -209,6 +228,8 @@ function buildSide({
     }),
     contracts: Object.freeze({
       deterministic: true,
+      deterministicSameDayOrder: true,
+      fifoOrder: 'entry_date,journal_no,line_no,journal_entry_id',
       oneRialExact: true,
       crossPartyNetting: false,
       draftExcluded: true
@@ -247,6 +268,8 @@ export function buildPartyAging({
     }),
     contracts: Object.freeze({
       deterministic: true,
+      deterministicSameDayOrder: true,
+      fifoOrder: 'entry_date,journal_no,line_no,journal_entry_id',
       oneRialExact: true,
       crossPartyNetting: false,
       actualLedgerMutation: false
