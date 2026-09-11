@@ -34,7 +34,16 @@ function sideLabel(side) {
 function moneyUnitLabel(money) {
   const sample = String(money?.('0') || '');
   const match = sample.match(/(تومان|ریال)/);
-  return match?.[1] || 'تومان';
+  if (match?.[1]) return match[1];
+  if (typeof window !== 'undefined') {
+    const runtime = String(window.AvanMoney?.unitLabel?.() || '').trim();
+    if (runtime === 'تومان' || runtime === 'ریال') return runtime;
+  }
+  return 'تومان';
+}
+
+function headerWithUnit(label, unitLabel) {
+  return `${label} <span class="avan-table-money-unit">(${unitLabel})</span>`;
 }
 
 function agingTable(side, money, unitLabel) {
@@ -50,7 +59,7 @@ function agingTable(side, money, unitLabel) {
   return `
     <table>
       <thead>
-        <tr><th>سررسید</th><th>مبلغ (${unitLabel})</th></tr>
+        <tr><th>سررسید</th><th>${headerWithUnit('مبلغ', unitLabel)}</th></tr>
       </thead>
       <tbody>
         <tr><td>جاری / سررسیدنشده</td><td class="num">${money(side.aging.current)}</td></tr>
@@ -70,7 +79,7 @@ function partyRows(sideName, side, money, esc, unitLabel) {
 
   return `
     <table>
-      <thead><tr><th>طرف‌حساب</th><th>مانده باز (${unitLabel})</th><th>جزئیات</th></tr></thead>
+      <thead><tr><th>طرف‌حساب</th><th>${headerWithUnit('مانده باز', unitLabel)}</th><th>جزئیات</th></tr></thead>
       <tbody>
         ${side.parties.slice(0, 10).map(party => `
           <tr>
@@ -129,8 +138,8 @@ export function partyAgingSection(aging, { money, dateFa, esc }) {
       </div>
 
       <div class="grid2 section">
-        <div class="card"><h3>Aging مطالبات</h3>${agingTable(ar, money, unitLabel)}</div>
-        <div class="card"><h3>Aging بدهی تجاری</h3>${agingTable(ap, money, unitLabel)}</div>
+        <div class="card"><h3>سررسید مطالبات</h3>${agingTable(ar, money, unitLabel)}</div>
+        <div class="card"><h3>سررسید بدهی تجاری</h3>${agingTable(ap, money, unitLabel)}</div>
       </div>
 
       <div class="grid2 section">
@@ -178,7 +187,7 @@ export function partyAgingDetailHtml({ aging, sideName, partyId, money, dateFa, 
     <div class="section">
       ${rows ? `
         <table>
-          <thead><tr><th>سند</th><th>تاریخ ثبت</th><th>سررسید</th><th>مانده (${unitLabel})</th><th>Drill-down</th></tr></thead>
+          <thead><tr><th>سند</th><th>تاریخ ثبت</th><th>سررسید</th><th>${headerWithUnit('مانده', unitLabel)}</th><th>Drill-down</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       ` : '<div class="empty">ردیف بازی وجود ندارد.</div>'}
