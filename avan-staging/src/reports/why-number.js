@@ -164,10 +164,11 @@ function buildAgingEvidence({
     return sum + toTenths(party.total, 'aging_party_total');
   }, 0n);
 
-  // Evidence must follow the exact open items that compose the displayed Aging amount.
-  // This avoids a misleading state where a non-zero open amount is shown but the
-  // evidence table is empty because unrelated party-level filtering missed the
-  // originating journal entry.
+  // Guarantee that every non-zero Aging answer carries the journal entries of
+  // the exact open items that compose that answer. Party-level control-account
+  // lines are retained as additional context, including reductions that affected
+  // the remaining balance, but they can no longer cause the origin journal to
+  // disappear from the evidence table.
   const openItems = selectedOpenItems(selectedParties, {
     overdueOnly: meta.overdueOnly,
     asOf: to
@@ -177,17 +178,26 @@ function buildAgingEvidence({
       .map(item => String(item?.journalEntryId || ''))
       .filter(Boolean)
   );
+  const contributingPartyIds = new Set(
+    selectedParties
+      .filter(party => !meta.overdueOnly || overdueTenths(party, to) > 0n)
+      .map(party => party.partyId)
+  );
   const entryMap = new Map(entries.map(entry => [String(entry.id), entry]));
   const evidenceLines = lines.filter(line => {
     if (!accountId || line.account_id !== accountId) return false;
-    if (!openJournalIds.has(String(line.journal_entry_id))) return false;
+    if (!line.party_id || !contributingPartyIds.has(line.party_id)) return false;
     const entry = entryMap.get(String(line.journal_entry_id));
     return entryInScope(entry, meta, from, to);
   });
+  const evidenceJournalIds = new Set([
+    ...evidenceLines.map(line => String(line.journal_entry_id)),
+    ...openJournalIds
+  ]);
   const journals = journalEvidence({
     evidenceLines,
     entries,
-    journalIds: openJournalIds
+    journalIds: evidenceJournalIds
   });
   const matchedParty = targetPartyId
     ? parties.find(party => party.id === targetPartyId) || null
