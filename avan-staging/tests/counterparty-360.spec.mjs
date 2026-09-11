@@ -28,11 +28,7 @@ const invoices = [
   { id: 'i2', invoice_no: 20, invoice_type: 'purchase', invoice_date: '2026-07-01', due_date: '2026-07-20', party_id: 'p1', status: 'posted', journal_entry_id: 'e3', total_amount: '30.2' }
 ];
 
-const snapshot = buildCounterparty360({
-  party, roles, accounts, entries, lines, invoices,
-  fiscalFrom: '2026-03-21', asOf: '2026-09-12'
-});
-
+const snapshot = buildCounterparty360({ party, roles, accounts, entries, lines, invoices, fiscalFrom: '2026-03-21', asOf: '2026-09-12' });
 assert.equal(snapshot.financial.receivable, '60.1');
 assert.equal(snapshot.financial.overdueReceivable, '60.1');
 assert.equal(snapshot.financial.payable, '30.2');
@@ -53,7 +49,6 @@ assert.equal(snapshot.contracts.evidenceBacked, true);
 
 const ui = fs.readFileSync(new URL('../src/ui/parties/counterparty-360.js', import.meta.url), 'utf8');
 const css = fs.readFileSync(new URL('../rc17-counterparty-360.css', import.meta.url), 'utf8');
-assert.match(ui, /data-counterparty-360/);
 assert.match(ui, /نمای ۳۶۰/);
 assert.match(ui, /مطالبه باز/);
 assert.match(ui, /بدهی باز/);
@@ -64,18 +59,21 @@ assert.match(ui, /گردش‌های دفتر طرف‌حساب/);
 assert.match(ui, /شواهد و اسناد مؤثر/);
 assert.match(ui, /تهاتر نمی‌شوند/);
 assert.match(ui, /formatCanonicalDecimal/);
-assert.match(ui, /installUiLifecycle/);
-assert.match(ui, /parties:counterparty-360-actions/);
 assert.match(ui, /data-counterparty-360-loading/);
 assert.match(ui, /در حال بارگذاری اطلاعات طرف‌حساب/);
 assert.match(ui, /localIsoDate/);
+assert.match(ui, /actionPartyId/);
+assert.match(ui, /tr\[data-party-master-row\] > td:last-child/);
+assert.match(ui, /mutationFreeAction:true/);
+assert.doesNotMatch(ui, /installUiLifecycle/);
+assert.doesNotMatch(ui, /parties:counterparty-360-actions/);
 assert.doesNotMatch(ui, /new MutationObserver/);
 assert.doesNotMatch(ui, /requestAnimationFrame/);
+assert.doesNotMatch(ui, /createElement\(/);
 assert.doesNotMatch(ui, /\.insert\(|\.update\(|\.delete\(|service_role/i);
 
-// Live stability contract: visible 360 affordance belongs to the stable action cell,
-// while the injected legacy button is only an invisible hit area. This prevents
-// visible add/remove flashing even if an upstream page rerender occurs.
+// The visible affordance is tied to the stable action cell, not to an injected DOM button.
+// Legacy injected buttons are transparent as a stale-cache fallback, so they cannot flash visibly.
 assert.match(css, /tr\[data-party-master-row\]>td:last-child::after/);
 assert.match(css, /content:'نمای ۳۶۰'/);
 assert.match(css, /\.avan-counterparty-360-button\{[^}]*opacity:0!important/);
