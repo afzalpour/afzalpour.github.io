@@ -115,7 +115,7 @@ Implemented: deterministic collection recommendations; payable sequencing; exact
 
 ## 7) Dashboard + Financial Intelligence Live Polish / Accounting Correctness
 
-Status: **Engineering PASS + Staging deployed; latest Live validation pending**.
+Status: **Engineering PASS + Live PASS for Exact KPI / 10-Day hotfix; broader legacy-derived amount audit remains open**.
 
 The first explicit polish pass was implemented through PR **#125**, a second layout/interaction pass through PR **#127**, and an accounting-correctness / ten-day-question hotfix through PR **#129**.
 
@@ -141,6 +141,7 @@ Accounting-correctness / ten-day hotfix:
 - Pages #366 = PASS.
 - current Staging PWA cache = `avan-staging-rc1-v108-dashboard-accounting-correctness`.
 - Production root was not changed.
+- explicit user confirmation = **«Dashboard Exact KPI + 10-Day PASS»**.
 
 ### Critical accounting-correctness finding
 
@@ -184,7 +185,7 @@ The `اولویت‌های ده روز آینده` answer had a MutationObserver
 
 ### Certification boundary
 
-PR #129 certifies **the four primary Dashboard KPI amounts and their Why Number amounts** for canonical one-Rial exactness. It does **not** yet certify every legacy-derived amount inside Dashboard Aging / old business-intelligence / risk / collection sections. Those paths include legacy integer-oriented assumptions and require a dedicated Dashboard Accounting Correctness Audit before they can be declared fully exact.
+PR #129 plus the explicit Live confirmation certifies **the four primary Dashboard KPI amounts and their Why Number amounts** for canonical one-Rial exactness and confirms that `اولویت‌های ده روز آینده` no longer hangs in the tested Live flow. It does **not** yet certify every legacy-derived amount inside Dashboard Aging / old business-intelligence / risk / collection sections. Those paths include legacy integer-oriented assumptions and require a dedicated Dashboard Accounting Correctness Audit before they can be declared fully exact.
 
 ---
 
@@ -247,17 +248,16 @@ Guardrails: deterministic calculation before narrative; evidence before recommen
 
 ## 11) Immediate Live gates
 
-Immediate validation after PR #129:
+Latest user Live validation result:
 
-1. Hard Refresh Staging and verify the four primary Dashboard KPI amounts update from authoritative report RPCs.
-2. For the current verified Ledger state, annual P&L should display **1,655,826,226 Rial** unless new financial postings occurred after the verification query.
-3. `چرا این عدد؟` for annual P&L must show the same exact amount.
-4. `اولویت‌های ده روز آینده` should only populate the question field; after `تحلیل کن`, the answer must render without a browser hang.
-5. negative primary KPI values must preserve accounting-negative presentation.
+1. the four primary Dashboard KPI amounts passed the exact-value Live check;
+2. annual P&L / `چرا این عدد؟` consistency passed;
+3. `اولویت‌های ده روز آینده` completed without the prior browser hang;
+4. explicit confirmation received: **«Dashboard Exact KPI + 10-Day PASS»**.
 
-After these pass, schedule a dedicated **Dashboard Accounting Correctness Audit** for legacy Aging / derived intelligence numbers before certifying the entire Dashboard as exact.
+Next accounting-quality task before certifying the entire Dashboard as exact: dedicated **Dashboard Accounting Correctness Audit** for legacy Aging / derived intelligence / risk / collection amounts.
 
-Separately, **RC1.7-D Live PASS is still pending** and must not be inferred from this validation.
+Separately, **RC1.7-D Live PASS is still pending** and must not be inferred from the Dashboard confirmation.
 
 ---
 
@@ -272,4 +272,5 @@ Separately, **RC1.7-D Live PASS is still pending** and must not be inferred from
 - RC1.7-D Engineering merge: `ba642265a33d43aca25937dac0721358dcb11a5c`.
 - latest functional Staging merge: `10b9d83bef1764626c8fd4f2e8fda31f35bb3f27`.
 - current Staging PWA cache: `avan-staging-rc1-v108-dashboard-accounting-correctness`.
-- current Live validations pending: **Dashboard exact KPI / ten-day hotfix** and **RC1.7-D**.
+- current Live validations pending: **RC1.7-D**.
+- broader Dashboard Accounting Correctness Audit remains open as an engineering/accounting-quality task, not yet a Live PASS.
