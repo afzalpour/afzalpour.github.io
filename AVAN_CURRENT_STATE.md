@@ -117,32 +117,37 @@ Implemented: deterministic collection recommendations; payable sequencing; exact
 
 Status: **Engineering PASS + Staging deployed; Live validation pending**.
 
-User supplied concrete dashboard/intelligence observations and requested correction before continuing. They were implemented in Staging through PR **#125**.
+The first explicit polish pass was implemented through PR **#125** and then a second Live-fix pass was required after the user reported remaining layout/interaction regressions.
+
+Baseline polish:
 
 - PR #125 merge = `b53f958cb13cd311c63d21b1e44789a162d96747`.
 - pre-merge Architecture Gate #213 = PASS.
 - post-merge Architecture Gate #214 = PASS.
 - Pages #362 = PASS.
-- current Staging PWA cache = `avan-staging-rc1-v106-dashboard-intelligence-polish`.
+
+Second Live-fix pass:
+
+- PR #127 merge = `bef54fac6494fb96f4f6381d47bef76e992c9423`.
+- pre-merge Architecture Gate #215 = PASS.
+- post-merge Architecture Gate #216 = PASS.
+- Pages #364 = PASS.
+- current Staging PWA cache = `avan-staging-rc1-v107-dashboard-intelligence-live-fix-v2`.
 - Production root was not changed.
 
-Implemented polish:
+Implemented / corrected:
 
-- dashboard tables receive safe responsive wrappers so long numeric values cannot visually escape their table;
-- `چرا این عدد؟` is Persian-first and user-facing: report amount is prominent in its own box;
-- technical RPC/data-path explanatory box was removed from the main modal;
-- calculation source, related accounts and ledger evidence remain available under collapsed `جزئیات محاسبه و شواهد` rather than cluttering the primary view;
-- `Ledger Evidence`, `Drill-down`, report RPC names and other visible technical terms are Persianized;
-- opening a journal from Why Number or Aging preserves the parent modal; `بستن` on the journal returns to that previous modal;
-- the business-question area gained additional high-value prompts only for deterministic intents the current Copilot actually supports: AR, AP, cash, P&L and priorities;
-- risk-factor cards now expose `چرا این عدد؟` with the deterministic rule/formula and data origin for liquidity coverage, >90-day receivables, customer concentration, supplier concentration and cash dependence on collections;
-- Month-End / close-readiness visible descriptions are translated to natural Persian;
-- receivable/payable aging tables are centered and currency-unit text is suppressed inside those tables only;
-- Continuous Controls value column is centered and kept on one line;
-- financial-analysis severity labels are color-coded by importance: critical/warning/attention/info/healthy;
-- no accounting calculation, DB write path, local/session financial persistence or Production runtime was changed.
+- top dashboard KPI cards (دارایی، بانک و صندوق و peer cards) now have their own single-line numeric fit contract; this corrects the prior mistake where only HTML tables were protected;
+- `چرا این عدد؟` amount card now spans the complete grid width and dynamically fits long values rather than breaking inside a narrow grid column;
+- all suggested business questions now only populate the question field; analysis runs only after explicit user action on `تحلیل کن`;
+- user-facing business answers no longer display the technical `منبع` label;
+- the duplicate priority prompts were consolidated: `اولویت‌های امروز` is replaced with `اولویت‌های ده روز آینده`; the result is explicitly framed as a 10-day management attention plan based on current recorded state, not a forecast of future events;
+- the Smart Collection table now uses a stable presentation contract with horizontal containment, minimum table width, no forced breaking of customer name / `قدیمی‌ترین` / amount columns, and no currency-unit text inside amount cells;
+- Continuous Controls `سطح` is protected from word/letter splitting;
+- prior Why Number Persianization, collapsed evidence details, journal-back behavior, risk explanations, centered aging tables and severity color coding remain active;
+- no accounting calculation, DB/RPC behavior, Company/RLS boundary, financial write path, browser financial persistence or Production runtime was changed.
 
-This patch has permanent regression coverage in `tests/dashboard-intelligence-live-polish.spec.mjs`.
+Regression coverage remains in `tests/dashboard-intelligence-live-polish.spec.mjs` and now includes the second Live-fix contract.
 
 ---
 
@@ -205,17 +210,15 @@ Guardrails: deterministic calculation before narrative; evidence before recommen
 
 ## 11) Immediate Live gates
 
-Immediate validation for the user-observed polish:
+Immediate validation for the second user-observed dashboard/intelligence polish pass:
 
-1. Dashboard tables keep all numbers visually inside their table/container on desktop and mobile.
-2. `چرا این عدد؟` is Persian, report amount is boxed, technical RPC/path box is gone, and detailed evidence is collapsed by default.
-3. from Why Number/Aging, `مشاهده سند` → `بستن` returns to the originating modal.
-4. business-question area shows additional useful supported questions.
-5. risk factors expose `چرا این عدد؟` with understandable origin/formula.
-6. Month-End descriptions are natural Persian.
-7. aging tables are centered and do not show currency-unit text inside cells.
-8. Continuous Controls value stays centered on one line.
-9. financial-analysis status words are color-coded by severity.
+1. the four top dashboard KPI cards keep their full numbers visually inside the card;
+2. `چرا این عدد؟` keeps the report amount unbroken inside a full-width amount box;
+3. every suggested business question only selects/fills the query and waits for explicit `تحلیل کن`;
+4. business answers do not show `منبع`;
+5. only one priority-style shortcut remains and it is `اولویت‌های ده روز آینده`;
+6. Smart Collection table keeps `قدیمی‌ترین`, customer names and amount columns unbroken, with no currency unit inside amount cells;
+7. Continuous Controls `سطح` does not split letters/words.
 
 Separately, **RC1.7-D Live PASS is still pending** and must not be inferred from this polish validation.
 
@@ -230,6 +233,6 @@ Separately, **RC1.7-D Live PASS is still pending** and must not be inferred from
 - Digital Twin Live merge: `d522dd47d825adc7e0458ca3d755c3752ccde069`.
 - Working Capital + Evidence Live merge: `197503177b04b7f0fd30bedd2173645decb944ab`.
 - RC1.7-D Engineering merge: `ba642265a33d43aca25937dac0721358dcb11a5c`.
-- latest functional Staging merge: `b53f958cb13cd311c63d21b1e44789a162d96747`.
-- current Staging PWA cache: `avan-staging-rc1-v106-dashboard-intelligence-polish`.
-- current Live validations pending: **dashboard/intelligence polish** and **RC1.7-D**.
+- latest functional Staging merge: `bef54fac6494fb96f4f6381d47bef76e992c9423`.
+- current Staging PWA cache: `avan-staging-rc1-v107-dashboard-intelligence-live-fix-v2`.
+- current Live validations pending: **dashboard/intelligence polish v2** and **RC1.7-D**.
