@@ -48,10 +48,6 @@ Status: **Engineering PASS + Live PASS**.
 
 Implemented: Company/RLS-scoped cash/bank, gross AR/AP by real `party_id`, bank/inventory risk indicators, deterministic close-readiness blockers, prioritized control actions, `چرا این عدد؟` evidence drilldown, Persian/Jalali responsive UI, exact one-Rial precision, zero AI-generated financial amount and zero financial write path.
 
-### Deferred Live polish
-
-User reported several minor Control Tower issues after Live PASS. Any remaining items not covered by later explicit feedback stay in the polish backlog and must not be guessed.
-
 ---
 
 ## 4) RC1.7-B — Financial Digital Twin
@@ -67,10 +63,6 @@ Status: **Engineering PASS + Live PASS**.
 
 Implemented: real opening cash/bank, explicit user-entered future flows, deterministic Base vs Scenario cash, liquidity stress, disclosed proportional sub-Rial rounding only where mathematically unavoidable, evidence for opening cash, no scenario persistence, no Actual Ledger mutation and no AI arithmetic.
 
-### Deferred Live polish
-
-User reported several minor Digital Twin issues after Live PASS. Any remaining items not covered by explicit later feedback stay deferred; Live PASS remains valid.
-
 ---
 
 ## 5) RC1.7-C — Working Capital + Evidence Foundation
@@ -80,19 +72,13 @@ Status: **Engineering PASS + Live PASS**.
 - PR #121 merged as `197503177b04b7f0fd30bedd2173645decb944ab`.
 - Gate #206 caught an obsolete hard-coded PWA cache assertion.
 - Gate #207 caught a real Shell regression: omitted `rc14-invoice-live-refinements.js`; it was restored without weakening the regression guard.
-- final pre-merge Gate #208 = PASS.
-- post-merge Gate #209 = PASS.
+- final pre-merge Architecture Gate #208 = PASS.
+- post-merge Architecture Gate #209 = PASS.
 - Pages #358 = PASS.
 - milestone cache = `avan-staging-rc1-v104-working-capital-evidence`.
 - explicit user confirmation = **«Working Capital + Evidence Live PASS»**.
 
 Implemented: canonical one-Rial Working Capital model; gross AR/AP by control accounts and real `party_id`; no cross-party netting; FIFO reduction allocation; invoice due-date aging with fallbacks; explainable collection priority; 30-day payable calendar; liquidity indicator; Evidence Graph links; explicit Company/RLS scope; zero autonomous collection/payment/posting and zero Actual Ledger mutation.
-
-Important correction: legacy `src/reports/party-aging.js` remains unsuitable as the numeric source because of integer-oriented assumptions. RC1.7-C uses canonical decimal↔tenths money helpers.
-
-### Deferred Live polish
-
-User reported a minor Working Capital/Evidence issue after Live PASS. Any remaining item not covered by explicit later feedback stays deferred.
 
 ---
 
@@ -101,7 +87,6 @@ User reported a minor Working Capital/Evidence issue after Live PASS. Any remain
 Status: **Engineering PASS + Staging deployed; Live Gate pending**.
 
 - PR #123 merged as `ba642265a33d43aca25937dac0721358dcb11a5c`.
-- Gate #210 correctly stopped an obsolete RC1.7-C exact-cache assertion.
 - final pre-merge Architecture Gate #211 = PASS.
 - post-merge Architecture Gate #212 = PASS.
 - Pages #360 = PASS.
@@ -113,79 +98,84 @@ Implemented: deterministic collection recommendations; payable sequencing; exact
 
 ---
 
-## 7) Dashboard + Financial Intelligence Live Polish / Accounting Correctness
+## 7) Dashboard + Financial Intelligence / Accounting Correctness
 
-Status: **Engineering PASS + Live PASS for Exact KPI / 10-Day hotfix; broader legacy-derived amount audit remains open**.
+Status: **Exact KPI + 10-Day = Engineering + Live PASS; broader Dashboard Accounting Correctness Audit = Engineering PASS + Staging deployed, Live Gate pending**.
 
-The first explicit polish pass was implemented through PR **#125**, a second layout/interaction pass through PR **#127**, and an accounting-correctness / ten-day-question hotfix through PR **#129**.
+### UI / interaction history
 
-Baseline polish:
-
-- PR #125 merge = `b53f958cb13cd311c63d21b1e44789a162d96747`.
-- pre-merge Architecture Gate #213 = PASS.
-- post-merge Architecture Gate #214 = PASS.
-- Pages #362 = PASS.
-
-Second Live-fix pass:
-
-- PR #127 merge = `bef54fac6494fb96f4f6381d47bef76e992c9423`.
-- pre-merge Architecture Gate #215 = PASS.
-- post-merge Architecture Gate #216 = PASS.
-- Pages #364 = PASS.
-
-Accounting-correctness / ten-day hotfix:
-
-- PR #129 merge = `10b9d83bef1764626c8fd4f2e8fda31f35bb3f27`.
-- pre-merge Architecture Gate #217 = PASS.
-- post-merge Architecture Gate #218 = PASS.
-- Pages #366 = PASS.
-- current Staging PWA cache = `avan-staging-rc1-v108-dashboard-accounting-correctness`.
-- Production root was not changed.
-- explicit user confirmation = **«Dashboard Exact KPI + 10-Day PASS»**.
+- PR #125 merge = `b53f958cb13cd311c63d21b1e44789a162d96747`; Gate #213/#214 PASS; Pages #362 PASS.
+- PR #127 merge = `bef54fac6494fb96f4f6381d47bef76e992c9423`; Gate #215/#216 PASS; Pages #364 PASS.
+- PR #129 merge = `10b9d83bef1764626c8fd4f2e8fda31f35bb3f27`; Gate #217/#218 PASS; Pages #366 PASS.
+- explicit user confirmation after PR #129 = **«Dashboard Exact KPI + 10-Day PASS»**.
 
 ### Critical accounting-correctness finding
 
-User questioned the displayed annual P&L value `16,558,262,260 Rial`. Direct verification against the PostgreSQL/Supabase Ledger exposed a legacy Dashboard numeric parser defect: canonical Toman values containing one decimal digit were passed through an integer-only cleanup that removed the decimal point before `BigInt` conversion. Example: `177178123.1` became `1771781231`, creating a factor-of-10 error before Rial presentation.
-
-Verified actual current-year values at the time of the check:
+The previously displayed annual P&L `16,558,262,260 Rial` was incorrect. Direct PostgreSQL/Supabase verification showed, at the time of the check:
 
 - income = `177,178,123.1 Toman`;
 - expense = `11,595,500.5 Toman`;
 - profit = `165,582,622.6 Toman` = **`1,655,826,226 Rial`**.
 
-The old displayed `16,558,262,260 Rial` was therefore incorrect.
+Root cause: legacy integer-oriented parsing did not preserve canonical decimal Toman values. PR #129 corrected the four primary Dashboard KPIs and their `چرا این عدد؟` amounts using canonical decimal↔tenths Money Core. It also removed the MutationObserver feedback loop behind the `اولویت‌های ده روز آینده` hang.
 
-PR #129 adds a read-only exact-money projection for the four primary Dashboard KPIs:
+### Dashboard Accounting Correctness Audit — PR #132
 
-- assets;
-- cash/bank;
-- liabilities;
-- annual profit/loss.
+Status: **Engineering PASS + Staging deployed; Live Gate pending**.
 
-These values are re-read from the authoritative report RPCs and parsed with canonical decimal↔tenths Money Core, preserving exact one-Rial values. The corrected canonical amount is also propagated to each KPI's `چرا این عدد؟` drilldown. Accounting-negative presentation is re-applied after the asynchronous exact refresh.
+- PR #132 merge = `19679a6a6d076beb4e964a13298ede934cb179dd`.
+- pre-merge Architecture Gate #219 = PASS.
+- post-merge Architecture Gate #220 = PASS.
+- Pages #369 = PASS.
+- current Staging PWA cache = `avan-staging-rc1-v109-dashboard-accounting-correctness-audit`.
+- Production root was not changed.
 
-Regression coverage contains the real-value pattern:
+Audit finding: the integer-only defect was not limited to the four top KPIs. Legacy paths in Party Aging, Business Copilot, Smart Collection and Risk/Continuous Audit also used money parsing that could discard or corrupt one-Rial decimal amounts. Live database inspection confirmed the active Workspace contains real fractional-Toman control-account activity, including multiple AR/AP lines with one-Rial precision; therefore the defect was materially relevant.
 
-`177178123.1 - 11595500.5 = 165582622.6 Toman = 1,655,826,226 Rial`.
+PR #132 corrects the affected Dashboard-derived paths:
 
-### Ten-day question hang root cause and fix
+1. **Party Aging**
+   - canonical decimal↔tenths arithmetic;
+   - one-Rial exact FIFO allocation;
+   - real `party_id`, no cross-party netting;
+   - invoice match by `journal_entry_id`, fallback `source_id`;
+   - due-date provenance: invoice due date → invoice date → entry date;
+   - sub-Rial input rejected instead of rounded or silently converted to zero.
 
-The `اولویت‌های ده روز آینده` answer had a MutationObserver feedback loop: after rendering, the polish observer rewrote the heading with identical `textContent` on every pass, and that DOM rewrite retriggered the observer indefinitely. PR #129 makes the heading mutation idempotent and retains the one-time explanatory note only once.
+2. **Business Copilot**
+   - assets/liabilities/profit/cash/AR/AP and overdue amounts use canonical exact money;
+   - top-expense Ledger aggregation preserves one Rial;
+   - exact money comparisons replace JavaScript/string/legacy-BigInt comparisons;
+   - no AI-generated accounting amount.
 
-### Existing polish kept active
+3. **Smart Collection**
+   - party balance, overdue balance, 90+ balance and Top-3 cash opportunity use exact tenths internally;
+   - public output remains canonical decimal Toman for Money Runtime;
+   - prioritization remains deterministic and Human-Controlled.
 
-- top KPI cards use a single-line numeric fit contract;
-- `چرا این عدد؟` amount card spans full width and fits long values;
-- all suggested business questions only populate the field and require explicit `تحلیل کن`;
-- business answers hide technical `منبع` labels;
-- the duplicate priority shortcut was consolidated into `اولویت‌های ده روز آینده`;
-- Smart Collection table has stable no-break / horizontal-containment rules and no currency-unit text inside amount cells;
-- Continuous Controls `سطح` is protected from word splitting;
-- prior Why Number Persianization, collapsed evidence details, journal-back behavior, risk explanations, centered aging tables and severity color coding remain active.
+4. **Risk Radar / Continuous Audit**
+   - cash-gap, overdue, duplicate invoice/transaction amounts and unusual-amount detection use exact canonical money;
+   - statistical comparisons use exact integer tenths, not floating money arithmetic;
+   - findings remain deterministic rules, not AI-generated financial truth.
 
-### Certification boundary
+5. **Authoritative Dashboard re-hydration**
+   - Business Copilot and cash-dependent Risk factors are rehydrated read-only after page render from the active company;
+   - every table read includes explicit `workspace_id` filtering;
+   - authoritative report RPCs provide balance sheet, P&L and cash/bank inputs;
+   - no insert/update/delete, no financial browser persistence and no schema/database mutation.
 
-PR #129 plus the explicit Live confirmation certifies **the four primary Dashboard KPI amounts and their Why Number amounts** for canonical one-Rial exactness and confirms that `اولویت‌های ده روز آینده` no longer hangs in the tested Live flow. It does **not** yet certify every legacy-derived amount inside Dashboard Aging / old business-intelligence / risk / collection sections. Those paths include legacy integer-oriented assumptions and require a dedicated Dashboard Accounting Correctness Audit before they can be declared fully exact.
+Regression tests now explicitly cover `0.1 Toman = 1 Rial`, FIFO AR/AP, no cross-party netting, exact expense totals, Smart Collection, Risk findings, sub-Rial rejection and the previously verified real P&L pattern.
+
+### Existing polish retained
+
+- top KPI cards retain single-line numeric fit;
+- `چرا این عدد؟` amount card remains full-width;
+- suggested business questions only select/fill and wait for explicit `تحلیل کن`;
+- technical `منبع` display remains hidden by the polish layer;
+- `اولویت‌های ده روز آینده` remains non-hanging and explicitly non-forecast;
+- Smart Collection table retains stable no-break / horizontal containment;
+- Continuous Controls `سطح` remains protected from letter splitting;
+- negative accounting presentation remains Presentation Layer only.
 
 ---
 
@@ -248,16 +238,20 @@ Guardrails: deterministic calculation before narrative; evidence before recommen
 
 ## 11) Immediate Live gates
 
-Latest user Live validation result:
+### Dashboard Accounting Correctness Audit Live Gate
 
-1. the four primary Dashboard KPI amounts passed the exact-value Live check;
-2. annual P&L / `چرا این عدد؟` consistency passed;
-3. `اولویت‌های ده روز آینده` completed without the prior browser hang;
-4. explicit confirmation received: **«Dashboard Exact KPI + 10-Day PASS»**.
+After Hard Refresh on Staging verify:
 
-Next accounting-quality task before certifying the entire Dashboard as exact: dedicated **Dashboard Accounting Correctness Audit** for legacy Aging / derived intelligence / risk / collection amounts.
+1. `مطالبات باز` / `مطالبات سررسیدگذشته` and `بدهی تجاری باز` / `بدهی سررسیدگذشته` render normally and their detail rows open without errors.
+2. `از آوان درباره کسب‌وکار بپرس` still requires explicit `تحلیل کن`; test at least `وضعیت مطالبات`, `نقدینگی فعلی`, `سود یا زیان دوره` and `اولویت‌های ده روز آینده`.
+3. Smart Collection renders customer names and amounts normally; `مانده`, `سررسیدگذشته` and Top-3 opportunity are not blank/zero merely because the Ledger contains `.1 Toman` values.
+4. Risk Radar / Continuous Audit loads without error and amount-based factors/findings display normally.
+5. primary P&L remains consistent with its `چرا این عدد؟` exact amount.
+6. no journal, receipt, payment, invoice or Actual balance is created/changed by opening or using these intelligence sections.
 
-Separately, **RC1.7-D Live PASS is still pending** and must not be inferred from the Dashboard confirmation.
+Required explicit confirmation after validation: **«Dashboard Accounting Correctness Audit Live PASS»**.
+
+Separately, **RC1.7-D Live PASS is still pending** and must not be inferred from this Dashboard audit.
 
 ---
 
@@ -270,7 +264,7 @@ Separately, **RC1.7-D Live PASS is still pending** and must not be inferred from
 - Digital Twin Live merge: `d522dd47d825adc7e0458ca3d755c3752ccde069`.
 - Working Capital + Evidence Live merge: `197503177b04b7f0fd30bedd2173645decb944ab`.
 - RC1.7-D Engineering merge: `ba642265a33d43aca25937dac0721358dcb11a5c`.
-- latest functional Staging merge: `10b9d83bef1764626c8fd4f2e8fda31f35bb3f27`.
-- current Staging PWA cache: `avan-staging-rc1-v108-dashboard-accounting-correctness`.
-- current Live validations pending: **RC1.7-D**.
-- broader Dashboard Accounting Correctness Audit remains open as an engineering/accounting-quality task, not yet a Live PASS.
+- Dashboard Exact KPI / 10-Day merge: `10b9d83bef1764626c8fd4f2e8fda31f35bb3f27` — Live PASS.
+- latest functional Staging merge: `19679a6a6d076beb4e964a13298ede934cb179dd`.
+- current Staging PWA cache: `avan-staging-rc1-v109-dashboard-accounting-correctness-audit`.
+- current Live validations pending: **Dashboard Accounting Correctness Audit** and **RC1.7-D**.
