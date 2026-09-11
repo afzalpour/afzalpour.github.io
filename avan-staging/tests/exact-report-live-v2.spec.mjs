@@ -34,7 +34,8 @@ assert.match(live, /oneRialExact:\s*true/);
 assert.match(live, /readOnly:\s*true/);
 assert.doesNotMatch(live, /\.insert\(|\.update\(|\.delete\(|service_role/i);
 
-// Direct, cache-busted wiring: do not rely on transitive import side effects.
-assert.match(index, /report-exact-live-v2\.js\?rc17-report-live=2/);
+// Direct wiring: do not rely on transitive import side effects.
+assert.match(index, /src\/ui\/reports\/report-exact-live-v2\.js/);
+assert.doesNotMatch(index, /report-exact-live-v2\.js\?/);
 
 console.log('exact-report-live-v2.spec.mjs: PASS');
