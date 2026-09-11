@@ -29,10 +29,32 @@ function sourceHtml(source, esc) {
     : '';
 }
 
+function accountLevelFa(level) {
+  return ({
+    1: 'کل',
+    2: 'معین',
+    3: 'تفصیلی',
+    4: 'تفصیلی شناور'
+  })[level] || `سطح ${level}`;
+}
+
 function trialTable(rows, money, esc) {
-  return `<table><thead><tr><th>حساب</th><th>بدهکار</th><th>بستانکار</th><th>مانده</th></tr></thead><tbody>${rows.map(row => `
-    <tr><td>${esc(row.account_code || '')} — ${esc(row.account_name || '')}</td><td class="num">${money(row.debit_turnover)}</td><td class="num">${money(row.credit_turnover)}</td><td class="num">${money(row.net)}</td></tr>
-  `).join('')}</tbody></table>`;
+  return `<table data-avan-account-hierarchy="1"><thead><tr><th>حساب</th><th>بدهکار</th><th>بستانکار</th><th>مانده</th></tr></thead><tbody>${rows.map(row => {
+    const level = Math.max(1, Math.min(9, Number(row.account_level || 1)));
+    const indent = (level - 1) * 22;
+    const parentAttr = row.parent_id ? ` data-account-parent-id="${esc(row.parent_id)}"` : '';
+    return `
+    <tr data-account-level="${level}"${parentAttr} data-account-postable="${row.is_postable ? '1' : '0'}">
+      <td class="avan-account-hierarchy-cell" style="padding-inline-start:${indent}px">
+        <span class="avan-account-code">${esc(row.account_code || '')}</span> —
+        <span class="avan-account-name">${esc(row.account_name || '')}</span>
+        <small class="muted" style="margin-inline-start:6px">${esc(accountLevelFa(level))}</small>
+      </td>
+      <td class="num">${money(row.debit_turnover)}</td>
+      <td class="num">${money(row.credit_turnover)}</td>
+      <td class="num">${money(row.net)}</td>
+    </tr>`;
+  }).join('')}</tbody></table>`;
 }
 
 function journalTable(rows, money, dateFa, esc) {
@@ -51,7 +73,9 @@ function tableResultHtml({ result, money, dateFa, esc }) {
   const rows = Array.isArray(result.rows) ? result.rows : [];
   if (!rows.length) return '<div class="empty">در این بازه داده‌ای وجود ندارد.</div>';
   const source = result.source?.name;
-  if (source === 'report_trial_balance') return trialTable(rows, money, esc);
+  if (source === 'report_trial_balance' || source === 'report_trial_balance_hierarchy') {
+    return trialTable(rows, money, esc);
+  }
   if (source === 'report_journal') return journalTable(rows, money, dateFa, esc);
   if (source === 'report_account_statement') return statementTable(rows, money, dateFa, esc);
   return `<div class="empty">گزارش اجرا شد. ${rows.length.toLocaleString('fa-IR')} ردیف دریافت شد.</div>`;

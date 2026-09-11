@@ -9,6 +9,7 @@ import {
 
 const ALLOWED_RPCS = new Set([
   'report_trial_balance',
+  'report_trial_balance_hierarchy',
   'report_journal',
   'report_profit_loss',
   'report_balance_sheet',
@@ -70,10 +71,14 @@ export async function executeReportIntent({
 
   if (intent.intent === 'trial_balance') {
     const params = { wid, dfrom: from, dto: to };
-    const rows = await trustedRpc(rpc, 'report_trial_balance', params);
+    const rows = await trustedRpc(rpc, 'report_trial_balance_hierarchy', params);
     return plain({
       status: 'ok', kind: 'table', title: 'تراز آزمایشی', rows,
-      period: intent.period, source: rpcSource('report_trial_balance', params), read_only: true
+      period: intent.period,
+      source: rpcSource('report_trial_balance_hierarchy', params),
+      read_only: true,
+      one_rial_exact: true,
+      hierarchy_rollup: true
     });
   }
 
