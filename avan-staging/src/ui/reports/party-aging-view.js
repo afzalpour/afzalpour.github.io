@@ -31,7 +31,13 @@ function sideLabel(side) {
   return side === 'receivables' ? 'مطالبات' : 'بدهی تجاری';
 }
 
-function agingTable(side, money) {
+function moneyUnitLabel(money) {
+  const sample = String(money?.('0') || '');
+  const match = sample.match(/(تومان|ریال)/);
+  return match?.[1] || 'تومان';
+}
+
+function agingTable(side, money, unitLabel) {
   if (!side.available) {
     return `
       <div class="empty">
@@ -44,7 +50,7 @@ function agingTable(side, money) {
   return `
     <table>
       <thead>
-        <tr><th>سررسید</th><th>مبلغ</th></tr>
+        <tr><th>سررسید</th><th>مبلغ (${unitLabel})</th></tr>
       </thead>
       <tbody>
         <tr><td>جاری / سررسیدنشده</td><td class="num">${money(side.aging.current)}</td></tr>
@@ -57,14 +63,14 @@ function agingTable(side, money) {
   `;
 }
 
-function partyRows(sideName, side, money, esc) {
+function partyRows(sideName, side, money, esc, unitLabel) {
   if (!side.available || !side.parties.length) {
     return '<div class="empty">مانده بازی برای نمایش وجود ندارد.</div>';
   }
 
   return `
     <table>
-      <thead><tr><th>طرف‌حساب</th><th>مانده باز</th><th>جزئیات</th></tr></thead>
+      <thead><tr><th>طرف‌حساب</th><th>مانده باز (${unitLabel})</th><th>جزئیات</th></tr></thead>
       <tbody>
         ${side.parties.slice(0, 10).map(party => `
           <tr>
@@ -87,6 +93,7 @@ export function partyAgingSection(aging, { money, dateFa, esc }) {
   const ap = aging.payables;
   const overdueAr = overdueTotal(ar);
   const overdueAp = overdueTotal(ap);
+  const unitLabel = moneyUnitLabel(money);
 
   return `
     <div class="section card">
@@ -122,13 +129,13 @@ export function partyAgingSection(aging, { money, dateFa, esc }) {
       </div>
 
       <div class="grid2 section">
-        <div class="card"><h3>Aging مطالبات</h3>${agingTable(ar, money)}</div>
-        <div class="card"><h3>Aging بدهی تجاری</h3>${agingTable(ap, money)}</div>
+        <div class="card"><h3>Aging مطالبات</h3>${agingTable(ar, money, unitLabel)}</div>
+        <div class="card"><h3>Aging بدهی تجاری</h3>${agingTable(ap, money, unitLabel)}</div>
       </div>
 
       <div class="grid2 section">
-        <div class="card"><h3>بیشترین مطالبات</h3>${partyRows('receivables', ar, money, esc)}</div>
-        <div class="card"><h3>بیشترین بدهی‌ها</h3>${partyRows('payables', ap, money, esc)}</div>
+        <div class="card"><h3>بیشترین مطالبات</h3>${partyRows('receivables', ar, money, esc, unitLabel)}</div>
+        <div class="card"><h3>بیشترین بدهی‌ها</h3>${partyRows('payables', ap, money, esc, unitLabel)}</div>
       </div>
     </div>
   `;
@@ -141,6 +148,7 @@ export function partyAgingDetailHtml({ aging, sideName, partyId, money, dateFa, 
   const party = side.parties.find(item => item.partyId === partyId);
   if (!party) return '<div class="empty">مانده بازی برای این طرف‌حساب وجود ندارد.</div>';
 
+  const unitLabel = moneyUnitLabel(money);
   const rows = party.openItems.map(item => `
     <tr>
       <td>${item.journalNo ?? '—'}</td>
@@ -170,7 +178,7 @@ export function partyAgingDetailHtml({ aging, sideName, partyId, money, dateFa, 
     <div class="section">
       ${rows ? `
         <table>
-          <thead><tr><th>سند</th><th>تاریخ ثبت</th><th>سررسید</th><th>مانده</th><th>Drill-down</th></tr></thead>
+          <thead><tr><th>سند</th><th>تاریخ ثبت</th><th>سررسید</th><th>مانده (${unitLabel})</th><th>Drill-down</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       ` : '<div class="empty">ردیف بازی وجود ندارد.</div>'}

@@ -3,10 +3,12 @@
 import { installAvanCloud } from '../../infrastructure/supabase/avan-cloud-bootstrap.js';
 import { MoneyRuntime } from '../money/money-runtime.js';
 import { projectAccountingNegativeNumbers } from '../money/accounting-negative-presentation.js';
+import { openModal, closeModal } from '../components/modal.js';
 import {
   canonicalDecimalToTenths,
   canonicalTenthsToDecimal
 } from '../../core/money/canonical-money.js';
+import { buildWhyNumberEvidence } from '../../reports/why-number.js';
 import { buildPartyAging } from '../../reports/party-aging.js';
 import {
   buildFinancialCopilotSnapshot,
@@ -33,6 +35,7 @@ let inflight = null;
 let cached = null;
 let auditInflight = null;
 let auditCached = null;
+let evidenceCached = null;
 
 function isoToday() {
   return new Date().toISOString().slice(0, 10);
@@ -151,9 +154,22 @@ async function loadAuditSnapshot() {
   auditInflight = (async () => {
     const cloud = installAvanCloud();
     const wid = metricState.workspaceId;
-    const [roleRows, accounts, parties, entries, lines, invoices, transactions, documents, integrity, invoiceIntegrity] = await Promise.all([
+    const [
+      roleRows,
+      accounts,
+      financialAccounts,
+      parties,
+      entries,
+      lines,
+      invoices,
+      transactions,
+      documents,
+      integrity,
+      invoiceIntegrity
+    ] = await Promise.all([
       cloud.select('account_roles', queryWorkspace('account_roles', 'role_key,account_id', wid)),
-      cloud.select('accounts', queryWorkspace('accounts', 'id,name,category,is_active,is_postable', wid)),
+      cloud.select('accounts', queryWorkspace('accounts', 'id,code,name,category,is_active,is_postable', wid)),
+      cloud.select('financial_accounts', queryWorkspace('financial_accounts', 'id,kind,ledger_account_id,is_active', wid)),
       cloud.select('parties', queryWorkspace('parties', 'id,name,kind,is_active,created_at', wid, 'order=name.asc')),
       cloud.select('journal_entries', queryWorkspace('journal_entries', 'id,journal_no,entry_date,status,source_type,source_id,description', wid, `entry_date=lte.${metricState.asOf}&order=entry_date.asc,journal_no.asc.nullslast`)),
       cloud.select('journal_lines', queryWorkspace('journal_lines', 'id,journal_entry_id,line_no,account_id,party_id,description,debit,credit', wid, 'order=journal_entry_id.asc,line_no.asc')),
@@ -201,6 +217,22 @@ async function loadAuditSnapshot() {
       integrity,
       invoiceIntegrity
     });
+
+    if (ownGeneration === generation) {
+      evidenceCached = Object.freeze({
+        generation: ownGeneration,
+        workspaceId: wid,
+        fiscalFrom: metricState.fiscalFrom,
+        asOf: metricState.asOf,
+        roles,
+        accounts: accounts || [],
+        financialAccounts: financialAccounts || [],
+        parties: parties || [],
+        entries: entries || [],
+        lines: lines || [],
+        invoices: invoices || []
+      });
+    }
 
     const result = Object.freeze({
       generation: ownGeneration,
@@ -282,17 +314,7 @@ function bindExactBusinessCopilot(section, snapshot) {
     const box = section.querySelector('#businessAskAnswer');
     if (!box) return;
     box.innerHTML = businessAnswerHtml(answer, { money, esc });
-    box.querySelectorAll('[data-business-why]').forEach(button => {
-      button.onclick = () => {
-        const metric = button.dataset.businessWhy;
-        const amount = button.dataset.businessAmount;
-        const source = document.querySelector(`[data-why-number="${CSS.escape(metric)}"]`);
-        if (source) {
-          if (amount !== undefined) source.dataset.whyAmount = amount;
-          source.click();
-        }
-      };
-    });
+    projectAccountingNegativeNumbers(document);
   };
 }
 
@@ -337,6 +359,166 @@ function patchRisk(root, snapshot) {
   return true;
 }
 
+function evidenceStatus(expected, calculated) {
+  if (calculated === null || calculated === undefined) return null;
+  try {
+    return toTenths(expected, 'business_evidence_expected') ===
+      toTenths(calculated, 'business_evidence_calculated');
+  } catch {
+    return null;
+  }
+}
+
+function businessEvidenceModalHtml({ evidence, amount, label }) {
+  const accountRows = (evidence.accounts || []).slice(0, 12).map(account => `
+    <tr>
+      <td>${esc(account.code || '')}</td>
+      <td>${esc(account.name || '')}</td>
+      <td>${esc(account.category || '—')}</td>
+    </tr>
+  `).join('');
+  const journalRows = (evidence.journals || []).slice(0, 16).map(entry => `
+    <tr>
+      <td>${entry.journal_no ?? '—'}</td>
+      <td>${dateFa(entry.entry_date)}</td>
+      <td>${esc(entry.description || '')}</td>
+    </tr>
+  `).join('');
+  const matched = evidenceStatus(amount, evidence.calculatedAmount);
+  const scopeText = evidence.scope === 'range'
+    ? `${dateFa(evidence.from)} تا ${dateFa(evidence.to)}`
+    : `تا ${dateFa(evidence.to)}`;
+  const checkHtml = matched === true
+    ? '<div class="success-box section">کنترل تطبیق ردیفی: مبلغ نمایش‌داده‌شده با محاسبه Evidence یکسان است.</div>'
+    : matched === false
+      ? `<div class="error-box section">کنترل تطبیق ردیفی نیازمند بررسی است. محاسبه Evidence: <b>${esc(money(evidence.calculatedAmount))}</b></div>`
+      : '';
+
+  return `
+    <div class="section-head">
+      <div>
+        <h2>چرا این عدد؟ — ${esc(label || evidence.title)}</h2>
+        <span class="muted">شواهد حسابداری و مسیر محاسبه از دفتر کل</span>
+      </div>
+      <span class="cloud-badge">Evidence</span>
+    </div>
+
+    <div class="grid4">
+      <div class="card">
+        <div class="kpi-label">عدد پاسخ</div>
+        <div class="kpi-value small-kpi">${esc(money(amount))}</div>
+      </div>
+      <div class="card">
+        <div class="kpi-label">منبع محاسبه</div>
+        <div class="kpi-value small-kpi">${esc(evidence.sourceReport || 'Ledger')}</div>
+      </div>
+      <div class="card">
+        <div class="kpi-label">حساب‌های مرتبط</div>
+        <div class="kpi-value small-kpi">${Number(evidence.accountCount || 0).toLocaleString('fa-IR')}</div>
+      </div>
+      <div class="card">
+        <div class="kpi-label">شواهد دفتر کل</div>
+        <div class="kpi-value small-kpi">${Number(evidence.lineCount || 0).toLocaleString('fa-IR')} ردیف / ${Number(evidence.journalCount || 0).toLocaleString('fa-IR')} سند</div>
+      </div>
+    </div>
+
+    <div class="info-box section">
+      <b>منطق:</b> ${esc(evidence.calculationNote || 'ردیابی از گزارش معتبر تا دفتر کل.')}
+      <br><br>
+      <b>بازه:</b> ${esc(scopeText)}
+    </div>
+
+    ${checkHtml}
+
+    <div class="section">
+      <h3>حساب‌های مرتبط</h3>
+      ${accountRows ? `
+        <table>
+          <thead><tr><th>کد</th><th>حساب</th><th>گروه</th></tr></thead>
+          <tbody>${accountRows}</tbody>
+        </table>
+      ` : '<div class="empty">حساب مرتبطی برای نمایش وجود ندارد.</div>'}
+    </div>
+
+    <div class="section">
+      <h3>اسناد مؤثر</h3>
+      ${journalRows ? `
+        <table>
+          <thead><tr><th>سند</th><th>تاریخ</th><th>شرح</th></tr></thead>
+          <tbody>${journalRows}</tbody>
+        </table>
+      ` : '<div class="empty">سند مرتبطی در این بازه پیدا نشد.</div>'}
+    </div>
+
+    <div class="form-actions"><button type="button" class="ghost" id="businessEvidenceClose">بستن</button></div>
+  `;
+}
+
+async function openBusinessEvidence(button) {
+  await MoneyRuntime.ready();
+  await loadAuditSnapshot();
+  const context = evidenceCached;
+  if (!context) throw new Error('BUSINESS_EVIDENCE_CONTEXT_REQUIRED');
+  const metric = String(button.dataset.businessEvidenceMetric || '').trim();
+  const amount = String(button.dataset.businessEvidenceAmount ?? '0');
+  const label = String(button.dataset.businessEvidenceLabel || '').trim();
+  const targetPartyId = button.dataset.businessEvidencePartyId || null;
+  const targetAccountId = button.dataset.businessEvidenceAccountId || null;
+
+  const evidence = buildWhyNumberEvidence({
+    metric,
+    accounts: context.accounts,
+    financialAccounts: context.financialAccounts,
+    roles: context.roles,
+    parties: context.parties,
+    entries: context.entries,
+    lines: context.lines,
+    invoices: context.invoices,
+    from: context.fiscalFrom,
+    to: context.asOf,
+    targetPartyId,
+    targetAccountId
+  });
+
+  openModal(businessEvidenceModalHtml({ evidence, amount, label }));
+  const close = document.getElementById('businessEvidenceClose');
+  if (close) close.onclick = closeModal;
+  projectAccountingNegativeNumbers(document);
+}
+
+function onBusinessEvidenceClick(event) {
+  const button = event.target?.closest?.('[data-business-evidence-metric]');
+  if (!button) return;
+  event.preventDefault();
+  event.stopPropagation();
+  if (button.disabled) return;
+  button.disabled = true;
+  Promise.resolve(openBusinessEvidence(button))
+    .catch(error => {
+      console.warn('[Business evidence]', error);
+      openModal(`
+        <h2>چرا این عدد؟</h2>
+        <div class="error-box">شواهد این عدد در حال حاضر قابل بارگذاری نیست. لطفاً دوباره تلاش کنید.</div>
+        <div class="form-actions"><button type="button" class="ghost" id="businessEvidenceClose">بستن</button></div>
+      `);
+      const close = document.getElementById('businessEvidenceClose');
+      if (close) close.onclick = closeModal;
+    })
+    .finally(() => { button.disabled = false; });
+}
+
+function installBusinessEvidenceStyle() {
+  if (document.getElementById('avanBusinessEvidenceStyle')) return;
+  const style = document.createElement('style');
+  style.id = 'avanBusinessEvidenceStyle';
+  style.textContent = `
+    .avan-business-metric-evidence{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;vertical-align:middle}
+    .avan-business-money-value{font-variant-numeric:tabular-nums;white-space:nowrap}
+    .avan-business-evidence-button{white-space:nowrap}
+  `;
+  document.head.append(style);
+}
+
 async function refresh() {
   const root = dashboardRoot();
   if (!root) return false;
@@ -370,11 +552,14 @@ function invalidate() {
   inflight = null;
   auditCached = null;
   auditInflight = null;
+  evidenceCached = null;
 }
 
 export function installDashboardAccountingCorrectnessHotfix() {
   if (!HAS_BROWSER || installed) return false;
   installed = true;
+  installBusinessEvidenceStyle();
+  document.addEventListener('click', onBusinessEvidenceClick, true);
 
   window.addEventListener('avan:page-rendered', () => queueMicrotask(refresh));
   window.addEventListener('avan:company-context-changed', () => {
