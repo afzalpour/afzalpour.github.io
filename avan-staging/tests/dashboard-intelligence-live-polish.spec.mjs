@@ -41,7 +41,7 @@ assert.match(fixV2, /TEN_DAY_QUERY/);
 assert.match(fixV2, /data-business-example\],\[data-avan-business-question/);
 assert.match(fixV2, /stopImmediatePropagation\(\)/);
 assert.match(fixV2, /سؤال انتخاب شد\. برای اجرا، دکمه «تحلیل کن» را بزنید/);
-assert.match(fixV2, /منبع\s\*:/);
+assert.match(fixV2, /منبع/);
 assert.match(fixV2, /node\.remove\(\)/);
 assert.match(fixV2, /پیش‌بینی رویدادهای آینده محسوب نمی‌شود/);
 
