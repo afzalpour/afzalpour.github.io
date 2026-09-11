@@ -10,16 +10,17 @@ const migration = read('APPLIED_RC1_7_PARTY_MASTER_DATA.sql');
 
 // Data model separates business role from legal form and preserves legacy records safely.
 assert.match(migration, /add column if not exists entity_type text not null default 'unspecified'/);
+for (const field of ['legal_name', 'registration_no', 'tax_id', 'province', 'city', 'address', 'website', 'contact_name']) {
+  assert.match(migration, new RegExp(`add column if not exists ${field}`));
+}
 assert.match(migration, /individual/);
 assert.match(migration, /legal/);
-assert.match(migration, /registration_no/);
-assert.match(migration, /economic_code/);
-assert.match(migration, /tax_id/);
-assert.match(migration, /postal_code|public\.parties/);
-assert.match(migration, /address/);
 assert.doesNotMatch(migration, /drop table|drop column|disable row level security/i);
 
-// UI exposes Persian, report-ready identity fields.
+// UI exposes both pre-existing and newly-added report-ready identity fields.
+for (const token of ['national_id', 'economic_code', 'postal_code', 'registration_no', 'tax_id', 'address']) {
+  assert.match(ui, new RegExp(token));
+}
 for (const label of [
   'نقش تجاری', 'ماهیت', 'شخص حقیقی', 'شخص حقوقی',
   'نام رسمی/حقوقی', 'کد ملی / شناسه ملی', 'شماره ثبت',
