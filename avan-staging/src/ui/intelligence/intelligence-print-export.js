@@ -17,6 +17,18 @@ function removeStaleToolbar() {
   document.querySelector('[data-avan-intelligence-print-toolbar]')?.remove();
 }
 
+function intelligencePrintSource(content) {
+  const clone = content.cloneNode(true);
+  clone.querySelectorAll('.avan-working-capital-date-form,.avan-cca-date-form').forEach(form => {
+    const visibleDate = form.querySelector('[data-jalalized]')?.value || '—';
+    const replacement = document.createElement('div');
+    replacement.className = 'muted';
+    replacement.textContent = `تا تاریخ: ${visibleDate}`;
+    form.replaceWith(replacement);
+  });
+  return clone;
+}
+
 function ensureIntelligencePrintToolbar() {
   if (!HAS_BROWSER) return false;
   const title = currentTitle();
@@ -38,7 +50,7 @@ function ensureIntelligencePrintToolbar() {
   print.addEventListener('click', () => {
     const api = window.AvanPrintExport;
     if (!api?.printElement) return;
-    api.printElement(content, title);
+    api.printElement(intelligencePrintSource(content), title);
   });
 
   const hint = document.createElement('span');
