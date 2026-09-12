@@ -59,6 +59,7 @@
 | [0021](0021-electronic-invoice-prevalidation-adapter-boundary.md) | پیش‌اعتبارسنجی صورتحساب الکترونیکی + Provider-neutral adapter و Server-side submission boundary | Accepted |
 | [0022](0022-bank-statement-reconciliation-boundary.md) | Bank Statement Reconciliation با Human-controlled matching و RLS boundary | Accepted |
 | [0023](0023-intelligent-finance-operating-system.md) | Intelligent Finance OS، ۹ ماژول تمایز و Early Priority برای Control Tower + Digital Twin | Accepted |
+| [0024](0024-production-staging-runtime-parity-contract.md) | Production/Staging Runtime Parity + allowlisted next-release divergence | Accepted |
 
 ## اصل حاکم
 

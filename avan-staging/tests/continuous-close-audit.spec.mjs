@@ -129,9 +129,9 @@ assert.ok(rpcCalls.every(call => call.args.wid === 'w1'));
 
 const uiSource = fs.readFileSync(new URL('../src/ui/intelligence/continuous-close-audit-workspace.js', import.meta.url), 'utf8');
 assert.ok(uiSource.includes('بستن و حسابرسی پیوسته'));
-assert.ok(uiSource.includes('Exception Register'));
+assert.ok(uiSource.includes('فهرست موارد نیازمند بررسی'));
 assert.ok(uiSource.includes('workspace_id=eq.${wid}'), 'evidence drill-down reads must remain workspace scoped');
 assert.ok(!uiSource.includes('<code>${'), 'raw provenance IDs must never be rendered as code');
-assert.ok(uiSource.includes('تصمیم اصلاح، ثبت یا بستن دوره با کاربر/حسابدار است'));
+assert.ok(uiSource.includes('تصمیم درباره اصلاح ثبت یا بستن دوره با کاربر و حسابدار است'));
 
 console.log('continuous-close-audit.spec.mjs: PASS');
