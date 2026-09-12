@@ -1,5 +1,6 @@
 'use strict';
 
+import './intelligence-print-export.js';
 import { installAvanCloud } from '../../infrastructure/supabase/avan-cloud-bootstrap.js';
 import { createContinuousCloseAuditService } from '../../application/intelligence/continuous-close-audit-service.js';
 import { MoneyRuntime } from '../money/money-runtime.js';
