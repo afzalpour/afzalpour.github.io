@@ -1,0 +1,44 @@
+/* AVAN RC1.7-A — Financial Control Tower */
+.avan-control-tower{display:grid;gap:18px}
+.avan-control-tower-hero{display:flex;align-items:end;justify-content:space-between;gap:20px;padding:22px}
+.avan-control-tower-hero h2{margin:4px 0 8px;font-size:clamp(24px,3vw,34px)}
+.avan-control-tower-hero p{margin:0;max-width:760px;line-height:1.9}
+.avan-control-tower-date-form{display:flex;align-items:end;gap:10px;min-width:min(330px,100%)}
+.avan-control-tower-date-form .field{flex:1}
+.avan-control-tower-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.avan-control-tower-metric{min-width:0;display:grid;align-content:start;gap:10px;overflow:hidden;border-top:3px solid transparent}
+.avan-control-tower-metric.attention{border-top-color:var(--bad,#b23b3b)}
+.avan-control-tower-metric.normal{border-top-color:var(--good,#2f8f5b)}
+.avan-control-tower-metric-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.avan-control-tower-dot{width:9px;height:9px;border-radius:50%;background:var(--good,#2f8f5b);box-shadow:0 0 0 4px color-mix(in srgb,var(--good,#2f8f5b) 12%,transparent)}
+.avan-control-tower-metric.attention .avan-control-tower-dot{background:var(--bad,#b23b3b);box-shadow:0 0 0 4px color-mix(in srgb,var(--bad,#b23b3b) 12%,transparent)}
+.avan-control-tower-metric .kpi-value{font-size:clamp(18px,2vw,25px);overflow-wrap:anywhere;min-width:0}
+.avan-control-tower-metric button{justify-self:start;margin-top:auto}
+.avan-control-tower-readiness,.avan-control-tower-actions,.avan-control-tower-twin-preview{padding:20px}
+.avan-control-tower-blockers{display:flex;gap:8px;flex-wrap:wrap}
+.avan-control-tower-action-list{display:grid;gap:8px}
+.avan-control-tower-action{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--line,#e5e7eb);border-radius:12px}
+.avan-control-tower-action>div{display:grid;gap:4px}
+.avan-control-tower-evidence-list{display:grid;gap:10px}
+.avan-control-tower-evidence-list .card{display:grid;gap:8px}
+.avan-control-tower-evidence-ids{display:flex;flex-wrap:wrap;gap:6px;direction:ltr;justify-content:flex-end}
+.avan-control-tower-evidence-ids code{font-size:11px;padding:4px 7px;border-radius:7px;background:var(--surface-2,#f5f6f8);max-width:100%;overflow-wrap:anywhere}
+.avan-control-tower-report-launcher{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;padding:16px 18px}
+.avan-control-tower-report-launcher>div{display:grid;gap:4px}
+.avan-control-tower-contract{margin:0}
+
+@media (max-width:1200px){
+  .avan-control-tower-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-width:760px){
+  .avan-control-tower{gap:12px}
+  .avan-control-tower-hero{align-items:stretch;flex-direction:column;padding:16px}
+  .avan-control-tower-date-form{min-width:0;width:100%}
+  .avan-control-tower-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .avan-control-tower-action,.avan-control-tower-report-launcher{align-items:stretch;flex-direction:column}
+  .avan-control-tower-action button,.avan-control-tower-report-launcher button{width:100%}
+}
+@media (max-width:440px){
+  .avan-control-tower-grid{grid-template-columns:1fr}
+  .avan-control-tower-date-form{align-items:stretch;flex-direction:column}
+}
