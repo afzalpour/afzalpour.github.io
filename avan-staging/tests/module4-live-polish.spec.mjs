@@ -39,7 +39,10 @@ for (const title of ['برج کنترل مالی', 'دوقلوی مالی', 'م�
   assert.ok(print.includes(`'${title}'`), `Print/PDF support missing for ${title}`);
 }
 assert.ok(print.includes('AvanPrintExport'));
-assert.ok(print.includes('printElement(content, title)'));
+assert.ok(print.includes('function intelligencePrintSource(content)'));
+assert.ok(print.includes('.avan-working-capital-date-form,.avan-cca-date-form'));
+assert.ok(print.includes('replacement.textContent = `تا تاریخ: ${visibleDate}`'));
+assert.ok(print.includes('printElement(intelligencePrintSource(content), title)'));
 
 const printBoundary = read('rc12-print-export.js');
 assert.ok(printBoundary.includes("Intl.DateTimeFormat('fa-IR-u-ca-persian'"), 'Print/PDF header date must use explicit Persian calendar.');
@@ -54,6 +57,6 @@ const module4 = read('src/ui/intelligence/continuous-close-audit-workspace.js');
 assert.ok(module4.includes("import './intelligence-print-export.js';"), 'Module 4 bootstrap must load unified intelligence Print/PDF controls.');
 
 const sw = read('sw.js');
-assert.ok(sw.includes('avan-staging-rc1-v114-module4-live-polish-v2'));
+assert.ok(sw.includes('avan-staging-rc1-v115-module4-print-jalali-single-date'));
 
 console.log('Module 4 Live polish regression PASS');
