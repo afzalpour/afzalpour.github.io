@@ -19,7 +19,7 @@ Repository: `afzalpour/afzalpour.github.io`
 - RC1.6 Production merge = `eace3198947da1e87deb5d5512b905b27975c74e`.
 - RC1.6 Production Smoke = **PASS**.
 - pre-RC1.6 rollback branch = `prod-backup-20260910-rc1-6-pre-promotion`.
-- RC1.7 remains **Staging-only** until RC1.7-D full Live closure, RC freeze, final regression, rollback point, Production Release Gate and explicit user release approval.
+- RC1.7 remains **Staging-only** until RC freeze, final regression, rollback point, Production Release Gate and explicit user release approval.
 
 ---
 
@@ -73,7 +73,7 @@ Accepted scope: one-Rial Working Capital model; gross AR/AP by real `party_id`; 
 
 ## 6) RC1.7-D — Evidence-backed Operational Decision Layer
 
-Status: **Engineering PASS; human-readable Evidence Live PASS; Digital Twin handoff hotfix deployed; final functional Live re-test pending**.
+Status: **Engineering PASS + Full Live PASS**.
 
 Foundation:
 - PR #123 merge = `ba642265a33d43aca25937dac0721358dcb11a5c`.
@@ -84,27 +84,26 @@ Evidence correction:
 - merge = `8060b93fbdec3b35de6c0d1ae5552022e6e69537`.
 - pre-merge Architecture Gate #259 = **PASS**.
 - raw UUID presentation in `چرا این پیشنهاد؟` replaced with accounting-facing labels for party, journal no/date/source, invoice no/due date and related open amount.
-- explicit user confirmation on 2026-09-12 = **«RC1.7-D Evidence Readable PASS»**.
+- explicit user confirmation = **«RC1.7-D Evidence Readable PASS»**.
 
-Live blocker discovered on 2026-09-12:
-- the user initially wrote **«RC1.7-D Live PASS»** but in the same report identified a functional blocker after explicit `محاسبه سناریو`;
-- collection handoff returned **«وصول مطالبات معتبر نیست»**;
-- payment handoff returned **«پرداخت بدهی‌ها معتبر نیست»**;
-- therefore the full RC1.7-D Live PASS is **not accepted yet**; the blocker report takes precedence over the PASS phrase.
+Digital Twin handoff blocker and correction:
+- initial Live attempt exposed `وصول مطالبات معتبر نیست` and `پرداخت بدهی‌ها معتبر نیست` only after explicit `محاسبه سناریو`.
+- root cause: canonical Toman seeds crossed into fields interpreted in the active display unit, while the legacy integer parser rejected fractional-Toman / exact one-Rial inputs.
+- PR #151 corrected canonical→display handoff and exact decimal fallback without changing successful legacy integer behavior.
+- regression locks `104,692.8 Toman ↔ 1,046,928 Rial ↔ 104,692.8 Toman`.
+- PR #151 merge = `dc7d6b7892ac1f8f3762cd30cee9293c95fe8f6e`.
+- pre-merge Architecture Gate #264 = **PASS**; post-merge Gate #265 = **PASS**; Pages #394 = **PASS**.
+- explicit final user confirmation = **«RC1.7-D Live PASS — Handoff Fixed»**.
 
-Root cause and correction — PR #151:
-- deterministic Decision Layer seeds were canonical Toman amounts but were injected directly into fields interpreted in the active user display unit;
-- the legacy Money Runtime input parser also used an integer-oriented path that rejected fractional-Toman / exact one-Rial inputs;
-- the handoff now converts canonical Toman to the active display unit before opening Financial Digital Twin;
-- successful legacy integer parsing is retained, with exact decimal parsing used only when the old integer path rejects decimal / obsolete Rial-divisibility cases;
-- regression locks `104,692.8 Toman ↔ 1,046,928 Rial ↔ 104,692.8 Toman` to prevent x10 drift and preserve one-Rial exactness;
-- PR #151 merge = `dc7d6b7892ac1f8f3762cd30cee9293c95fe8f6e`;
-- pre-merge Architecture Gate #264 = **PASS**;
-- post-merge Architecture Gate #265 = **PASS**;
-- GitHub Pages #394 = **PASS**;
-- Production runtime was not changed.
+Final Digital Twin numeric-entry polish:
+- user requested all eight primary editable Digital Twin numeric fields to use live three-digit grouping, consistent with the rest of Avan.
+- PR #153 routes the 8 primary fields through the central Money Input Lifecycle and also groups `اثر نقدی یک‌باره سناریو` for consistency.
+- thousands separator = Persian `٬`; signed decimal values remain supported for percentage changes and one-off cash impact.
+- no scenario arithmetic, accounting logic, persistence, Actual Ledger or Production runtime change.
+- PR #153 merge = `7c67eec784e18c21fd7b8be27adf5f90ca77b7bf`.
+- pre-merge Architecture Gate #266 = **PASS**; post-merge Gate #267 = **PASS**; Pages #396 = **PASS**.
 
-Implemented scope remains deterministic collection recommendations; payable sequencing; exact one-Rial `cash before`/`cash after`; liquidity-gap recommendation; `چرا این پیشنهاد؟`; controlled Digital Twin handoff with real open amount as editable seed; no auto-run; no autonomous message/payment/posting; no DB write and no Actual Ledger mutation.
+Accepted RC1.7-D scope: deterministic collection recommendations; payable sequencing; exact one-Rial `cash before`/`cash after`; liquidity-gap recommendation; human-readable `چرا این پیشنهاد؟`; controlled Digital Twin handoff with real open amount as editable seed; no auto-run; no autonomous message/payment/posting; no DB write and no Actual Ledger mutation.
 
 ---
 
@@ -161,11 +160,11 @@ Accepted foundation scope:
 - PR #148 refreshed this Source of Truth after repository/Supabase reconciliation.
 - PR #149 added a permanent **RC1.7 Release Closure Regression Gate** to the Staging architecture suite.
 - PR #149 merge = `55a447f9492ebe5e61b2cd77e666c7a3de92cb50`.
-- pre-merge Architecture Gate #261 = **PASS**.
-- post-merge Architecture Gate #262 = **PASS**.
-- Gate verifies RC1.7 modules are wired/pre-cached in Staging while Production root remains RC1.6 before explicit promotion.
-- PR #150 recorded Dashboard Accounting Correctness and Counterparty 360 Live PASS while retaining RC1.7-D as the only remaining Live gate.
+- pre-merge Architecture Gate #261 = **PASS**; post-merge Architecture Gate #262 = **PASS**.
+- PR #150 recorded Dashboard Accounting Correctness and Counterparty 360 Live PASS.
 - PR #151 fixed the Decision Layer → Digital Twin exact-money handoff; Gate #264/#265 and Pages #394 = **PASS**.
+- PR #153 added the requested Digital Twin input grouping polish; Gate #266/#267 and Pages #396 = **PASS**.
+- all current RC1.7 Live validation gates are now closed.
 - Production remains RC1.6; no RC1.7 Production promotion has occurred.
 
 ---
@@ -182,9 +181,10 @@ Direct read-only verification on `Avan-production`:
 - cross-workspace invoice-line mismatches = **0**.
 - journal lines containing fractional Toman values = **42**; one-Rial exactness is materially exercised by real data.
 - effective anon/auth executable public `SECURITY DEFINER` exposure = **0** under the established privilege boundary.
-- before the RC1.7-D functional test: journal entries = **93**, financial transactions = **24**, invoices = **42**.
-- after the reported failed Digital Twin calculations: journal entries = **93**, financial transactions = **24**, invoices = **42**, with unchanged latest creation timestamps.
-- therefore the failed Decision/Digital Twin tests created **no Actual journal, financial transaction or invoice mutation**.
+- before RC1.7-D functional testing: journal entries = **93**, financial transactions = **24**, invoices = **42**.
+- after the failed handoff test: counts and latest creation timestamps were unchanged.
+- after explicit **«RC1.7-D Live PASS — Handoff Fixed»**: journal entries = **93**, financial transactions = **24**, invoices = **42**, with the same latest creation timestamps as before.
+- therefore RC1.7-D Evidence/Decision/Digital-Twin Live testing created **no Actual journal, financial transaction or invoice mutation**.
 
 Supabase Security Advisor still reports:
 - built-in **Leaked Password Protection disabled**; acknowledged provider/plan limitation, not falsely marked fixed.
@@ -235,7 +235,7 @@ ADR-0023 is **Accepted**. Official capabilities:
 Progress:
 - Module 1: first scope Live PASS.
 - Module 2: first scope Live PASS.
-- Module 3: foundation Live PASS; Decision Layer readable Evidence PASS; Digital Twin handoff hotfix deployed and awaiting focused Live re-test.
+- Module 3: foundation + Decision Layer current scope = **Full Live PASS**.
 - Module 6: Counterparty 360 foundation Live PASS.
 - Module 8: Evidence foundation Live PASS and used across recommendations/Counterparty views.
 - Modules 4, 5, 7 and 9 remain planned after RC1.7 release boundary.
@@ -244,31 +244,15 @@ Guardrails: deterministic calculation before narrative; evidence before recommen
 
 ---
 
-## 14) Immediate Live closure gate — ONLY RC1.7-D handoff re-test remains
+## 14) RC1.7 Live closure COMPLETE — release engineering only
 
-Dashboard Accounting Correctness and Counterparty 360 are now explicitly Live PASS. Evidence readability for RC1.7-D is also Live PASS. Do not repeat those gates.
+Dashboard Accounting Correctness and Counterparty 360 are now explicitly Live PASS. RC1.7-D Evidence readability and final functional handoff are also explicitly Live PASS.
 
-After a Hard Refresh on Staging, perform only these two focused checks:
-
-1. **Collection handoff re-test**
-   - open `مرکز سرمایه در گردش` → `پیشنهادهای کنترل‌شده وصول`;
-   - click `آزمایش وصول در دوقلو` on one row;
-   - confirm the real overdue amount is prefilled in `وصول مطالبات` and remains editable;
-   - click `محاسبه سناریو`;
-   - calculation must complete and render the Base vs Scenario result without `وصول مطالبات معتبر نیست`.
-
-2. **Payment handoff re-test**
-   - return to `مرکز سرمایه در گردش` → `پیشنهادهای کنترل‌شده پرداخت`;
-   - click `آزمایش پرداخت در دوقلو` on one row;
-   - confirm the real open amount is prefilled in `پرداخت بدهی‌ها` and remains editable;
-   - click `محاسبه سناریو`;
-   - calculation must complete and render the Base vs Scenario result without `پرداخت بدهی‌ها معتبر نیست`.
-
-No repeat Evidence, Dashboard or Counterparty test is required. After successful focused re-test, re-query Supabase mutation baseline and accept full RC1.7-D Live closure only if Actual counts/timestamps remain unchanged.
-
-Required confirmation after both calculations succeed: **«RC1.7-D Live PASS — Handoff Fixed»**.
-
-Only after this confirmation and no-mutation verification: freeze RC1.7, run final release regression, create rollback point and prepare the explicit **RC1.7 Production Release Gate**. Do not promote before explicit user release approval.
+- required confirmation received: **«RC1.7-D Live PASS — Handoff Fixed»**.
+- direct post-Live Supabase mutation check = unchanged at **93 journal entries / 24 financial transactions / 42 invoices**, with unchanged latest creation timestamps.
+- no further RC1.7 functional Live re-test is pending for the current scope.
+- next steps are release-engineering only: **RC freeze → final regression → rollback point → Production Release Gate**.
+- Production promotion still requires explicit user release approval; do not promote before that approval.
 
 ---
 
@@ -285,5 +269,7 @@ Only after this confirmation and no-mutation verification: freeze RC1.7, run fin
 - RC1.7-D readable Evidence merge = `8060b93fbdec3b35de6c0d1ae5552022e6e69537` — Evidence Readable Live PASS.
 - RC1.7 Release Closure Gate merge = `55a447f9492ebe5e61b2cd77e666c7a3de92cb50` — Gate #261/#262 PASS.
 - RC1.7-D Digital Twin handoff hotfix merge = `dc7d6b7892ac1f8f3762cd30cee9293c95fe8f6e` — Gate #264/#265 PASS; Pages #394 PASS.
+- RC1.7-D Digital Twin grouped-input polish merge = `7c67eec784e18c21fd7b8be27adf5f90ca77b7bf` — Gate #266/#267 PASS; Pages #396 PASS.
 - current Staging service-worker cache identity = `avan-staging-rc1-v109-dashboard-live-contract-v3` with fresh-network delivery safeguards and release-closure regression coverage.
-- current Live validation pending = **RC1.7-D full functional closure only**.
+- current Live validation pending = **none for RC1.7 current scope**.
+- current release-engineering pending = **RC freeze, final regression, rollback point, Production Release Gate, explicit user release approval**.
