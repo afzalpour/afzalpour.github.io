@@ -167,9 +167,19 @@ function repairTrialBalanceSummary(root) {
   }
 }
 
+function directUnitBadges(root) {
+  return [...(root?.children || [])].filter(node => node.classList?.contains('avan-output-money-unit'));
+}
+
+function removeUnitBadges(root) {
+  directUnitBadges(root).forEach(node => node.remove());
+}
+
 function ensureUnitBadge(root, unitLabel, detail = false) {
   if (!root) return;
-  let badge = [...root.children].find(node => node.classList?.contains('avan-output-money-unit')) || null;
+  const badges = directUnitBadges(root);
+  let badge = badges.shift() || null;
+  badges.forEach(node => node.remove());
   if (!badge) {
     badge = document.createElement('div');
     badge.className = 'avan-output-money-unit';
@@ -213,13 +223,18 @@ export function projectMoneyOutput(documentObject = document) {
   const backdrop = documentObject.getElementById('modalBackdrop');
   const modal = documentObject.getElementById('modal');
   if (modal && !backdrop?.hidden) {
+    const suppressUnitBadge = Boolean(modal.querySelector('[data-avan-money-unit-badge="suppress"]'));
     const heading = modal.querySelector('h2')?.textContent?.trim() || '';
-    if (/^(فاکتور|سند |دریافت|پرداخت|انتقال|مانده افتتاحیه|گزارش)/.test(heading)) {
+    if (suppressUnitBadge) {
+      removeUnitBadges(modal);
+    } else if (/^(فاکتور|سند |دریافت|پرداخت|انتقال|مانده افتتاحیه|گزارش)/.test(heading)) {
       ensureUnitBadge(modal, unitLabel, true);
       annotateHeaders(modal, unitLabel, { inlineUnit: true });
       stripRepeatedUnitsFromReportTables(modal);
       centerReportHeaders(modal);
       centerReportNumericCells(modal);
+    } else {
+      removeUnitBadges(modal);
     }
   }
   return true;
