@@ -15,9 +15,12 @@
 .rc15-invoice-totals .rc15-grand{border:1px solid color-mix(in srgb,var(--primary,#5754d8) 26%,transparent)}
 .rc15-tax-detail{margin-top:14px}
 .rc15-tax-detail h3{margin-top:0}
+.rc15-vat-report{min-width:0;overflow:hidden}
 .rc15-vat-report .grid4>.card{min-width:0}
 .rc15-vat-report .kpi-value{font-size:1.05rem;overflow-wrap:anywhere}
-.rc15-vat-report table{min-width:1040px}
+.rc15-vat-report .table-wrap{width:100%;max-width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-inline:contain}
+.rc15-vat-report table{width:max-content;min-width:1040px;max-width:none;margin-inline:0}
+.rc15-vat-report th,.rc15-vat-report td{white-space:nowrap}
 .rc15-vat-report td.num,.rc15-tax-detail td.num{white-space:nowrap;font-variant-numeric:tabular-nums}
 .rc15-item-tax-field select,.rc15-invoice-tax-field select{width:100%}
 @media(max-width:760px){
@@ -25,6 +28,7 @@
   .rc15-tax-settings .form-actions{display:grid;grid-template-columns:1fr}
   .rc15-tax-settings .form-actions button{width:100%}
   .rc15-vat-report .grid4{grid-template-columns:1fr 1fr}
+  .rc15-vat-report .table-wrap{margin-inline:0;padding-bottom:4px}
 }
 @media(max-width:460px){
   .rc15-vat-report .grid4{grid-template-columns:1fr}
@@ -32,5 +36,9 @@
 @media print{
   .rc15-tax-settings{display:none!important}
   .rc15-vat-report [data-rc15-refresh-vat]{display:none!important}
+  .rc15-vat-report{overflow:visible!important}
+  .rc15-vat-report .table-wrap{overflow:visible!important}
+  .rc15-vat-report table{width:100%!important;min-width:0!important}
+  .rc15-vat-report th,.rc15-vat-report td{white-space:normal}
   .rc15-invoice-totals{page-break-inside:avoid;break-inside:avoid}
 }
