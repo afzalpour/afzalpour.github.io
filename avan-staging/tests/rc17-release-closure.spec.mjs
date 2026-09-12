@@ -97,8 +97,15 @@ assert.ok(currentState.includes('RC1.7-D Live PASS — Handoff Fixed'),
   'Source of Truth must record the explicit final RC1.7-D functional Live PASS');
 assert.ok(currentState.includes('Digital Twin Evidence Readable PASS'),
   'Source of Truth must record the explicit readable opening-evidence Live PASS');
-assert.ok(currentState.includes('current Live validation pending = **none for RC1.7 current scope**'),
-  'RC1.7 current-scope Live closure must be complete before release freeze');
+
+const initialLiveClosureComplete = currentState.includes('current Live validation pending = **none for RC1.7 current scope**');
+const postReleaseSmokeCorrectionTracked = productionApproved &&
+  currentState.includes('## 14) RC1.7 Production Smoke correction loop') &&
+  currentState.includes('current Live validation pending = **targeted authenticated Staging retest of PR #160**') &&
+  currentState.includes('no database/schema/accounting math changes');
+assert.ok(initialLiveClosureComplete || postReleaseSmokeCorrectionTracked,
+  'RC1.7 feature Live closure must remain complete; after release only a documented authenticated Smoke correction loop may remain pending');
+
 assert.ok(currentState.includes('93 journal entries / 24 financial transactions / 42 invoices'),
   'Source of Truth must retain the post-Live no-mutation certification');
 
