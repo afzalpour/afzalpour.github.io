@@ -55,7 +55,16 @@ Status: **Engineering PASS + Live PASS**.
 - Gate #204/#205 = PASS; Pages #356 = PASS.
 - explicit user confirmation = **«Financial Digital Twin Live PASS»**.
 
-Accepted scope: real opening cash/bank, explicit scenario flows, deterministic Base vs Scenario cash, liquidity stress, evidence for opening cash, no scenario persistence, no Actual Ledger mutation and no AI arithmetic.
+Opening-evidence readability polish:
+- PR #155 replaced raw technical reference IDs in `منشأ این عدد` with accounting-facing rows.
+- financial-account evidence shows account type/bank plus ledger account code/name when available.
+- journal evidence shows journal number, Jalali date, accounting source type and description when available.
+- all detail lookups remain explicitly `workspace_id` scoped and read-only.
+- PR #155 merge = `838d4e7a12f57e6b9ab7519ceb71265e5e57dd2f`.
+- pre-merge Architecture Gate #270 = **PASS**; post-merge Gate #271 = **PASS**; Pages #398 = **PASS**.
+- explicit user confirmation = **«Digital Twin Evidence Readable PASS»**.
+
+Accepted scope: real opening cash/bank, explicit scenario flows, deterministic Base vs Scenario cash, liquidity stress, human-readable accounting provenance for opening cash, no scenario persistence, no Actual Ledger mutation and no AI arithmetic.
 
 ---
 
@@ -164,6 +173,7 @@ Accepted foundation scope:
 - PR #150 recorded Dashboard Accounting Correctness and Counterparty 360 Live PASS.
 - PR #151 fixed the Decision Layer → Digital Twin exact-money handoff; Gate #264/#265 and Pages #394 = **PASS**.
 - PR #153 added the requested Digital Twin input grouping polish; Gate #266/#267 and Pages #396 = **PASS**.
+- PR #155 added accounting-readable Digital Twin opening evidence; Gate #270/#271 and Pages #398 = **PASS**; explicit Live = **«Digital Twin Evidence Readable PASS»**.
 - all current RC1.7 Live validation gates are now closed.
 - Production remains RC1.6; no RC1.7 Production promotion has occurred.
 
@@ -234,7 +244,7 @@ ADR-0023 is **Accepted**. Official capabilities:
 
 Progress:
 - Module 1: first scope Live PASS.
-- Module 2: first scope Live PASS.
+- Module 2: first scope Live PASS including accounting-readable opening provenance.
 - Module 3: foundation + Decision Layer current scope = **Full Live PASS**.
 - Module 6: Counterparty 360 foundation Live PASS.
 - Module 8: Evidence foundation Live PASS and used across recommendations/Counterparty views.
@@ -246,9 +256,9 @@ Guardrails: deterministic calculation before narrative; evidence before recommen
 
 ## 14) RC1.7 Live closure COMPLETE — release engineering only
 
-Dashboard Accounting Correctness and Counterparty 360 are now explicitly Live PASS. RC1.7-D Evidence readability and final functional handoff are also explicitly Live PASS.
+Dashboard Accounting Correctness, Counterparty 360, RC1.7-D Evidence/functional handoff and Digital Twin opening provenance are explicitly Live PASS.
 
-- required confirmation received: **«RC1.7-D Live PASS — Handoff Fixed»**.
+- required confirmations received: **«RC1.7-D Live PASS — Handoff Fixed»** and **«Digital Twin Evidence Readable PASS»**.
 - direct post-Live Supabase mutation check = unchanged at **93 journal entries / 24 financial transactions / 42 invoices**, with unchanged latest creation timestamps.
 - no further RC1.7 functional Live re-test is pending for the current scope.
 - next steps are release-engineering only: **RC freeze → final regression → rollback point → Production Release Gate**.
@@ -270,6 +280,7 @@ Dashboard Accounting Correctness and Counterparty 360 are now explicitly Live PA
 - RC1.7 Release Closure Gate merge = `55a447f9492ebe5e61b2cd77e666c7a3de92cb50` — Gate #261/#262 PASS.
 - RC1.7-D Digital Twin handoff hotfix merge = `dc7d6b7892ac1f8f3762cd30cee9293c95fe8f6e` — Gate #264/#265 PASS; Pages #394 PASS.
 - RC1.7-D Digital Twin grouped-input polish merge = `7c67eec784e18c21fd7b8be27adf5f90ca77b7bf` — Gate #266/#267 PASS; Pages #396 PASS.
+- Digital Twin readable opening-evidence merge = `838d4e7a12f57e6b9ab7519ceb71265e5e57dd2f` — Gate #270/#271 PASS; Pages #398 PASS; Live PASS.
 - current Staging service-worker cache identity = `avan-staging-rc1-v109-dashboard-live-contract-v3` with fresh-network delivery safeguards and release-closure regression coverage.
 - current Live validation pending = **none for RC1.7 current scope**.
 - current release-engineering pending = **RC freeze, final regression, rollback point, Production Release Gate, explicit user release approval**.
