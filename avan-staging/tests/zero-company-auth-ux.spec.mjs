@@ -4,6 +4,7 @@ import { createCompanyContext } from '../src/application/company/company-context
 
 const read = rel => fs.readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
 const company = read('rc13-company-context.js');
+const companyCss = read('rc13-company-context.css');
 const companyCore = read('src/application/company/company-context.js');
 const lifecycle = read('rc13-company-lifecycle.js');
 const auth = read('src/ui/auth/auth-view.js');
@@ -13,6 +14,11 @@ const css = read('rc15-final-web-pwa.css');
 assert.match(company, /companies\.length\s*===\s*0/,'zero-company accounts must be handled explicitly');
 assert.match(company, /firstCompanyRequired/);
 assert.match(company, /appVisible\(\)/);
+assert.match(company, /if\s*\(!appVisible\(\)\)\s*\{[\s\S]*closePortfolio\(\);[\s\S]*return;/,'required Company Portfolio must close whenever the authenticated app shell is not visible');
+assert.match(company, /avanSwitchAccount/,'required Portfolio must provide an explicit account escape path');
+assert.match(company, /خروج و ورود با حساب دیگر/);
+assert.match(company, /companyContext\.clearSelection\(\{\s*emit:\s*false\s*\}\)/,'switch-account path must clear only the client company selection');
+assert.match(company, /await cloud\.logout\(\)/,'switch-account path must sign out the current auth session');
 assert.match(company, /resolved\s*=\s*true/,'zero-company state must only be trusted after an authoritative context response');
 assert.match(company, /if\s*\(loading\s*\|\|\s*!resolved\)\s*return/,'required onboarding must not open from the initial empty client state');
 assert.doesNotMatch(company, /refreshState\s*:/,'opening Company Portfolio must not force a parallel membership refresh');
@@ -28,6 +34,8 @@ assert.match(company, /در حال خواندن شرکت‌های شما/);
 assert.match(company, /اولین شرکت خود را ایجاد کنید/);
 assert.match(lifecycle, /avanCreateCompanyButton/);
 assert.match(lifecycle, /create_avan_company/);
+assert.match(companyCss, /body\.avan-company-portfolio-open \.modal-backdrop\{z-index:760\}/,'company onboarding modal must render above the required Portfolio overlay');
+assert.match(companyCss, /\.avan-company-portfolio-overlay\{[^}]*z-index:700/,'Portfolio overlay layer must remain below the onboarding modal');
 
 assert.match(auth, /data\.authPasswordToggle|dataset\.authPasswordToggle/);
 assert.match(auth, /textContent = '👁'/);
