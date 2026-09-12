@@ -11,6 +11,7 @@ const allowed = new Map((allowlist.allowed || []).map(item => [String(item.path)
 const ROOT_RUNTIME_EXTENSIONS = new Set(['.js', '.css', '.html', '.webmanifest', '.png', '.ico']);
 const STAGING_IGNORE_DIRS = new Set(['tests', 'scripts', 'node_modules']);
 const PRODUCTION_IGNORE_DIRS = new Set(['.git', '.github', 'docs', 'avan-staging', 'node_modules']);
+const PRODUCTION_NON_RUNTIME_FILES = new Set(['demo.html']);
 const STAGING_IGNORE_FILES = new Set(['package-lock.json']);
 
 function normalized(path) {
@@ -35,6 +36,7 @@ function walk(root, dir = root, ignoreDirs = new Set()) {
 }
 
 function isProductionRuntime(path) {
+  if (PRODUCTION_NON_RUNTIME_FILES.has(path)) return false;
   if (path.startsWith('src/')) return true;
   if (path.includes('/')) return false;
   return ROOT_RUNTIME_EXTENSIONS.has(extname(path));
