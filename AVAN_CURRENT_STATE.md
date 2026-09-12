@@ -348,7 +348,8 @@ Guardrails: deterministic calculation before narrative; evidence before recommen
 - Production Company Onboarding/Auth Release Gate = **#18 pre-merge / #19 post-merge PASS**.
 - Production Company Onboarding/Auth Pages = **#410 PASS**.
 - Company Onboarding/Auth rollback = `prod-backup-20260912-company-onboarding-auth-hotfix-pre-promotion`.
-- Production Company Onboarding/Auth authenticated Live validation = **pending**.
+- Production Company Onboarding/Auth authenticated Live validation = **PASS**.
+- explicit authenticated confirmation = **«Company Onboarding + Admin Re-entry Live PASS»**.
 - Production Service Worker cache = `avan-prod-rc1-7-v1`.
 - original Production rollback = `prod-backup-20260912-rc1-7-pre-promotion`.
 - pre-Smoke-UX-hotfix rollback = `prod-backup-20260912-rc1-7-pre-smoke-ux-hotfix`.
@@ -414,7 +415,7 @@ Required next acceptance:
 
 ## 16) Critical Company Onboarding + Admin Auth Re-entry hotfix — 2026-09-12
 
-Status: **Engineering/Release PASS / authenticated Production Live validation pending**.
+Status: **Engineering/Release PASS + authenticated Production Live PASS — CLOSED**.
 
 Incident:
 - zero-company users could reach Company Portfolio but clicking **«ایجاد شرکت جدید»** appeared to do nothing.
@@ -447,9 +448,10 @@ Production correction:
 - Production service-worker identity was intentionally unchanged (`avan-prod-rc1-7-v1`); runtime remains network-first.
 - no database/schema/data, membership, admin or financial mutation was part of this release.
 
-Required Live acceptance:
-- zero-company user can open the create-company form visibly, create the first company and enter it.
-- **«خروج و ورود با حساب دیگر»** returns cleanly to authentication.
-- existing Platform Admin can then sign in and reach its existing company/admin access.
-- do **not** mark this hotfix Live PASS until explicit user confirmation **«Company Onboarding + Admin Re-entry Live PASS»**.
-- Module 4 Live Gate remains deferred until this Production blocker is Live accepted.
+Live acceptance result:
+- explicit authenticated user confirmation = **«Company Onboarding + Admin Re-entry Live PASS»**.
+- zero-company create-company onboarding = **PASS**.
+- account-switch/authentication re-entry = **PASS**.
+- existing Platform Admin sign-in and access re-entry = **PASS**.
+- this Production blocker is **closed**; no retest is required unless a new regression is reported.
+- Module 4 authenticated Staging Live Gate is again the next acceptance step.
