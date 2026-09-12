@@ -7,6 +7,7 @@
     { "path": "sw.js", "reason": "Service Worker و cache identity محیط‌ها مستقل است." },
     { "path": "package.json", "reason": "Quality gate فقط در Staging اجرا می‌شود." },
     { "path": "module4-continuous-close-audit.css", "reason": "Module 4 هنوز next-release و Staging-only است." },
+    { "path": "rc12-print-export.js", "reason": "تاریخ سربرگ چاپ/PDF در next-release به تقویم شمسی صریح منتقل شده و هنوز Production-promoted نشده است." },
     { "path": "rc15-tax-ux.css", "reason": "اصلاح responsive گزارش ارزش افزوده در Live correction جاری و هنوز Production-promoted نشده است." },
     { "path": "src/ai/risk-audit.js", "reason": "Evidence enrichment مربوط به Module 4 و هنوز Staging-only است." },
     { "path": "src/application/intelligence/continuous-close-audit-service.js", "reason": "Module 4 Staging-only." },
