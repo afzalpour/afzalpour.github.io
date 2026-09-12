@@ -19,7 +19,7 @@ Repository: `afzalpour/afzalpour.github.io`
 - RC1.6 Production merge = `eace3198947da1e87deb5d5512b905b27975c74e`.
 - RC1.6 Production Smoke = **PASS**.
 - pre-RC1.6 rollback branch = `prod-backup-20260910-rc1-6-pre-promotion`.
-- RC1.7 remains **Staging-only** until explicit RC freeze, Production Release Gate and user approval.
+- RC1.7 remains **Staging-only** until RC1.7-D full Live closure, RC freeze, final regression, rollback point, Production Release Gate and explicit user release approval.
 
 ---
 
@@ -43,7 +43,7 @@ Status: **Engineering PASS + Live PASS**.
 - PR #118 merge = `b260c6995c233f097661082092767373416e1fe9`.
 - Gate #202/#203 = PASS; Pages #355 = PASS.
 
-Scope accepted: Company/RLS-scoped cash/bank, gross AR/AP by real `party_id`, bank/inventory risk indicators, deterministic close-readiness blockers, prioritized actions, `چرا این عدد؟`, Persian/Jalali responsive UI, exact one-Rial precision, zero AI-generated accounting amount and zero financial write path.
+Accepted scope: Company/RLS-scoped cash/bank, gross AR/AP by real `party_id`, bank/inventory risk indicators, deterministic close-readiness blockers, prioritized actions, `چرا این عدد؟`, Persian/Jalali responsive UI, exact one-Rial precision, zero AI-generated accounting amount and zero financial write path.
 
 ---
 
@@ -55,7 +55,7 @@ Status: **Engineering PASS + Live PASS**.
 - Gate #204/#205 = PASS; Pages #356 = PASS.
 - explicit user confirmation = **«Financial Digital Twin Live PASS»**.
 
-Scope accepted: real opening cash/bank, explicit scenario flows, deterministic Base vs Scenario cash, liquidity stress, evidence for opening cash, no scenario persistence, no Actual Ledger mutation and no AI arithmetic.
+Accepted scope: real opening cash/bank, explicit scenario flows, deterministic Base vs Scenario cash, liquidity stress, evidence for opening cash, no scenario persistence, no Actual Ledger mutation and no AI arithmetic.
 
 ---
 
@@ -67,27 +67,26 @@ Status: **Engineering PASS + Live PASS**.
 - final Gate #208/#209 = PASS; Pages #358 = PASS.
 - explicit user confirmation = **«Working Capital + Evidence Live PASS»**.
 
-Scope accepted: one-Rial Working Capital model; gross AR/AP by real `party_id`; no cross-party netting; FIFO reduction allocation; invoice due-date aging/fallbacks; collection priority; 30-day payable calendar; liquidity indicator; Evidence links; Company/RLS scope; no autonomous collection/payment/posting and no Actual Ledger mutation.
+Accepted scope: one-Rial Working Capital model; gross AR/AP by real `party_id`; no cross-party netting; FIFO reduction allocation; invoice due-date aging/fallbacks; collection priority; 30-day payable calendar; liquidity indicator; Evidence links; Company/RLS scope; no autonomous collection/payment/posting and no Actual Ledger mutation.
 
 ---
 
 ## 6) RC1.7-D — Evidence-backed Operational Decision Layer
 
-Status: **Engineering PASS; human-readable Evidence correction Live PASS; full RC1.7-D Live closure still pending explicit confirmation**.
+Status: **Engineering PASS; human-readable Evidence correction Live PASS; full RC1.7-D functional Live closure still pending explicit confirmation**.
 
 Foundation:
 - PR #123 merge = `ba642265a33d43aca25937dac0721358dcb11a5c`.
 - Gate #211/#212 = PASS; Pages #360 = PASS.
 
-Latest Live correction:
+Latest Evidence correction:
 - PR #147 = **RC1.7-D fix: human-readable decision evidence**.
 - merge = `8060b93fbdec3b35de6c0d1ae5552022e6e69537`.
 - pre-merge Architecture Gate #259 = **PASS**.
-- raw UUID presentation in `چرا این پیشنهاد؟` was replaced with accounting-facing evidence: party, journal no/date/source, related journal context, invoice no/due date and related open amount.
-- accounting logic, FIFO, money precision, RLS and Actual Ledger were not changed.
+- raw UUID presentation in `چرا این پیشنهاد؟` replaced with accounting-facing labels for party, journal no/date/source, invoice no/due date and related open amount.
 - explicit user confirmation on 2026-09-12 = **«RC1.7-D Evidence Readable PASS»**.
 
-Implemented scope remains deterministic collection recommendations, payable sequencing, exact one-Rial `cash before`/`cash after`, liquidity-gap recommendation, `چرا این پیشنهاد؟`, controlled Digital Twin handoff with editable real open amounts, no auto-run, no autonomous message/payment/posting, no DB write and no Actual Ledger mutation.
+Implemented scope: deterministic collection recommendations; payable sequencing; exact one-Rial `cash before`/`cash after`; liquidity-gap recommendation; `چرا این پیشنهاد؟`; controlled Digital Twin handoff with real open amount as editable seed; no auto-run; no autonomous message/payment/posting; no DB write and no Actual Ledger mutation.
 
 **Do not infer full RC1.7-D Live PASS from the narrower Evidence Readable PASS.**
 
@@ -95,9 +94,7 @@ Implemented scope remains deterministic collection recommendations, payable sequ
 
 ## 7) Dashboard + Financial Intelligence / Accounting Correctness
 
-Status:
-- **Exact KPI + 10-Day = Engineering + Live PASS**.
-- **Broader Dashboard Accounting Correctness = Engineering PASS; final Live certification pending**.
+Status: **Engineering PASS + Full Live PASS for current RC1.7 scope**.
 
 Key history:
 - PR #129 corrected the factor-of-10 defect in primary Dashboard KPIs and `چرا این عدد؟`; explicit user confirmation = **«Dashboard Exact KPI + 10-Day PASS»**.
@@ -107,8 +104,9 @@ Key history:
 - PR #141 added one-Rial exact Natural Reports.
 - PR #142 added authoritative exact report runtime.
 - PR #143 added hierarchical account rollup through a SECURITY INVOKER reporting boundary.
+- explicit user confirmation on 2026-09-12 = **«Dashboard Accounting Correctness Audit Live PASS»**.
 
-Accounting contracts retained:
+Accepted contracts:
 - `0.1 Toman = 1 Rial` exactness;
 - FIFO AR/AP with real `party_id` and no cross-party netting;
 - due-date provenance and evidence journals;
@@ -116,20 +114,20 @@ Accounting contracts retained:
 - explicit `workspace_id` scoping;
 - no insert/update/delete from intelligence views and no financial browser persistence.
 
-Final Live certification still requires the authenticated Staging checks listed in section 13.
-
 ---
 
 ## 8) RC1.7-E — Counterparty 360 Foundation
 
-Status: **Engineering PASS + Staging deployed; Live Gate pending**.
+Status: **Engineering PASS + Live PASS for current foundation scope**.
 
+History:
 - PR #138 = complete counterparty master data; additive migration applied and verified on `Avan-production`.
 - PR #144 = Counterparty 360 foundation.
 - PR #145 = Live UI stabilization hotfix.
-- PR #146 = mutation-free Counterparty 360 action path / flashing elimination; latest known pre-merge Gate #257 = PASS.
+- PR #146 = mutation-free Counterparty 360 action path / flashing elimination; Gate #257 = PASS.
+- explicit user confirmation on 2026-09-12 = **«Counterparty 360 Live PASS»**.
 
-Counterparty 360 scope:
+Accepted foundation scope:
 - master-data identity/tax profile;
 - exact one-Rial AR/AP Aging with receivable/payable kept separate;
 - overdue/open items;
@@ -137,33 +135,43 @@ Counterparty 360 scope:
 - recent invoices;
 - origin/evidence journals;
 - deterministic risk/data-completeness flags;
-- responsive `نمای ۳۶۰` modal;
+- responsive stable `نمای ۳۶۰` modal;
 - read-only behavior, no cross-party netting and no financial writes.
-
-The user-reported flashing path was corrected in #145/#146, but **no explicit Counterparty 360 Live PASS is recorded yet**.
 
 ---
 
-## 9) Backend / accounting certification snapshot — 2026-09-12
+## 9) RC1.7 release-closure engineering gate
+
+- PR #148 refreshed this Source of Truth after repository/Supabase reconciliation.
+- PR #149 added a permanent **RC1.7 Release Closure Regression Gate** to the Staging architecture suite.
+- PR #149 merge = `55a447f9492ebe5e61b2cd77e666c7a3de92cb50`.
+- pre-merge Architecture Gate #261 = **PASS**.
+- post-merge Architecture Gate #262 = **PASS**.
+- Gate verifies RC1.7 modules are wired/pre-cached in Staging while Production root remains RC1.6 before explicit promotion.
+- no accounting logic, schema or Production runtime was changed by #148/#149.
+
+---
+
+## 10) Backend / accounting certification snapshot — 2026-09-12
 
 Direct read-only verification on `Avan-production`:
 
-- public financial/application tables inspected = all returned with **RLS enabled**.
+- public financial/application tables inspected = RLS enabled.
 - orphan journal lines = **0**.
 - cross-workspace journal-line mismatches = **0**.
 - unbalanced Posted journals = **0**.
 - orphan invoice lines = **0**.
 - cross-workspace invoice-line mismatches = **0**.
-- journal lines containing fractional Toman values = **42**; therefore one-Rial exactness remains materially exercised by real data.
-- public-schema `SECURITY DEFINER` functions exist only as hardened/internal boundaries; latest effective anon/auth executable public `SECURITY DEFINER` exposure remains **0** under the established privilege boundary.
+- journal lines containing fractional Toman values = **42**; one-Rial exactness is materially exercised by real data.
+- effective anon/auth executable public `SECURITY DEFINER` exposure = **0** under the established privilege boundary.
 
-Supabase Security Advisor currently still reports:
-- built-in **Leaked Password Protection disabled**; this remains an acknowledged provider/plan limitation and must not be falsely marked fixed.
-- INFO notices for RLS-enabled tables without policies include private/internal tables and `public.workspace_invitations`; this must be reviewed against the intentional RPC-only/private access contract before any policy change. Do not add permissive policies merely to silence the advisor.
+Supabase Security Advisor still reports:
+- built-in **Leaked Password Protection disabled**; acknowledged provider/plan limitation, not falsely marked fixed.
+- INFO notices for RLS-enabled tables without policies include private/internal tables and `public.workspace_invitations`; review against intentional RPC-only/private contracts before any policy change. Do not add permissive policies merely to silence the advisor.
 
 ---
 
-## 10) Governing accounting / money invariants
+## 11) Governing accounting / money invariants
 
 - PostgreSQL/Supabase is the financial Source of Truth.
 - canonical money = **Toman with 0.1 Toman = 1 Rial**.
@@ -177,7 +185,7 @@ Supabase Security Advisor currently still reports:
 
 ---
 
-## 11) Security / tenancy / recovery invariants
+## 12) Security / tenancy / recovery invariants
 
 - Company/RLS boundary is mandatory; cross-company leakage is Blocker/Critical.
 - browser never receives Service Role/private secrets.
@@ -189,7 +197,7 @@ Supabase Security Advisor currently still reports:
 
 ---
 
-## 12) Strategic architecture — ADR-0023
+## 13) Strategic architecture — ADR-0023
 
 ADR-0023 is **Accepted**. Official capabilities:
 
@@ -206,8 +214,8 @@ ADR-0023 is **Accepted**. Official capabilities:
 Progress:
 - Module 1: first scope Live PASS.
 - Module 2: first scope Live PASS.
-- Module 3: foundation Live PASS; decision layer at final Live closure.
-- Module 6: Counterparty 360 foundation Engineering PASS, Live pending.
+- Module 3: foundation Live PASS; Decision Layer has readable Evidence PASS and awaits final functional Live closure.
+- Module 6: Counterparty 360 foundation Live PASS.
 - Module 8: Evidence foundation Live PASS and used across recommendations/Counterparty views.
 - Modules 4, 5, 7 and 9 remain planned after RC1.7 release boundary.
 
@@ -215,46 +223,38 @@ Guardrails: deterministic calculation before narrative; evidence before recommen
 
 ---
 
-## 13) Immediate Live closure gates
+## 14) Immediate Live closure gate — ONLY RC1.7-D remains
 
-### A) Dashboard Accounting Correctness final Live gate
+Dashboard Accounting Correctness and Counterparty 360 are now explicitly Live PASS.
 
-After Hard Refresh on Staging verify:
-1. open/overdue receivables and payables render and detail rows open normally;
-2. Business Copilot still waits for explicit `تحلیل کن`; test `وضعیت مطالبات`, `نقدینگی فعلی`, `سود یا زیان دوره`, `اولویت‌های ده روز آینده`;
-3. Smart Collection names/amounts and Top-3 opportunity are not blank/zero due to `.1 Toman` data;
-4. Risk Radar / Continuous Audit loads normally;
-5. primary P&L agrees with `چرا این عدد؟`;
-6. no journal, receipt, payment, invoice or Actual balance changes merely by using intelligence sections.
+### RC1.7-D final functional Live closure
 
-Required confirmation: **«Dashboard Accounting Correctness Audit Live PASS»**.
+Open **مرکز سرمایه در گردش** and validate both decision paths:
 
-### B) RC1.7-D final functional Live closure
+1. **Collection recommendation**
+   - under `پیشنهادهای کنترل‌شده وصول`, choose a row and click `چرا این پیشنهاد؟`;
+   - recommendation reason, open/overdue amount and human-readable Evidence must agree;
+   - click `آزمایش وصول در دوقلو`;
+   - Financial Digital Twin must open with the row's real overdue amount prefilled in `وصول مطالبات`;
+   - the amount must remain editable and the scenario must **not** calculate automatically; calculation occurs only after explicit `محاسبه سناریو`.
 
-Evidence readability is already PASS. Confirm that:
-1. collection recommendation opens and amount/effect are sensible against the shown evidence;
-2. payable sequencing and `cash before/cash after` render normally;
-3. Digital Twin handoff uses the real open amount as an editable seed and does not auto-run;
-4. closing the feature leaves Actual Ledger unchanged.
+2. **Payment recommendation**
+   - under `پیشنهادهای کنترل‌شده پرداخت`, choose a row;
+   - confirm `تعهد باز` and `نقد پس از این ردیف` render normally;
+   - click `چرا این پیشنهاد؟` and confirm `تعهد`, `نقد قبل از این ردیف`, `نقد پس از این ردیف` and Evidence are coherent;
+   - click `آزمایش پرداخت در دوقلو`;
+   - Financial Digital Twin must open with the row's real open amount prefilled in `پرداخت بدهی‌ها`, editable and not auto-run.
+
+3. **No Actual mutation**
+   - merely opening Evidence, Decision Layer or Digital Twin must not create journal, receipt, payment or change Actual balances.
 
 Required confirmation: **«RC1.7-D Live PASS»**.
 
-### C) RC1.7-E Counterparty 360 Live gate
-
-Verify one customer/vendor/both party:
-1. `نمای ۳۶۰` affordance is stable and does not flash/recreate;
-2. modal opens once and remains stable while loading;
-3. AR and AP remain separate; open/overdue items, ledger movements, invoices and evidence journals are coherent;
-4. one-Rial values render correctly;
-5. opening/closing the view performs no financial write.
-
-Required confirmation: **«Counterparty 360 Live PASS»**.
-
-Only after A+B+C PASS: freeze RC1.7, run final release regression, create rollback point and prepare the explicit **RC1.7 Production Release Gate**. Do not promote before explicit user release approval.
+Only after this PASS: freeze RC1.7, run final release regression, create rollback point and prepare the explicit **RC1.7 Production Release Gate**. Do not promote before explicit user release approval.
 
 ---
 
-## 14) Canonical current pointers
+## 15) Canonical current pointers
 
 - Production runtime = **RC1.6**.
 - Production merge = `eace3198947da1e87deb5d5512b905b27975c74e`.
@@ -264,7 +264,7 @@ Only after A+B+C PASS: freeze RC1.7, run final release regression, create rollba
 - Working Capital + Evidence Live merge = `197503177b04b7f0fd30bedd2173645decb944ab`.
 - RC1.7-D foundation merge = `ba642265a33d43aca25937dac0721358dcb11a5c`.
 - Dashboard Exact KPI / 10-Day merge = `10b9d83bef1764626c8fd4f2e8fda31f35bb3f27` — Live PASS.
-- latest functional Staging merge = `8060b93fbdec3b35de6c0d1ae5552022e6e69537` (PR #147).
-- PR #147 Architecture Gate #259 = PASS.
-- current Staging service-worker cache identity = `avan-staging-rc1-v109-dashboard-live-contract-v3` with the existing v110 runtime-cache audit marker; release certification must keep cache delivery explicit and regression-tested.
-- current Live validations pending = **Dashboard Accounting Correctness final**, **RC1.7-D full functional closure**, **Counterparty 360**.
+- RC1.7-D readable Evidence merge = `8060b93fbdec3b35de6c0d1ae5552022e6e69537` — Evidence Readable Live PASS.
+- RC1.7 Release Closure Gate merge = `55a447f9492ebe5e61b2cd77e666c7a3de92cb50` — Gate #261/#262 PASS.
+- current Staging service-worker cache identity = `avan-staging-rc1-v109-dashboard-live-contract-v3` with fresh-network delivery safeguards and release-closure regression coverage.
+- current Live validation pending = **RC1.7-D full functional closure only**.
