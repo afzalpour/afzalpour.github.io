@@ -1,6 +1,6 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: **2026-09-12**
+آخرین به‌روزرسانی مرجع: **2026-09-13**
 
 این فایل Source of Truth وضعیت جاری پروژه است. ترتیب مرجع: `AVAN_MASTER_PROMPT.md` → این فایل → ADRهای Accepted → Repository → گزارش واقعی Live کاربر. Engineering/Backend PASS جایگزین Live PASS نیست.
 
@@ -80,7 +80,8 @@ Direct read-only verification on `Avan-production` remains the backend reference
 - journal lines containing fractional Toman values = **42**; real data exercises one-Rial exactness.
 - effective anon/auth executable public `SECURITY DEFINER` exposure = **0**.
 - historical RC1.7-D post-Live certification remains **93 journal entries / 24 financial transactions / 42 invoices** with unchanged latest creation timestamps at that Gate.
-- after the final Module 4 targeted Live retest, read-only verification showed **94 journal entries / 24 financial transactions / 42 invoices / 23 documents**. The one additional journal is a user-created **manual Draft** with description **«آزمایشی ۱»** and is not attributable to Module 4. Module 4 itself remained read-only and did not create a journal, payment, invoice or document.
+- after the final Module 4 targeted Live retest, read-only verification showed **94 journal entries / 24 financial transactions / 42 invoices / 23 documents**. The one additional journal is a user-created **manual Draft** with description **«آزمایشی ۱»** and is not attributable to Module 4.
+- after explicit Module 5 Live PASS, read-only verification still shows **94 journal entries / 24 financial transactions / 42 invoices / 23 documents**; latest timestamps are unchanged from the pre-Module-5-Live baseline. Module 5 therefore remained mutation-free as designed.
 
 Supabase Security Advisor remains truthful:
 - built-in **Leaked Password Protection disabled**; provider/plan limitation, not falsely marked fixed.
@@ -142,12 +143,12 @@ Current progress:
 - Module 2 = Production Live PASS.
 - Module 3 = Production Live PASS.
 - Module 4 = **Engineering PASS + authenticated Staging Live PASS; CLOSED for Staging acceptance**.
-- Module 5 = **Engineering PASS; authenticated Staging Live pending**.
+- Module 5 = **Engineering PASS + authenticated Staging Live PASS; CLOSED for Staging acceptance**.
 - Module 6 = Production Live PASS.
 - Module 8 current scope = Production Live PASS.
-- Modules 7 and 9 remain later trains.
+- Modules 7 and 9 remain future trains.
 
-Current architectural train: **Module 5 — Iran Compliance Radar**.
+Current architectural train: **Module 7 — Smart Procurement & Spend Control**.
 
 ---
 
@@ -172,7 +173,7 @@ Live correction history retained:
 Final authenticated Staging acceptance:
 - the user completed the targeted corrected-surface retest and confirmed **«مورد تایید است برو گام بعد»** in direct response to that Gate.
 - this closes Module 4 authenticated Staging Live validation as **PASS**.
-- post-Live read-only mutation check confirmed Module 4 did not create or modify financial source rows; the only count change was the unrelated manual Draft **«آزمایشی ۱»** described in Section 3.
+- post-Live read-only mutation check confirmed Module 4 did not create or modify financial source rows.
 - Module 4 Production promotion = **not authorized / not performed**.
 
 ---
@@ -193,12 +194,12 @@ Active contract:
 - allowlist entries must remain temporary/minimal.
 
 Dedicated capability locks retained:
-- `src/ui/intelligence/business-copilot-view.js` byte-identical between Production/Staging.
-- `src/ui/intelligence/dashboard-intelligence-live-polish.js` byte-identical between Production/Staging.
+- `src/ui/intelligence/business-copilot-view.js` byte-identical between Production/Staging unless explicitly allowlisted in a later release train.
+- `src/ui/intelligence/dashboard-intelligence-live-polish.js` byte-identical between Production/Staging unless explicitly allowlisted in a later release train.
 
 ---
 
-## 9) Module 5 — Iran Compliance Radar — Engineering PASS
+## 9) Module 5 — Iran Compliance Radar — Engineering + authenticated Staging Live PASS
 
 Scope and contract:
 - architecture = `avan-iran-compliance-radar-foundation-v1`.
@@ -207,37 +208,61 @@ Scope and contract:
 - primary data sources: `tax_rule_versions`, `workspace_tax_settings`, `tax_profiles`, `invoices`, `invoice_lines`, `fiscal_periods`, and the existing e-invoice prevalidation contract.
 - company/workspace scope and RLS boundary remain mandatory.
 - money calculations preserve canonical one-Rial exactness.
-- `writeOperations = 0`.
-- `actualLedgerMutation = false`.
-- `submissionSupported = false`.
+- `writeOperations = 0`; `actualLedgerMutation = false`; `submissionSupported = false`.
 - no filing, invoice submission, posting, payment or period-close action is executed by the Radar.
 - `fabricatedDeadlines = false`: the Foundation does **not** invent statutory deadlines when no trusted versioned rule exists.
 - current explicit coverage: tax/VAT = yes; electronic invoice readiness = yes; fiscal-close readiness = yes; payroll = no; insurance = no.
 
 Engineering delivery:
 - PR #176 **Module 5: Iran Compliance Radar foundation** merged as `2f7185aa3cc46f735387689274f4db8667d56081`.
-- pre-merge Architecture Gate #301 = PASS.
-- post-merge Architecture Gate #302 = PASS.
-- Pages #419 = PASS.
-- Staging cache = **`avan-staging-rc1-v117-module5-iran-compliance-radar`**.
+- Architecture #301/#302 = PASS; Pages #419 = PASS.
+- initial Staging cache = `avan-staging-rc1-v117-module5-iran-compliance-radar`.
 - permanent regression = **`Iran Compliance Radar foundation PASS`**.
-- Production runtime remained unchanged.
 
 Runtime-parity hardening:
-- the first split-manifest Service Worker implementation passed functional tests but temporarily reduced ADR-0024 parity enumeration to only 40 directly declared Staging assets; this was not accepted as sufficient audit coverage.
-- PR #177 **Module 5: restore full Staging runtime parity coverage** merged as `7c3fcb636fa419200b37da30fc477771a7c0a6fb`.
-- pre-merge Architecture Gate #303 = PASS.
-- post-merge Architecture Gate #304 = PASS.
-- full Service Worker `ASSETS` enumeration was restored.
-- final Gate evidence: `sw-precache-integrity: PASS (202 declared runtime entries; avan-staging-rc1-v117-module5-iran-compliance-radar)`.
-- final parity evidence: **`runtime parity PASS — 201 Staging assets / 192 Production assets checked; 19 intentional divergences declared`**.
-- architecture high findings = **0**.
-- money architecture findings = **0**.
-- Production remained unchanged.
+- PR #177 merged as `7c3fcb636fa419200b37da30fc477771a7c0a6fb`.
+- Architecture #303/#304 = PASS.
+- full Service Worker enumeration restored after rejecting a temporary reduced audit surface.
+- `sw-precache-integrity: PASS (202 declared runtime entries; avan-staging-rc1-v117-module5-iran-compliance-radar)`.
+- **`runtime parity PASS — 201 Staging assets / 192 Production assets checked; 19 intentional divergences declared`**.
+- architecture high findings = **0**; money architecture findings = **0**.
+
+Authenticated Staging Live acceptance:
+- explicit user confirmation = **«Module 5 Iran Compliance Radar Live PASS»**.
+- page/navigation, deterministic readiness/findings, evidence readability, date rerun, no fabricated deadline, explicit non-coverage of payroll/insurance and shared Print/PDF were accepted in authenticated Staging Live.
+- post-Live read-only Supabase verification confirmed no new journal, financial transaction, invoice or document was created by Module 5.
+- Module 5 Production promotion = **not authorized / not performed**.
 
 ---
 
-## 10) Current canonical pointers
+## 10) ADR-0025 — Strict Persian User-Facing Language Contract
+
+Status: **Accepted / permanent product invariant**.
+
+User requirement after Module 5 Live acceptance: all unnecessary English text visible to end users must be replaced with fluent, natural Persian, including text originating from system/database coded values.
+
+Permanent contract:
+- static UI copy must be fluent Persian and appropriate for Iranian accounting/finance terminology.
+- coded database/system values such as `active`, `standard`, `exempt`, `zero`, `both`, `fixed`, `rule` and similar enums are localized at the **presentation boundary**.
+- canonical/raw database values remain unchanged when they are part of API, audit, rules or data-integrity contracts; localization must not destroy traceability.
+- unknown Latin system values must not leak raw into primary user-facing labels; use a context-appropriate Persian fallback until an explicit mapping is added.
+- user-entered Latin data, URLs, legal identifiers and necessary technical/reference codes are exempt when their exact form is required for identity or auditability.
+- each new module must include regression coverage against unnecessary English UI leakage.
+- no translation may alter accounting, tax or legal meaning.
+
+Module 5 localization correction:
+- PR #179 **Persian UI contract: localize Module 5 and database-facing labels** merged as `96064e6d4009b9c0e1c5e01b60c14d0dc933f526`.
+- pre-merge Architecture Gate #309 = PASS.
+- post-merge Architecture Gate #310 = PASS.
+- Pages #422 = PASS.
+- Staging cache = **`avan-staging-rc1-v118-persian-user-facing-contract`**.
+- examples corrected include `Snapshot`, `Foundation`, `Source of Truth` and database enum statuses/treatments.
+- Supabase inspection confirmed current legal source/title text is already Persian while several canonical enum values are English-coded; those enum values are now translated in the UI rather than rewritten in the database.
+- Production runtime remained byte-for-byte unchanged by PR #179; the Staging localization difference is explicitly declared under ADR-0024 until an authorized Production promotion.
+
+---
+
+## 11) Current canonical pointers
 
 Production:
 - current release = **RC1.7**.
@@ -249,26 +274,23 @@ Production:
 
 Staging:
 - Module 4 authenticated Live = **PASS / CLOSED**.
-- Module 5 Engineering = **PASS**.
-- Module 5 authenticated Live = **pending**.
-- current Staging cache = `avan-staging-rc1-v117-module5-iran-compliance-radar`.
-- latest runtime merge = `7c3fcb636fa419200b37da30fc477771a7c0a6fb`.
-- latest Architecture = #303 pre-merge / #304 post-merge PASS.
+- Module 5 Engineering + authenticated Live = **PASS / CLOSED**.
+- current Staging cache = `avan-staging-rc1-v118-persian-user-facing-contract`.
+- latest runtime merge = `96064e6d4009b9c0e1c5e01b60c14d0dc933f526`.
+- latest Architecture = #309 pre-merge / #310 post-merge PASS.
+- latest runtime Pages = #422 PASS.
 
 Architecture:
 - ADR-0023 Intelligent Finance OS = Accepted.
 - ADR-0024 Production/Staging Runtime Parity Contract = Accepted.
+- ADR-0025 Strict Persian User-Facing Language Contract = Accepted.
 
 ---
 
-## 11) Required next acceptance — Module 5 authenticated Staging Live Gate
+## 12) Required next engineering train
 
-Run only on `https://afzalpour.github.io/avan-staging/` after login and company selection:
+Next architectural train is **Module 7 — Smart Procurement & Spend Control**.
 
-1. Open **«رادار انطباق مالی ایران»** from **هوشمندی مالی** or its Reports launcher; page must open without error.
-2. Confirm the readiness/findings are understandable and are based on the saved company tax settings and versioned rule evidence. The screen must not claim unsupported payroll/insurance coverage or invent a legal deadline.
-3. Open finding/evidence details; references must be accounting/compliance-readable (tax rule, invoice, fiscal period) rather than raw UUID-only output.
-4. Change the as-of date / rerun the Radar and confirm no journal, invoice, payment, filing/submission or period-close record is created automatically.
-5. Use **چاپ / ذخیره PDF** and confirm company identity, selected money unit and Jalali/Persian date remain correct.
+Before any authenticated Live Gate, Engineering must first build the Staging foundation under the existing invariants: company/RLS scoped, deterministic before narrative, evidence-backed, exact one-Rial money, Persian-first under ADR-0025, and no silent payment/posting/procurement commitment.
 
-Do **not** mark Module 5 Live PASS until explicit authenticated user confirmation. Do **not** promote Module 4 or Module 5 to Production without separate explicit release approval.
+Do **not** promote Modules 4 or 5 to Production without separate explicit release approval.
