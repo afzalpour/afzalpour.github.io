@@ -5,8 +5,6 @@
     { "path": "config.js", "reason": "پیکربندی محیط Production و Staging عمداً متفاوت است." },
     { "path": "index.html", "reason": "Staging می‌تواند entrypoint ماژول next-release را پیش از Production داشته باشد." },
     { "path": "sw.js", "reason": "Service Worker و cache identity محیط‌ها مستقل است." },
-    { "path": "sw-assets-common-a.js", "reason": "Manifest داخلی precache برای نگه‌داشت‌پذیری Service Worker در Staging است." },
-    { "path": "sw-assets-common-b.js", "reason": "Manifest داخلی precache برای نگه‌داشت‌پذیری Service Worker در Staging است." },
     { "path": "package.json", "reason": "Quality gate فقط در Staging اجرا می‌شود." },
     { "path": "module4-continuous-close-audit.css", "reason": "Module 4 هنوز next-release و Staging-only است." },
     { "path": "module5-iran-compliance-radar.css", "reason": "Module 5 Iran Compliance Radar foundation فعلاً Staging-only است." },
