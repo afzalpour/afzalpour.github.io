@@ -6,8 +6,8 @@ import { fileURLToPath } from 'node:url';
 const testsDir = path.dirname(fileURLToPath(import.meta.url));
 const stagingRoot = path.resolve(testsDir, '..');
 const repoRoot = path.resolve(stagingRoot, '..');
-
 const read = (...parts) => fs.readFileSync(path.join(...parts), 'utf8');
+
 const stagingIndex = read(stagingRoot, 'index.html');
 const productionIndex = read(repoRoot, 'index.html');
 const sw = read(stagingRoot, 'sw.js');
@@ -26,16 +26,10 @@ const requiredRuntime = [
 ];
 
 for (const asset of requiredRuntime) {
-  assert.match(
-    stagingIndex,
-    new RegExp(`src=["']${asset.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`),
-    `RC1.7 release closure requires ${asset} to be wired in Staging index.html`
-  );
-  assert.match(
-    sw,
-    new RegExp(`["']\\./${asset.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`),
-    `RC1.7 release closure requires ${asset} in the Staging service-worker asset contract`
-  );
+  assert.ok(stagingIndex.includes(`src="${asset}"`) || stagingIndex.includes(`src='${asset}'`),
+    `RC1.7 release closure requires ${asset} in Staging index.html`);
+  assert.ok(sw.includes(`'./${asset}'`) || sw.includes(`"./${asset}"`),
+    `RC1.7 release closure requires ${asset} in the Staging service-worker asset contract`);
 }
 
 for (const stylesheet of [
@@ -46,18 +40,17 @@ for (const stylesheet of [
   'rc17-party-master-data.css',
   'rc17-counterparty-360.css'
 ]) {
-  assert.match(stagingIndex, new RegExp(`href=["']${stylesheet.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`));
-  assert.match(sw, new RegExp(`["']\\./${stylesheet.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`));
+  assert.ok(stagingIndex.includes(`href="${stylesheet}"`) || stagingIndex.includes(`href='${stylesheet}'`));
+  assert.ok(sw.includes(`'./${stylesheet}'`) || sw.includes(`"./${stylesheet}"`));
 }
 
-assert.match(sw, /new Request\(request,\{cache:'reload'\}\)/,
+assert.ok(sw.includes("new Request(request,{cache:'reload'})"),
   'Staging runtime requests must cross the browser HTTP-cache boundary');
-assert.match(sw, /new Request\(new URL\(asset,self\.registration\.scope\),\{cache:'reload'\}\)/,
+assert.ok(sw.includes("new Request(new URL(asset,self.registration.scope),{cache:'reload'})"),
   'Staging install-time precache must fetch fresh assets');
-assert.match(sw, /client\.navigate\(client\.url\)/,
+assert.ok(sw.includes('client.navigate(client.url)'),
   'Staging service-worker activation must move open clients onto the active runtime');
 
-// Production must remain the explicitly released RC1.6 runtime until the separate Production Release Gate.
 for (const rc17Marker of [
   'rc17-control-tower',
   'rc17-financial-digital-twin',
@@ -67,17 +60,19 @@ for (const rc17Marker of [
   'party-master-data',
   'counterparty-360'
 ]) {
-  assert.doesNotMatch(productionIndex, new RegExp(rc17Marker),
+  assert.ok(!productionIndex.includes(rc17Marker),
     `Production runtime must not contain RC1.7 marker ${rc17Marker} before promotion`);
 }
 
-assert.match(currentState, /Production current release = \*\*RC1\.6\*\*/,
+assert.ok(currentState.includes('Production current release = **RC1.6**'),
   'Source of Truth must keep Production on RC1.6 before explicit promotion');
-assert.match(currentState, /RC1\.7 remains \*\*Staging-only\*\*/,
+assert.ok(currentState.includes('RC1.7 remains **Staging-only**'),
   'Source of Truth must preserve the Staging-only RC1.7 release boundary');
-assert.match(currentState, /RC1\.7-D Evidence Readable PASS/,
-  'Source of Truth must record the explicit RC1.7-D evidence readability Live result');
-assert.match(currentState, /current Live validations pending = \*\*Dashboard Accounting Correctness final\*\*, \*\*RC1\.7-D full functional closure\*\*, \*\*Counterparty 360\*\*/,
-  'RC1.7 release closure must not silently promote while explicit Live gates remain pending');
+assert.ok(currentState.includes('RC1.7-D Evidence Readable PASS'),
+  'Source of Truth must retain the evidence readability Live result');
+assert.ok(currentState.includes('Dashboard Accounting Correctness and Counterparty 360 are now explicitly Live PASS'),
+  'Source of Truth must retain the accepted Dashboard and Counterparty 360 Live results');
+assert.ok(currentState.includes('current Live validation pending = **RC1.7-D full functional closure only**'),
+  'RC1.7 release closure must remain blocked on the still-open RC1.7-D functional gate');
 
 console.log('rc17-release-closure: PASS');

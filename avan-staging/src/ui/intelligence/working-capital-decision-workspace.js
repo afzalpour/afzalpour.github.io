@@ -224,13 +224,34 @@ function whyModal(item) {
   document.querySelector('[data-decision-close]')?.addEventListener('click', closeModal, { once: true });
 }
 
+function simulationSeedForDisplay(seed) {
+  const next = { ...(seed || {}) };
+  for (const key of ['revenue', 'collections', 'operatingCosts', 'payments', 'oneOffCashImpact']) {
+    if (!Object.prototype.hasOwnProperty.call(next, key)) continue;
+    const displayValue = MoneyRuntime?.decimalInputFromCanonical?.(String(next[key] ?? '0'));
+    if (displayValue === null || displayValue === undefined || displayValue === '') {
+      throw new Error(`DIGITAL_TWIN_SEED_DISPLAY_CONVERSION_FAILED:${key}`);
+    }
+    next[key] = String(displayValue);
+  }
+  return next;
+}
+
 function simulate(item) {
   if (!window.AvanFinancialDigitalTwin?.open) {
     toast('دوقلوی مالی در این لحظه آماده نیست.');
     return;
   }
+  let seed;
+  try {
+    seed = simulationSeedForDisplay(item.simulationSeed);
+  } catch (error) {
+    console.error('[Avan Working Capital Decisions] Digital Twin seed conversion', error);
+    toast('مبلغ این پیشنهاد برای دوقلوی مالی قابل آماده‌سازی نیست.');
+    return;
+  }
   closeModal();
-  void window.AvanFinancialDigitalTwin.open(item.simulationSeed);
+  void window.AvanFinancialDigitalTwin.open(seed);
 }
 
 function bindDecisionActions(root) {
