@@ -7,6 +7,7 @@ import { MoneyRuntime } from '../money/money-runtime.js';
 import { setTitle, page } from '../shell/shell-view.js';
 import { openModal, closeModal } from '../components/modal.js';
 import { toast } from '../feedback/toast.js';
+import { safeDatabaseFacingFa } from '../localization/user-facing-fa.js';
 
 const HAS_BROWSER = typeof window !== 'undefined' && typeof document !== 'undefined';
 const C = HAS_BROWSER ? installAvanCloud() : null;
@@ -21,8 +22,14 @@ const CATEGORY_FA = Object.freeze({
   vat: 'مالیات بر ارزش افزوده', electronic_invoice: 'صورتحساب الکترونیکی',
   integrity: 'یکپارچگی حسابداری', fiscal_close: 'دوره مالی', money_integrity: 'دقت مبالغ'
 });
+const DB_STATUS_FA = Object.freeze({ active: 'فعال', inactive: 'غیرفعال', draft: 'پیش‌نویس', open: 'باز', closed: 'بسته', pending: 'در انتظار' });
+const EXACT_FA = Object.freeze({
+  'Snapshot مالیاتی برخی ردیف‌های فروش ناقص است': 'اطلاعات مالیاتی ثبت‌شده برای برخی ردیف‌های فروش ناقص است'
+});
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+const fa = (value, fallback = 'اطلاعات ثبت‌شده') => EXACT_FA[String(value ?? '').trim()] || safeDatabaseFacingFa(value, fallback);
+const statusFa = value => DB_STATUS_FA[String(value ?? '').trim().toLowerCase()] || fa(value, 'نامشخص');
 function today() { return new Date().toISOString().slice(0, 10); }
 function dateFa(value) {
   if (!value) return '—';
@@ -33,7 +40,7 @@ function money(value) { return value === null || value === undefined ? '—' : (
 
 function readinessCards(snapshot) {
   return `<div class="grid4 avan-compliance-summary">
-    <article class="card"><span class="kpi-label">وضعیت آمادگی</span><div class="kpi-value avan-compliance-status ${esc(snapshot.readiness)}">${esc(STATUS_FA[snapshot.readiness] || snapshot.readiness)}</div></article>
+    <article class="card"><span class="kpi-label">وضعیت آمادگی</span><div class="kpi-value avan-compliance-status ${esc(snapshot.readiness)}">${esc(STATUS_FA[snapshot.readiness] || 'نامشخص')}</div></article>
     <article class="card"><span class="kpi-label">موارد بحرانی</span><div class="kpi-value">${Number(snapshot.summary.critical || 0).toLocaleString('fa-IR')}</div></article>
     <article class="card"><span class="kpi-label">فاکتور فروش قطعی بررسی‌شده</span><div class="kpi-value">${Number(snapshot.summary.postedSaleInvoices || 0).toLocaleString('fa-IR')}</div></article>
     <article class="card"><span class="kpi-label">مالیات خروجی ثبت‌شده</span><div class="kpi-value" data-avan-number-output="1">${money(snapshot.summary.outputTaxCanonical)}</div></article>
@@ -45,9 +52,9 @@ function ruleHtml(snapshot) {
   return `<section class="card avan-compliance-section">
     <div class="section-head"><div><h2>قاعده مالیاتی فعال</h2><span class="muted">نسخه قاعده بر اساس تاریخ مبنا انتخاب می‌شود؛ تغییر قاعده تاریخچه قبلی را بازنویسی نمی‌کند.</span></div></div>
     ${rule ? `<div class="avan-compliance-rule">
-      <div><b>${esc(rule.name || 'قاعده مالیاتی')}</b><span class="muted">از ${esc(dateFa(rule.effectiveFrom))}${rule.effectiveTo ? ` تا ${esc(dateFa(rule.effectiveTo))}` : ''}</span></div>
+      <div><b>${esc(fa(rule.name, 'قاعده مالیاتی'))}</b><span class="muted">از ${esc(dateFa(rule.effectiveFrom))}${rule.effectiveTo ? ` تا ${esc(dateFa(rule.effectiveTo))}` : ''}</span></div>
       <div><span>نرخ عمومی ثبت‌شده</span><b>${esc(String(rule.rate ?? '—'))}٪</b></div>
-      <div><span>منبع</span><b>${esc(rule.sourceTitle || '—')}</b><small>${esc(rule.sourceReference || '')}</small></div>
+      <div><span>منبع</span><b>${esc(fa(rule.sourceTitle, 'منبع ثبت‌شده'))}</b><small>${esc(fa(rule.sourceReference, 'مرجع ثبت‌شده'))}</small></div>
     </div>` : '<div class="error-box">برای تاریخ انتخاب‌شده قاعده فعال قابل استناد در آوان پیدا نشد.</div>'}
   </section>`;
 }
@@ -57,7 +64,7 @@ function findingsHtml(snapshot) {
   return `<section class="card avan-compliance-section" id="avanComplianceFindings">
     <div class="section-head"><div><h2>فهرست اقدام‌های انطباق</h2><span class="muted">مواردی که داده یا تنظیمات آن‌ها باید بررسی شوند؛ هشدار به معنی تخلف قطعی نیست.</span></div><span class="summary-pill">${Number(rows.length).toLocaleString('fa-IR')} مورد</span></div>
     ${rows.length ? `<div class="avan-compliance-table-wrap"><table><thead><tr><th>سطح</th><th>حوزه</th><th>مورد</th><th>توضیح</th><th>شواهد</th></tr></thead><tbody>
-      ${rows.map(row => `<tr><td><span class="avan-compliance-severity ${esc(row.severity)}">${esc(SEVERITY_FA[row.severity] || row.severity)}</span></td><td>${esc(CATEGORY_FA[row.category] || row.category)}</td><td><b>${esc(row.title)}</b></td><td>${esc(row.description)}</td><td><button type="button" class="ghost small" data-compliance-evidence="${esc(row.id)}">مشاهده شواهد</button></td></tr>`).join('')}
+      ${rows.map(row => `<tr><td><span class="avan-compliance-severity ${esc(row.severity)}">${esc(SEVERITY_FA[row.severity] || 'نامشخص')}</span></td><td>${esc(CATEGORY_FA[row.category] || 'سایر')}</td><td><b>${esc(fa(row.title, 'مورد نیازمند بررسی'))}</b></td><td>${esc(fa(row.description, 'این مورد نیازمند بررسی است.'))}</td><td><button type="button" class="ghost small" data-compliance-evidence="${esc(row.id)}">مشاهده شواهد</button></td></tr>`).join('')}
     </tbody></table></div>` : '<div class="success-box">در دامنه فعلی رادار، مورد بازی برای اقدام شناسایی نشد.</div>'}
   </section>`;
 }
@@ -67,7 +74,7 @@ function regulationsHtml(snapshot) {
   return `<section class="card avan-compliance-section">
     <div class="section-head"><div><h2>تغییرات قواعد ثبت‌شده در آوان</h2><span class="muted">فقط نسخه‌ها و منابعی که در سامانه ثبت شده‌اند نمایش داده می‌شوند.</span></div></div>
     ${rows.length ? `<div class="avan-compliance-table-wrap"><table><thead><tr><th>قاعده</th><th>شروع اثر</th><th>پایان اثر</th><th>وضعیت</th><th>منبع ثبت‌شده</th></tr></thead><tbody>
-      ${rows.map(row => `<tr><td><b>${esc(row.name || 'قاعده مالیاتی')}</b></td><td>${esc(dateFa(row.effectiveFrom))}</td><td>${esc(dateFa(row.effectiveTo))}</td><td>${esc(row.status || '—')}</td><td><b>${esc(row.sourceTitle || '—')}</b>${row.sourceReference ? `<small class="muted">${esc(row.sourceReference)}</small>` : ''}</td></tr>`).join('')}
+      ${rows.map(row => `<tr><td><b>${esc(fa(row.name, 'قاعده مالیاتی'))}</b></td><td>${esc(dateFa(row.effectiveFrom))}</td><td>${esc(dateFa(row.effectiveTo))}</td><td>${esc(statusFa(row.status))}</td><td><b>${esc(fa(row.sourceTitle, 'منبع ثبت‌شده'))}</b>${row.sourceReference ? `<small class="muted">${esc(fa(row.sourceReference, 'مرجع ثبت‌شده'))}</small>` : ''}</td></tr>`).join('')}
     </tbody></table></div>` : '<div class="info-box">نسخه قاعده‌ای برای نمایش ثبت نشده است.</div>'}
   </section>`;
 }
@@ -76,18 +83,18 @@ function calendarHtml(snapshot) {
   const rows = snapshot.calendar || [];
   return `<section class="card avan-compliance-section">
     <div class="section-head"><div><h2>تقویم کنترلی</h2><span class="muted">تاریخ‌های زیر پایان دوره یا شروع اثر قاعده‌اند؛ تا زمانی که منبع نسخه‌دار جداگانه ثبت نشود «موعد قانونی» محسوب نمی‌شوند.</span></div></div>
-    ${rows.length ? `<div class="avan-compliance-calendar">${rows.map(row => `<div class="avan-compliance-calendar-row"><time>${esc(dateFa(row.date))}</time><b>${esc(row.title)}</b><span class="muted">${row.type === 'fiscal_period_end' ? 'کنترل پایان دوره' : 'شروع اثر قاعده'}</span><span class="badge">موعد قانونی نیست</span></div>`).join('')}</div>` : '<div class="info-box">تاریخ کنترلی ثبت‌شده‌ای برای این نما وجود ندارد.</div>'}
+    ${rows.length ? `<div class="avan-compliance-calendar">${rows.map(row => `<div class="avan-compliance-calendar-row"><time>${esc(dateFa(row.date))}</time><b>${esc(fa(row.title, 'تاریخ کنترلی'))}</b><span class="muted">${row.type === 'fiscal_period_end' ? 'کنترل پایان دوره' : 'شروع اثر قاعده'}</span><span class="badge">موعد قانونی نیست</span></div>`).join('')}</div>` : '<div class="info-box">تاریخ کنترلی ثبت‌شده‌ای برای این نما وجود ندارد.</div>'}
   </section>`;
 }
 
 function coverageHtml(snapshot) {
   const c = snapshot.coverage || {};
-  const item = (title, ok, note) => `<article class="card"><b>${esc(title)}</b><span class="${ok ? 'success-text' : 'muted'}">${ok ? 'پوشش فعال' : 'در Foundation فعلی پوشش داده نمی‌شود'}</span><small>${esc(note)}</small></article>`;
+  const item = (title, ok, note) => `<article class="card"><b>${esc(title)}</b><span class="${ok ? 'success-text' : 'muted'}">${ok ? 'پوشش فعال' : 'در نسخه فعلی پوشش داده نمی‌شود'}</span><small>${esc(note)}</small></article>`;
   return `<section class="avan-compliance-coverage"><h2>دامنه پوشش رادار</h2><div class="grid4">
-    ${item('مالیات و ارزش افزوده', c.tax, 'بر پایه قواعد نسخه‌دار و Snapshot مالیاتی')}
+    ${item('مالیات و ارزش افزوده', c.tax, 'بر پایه قواعد نسخه‌دار و اطلاعات مالیاتی ثبت‌شده')}
     ${item('صورتحساب الکترونیکی', c.electronicInvoice, 'کنترل آمادگی داده؛ بدون ارسال خودکار')}
-    ${item('حقوق و دستمزد', c.payroll, 'تا اضافه‌شدن Source of Truth حقوق، نتیجه‌ای صادر نمی‌شود')}
-    ${item('بیمه', c.insurance, 'تا اضافه‌شدن داده معتبر بیمه، نتیجه‌ای صادر نمی‌شود')}
+    ${item('حقوق و دستمزد', c.payroll, 'تا اضافه‌شدن مرجع معتبر داده‌های حقوق و دستمزد، نتیجه‌ای صادر نمی‌شود')}
+    ${item('بیمه', c.insurance, 'تا اضافه‌شدن مرجع معتبر داده‌های بیمه، نتیجه‌ای صادر نمی‌شود')}
   </div></section>`;
 }
 
@@ -103,8 +110,8 @@ export function iranComplianceRadarPageHtml({ workspace, snapshot }) {
 
 function evidenceModal(item) {
   const refs = item?.evidence || [];
-  openModal(`<div data-compliance-evidence-modal><div class="section-head"><div><h3>${esc(item.title)}</h3><span class="muted">${esc(item.description)}</span></div><button type="button" class="ghost small" data-close-compliance-evidence>بستن</button></div>
-    ${refs.length ? `<div class="avan-compliance-evidence-list">${refs.map(ref => `<div class="card"><b>${esc(ref.label)}</b>${ref.meta ? `<span class="muted">${esc(ref.meta)}</span>` : ''}</div>`).join('')}</div>` : '<div class="info-box">برای این کنترل مرجع جزئی ثبت نشده است.</div>'}</div>`);
+  openModal(`<div data-compliance-evidence-modal><div class="section-head"><div><h3>${esc(fa(item.title, 'مورد نیازمند بررسی'))}</h3><span class="muted">${esc(fa(item.description, 'این مورد نیازمند بررسی است.'))}</span></div><button type="button" class="ghost small" data-close-compliance-evidence>بستن</button></div>
+    ${refs.length ? `<div class="avan-compliance-evidence-list">${refs.map(ref => `<div class="card"><b>${esc(fa(ref.label, 'مرجع حسابداری'))}</b>${ref.meta ? `<span class="muted">${esc(fa(ref.meta, 'اطلاعات تکمیلی'))}</span>` : ''}</div>`).join('')}</div>` : '<div class="info-box">برای این کنترل مرجع جزئی ثبت نشده است.</div>'}</div>`);
   document.querySelector('[data-close-compliance-evidence]')?.addEventListener('click', closeModal);
 }
 
