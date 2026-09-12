@@ -73,16 +73,54 @@ jobs:
             BASE_REF='origin/main'
           fi
           CHANGED="$(git diff --name-only "$BASE_REF"...HEAD)"
-          if printf '%s\n' "$CHANGED" | grep -Eq '^(src/|[^/]+\.(js|css|html|webmanifest|png)$)'; then
+          RUNTIME_CHANGED="$(printf '%s\n' "$CHANGED" | grep -E '^(src/|[^/]+\.(js|css|html|webmanifest|png)$)' || true)"
+          if [ -n "$RUNTIME_CHANGED" ]; then
             echo 'runtime=true' >> "$GITHUB_OUTPUT"
-            echo 'Production runtime promotion detected; exact Staging projection is mandatory.'
+            if printf '%s\n' "$RUNTIME_CHANGED" | grep -Ev '^(rc13-company-context\.js|rc13-company-context\.css)$' | grep -q .; then
+              echo 'targeted_company_hotfix=false' >> "$GITHUB_OUTPUT"
+              echo 'Production runtime promotion detected; exact Staging projection is mandatory.'
+            else
+              echo 'targeted_company_hotfix=true' >> "$GITHUB_OUTPUT"
+              echo 'Targeted Company Shell hotfix detected; exact allowlisted Staging copies are mandatory.'
+            fi
           else
             echo 'runtime=false' >> "$GITHUB_OUTPUT"
+            echo 'targeted_company_hotfix=false' >> "$GITHUB_OUTPUT"
             echo 'Release-gate preparation only; Production runtime remains unchanged.'
           fi
 
+      - name: Verify targeted Company Shell hotfix
+        if: steps.promotion.outputs.runtime == 'true' && steps.promotion.outputs.targeted_company_hotfix == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            BASE_REF='HEAD^1'
+          else
+            BASE_REF='origin/main'
+          fi
+          RUNTIME_CHANGED="$(git diff --name-only "$BASE_REF"...HEAD | grep -E '^(src/|[^/]+\.(js|css|html|webmanifest|png)$)' || true)"
+          test -n "$RUNTIME_CHANGED"
+          printf '%s\n' "$RUNTIME_CHANGED" | grep -Ev '^(rc13-company-context\.js|rc13-company-context\.css)$' && {
+            echo 'Targeted Company Shell hotfix contains an unapproved Production runtime file.' >&2
+            exit 1
+          } || true
+          while IFS= read -r rel; do
+            [ -n "$rel" ] || continue
+            test -f "avan-staging/$rel"
+            cmp --silent "$rel" "avan-staging/$rel" || {
+              echo "Targeted Production hotfix is not identical to vetted Staging: $rel" >&2
+              exit 1
+            }
+          done <<< "$RUNTIME_CHANGED"
+          grep -q 'body\.avan-company-portfolio-open \.modal-backdrop{z-index:760}' rc13-company-context.css
+          grep -q 'id="avanSwitchAccount"' rc13-company-context.js
+          grep -q 'await cloud.logout()' rc13-company-context.js
+          echo 'Targeted Company Shell hotfix is exact, allowlisted and Staging-vetted.'
+
       - name: Verify Production runtime is exact vetted Staging projection
-        if: steps.promotion.outputs.runtime == 'true'
+        if: steps.promotion.outputs.runtime == 'true' && steps.promotion.outputs.targeted_company_hotfix != 'true'
         shell: bash
         run: |
           set -euo pipefail
