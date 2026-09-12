@@ -1,8 +1,14 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {
+  UNIT_RIAL,
+  canonicalDecimalToDisplay,
+  displayDecimalToCanonical
+} from '../src/core/money/canonical-money.js';
 
 const read = rel => fs.readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
 const ui = read('src/ui/intelligence/working-capital-decision-workspace.js');
+const moneyRuntime = read('src/ui/money/money-runtime.js');
 const css = read('rc17-working-capital-decisions.css');
 const index = read('index.html');
 const sw = read('sw.js');
@@ -23,8 +29,24 @@ assert.match(ui, /طرف‌حساب مرتبط با این پیشنهاد/,
   'party evidence must resolve to a human-facing party description');
 assert.doesNotMatch(ui, /<code>\$\{esc\(id\)\}<\/code>/,
   'decision evidence modal must never print raw UUID references');
-assert.match(ui, /window\.AvanFinancialDigitalTwin\.open\(item\.simulationSeed\)/,
-  'simulation handoff must open Digital Twin with explicit deterministic seed only');
+
+assert.match(ui, /decimalInputFromCanonical/,
+  'Decision Layer must project canonical Toman seeds into the active display unit before Digital Twin handoff');
+assert.match(ui, /window\.AvanFinancialDigitalTwin\.open\(seed\)/,
+  'simulation handoff must open Digital Twin with the display-safe deterministic seed');
+assert.doesNotMatch(ui, /window\.AvanFinancialDigitalTwin\.open\(item\.simulationSeed\)/,
+  'canonical seed must never be injected directly into display-unit inputs');
+assert.match(moneyRuntime, /const parsed = service\.parseInput\(value\);[\s\S]*RIAL_NOT_DIVISIBLE_BY_10[\s\S]*service\.parseDecimalInput\(value\)/,
+  'Money Runtime must preserve legacy integer success while falling back to exact decimal parsing for one-Rial inputs');
+
+const rialDisplay = canonicalDecimalToDisplay('104692.8', UNIT_RIAL);
+assert.equal(rialDisplay, '1046928',
+  '104,692.8 canonical Toman must hand off as 1,046,928 Rial without x10 drift');
+const roundTrip = displayDecimalToCanonical(rialDisplay, UNIT_RIAL);
+assert.equal(roundTrip.ok, true);
+assert.equal(roundTrip.value, '104692.8',
+  'Rial display handoff must round-trip exactly to the canonical one-Rial amount');
+
 assert.match(ui, /Human-controlled/);
 assert.doesNotMatch(ui, /localStorage|sessionStorage/,
   'decision workspace must not persist financial decision data in browser storage');
