@@ -12,6 +12,8 @@ const stagingIndex = read(stagingRoot, 'index.html');
 const productionIndex = read(repoRoot, 'index.html');
 const sw = read(stagingRoot, 'sw.js');
 const currentState = read(repoRoot, 'AVAN_CURRENT_STATE.md');
+const productionGate = read(repoRoot, '.github', 'workflows', 'avan-production-release-gate.yml');
+const twinUi = read(stagingRoot, 'src', 'ui', 'intelligence', 'financial-digital-twin-workspace.js');
 
 const requiredRuntime = [
   'src/ui/intelligence/control-tower-workspace.js',
@@ -51,7 +53,6 @@ assert.ok(sw.includes("new Request(new URL(asset,self.registration.scope),{cache
 assert.ok(sw.includes('client.navigate(client.url)'),
   'Staging service-worker activation must move open clients onto the active runtime');
 
-// Full RC1.7 Live closure must never silently promote Production.
 for (const rc17Marker of [
   'rc17-control-tower',
   'rc17-financial-digital-twin',
@@ -70,14 +71,25 @@ assert.ok(currentState.includes('Production current release = **RC1.6**'),
 assert.ok(currentState.includes('RC1.7 remains **Staging-only**'),
   'Source of Truth must preserve the Staging-only RC1.7 release boundary');
 assert.ok(currentState.includes('RC1.7-D Evidence Readable PASS'),
-  'Source of Truth must retain the evidence readability Live result');
+  'Source of Truth must retain the decision evidence readability Live result');
 assert.ok(currentState.includes('RC1.7-D Live PASS — Handoff Fixed'),
   'Source of Truth must record the explicit final RC1.7-D functional Live PASS');
+assert.ok(currentState.includes('Digital Twin Evidence Readable PASS'),
+  'Source of Truth must record the explicit readable opening-evidence Live PASS');
 assert.ok(currentState.includes('current Live validation pending = **none for RC1.7 current scope**'),
   'RC1.7 current-scope Live closure must be complete before release freeze');
 assert.ok(currentState.includes('Production promotion still requires explicit user release approval'),
   'Full Live closure must not bypass the explicit Production Release Gate');
 assert.ok(currentState.includes('93 journal entries / 24 financial transactions / 42 invoices'),
   'Source of Truth must retain the post-Live no-mutation certification');
+
+assert.ok(productionGate.includes("const CACHE='avan-prod-rc1-7-v1';"),
+  'RC1.7 release engineering must advance the Production service-worker cache identity');
+assert.ok(!productionGate.includes("const CACHE='avan-prod-rc1-6-v1';"),
+  'RC1.6 cache identity must not remain hardcoded in the RC1.7 Production gate');
+assert.ok(twinUi.includes('avan-twin-evidence-human-list'),
+  'Digital Twin opening evidence must render accounting-facing rows');
+assert.ok(!twinUi.includes('<code>${esc(id)}</code>'),
+  'Digital Twin opening evidence must not render raw technical IDs');
 
 console.log('rc17-release-closure: PASS');
