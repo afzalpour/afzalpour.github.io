@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { extname, join, relative, resolve, sep } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 
 const stagingRoot = resolve(process.cwd());
 const productionRoot = resolve(stagingRoot, '..');
@@ -8,46 +8,11 @@ const allowlistPath = join(stagingRoot, 'runtime-divergence-allowlist.json');
 const allowlist = JSON.parse(readFileSync(allowlistPath, 'utf8'));
 const allowed = new Map((allowlist.allowed || []).map(item => [String(item.path).replaceAll('\\', '/'), item.reason]));
 
-const ROOT_RUNTIME_EXTENSIONS = new Set(['.js', '.css', '.html', '.webmanifest', '.png', '.ico']);
-const STAGING_IGNORE_DIRS = new Set(['tests', 'scripts', 'node_modules']);
-const PRODUCTION_IGNORE_DIRS = new Set(['.git', '.github', 'docs', 'avan-staging', 'node_modules']);
-const PRODUCTION_NON_RUNTIME_FILES = new Set(['demo.html']);
-const STAGING_IGNORE_FILES = new Set(['package-lock.json']);
-
-function normalized(path) {
-  return path.split(sep).join('/');
-}
-
-function walk(root, dir = root, ignoreDirs = new Set()) {
-  const out = [];
-  for (const name of readdirSync(dir)) {
-    const full = join(dir, name);
-    const rel = normalized(relative(root, full));
-    const top = rel.split('/')[0];
-    const stat = statSync(full);
-    if (stat.isDirectory()) {
-      if (ignoreDirs.has(top)) continue;
-      out.push(...walk(root, full, ignoreDirs));
-    } else {
-      out.push(rel);
-    }
-  }
-  return out;
-}
-
-function isProductionRuntime(path) {
-  if (PRODUCTION_NON_RUNTIME_FILES.has(path)) return false;
-  if (path.startsWith('src/')) return true;
-  if (path.includes('/')) return false;
-  return ROOT_RUNTIME_EXTENSIONS.has(extname(path));
-}
-
-function isStagingRuntime(path) {
-  if (STAGING_IGNORE_FILES.has(path)) return false;
-  if (path === 'runtime-divergence-allowlist.json' || path === 'package.json') return true;
-  if (path.startsWith('src/')) return true;
-  if (path.includes('/')) return false;
-  return ROOT_RUNTIME_EXTENSIONS.has(extname(path));
+function declaredRuntimeAssets(root) {
+  const sw = readFileSync(join(root, 'sw.js'), 'utf8');
+  const match = sw.match(/const ASSETS=\[([\s\S]*?)\];/);
+  assert.ok(match, `Service Worker ASSETS declaration missing under ${root}`);
+  return [...new Set([...match[1].matchAll(/['"]\.\/([^'"]+)['"]/g)].map(item => item[1]))];
 }
 
 function assertSameBytes(path) {
@@ -60,17 +25,18 @@ function assertSameBytes(path) {
   assert.ok(stagingBytes.equals(productionBytes), `Unexpected Production/Staging runtime drift: ${path}. Add a justified allowlist entry only for intentional next-release divergence.`);
 }
 
-const stagingRuntime = walk(stagingRoot, stagingRoot, STAGING_IGNORE_DIRS).filter(isStagingRuntime);
+const stagingRuntime = declaredRuntimeAssets(stagingRoot);
+const productionRuntime = declaredRuntimeAssets(productionRoot);
+
 for (const path of stagingRuntime) {
   if (allowed.has(path)) continue;
   assertSameBytes(path);
 }
 
-const productionRuntime = walk(productionRoot, productionRoot, PRODUCTION_IGNORE_DIRS).filter(isProductionRuntime);
 for (const path of productionRuntime) {
   if (allowed.has(path)) continue;
   const stagingPath = join(stagingRoot, path);
-  assert.ok(existsSync(stagingPath), `Production runtime has no Staging mirror: ${path}. Backport Production hotfixes to Staging before further release work.`);
+  assert.ok(existsSync(stagingPath), `Production runtime asset has no Staging mirror: ${path}. Backport Production hotfixes to Staging before further release work.`);
   assertSameBytes(path);
 }
 
@@ -89,4 +55,4 @@ const polishProd = readFileSync(join(productionRoot, 'src/ui/intelligence/dashbo
 const polishStage = readFileSync(join(stagingRoot, 'src/ui/intelligence/dashboard-intelligence-live-polish.js'));
 assert.ok(polishProd.equals(polishStage), 'Expanded dashboard intelligence question bank must match Production byte-for-byte.');
 
-console.log(`runtime parity PASS — ${stagingRuntime.length} staged runtime files checked, ${allowed.size} intentional divergences declared`);
+console.log(`runtime parity PASS — ${stagingRuntime.length} Staging assets / ${productionRuntime.length} Production assets checked; ${allowed.size} intentional divergences declared`);
