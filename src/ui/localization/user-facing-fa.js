@@ -14,20 +14,6 @@ const EXACT = new Map([
   ['داده‌های مالی از PostgreSQL/Supabase خوانده می‌شوند؛ LocalStorage فقط Session کاربر را نگه می‌دارد.', 'داده‌های مالی از پایگاه داده ابری آوان خوانده می‌شوند؛ حافظه محلی مرورگر فقط اطلاعات ورود کاربر را نگه می‌دارد.'],
   ['PNG، JPG یا WEBP — حداکثر ۲ مگابایت. لوگو در Storage خصوصی شرکت نگهداری می‌شود.', 'فرمت‌های مجاز: پی‌ان‌جی، جی‌پی‌جی یا وب‌پی — حداکثر ۲ مگابایت. لوگو در فضای ذخیره‌سازی خصوصی شرکت نگهداری می‌شود.'],
   ['ارسال صورتحساب الکترونیکی در این Gate فعال نیست و در RC1.5-D فقط با اقدام صریح کاربر بررسی می‌شود.', 'ارسال صورتحساب الکترونیکی در این مرحله فعال نیست و در مرحله بعد فقط با تأیید صریح کاربر انجام خواهد شد.'],
-  ['active', 'فعال'],
-  ['inactive', 'غیرفعال'],
-  ['standard', 'استاندارد'],
-  ['exempt', 'معاف'],
-  ['zero', 'نرخ صفر'],
-  ['both', 'کالا و خدمت'],
-  ['fixed', 'ثابت'],
-  ['rule', 'تابع قاعده'],
-  ['legal', 'حقوقی'],
-  ['individual', 'حقیقی'],
-  ['unspecified', 'نامشخص'],
-  ['sale', 'فروش'],
-  ['draft', 'پیش‌نویس'],
-  ['closed', 'بسته'],
   ['open', 'اعتباری'],
   ['sales_invoice', 'فاکتور فروش'],
   ['purchase_invoice', 'فاکتور خرید'],
@@ -74,8 +60,6 @@ const REPLACERS = [
   [/member added as accountant/gi, 'کاربر با نقش حسابدار به شرکت افزوده شد'],
   [/member added as manager/gi, 'کاربر با نقش مدیر به شرکت افزوده شد'],
   [/member added as viewer/gi, 'کاربر با نقش مشاهده‌گر به شرکت افزوده شد'],
-  [/Snapshot/gi, 'اطلاعات ثبت‌شده'], [/Foundation/gi, 'نسخه پایه'], [/Source of Truth/gi, 'مرجع معتبر داده'],
-  [/Exception Register/gi, 'فهرست موارد نیازمند بررسی'], [/Close Readiness/gi, 'آمادگی بستن دوره'], [/Working Capital/gi, 'سرمایه در گردش'],
   [/Platform Admin/gi, 'مدیر سامانه'], [/SaaS Control Plane/gi, 'مرکز مدیریت سامانه'], [/Control Plane/gi, 'مرکز مدیریت سامانه'],
   [/Support Session/gi, 'دسترسی پشتیبانی'], [/Support/gi, 'پشتیبانی'], [/Session/gi, 'نشست'],
   [/Read-only/gi, 'فقط‌خواندنی'], [/Read only/gi, 'فقط‌خواندنی'], [/Viewer/gi, 'مشاهده‌گر'],
@@ -98,8 +82,4 @@ export function safeUserFacingFa(value, fallback = 'رویداد سامانه') 
   const text = translateUserFacingText(String(value ?? '').trim());
   if (!text) return fallback;
   return /[A-Za-z]/.test(text) ? fallback : text;
-}
-
-export function safeDatabaseFacingFa(value, fallback = 'اطلاعات ثبت‌شده') {
-  return safeUserFacingFa(value, fallback);
 }
