@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "policy": "هر فایل Runtime مشترک بین Production و Staging باید byte-identical باشد؛ اختلاف فقط با ثبت صریح در این allowlist و دلیل release مجاز است.",
+  "allowed": [
+    { "path": "config.js", "reason": "پیکربندی محیط Production و Staging عمداً متفاوت است." },
+    { "path": "index.html", "reason": "Staging می‌تواند entrypoint ماژول next-release را پیش از Production داشته باشد." },
+    { "path": "sw.js", "reason": "Service Worker و cache identity محیط‌ها مستقل است." },
+    { "path": "package.json", "reason": "Quality gate فقط در Staging اجرا می‌شود." },
+    { "path": "module4-continuous-close-audit.css", "reason": "Module 4 هنوز next-release و Staging-only است." },
+    { "path": "rc15-tax-ux.css", "reason": "اصلاح responsive گزارش ارزش افزوده در Live correction جاری و هنوز Production-promoted نشده است." },
+    { "path": "src/ai/risk-audit.js", "reason": "Evidence enrichment مربوط به Module 4 و هنوز Staging-only است." },
+    { "path": "src/application/intelligence/continuous-close-audit-service.js", "reason": "Module 4 Staging-only." },
+    { "path": "src/intelligence/continuous-close-audit-foundation.js", "reason": "Module 4 Staging-only." },
+    { "path": "src/ui/intelligence/continuous-close-audit-workspace.js", "reason": "Module 4 Staging-only و Live correction جاری." },
+    { "path": "src/ui/intelligence/intelligence-print-export.js", "reason": "Unified intelligence Print/PDF در next-release و هنوز Production-promoted نشده است." },
+    { "path": "src/ui/money/money-output-contract.js", "reason": "اصلاح idempotency واحد مبالغ برای Evidence modal در Live correction جاری." },
+    { "path": "runtime-divergence-allowlist.json", "reason": "متادیتای مخصوص قرارداد parity در Staging." }
+  ]
+}
