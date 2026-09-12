@@ -85,8 +85,12 @@ export function installMoneyRuntime({ globalObject = window, documentObject = do
   }
 
   function safeParseInput(value) {
-    try { return service.parseInput(value); }
-    catch { return { ok: false, value: null, code: 'MONEY_UNIT_NOT_READY' }; }
+    try {
+      const parsed = service.parseInput(value);
+      if (parsed?.ok) return parsed;
+      if (!['INVALID_AMOUNT', 'RIAL_NOT_DIVISIBLE_BY_10'].includes(parsed?.code)) return parsed;
+      return service.parseDecimalInput(value);
+    } catch { return { ok: false, value: null, code: 'MONEY_UNIT_NOT_READY' }; }
   }
 
   function safeParseDecimalInput(value) {
