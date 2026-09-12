@@ -45,18 +45,44 @@ jobs:
         run: |
           set -euo pipefail
           git fetch origin main --depth=1
-          if ! git diff --quiet origin/main...HEAD -- config.js; then
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            BASE_REF='HEAD^1'
+          else
+            BASE_REF='origin/main'
+          fi
+          if ! git diff --quiet "$BASE_REF"...HEAD -- config.js; then
             echo 'Production config.js must not change during runtime promotion.' >&2
             exit 1
           fi
-          if git diff --name-only origin/main...HEAD | grep -Eq '^[^/]+\.sql$'; then
+          if git diff --name-only "$BASE_REF"...HEAD | grep -Eq '^[^/]+\.sql$'; then
             echo 'Root SQL artifacts must not be promoted with frontend runtime.' >&2
             exit 1
           fi
           test ! -d tests
           test ! -d scripts
 
+      - name: Detect Production runtime promotion
+        id: promotion
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            BASE_REF='HEAD^1'
+          else
+            BASE_REF='origin/main'
+          fi
+          CHANGED="$(git diff --name-only "$BASE_REF"...HEAD)"
+          if printf '%s\n' "$CHANGED" | grep -Eq '^(src/|[^/]+\.(js|css|html|webmanifest|png)$)'; then
+            echo 'runtime=true' >> "$GITHUB_OUTPUT"
+            echo 'Production runtime promotion detected; exact Staging projection is mandatory.'
+          else
+            echo 'runtime=false' >> "$GITHUB_OUTPUT"
+            echo 'Release-gate preparation only; Production runtime remains unchanged.'
+          fi
+
       - name: Verify Production runtime is exact vetted Staging projection
+        if: steps.promotion.outputs.runtime == 'true'
         shell: bash
         run: |
           set -euo pipefail
