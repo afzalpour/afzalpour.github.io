@@ -61,6 +61,6 @@ const module4 = read('src/ui/intelligence/continuous-close-audit-workspace.js');
 assert.ok(module4.includes("import './intelligence-print-export.js';"), 'Module 4 bootstrap must load unified intelligence Print/PDF controls.');
 
 const sw = read('sw.js');
-assert.ok(sw.includes('avan-staging-rc1-v116-print-hidden-iso-root-fix'));
+assert.ok(sw.includes('avan-staging-rc1-v117-module5-iran-compliance-radar'));
 
 console.log('Module 4 Live polish regression PASS');

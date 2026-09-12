@@ -5,33 +5,56 @@ import { fileURLToPath } from 'node:url';
 
 const testsDir = path.dirname(fileURLToPath(import.meta.url));
 const stagingRoot = path.resolve(testsDir, '..');
-const sw = fs.readFileSync(path.join(stagingRoot, 'sw.js'), 'utf8');
+const read = rel => fs.readFileSync(path.join(stagingRoot, rel), 'utf8');
+const sw = read('sw.js');
+const manifestA = read('sw-assets-common-a.js');
+const manifestB = read('sw-assets-common-b.js');
+
+assert.match(sw, /importScripts\('\.\/sw-assets-common-a\.js','\.\/sw-assets-common-b\.js'\)/,
+  'service worker must load the bounded internal precache manifests');
+
+function literals(source) {
+  return [...source.matchAll(/['"]\.\/([^'"]*)['"]/g)].map(match => match[1]);
+}
+
+for (const [name, source] of [['common-a', manifestA], ['common-b', manifestB]]) {
+  const rows = literals(source);
+  assert.ok(rows.length > 0, `${name} must declare runtime assets`);
+  assert.equal(new Set(rows).size, rows.length, `${name} must not contain duplicate assets`);
+}
 
 const assetBlock = sw.match(/const ASSETS=\[([\s\S]*?)\];/);
 assert.ok(assetBlock, 'service worker must declare a bounded ASSETS array');
-const assets = [...assetBlock[1].matchAll(/['"]\.\/([^'"]*)['"]/g)].map(match => match[1]);
-assert.ok(assets.length > 0, 'service worker must declare runtime assets');
-assert.equal(new Set(assets).size, assets.length, 'precache asset list must not contain duplicates');
+const directAssets = literals(assetBlock[1]);
+assert.ok(directAssets.length > 0, 'service worker must declare direct next-release runtime assets');
+assert.equal(new Set(directAssets).size, directAssets.length, 'direct ASSETS literals must not contain duplicates');
 
+const assets = [...new Set([...literals(manifestA), ...literals(manifestB), ...directAssets])];
 const missing = [];
 for (const rel of assets) {
-  if (!rel) continue; // './' is the navigation root.
+  if (!rel) continue;
   const target = path.resolve(stagingRoot, rel);
-  if (!target.startsWith(`${stagingRoot}${path.sep}`) || !fs.existsSync(target) || !fs.statSync(target).isFile()) {
-    missing.push(rel);
-  }
+  if (!target.startsWith(`${stagingRoot}${path.sep}`) || !fs.existsSync(target) || !fs.statSync(target).isFile()) missing.push(rel);
 }
-
 assert.deepEqual(missing, [], `every precached runtime asset must exist; missing: ${missing.join(', ')}`);
-assert.doesNotMatch(assetBlock[1], /src\/ui\/money\/live-money-inputs\.js/,
+
+for (const support of ['sw-assets-common-a.js', 'sw-assets-common-b.js']) {
+  assert.ok(directAssets.includes(support), `${support} must be part of the worker runtime contract`);
+}
+for (const module5 of [
+  'module5-iran-compliance-radar.css',
+  'src/application/intelligence/iran-compliance-radar-service.js',
+  'src/intelligence/iran-compliance-radar-foundation.js',
+  'src/ui/intelligence/iran-compliance-radar-workspace.js'
+]) assert.ok(directAssets.includes(module5), `Module 5 precache missing: ${module5}`);
+
+assert.doesNotMatch([sw, manifestA, manifestB].join('\n'), /src\/ui\/money\/live-money-inputs\.js/,
   'removed legacy money input runtime must never be precached again');
 
 const cacheIdentity = sw.match(/const CACHE='(avan-staging-rc1-v(\d+)-[a-z0-9-]+)'/i);
 assert.ok(cacheIdentity, 'Staging service worker must use a versioned avan-staging-rc1 cache identity');
-assert.ok(Number(cacheIdentity[2]) >= 94,
-  'Staging PWA cache identity must not regress behind the precache-integrity baseline');
+assert.ok(Number(cacheIdentity[2]) >= 117, 'Module 5 Staging cache identity must be v117 or newer');
+assert.match(sw, /if\(request\.mode==='navigate'\)/, 'HTML fallback must remain navigation-only');
+assert.match(sw, /url\.origin!==location\.origin/, 'cross-origin traffic must stay outside the app cache');
 
-assert.match(sw, /if\(request\.mode==='navigate'\)/,
-  'HTML fallback must remain navigation-only');
-
-console.log(`sw-precache-integrity: PASS (${assets.length} declared runtime entries; ${cacheIdentity[1]})`);
+console.log(`sw-precache-integrity: PASS (${assets.length} effective runtime entries; ${cacheIdentity[1]})`);
