@@ -72,7 +72,7 @@ function collectionDecisionsHtml(items) {
     <section class="avan-decision-group">
       <div class="section-head"><div><h3>پیشنهادهای کنترل‌شده وصول</h3><span class="muted">قاعده از روزهای تأخیر و مانده واقعی می‌آید؛ پیام یا وصول خودکار انجام نمی‌شود.</span></div><span class="summary-pill">${Number(items.length).toLocaleString('fa-IR')} پیشنهاد</span></div>
       ${items.length ? `<div class="avan-decision-list">${items.slice(0, 8).map(item => `
-        <article class="avan-decision-row ${recommendationClass(item.recommendation.tier)}" data-decision-id="${esc(item.id)}">
+        <article class="avan-decision-row collection ${recommendationClass(item.recommendation.tier)}" data-decision-id="${esc(item.id)}">
           <div class="avan-decision-main"><b>${esc(item.partyName)}</b><span class="muted">${esc(item.recommendation.label)}</span><span>${esc(item.recommendation.reason)}</span></div>
           <div class="avan-decision-money"><span>سررسیدگذشته</span><b data-avan-number-output="1">${money(item.overdueAmount)}</b></div>
           <div class="avan-decision-actions"><button type="button" class="ghost small" data-decision-why="${esc(item.id)}">چرا این پیشنهاد؟</button><button type="button" class="ghost small" data-decision-simulate="${esc(item.id)}">آزمایش وصول در دوقلو</button></div>
@@ -83,9 +83,9 @@ function collectionDecisionsHtml(items) {
 function paymentDecisionsHtml(items) {
   return `
     <section class="avan-decision-group">
-      <div class="section-head"><div><h3>پیشنهادهای کنترل‌شده پرداخت</h3><span class="muted">ترتیب فقط بر اساس سررسید است. پوشش نقد، اثر تجمعی پرداخت همین صف را نشان می‌دهد و دستور پرداخت نیست.</span></div><span class="summary-pill">${Number(items.length).toLocaleString('fa-IR')} پیشنهاد</span></div>
+      <div class="section-head"><div><h3>پیشنهادهای کنترل‌شده پرداخت</h3><span class="muted">ترتیب بر اساس سررسید است. مبلغ «نقد پس از این ردیف» فقط اثر تجمعی همین صف را نشان می‌دهد و دستور پرداخت نیست.</span></div><span class="summary-pill">${Number(items.length).toLocaleString('fa-IR')} پیشنهاد</span></div>
       ${items.length ? `<div class="avan-decision-list">${items.slice(0, 12).map(item => `
-        <article class="avan-decision-row ${recommendationClass(item.recommendation.tier)}" data-decision-id="${esc(item.id)}">
+        <article class="avan-decision-row payment ${recommendationClass(item.recommendation.tier)}" data-decision-id="${esc(item.id)}">
           <div class="avan-decision-main"><b>${esc(item.partyName)} · ${item.invoiceNo ? `فاکتور ${esc(item.invoiceNo)}` : `سند ${esc(item.journalNo || '—')}`}</b><span class="muted">سررسید ${esc(dateFa(item.dueDate))} · ${esc(item.recommendation.label)}</span><span>${esc(item.recommendation.reason)}</span></div>
           <div class="avan-decision-money"><span>تعهد باز</span><b data-avan-number-output="1">${money(item.amount)}</b></div>
           <div class="avan-decision-money"><span>نقد پس از این ردیف</span><b data-avan-number-output="1">${money(item.projectedCashAfter)}</b></div>
@@ -98,13 +98,13 @@ function decisionCenterHtml(result) {
   return `
     <section class="card avan-working-capital-decisions" data-working-capital-decision-center>
       <div class="section-head">
-        <div><div class="eyebrow">RC1.7-D · Evidence-backed Decision Layer</div><h2>تصمیم‌یار عملیاتی</h2><span class="muted">از داده واقعی تا پیشنهاد قابل توضیح؛ تصمیم نهایی و هر اقدام مالی همچنان با کاربر است.</span></div>
-        <span class="cloud-badge">Human-controlled</span>
+        <div><h2>تصمیم‌یار عملیاتی</h2><span class="muted">از داده واقعی تا پیشنهاد قابل توضیح؛ تصمیم نهایی و هر اقدام مالی همچنان با کاربر است.</span></div>
+        <span class="cloud-badge">تحت کنترل کاربر</span>
       </div>
       ${summaryHtml(result.decisions)}
       ${collectionDecisionsHtml(result.decisions.collections)}
       ${paymentDecisionsHtml(result.decisions.payments)}
-      <div class="info-box">مبلغ توصیه‌ای ساختگی: صفر · محاسبه با دقت یک ریال · AI arithmetic: صفر · ارسال پیام خودکار: صفر · پرداخت خودکار: صفر · تغییر Actual Ledger: صفر</div>
+      <div class="info-box">آوان در این بخش مبلغ ساختگی تولید نمی‌کند و محاسبات با دقت یک ریال انجام می‌شود. هیچ پیام، پرداخت یا ثبت حسابداری بدون اقدام و تأیید شما انجام نمی‌شود.</div>
     </section>`;
 }
 
@@ -213,7 +213,7 @@ function evidenceListHtml(item) {
 function whyModal(item) {
   openModal(`
     <div data-decision-why-modal>
-      <div class="section-head"><div><h2>چرا این پیشنهاد؟</h2><span class="muted">قاعده + اثر نقد + شواهد قابل‌فهم</span></div><span class="cloud-badge">قابل ردیابی</span></div>
+      <div class="section-head"><div><h2>چرا این پیشنهاد؟</h2><span class="muted">قاعده، اثر نقدی و شواهد حسابداری</span></div><span class="cloud-badge">قابل ردیابی</span></div>
       <div class="info-box"><b>${esc(item.recommendation.label)}</b><br>${esc(item.recommendation.reason)}</div>
       ${item.kind === 'collection'
         ? `<div class="grid2 section"><div class="card"><span class="kpi-label">مانده باز</span><b data-avan-number-output="1">${money(item.openAmount)}</b></div><div class="card"><span class="kpi-label">سررسیدگذشته</span><b data-avan-number-output="1">${money(item.overdueAmount)}</b></div></div>`
