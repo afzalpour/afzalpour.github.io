@@ -48,6 +48,10 @@ const printBoundary = read('rc12-print-export.js');
 assert.ok(printBoundary.includes("Intl.DateTimeFormat('fa-IR-u-ca-persian'"), 'Print/PDF header date must use explicit Persian calendar.');
 assert.ok(!printBoundary.includes("Intl.DateTimeFormat('fa-IR', {\n    dateStyle: 'medium'"), 'Ambiguous fa-IR print date formatter must not return.');
 
+const jalaliPicker = read('src/ui/date/jalali-picker.js');
+assert.ok(jalaliPicker.includes("hidden.type = 'hidden';"), 'Jalali picker must keep an ISO backing control.');
+assert.ok(jalaliPicker.includes('hidden.hidden = true;'), 'Jalali ISO backing control must carry the hidden attribute so print clones remove it.');
+
 const module4Css = read('module4-continuous-close-audit.css');
 assert.ok(module4Css.includes('.avan-working-capital-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important'), 'Working Capital desktop KPI layout must remain 4 columns (4+3 for seven cards).');
 assert.ok(module4Css.includes('@media(max-width:900px){.avan-working-capital-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important'), 'Working Capital responsive two-column guard must remain.');
@@ -57,6 +61,6 @@ const module4 = read('src/ui/intelligence/continuous-close-audit-workspace.js');
 assert.ok(module4.includes("import './intelligence-print-export.js';"), 'Module 4 bootstrap must load unified intelligence Print/PDF controls.');
 
 const sw = read('sw.js');
-assert.ok(sw.includes('avan-staging-rc1-v115-module4-print-jalali-single-date'));
+assert.ok(sw.includes('avan-staging-rc1-v116-print-hidden-iso-root-fix'));
 
 console.log('Module 4 Live polish regression PASS');
