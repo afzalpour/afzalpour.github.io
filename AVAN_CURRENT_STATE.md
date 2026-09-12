@@ -338,11 +338,17 @@ Guardrails: deterministic calculation before narrative; evidence before recommen
 
 ## 14) Canonical current pointers
 
-- Production runtime = **RC1.7 + Production Smoke UX hotfix**.
+- Production runtime = **RC1.7 + Production Smoke UX hotfix + Company Onboarding/Auth re-entry hotfix**.
 - Production release PR = **#158**.
 - Production release merge = `cf08f25703b84c0049103eb97e15d59945973658`.
 - Production UX delivery hotfix PR = **#162**.
 - Production UX delivery hotfix merge = `133f9e44cd3408e6ba7dbabfba194a89dca92d0c`.
+- Production Company Onboarding/Auth hotfix PR = **#167**.
+- Production Company Onboarding/Auth hotfix merge = `1eac2e9cf4fd44feaa49fffd86b9438a6a5161c9`.
+- Production Company Onboarding/Auth Release Gate = **#18 pre-merge / #19 post-merge PASS**.
+- Production Company Onboarding/Auth Pages = **#410 PASS**.
+- Company Onboarding/Auth rollback = `prod-backup-20260912-company-onboarding-auth-hotfix-pre-promotion`.
+- Production Company Onboarding/Auth authenticated Live validation = **pending**.
 - Production Service Worker cache = `avan-prod-rc1-7-v1`.
 - original Production rollback = `prod-backup-20260912-rc1-7-pre-promotion`.
 - pre-Smoke-UX-hotfix rollback = `prod-backup-20260912-rc1-7-pre-smoke-ux-hotfix`.
@@ -403,3 +409,47 @@ Required next acceptance:
 - authenticated Staging Live Gate for page load, Close status, Exception Register, accounting-readable evidence drilldown, date rerun and mutation-free behavior.
 - do **not** mark Module 4 Live PASS until explicit user confirmation.
 - do **not** promote Module 4 into Production without a separate explicit Production release approval.
+
+---
+
+## 16) Critical Company Onboarding + Admin Auth Re-entry hotfix — 2026-09-12
+
+Status: **Engineering/Release PASS / authenticated Production Live validation pending**.
+
+Incident:
+- zero-company users could reach Company Portfolio but clicking **«ایجاد شرکت جدید»** appeared to do nothing.
+- root cause was presentation layering: the standard modal backdrop was at z-index `100` while Company Portfolio was at z-index `700`, so the onboarding form opened behind the Portfolio.
+- required Company Portfolio also lacked a safe account-switch escape path and could obstruct clean auth re-entry after sign-out/account switching.
+
+Backend/security verification before patch:
+- Production `create_avan_company` public RPC has the exact six-argument signature used by the onboarding UI: company name, money unit, fiscal name, start date, end date and profile JSON.
+- `authenticated` retains `EXECUTE` on the public wrapper.
+- the Platform Admin record remained active and its existing workspace membership remained present; the incident did **not** delete admin privilege or tenancy membership.
+- no user password, financial data, membership or admin row was modified during diagnosis.
+
+Staging-first correction:
+- PR **#166** fixed the modal layer so onboarding renders above Company Portfolio.
+- required Portfolio now closes whenever the authenticated application shell is not visible.
+- required Portfolio now provides **«خروج و ورود با حساب دیگر»**; it clears only the client company selection, signs out through the existing Supabase auth client and reloads cleanly.
+- regression coverage permanently locks zero-company onboarding visibility and auth re-entry behavior.
+- PR #166 merge = `7533b0f72514120dc6e924575addb30496efe4b0`.
+- Architecture Gate **#284 pre-merge / #285 post-merge PASS**.
+- Staging Pages **#409 PASS**.
+
+Production correction:
+- PR **#167** promoted only the vetted root `rc13-company-context.js` and `rc13-company-context.css`; Module 4 remained Staging-only.
+- Production Release Gate was strengthened with a narrow allowlist for targeted Company Shell hotfixes: only those two runtime files are permitted and each must be byte-identical to its already-vetted Staging counterpart; normal releases still require exact full-Staging projection.
+- PR #167 merge = `1eac2e9cf4fd44feaa49fffd86b9438a6a5161c9`.
+- Production Release Gate **#18 pre-merge / #19 post-merge PASS**.
+- GitHub Pages **#410 PASS**.
+- dedicated rollback = `prod-backup-20260912-company-onboarding-auth-hotfix-pre-promotion`.
+- root Production files were re-read after deployment and confirmed to contain the account-switch action, app-shell visibility guard and modal-above-Portfolio layer rule.
+- Production service-worker identity was intentionally unchanged (`avan-prod-rc1-7-v1`); runtime remains network-first.
+- no database/schema/data, membership, admin or financial mutation was part of this release.
+
+Required Live acceptance:
+- zero-company user can open the create-company form visibly, create the first company and enter it.
+- **«خروج و ورود با حساب دیگر»** returns cleanly to authentication.
+- existing Platform Admin can then sign in and reach its existing company/admin access.
+- do **not** mark this hotfix Live PASS until explicit user confirmation **«Company Onboarding + Admin Re-entry Live PASS»**.
+- Module 4 Live Gate remains deferred until this Production blocker is Live accepted.
