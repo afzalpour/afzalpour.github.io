@@ -21,7 +21,7 @@ Repository: `afzalpour/afzalpour.github.io`
 - current Live validation pending = **none for RC1.7 current scope**.
 - current release-engineering pending = **none for RC1.7**.
 - Production Service Worker cache = `avan-prod-rc1-7-v1`.
-- Production root remains RC1.7 plus the accepted Smoke UX and Company Onboarding/Auth hotfixes.
+- Production root remains RC1.7 plus accepted Smoke UX and Company Onboarding/Auth hotfixes.
 - **Module 4 has not been promoted to Production.**
 
 Production rollback points retained:
@@ -78,7 +78,7 @@ Direct read-only verification on `Avan-production` remains the backend reference
 - orphan invoice lines = **0**.
 - cross-workspace invoice-line mismatches = **0**.
 - journal lines containing fractional Toman values = **42**; real data exercises one-Rial exactness.
-- effective anon/auth executable public `SECURITY DEFINER` exposure = **0** under the established privilege boundary.
+- effective anon/auth executable public `SECURITY DEFINER` exposure = **0**.
 - after explicit **«RC1.7-D Live PASS — Handoff Fixed»**: **93 journal entries / 24 financial transactions / 42 invoices** with unchanged latest creation timestamps relative to the pre-test baseline.
 
 Supabase Security Advisor remains truthful:
@@ -111,7 +111,6 @@ Supabase Security Advisor remains truthful:
 
 Status: **Engineering/Release PASS + authenticated Production Live PASS**.
 
-Incident correction history:
 - Staging PR #166 merge = `7533b0f72514120dc6e924575addb30496efe4b0`.
 - Architecture Gate #284/#285 = PASS; Staging Pages #409 = PASS.
 - Production PR #167 merge = `1eac2e9cf4fd44feaa49fffd86b9438a6a5161c9`.
@@ -121,8 +120,6 @@ Incident correction history:
 - existing Platform Admin sign-in/access re-entry = PASS.
 - explicit authenticated confirmation = **«Company Onboarding + Admin Re-entry Live PASS»**.
 - no password, financial data, membership or admin-row mutation was required by the hotfix.
-
-No retest is required unless a new regression is reported.
 
 ---
 
@@ -172,7 +169,7 @@ Foundation contract:
 - no posting, payment or period-close action is executed by the workspace.
 - one-Rial exactness and explicit sub-Rial rejection remain locked by regression tests.
 
-Pre-Live read-only baseline recorded after the original Engineering merge:
+Pre-Live read-only baseline after Engineering merge:
 - journal entries = **93**;
 - financial transactions = **24**;
 - invoices = **42**;
@@ -182,71 +179,41 @@ Pre-Live read-only baseline recorded after the original Engineering merge:
 
 ## 8) Module 4 first authenticated Staging Live result — PARTIAL PASS
 
-User Live validation on Staging reported:
-
-### Accepted in Live
-1. page **«بستن و حسابرسی پیوسته»** opens correctly both from its standalone navigation entry and from Reports = **PASS**.
-2. Close status and its logic are understandable/functional = **PASS**.
-3. changing the date (including test to 1 Mordad 1404) recalculates values and created no journal/document = **mutation-free Live PASS for this interaction**.
+Accepted in Live:
+1. **«بستن و حسابرسی پیوسته»** opens from standalone navigation and Reports = PASS.
+2. Close status/logic = PASS.
+3. changing date, including 1 Mordad 1404, recalculated values and created no journal/document = mutation-free PASS for this interaction.
 4. evidence under **«آمادگی بستن دوره»** works correctly.
 
-### Defects found in Live
-- Evidence interaction under the exception section was unstable for some rows.
-- numeric evidence cases such as approximately `78,000,000 Rial` could open accounting evidence while repeatedly injecting **«واحد مبالغ: ریال»** boxes and causing visible jumping/flicker.
-- Module 4 contained mixed English/Persian terms including Close / Exception / Reconciliation / Anomaly and needed fluent Persian business language.
-- VAT report tables could overflow the visible RTL/card surface.
-- intelligence workspaces lacked a consistent **چاپ / ذخیره PDF** entry.
-- user observed a Production/Staging behavioral mismatch in **«✦ از آوان بپرس»** (Production showing more suggested questions than Staging), exposing a release-architecture drift/cache risk.
+Defects reported during Live:
+- some Exception evidence interactions were unstable.
+- high-value evidence such as ~`78,000,000 Rial` could trigger repeated **«واحد مبالغ: ریال»** boxes and flicker.
+- Module 4 contained mixed English/Persian terms.
+- VAT report wide tables could overflow.
+- intelligence workspaces lacked consistent Print/PDF.
+- Production/Staging mismatch was observed in **«✦ از آوان بپرس»**.
 
 Therefore **Module 4 Live PASS is not yet recorded**.
 
 ---
 
-## 9) Module 4 Live correction + UX hardening — PR #170
+## 9) Module 4 Live correction + runtime parity — PR #170
 
-Correction PR = **#170**.
-Merge = `d848b0056936934cb471553e769b0b266f0be5c1`.
-Pre-merge Architecture Gate = **#289 PASS**.
-Post-merge Architecture Gate = **#290 PASS**.
-Staging Pages = **#413 PASS**.
-Staging cache = **`avan-staging-rc1-v113-module4-live-polish-runtime-parity`**.
-Production runtime = **unchanged**.
+- PR #170 merge = `d848b0056936934cb471553e769b0b266f0be5c1`.
+- Architecture Gate #289/#290 = PASS.
+- Staging Pages #413 = PASS.
+- cache = `avan-staging-rc1-v113-module4-live-polish-runtime-parity`.
+- Production runtime remained unchanged.
 
-Engineering corrections now deployed to Staging:
+Corrections deployed:
+- Evidence Modal opens once and updates its body in place.
+- money-unit badge projection is idempotent and duplicate/stale badges are removed.
+- Module 4 user-facing Close/Exception/Reconciliation/Anomaly wording was rewritten to fluent Persian.
+- shared intelligence **«چاپ / ذخیره PDF»** launcher uses existing `AvanPrintExport.printElement(...)` for Control Tower, Digital Twin, Working Capital, Decision Layer and Continuous Close/Audit.
+- VAT report wide tables are width-contained with horizontal scrolling.
+- ADR-0024 runtime parity regression became part of `npm quality`.
 
-### Evidence stability / money-unit flicker
-- Module 4 evidence Modal now opens once and updates its evidence body in place instead of rebuilding the complete Modal after asynchronous reads.
-- Evidence Modal explicitly suppresses the generic money-unit badge.
-- Money Output Contract is now idempotent for direct unit badges and removes duplicates/stale badges.
-- permanent regression asserts a single `openModal()` lifecycle in the evidence flow and the badge suppression contract.
-
-### Fluent Persian Module 4 UI
-User-facing terminology was rewritten to business Persian, including:
-- `کنترل مستمر بستن دوره و حسابرسی`;
-- `کنترل بازِ بستن دوره`;
-- `کل موارد نیازمند بررسی`;
-- `فهرست موارد نیازمند بررسی`;
-- `کنترل‌های یکپارچگی، ثبت‌های مشابه، مغایرت‌ها و ناهنجاری‌ها`;
-- Persian explanation/disclaimer for duplicate/anomaly findings;
-- user-facing Close/Audit/Integrity/Duplicate/Reconciliation/Anomaly/Posted/Draft references are translated in the Module 4 presentation layer.
-
-### Unified Print / Save PDF
-A shared intelligence print launcher now uses the existing company/unit-aware Avan Print/Export boundary for:
-- **برج کنترل مالی**;
-- **دوقلوی مالی**;
-- **مرکز سرمایه در گردش**;
-- **تصمیم‌یار عملیاتی**;
-- **بستن و حسابرسی پیوسته**.
-
-The control is **«چاپ / ذخیره PDF»** and reuses `AvanPrintExport.printElement(...)`; a second print system was not created. The existing print contract remains responsible for company identity and selected money unit.
-
-### VAT report containment
-- VAT report `.table-wrap` is explicitly width-contained and horizontally scrollable for wide tables.
-- print mode restores full printable table width.
-- mobile KPI layout is constrained separately.
-
-### Regression result
-Architecture Gate #289 log explicitly confirmed:
+Gate #289 explicitly confirmed:
 - `continuous-close-audit.spec.mjs: PASS`
 - `Module 4 Live polish regression PASS`
 - `runtime parity PASS — 197 Staging assets / 192 Production assets checked; 13 intentional divergences declared`
@@ -261,43 +228,77 @@ Architecture Gate #289 log explicitly confirmed:
 
 Status: **Accepted**.
 
-Reason: Production and Staging are intentionally separate release surfaces, but shared runtime must not silently drift after Production hotfixes or next-release work.
-
 Active contract:
 - Production baseline is the common runtime reference.
-- runtime assets shared by Production and Staging must be **byte-identical**.
-- intentional next-release/environment differences must be declared in `avan-staging/runtime-divergence-allowlist.json` with an explicit reason.
-- parity is **bidirectional**: Production runtime cannot gain an active asset without its Staging mirror, and Staging cannot silently carry a different shared asset.
-- active runtime scope is defined from each environment's declared Service Worker `ASSETS`, not from historical/unused repository debris.
-- normal Production promotion remains explicit; parity does **not** auto-promote Staging changes.
-- a Production incident hotfix must be Staging-first or immediately backported into the same release train.
+- shared runtime assets must be **byte-identical**.
+- intentional next-release/environment differences must be declared in `avan-staging/runtime-divergence-allowlist.json` with explicit reason.
+- parity is bidirectional.
+- active runtime scope comes from each environment's Service Worker `ASSETS`.
+- normal Production promotion remains explicit; parity does not auto-promote Staging changes.
+- Production incident hotfixes must be Staging-first or immediately backported into the same release train.
 - Staging runtime changes require an advanced cache identity.
-- allowlist entries are expected to be temporary/minimal and removed after promotion when the runtime becomes shared again.
+- allowlist entries must remain temporary/minimal.
 
-Dedicated capability lock:
-- `src/ui/intelligence/business-copilot-view.js` must be byte-identical between Production and Staging.
-- `src/ui/intelligence/dashboard-intelligence-live-polish.js` must be byte-identical between Production and Staging.
+Dedicated capability locks:
+- `src/ui/intelligence/business-copilot-view.js` byte-identical between Production/Staging.
+- `src/ui/intelligence/dashboard-intelligence-live-polish.js` byte-identical between Production/Staging.
 
-At PR #170 Gate time those question-bank source files were already byte-identical. Therefore the previously observed **9-vs-4 «از آوان بپرس»** difference was not supported by current source drift and is consistent with a stale served runtime/cache. Staging cache was advanced to v113 and the parity contract now prevents future silent source drift.
+At PR #170 Gate time those question-bank source files were already byte-identical. The previously observed **9-vs-4 «از آوان بپرس»** mismatch was therefore not supported by current source drift and was consistent with stale served runtime/cache.
 
 ---
 
-## 11) Current canonical pointers
+## 11) Module 4 Live polish v2 — Working Capital layout + Jalali Print/PDF
+
+Authenticated user retest reported two additional presentation defects:
+1. Staging **مرکز سرمایه در گردش** showed the seven KPI cards vertically instead of the accepted Production **4 + 3** desktop rhythm.
+2. Print/PDF header date could appear Gregorian and must be explicitly Jalali/Persian.
+
+Correction delivery:
+- PR #172 = **Module 4 Live polish v2: Working Capital 4+3 + Jalali Print/PDF**.
+- merge = `26d25eed3ef6995df6b08d4919f2e81ba81792ee`.
+- pre-merge Architecture Gate = **#291 PASS**.
+- post-merge Architecture Gate = **#292 PASS**.
+- Staging Pages = **#415 PASS**.
+- Staging cache = **`avan-staging-rc1-v114-module4-live-polish-v2`**.
+- Production runtime = **unchanged**.
+
+Working Capital layout correction:
+- a late-loaded Staging guard now enforces `4` KPI columns on desktop, naturally rendering seven cards as **4 + 3**.
+- responsive fallbacks remain `3` columns at <=1100px, `2` at <=900px and `1` at <=560px.
+- the guard uses explicit layout ownership so later CSS cannot collapse all KPI cards into one column.
+
+Print/PDF date correction:
+- central Staging `rc12-print-export.js` changed from ambiguous `Intl.DateTimeFormat('fa-IR', ...)` to explicit **`Intl.DateTimeFormat('fa-IR-u-ca-persian', ...)`**.
+- therefore the shared Print/PDF header now requires the Persian/Jalali calendar while retaining print time.
+- this is intentionally declared in ADR-0024 divergence allowlist until a later Production promotion.
+
+Permanent regression coverage now locks:
+- Working Capital desktop 4-column KPI grid;
+- responsive 2/1-column fallbacks;
+- explicit Persian calendar formatter in the Print/PDF boundary;
+- Staging cache identity v114.
+
+No accounting calculation, backend schema/data, financial mutation, auth, membership or admin behavior changed in PR #172.
+
+---
+
+## 12) Current canonical pointers
 
 Production:
 - current release = **RC1.7**.
 - original release PR #158.
 - Smoke UX Production hotfix PR #162 merge `133f9e44cd3408e6ba7dbabfba194a89dca92d0c`.
 - Company Onboarding/Auth Production hotfix PR #167 merge `1eac2e9cf4fd44feaa49fffd86b9438a6a5161c9`.
-- Company Onboarding/Auth Live = **PASS**.
+- Company Onboarding/Auth Live = PASS.
 - Production Service Worker = `avan-prod-rc1-7-v1`.
 
 Staging / Module 4:
 - foundation PR #164 merge `4549e56a934431e2e09826ee510800ecbdc8709a`.
 - Live correction/parity PR #170 merge `d848b0056936934cb471553e769b0b266f0be5c1`.
-- Architecture = #289 pre-merge / #290 post-merge PASS.
-- Pages = #413 PASS.
-- cache = `avan-staging-rc1-v113-module4-live-polish-runtime-parity`.
+- Live polish v2 PR #172 merge `26d25eed3ef6995df6b08d4919f2e81ba81792ee`.
+- latest Architecture = #291 pre-merge / #292 post-merge PASS.
+- latest Pages = #415 PASS.
+- latest cache = `avan-staging-rc1-v114-module4-live-polish-v2`.
 - Module 4 Production promotion = **not authorized / not performed**.
 - Module 4 final Live validation = **targeted Staging retest pending**.
 
@@ -307,18 +308,12 @@ Architecture:
 
 ---
 
-## 12) Required next acceptance — targeted Staging retest only
+## 13) Required next acceptance — targeted Staging retest only
 
-Do not repeat the already accepted Module 4 checks from zero. Only verify the corrected surfaces on `https://afzalpour.github.io/avan-staging/`:
+Do not repeat accepted Module 4 checks from zero. Verify only corrected surfaces on `https://afzalpour.github.io/avan-staging/`:
 
-1. In **فهرست موارد نیازمند بررسی**, open evidence for a numeric/high-value row such as the previously observed ~78,000,000 Rial case. Evidence must remain open/stable with **no repeated «واحد مبالغ» boxes and no jumping/flicker**.
-2. Confirm the Module 4 hero, KPI labels, table descriptions and warning/disclaimer are fluent Persian and no unwanted Close/Exception/Reconciliation/Anomaly terminology remains in the user-facing flow.
-3. Confirm **چاپ / ذخیره PDF** is available on the main intelligence workspaces (Control Tower, Financial Digital Twin, Working Capital, Continuous Close/Audit; Decision Layer is also covered) and that the print/PDF header retains company identity and selected money unit.
-4. Open **گزارش مالیات بر ارزش افزوده** and confirm the wide table remains inside its surface with horizontal scrolling rather than overflowing the card/page.
-5. After Staging v113 refresh, compare **«✦ از آوان بپرس»** with Production; question suggestions/content should match for the shared runtime.
+1. **مرکز سرمایه در گردش** on desktop must show seven KPI cards as **4 on the first row + 3 on the second row**, matching the accepted Production presentation.
+2. Open **چاپ / ذخیره PDF** from an intelligence workspace and confirm the header date is **شمسی** (Persian calendar), with company identity and selected money unit retained.
+3. Continue the still-pending targeted checks from PR #170: Exception evidence stability/no repeated money-unit boxes, fluent Persian Module 4 text, VAT table containment, and shared **«✦ از آوان بپرس»** behavior.
 
-If these corrected surfaces pass, the expected confirmation is:
-
-**«Module 4 Live Polish + Runtime Parity PASS»**
-
-Only after that confirmation may Module 4 be considered for a separate Production release approval. Do **not** promote it automatically.
+Do **not** mark Module 4 Live PASS until explicit authenticated user confirmation. Do **not** promote Module 4 to Production without a separate explicit release approval.
