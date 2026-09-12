@@ -83,6 +83,7 @@ export function jalalizeDateInputs(root = document) {
         document.createElement('input');
 
       hidden.type = 'hidden';
+      hidden.hidden = true;
       hidden.value = iso;
 
       if (name) {
