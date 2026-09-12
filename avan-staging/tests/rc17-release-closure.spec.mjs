@@ -51,6 +51,7 @@ assert.ok(sw.includes("new Request(new URL(asset,self.registration.scope),{cache
 assert.ok(sw.includes('client.navigate(client.url)'),
   'Staging service-worker activation must move open clients onto the active runtime');
 
+// Full RC1.7 Live closure must never silently promote Production.
 for (const rc17Marker of [
   'rc17-control-tower',
   'rc17-financial-digital-twin',
@@ -61,7 +62,7 @@ for (const rc17Marker of [
   'counterparty-360'
 ]) {
   assert.ok(!productionIndex.includes(rc17Marker),
-    `Production runtime must not contain RC1.7 marker ${rc17Marker} before promotion`);
+    `Production runtime must not contain RC1.7 marker ${rc17Marker} before explicit Production Release Gate approval`);
 }
 
 assert.ok(currentState.includes('Production current release = **RC1.6**'),
@@ -70,9 +71,13 @@ assert.ok(currentState.includes('RC1.7 remains **Staging-only**'),
   'Source of Truth must preserve the Staging-only RC1.7 release boundary');
 assert.ok(currentState.includes('RC1.7-D Evidence Readable PASS'),
   'Source of Truth must retain the evidence readability Live result');
-assert.ok(currentState.includes('Dashboard Accounting Correctness and Counterparty 360 are now explicitly Live PASS'),
-  'Source of Truth must retain the accepted Dashboard and Counterparty 360 Live results');
-assert.ok(currentState.includes('current Live validation pending = **RC1.7-D full functional closure only**'),
-  'RC1.7 release closure must remain blocked on the still-open RC1.7-D functional gate');
+assert.ok(currentState.includes('RC1.7-D Live PASS — Handoff Fixed'),
+  'Source of Truth must record the explicit final RC1.7-D functional Live PASS');
+assert.ok(currentState.includes('current Live validation pending = **none for RC1.7 current scope**'),
+  'RC1.7 current-scope Live closure must be complete before release freeze');
+assert.ok(currentState.includes('Production promotion still requires explicit user release approval'),
+  'Full Live closure must not bypass the explicit Production Release Gate');
+assert.ok(currentState.includes('93 journal entries / 24 financial transactions / 42 invoices'),
+  'Source of Truth must retain the post-Live no-mutation certification');
 
 console.log('rc17-release-closure: PASS');
