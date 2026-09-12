@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { basename, dirname, extname, join, relative, resolve, sep } from 'node:path';
+import { extname, join, relative, resolve, sep } from 'node:path';
 
 const stagingRoot = resolve(process.cwd());
 const productionRoot = resolve(stagingRoot, '..');
@@ -10,21 +10,23 @@ const allowed = new Map((allowlist.allowed || []).map(item => [String(item.path)
 
 const ROOT_RUNTIME_EXTENSIONS = new Set(['.js', '.css', '.html', '.webmanifest', '.png', '.ico']);
 const STAGING_IGNORE_DIRS = new Set(['tests', 'scripts', 'node_modules']);
+const PRODUCTION_IGNORE_DIRS = new Set(['.git', '.github', 'docs', 'avan-staging', 'node_modules']);
 const STAGING_IGNORE_FILES = new Set(['package-lock.json']);
 
 function normalized(path) {
   return path.split(sep).join('/');
 }
 
-function walk(root, dir = root) {
+function walk(root, dir = root, ignoreDirs = new Set()) {
   const out = [];
   for (const name of readdirSync(dir)) {
     const full = join(dir, name);
     const rel = normalized(relative(root, full));
+    const top = rel.split('/')[0];
     const stat = statSync(full);
     if (stat.isDirectory()) {
-      if (root === stagingRoot && STAGING_IGNORE_DIRS.has(rel.split('/')[0])) continue;
-      out.push(...walk(root, full));
+      if (ignoreDirs.has(top)) continue;
+      out.push(...walk(root, full, ignoreDirs));
     } else {
       out.push(rel);
     }
@@ -33,7 +35,6 @@ function walk(root, dir = root) {
 }
 
 function isProductionRuntime(path) {
-  if (path.startsWith('avan-staging/') || path.startsWith('.github/') || path.startsWith('docs/')) return false;
   if (path.startsWith('src/')) return true;
   if (path.includes('/')) return false;
   return ROOT_RUNTIME_EXTENSIONS.has(extname(path));
@@ -57,13 +58,13 @@ function assertSameBytes(path) {
   assert.ok(stagingBytes.equals(productionBytes), `Unexpected Production/Staging runtime drift: ${path}. Add a justified allowlist entry only for intentional next-release divergence.`);
 }
 
-const stagingRuntime = walk(stagingRoot).filter(isStagingRuntime);
+const stagingRuntime = walk(stagingRoot, stagingRoot, STAGING_IGNORE_DIRS).filter(isStagingRuntime);
 for (const path of stagingRuntime) {
   if (allowed.has(path)) continue;
   assertSameBytes(path);
 }
 
-const productionRuntime = walk(productionRoot).filter(isProductionRuntime);
+const productionRuntime = walk(productionRoot, productionRoot, PRODUCTION_IGNORE_DIRS).filter(isProductionRuntime);
 for (const path of productionRuntime) {
   if (allowed.has(path)) continue;
   const stagingPath = join(stagingRoot, path);
