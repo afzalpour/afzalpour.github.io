@@ -79,6 +79,16 @@ assert.match(ui, /وصول مطالبات/);
 assert.match(ui, /هزینه‌های نقدی عملیاتی/);
 assert.match(ui, /پرداخت بدهی‌ها/);
 assert.match(ui, /منشأ این عدد/);
+assert.match(ui, /سند حسابداری شماره/,
+  'Digital Twin opening evidence must render accounting-facing journal labels');
+assert.match(ui, /کد حساب/,
+  'Digital Twin opening evidence must render the ledger account code/name instead of a technical id');
+assert.match(ui, /financial_accounts/);
+assert.match(ui, /journal_entries/);
+assert.match(ui, /workspace_id=eq\.\$\{workspaceId\}/,
+  'readable evidence lookups must remain explicitly Company-scoped');
+assert.doesNotMatch(ui, /<code>\$\{esc\(id\)\}<\/code>/,
+  'raw technical evidence ids must never be rendered in the Digital Twin evidence modal');
 assert.match(ui, /هیچ سند حسابداری، دریافت، پرداخت یا مانده واقعی/);
 assert.match(ui, /Math\.round\(number \* 100\)/,
   'percentage inputs must be converted explicitly to basis points');
@@ -109,6 +119,8 @@ assert.doesNotMatch(ui, /\.insert\(|\.update\(|\.delete\(|\.rpc\(/,
 assert.match(css, /@media\(max-width:760px\)/,
   'Digital Twin workspace must remain responsive on mobile');
 assert.match(css, /avan-twin-table th,\.avan-twin-table td\{text-align:center!important/);
+assert.match(css, /avan-twin-evidence-human-row/,
+  'readable opening evidence must use accounting-facing evidence rows');
 assert.match(index, /rc17-financial-digital-twin\.css/);
 assert.match(index, /src\/ui\/intelligence\/financial-digital-twin-workspace\.js/);
 assert.match(sw, /rc17-financial-digital-twin\.css/);
