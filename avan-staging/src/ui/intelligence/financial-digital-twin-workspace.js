@@ -31,6 +31,26 @@ const EVIDENCE_TYPE_FA = Object.freeze({
   user_input: 'فرض واردشده توسط کاربر'
 });
 
+const SOURCE_TYPE_FA = Object.freeze({
+  invoice: 'فاکتور',
+  receipt: 'دریافت',
+  payment: 'پرداخت',
+  transfer: 'انتقال',
+  manual: 'سند دستی',
+  opening: 'افتتاحیه',
+  reversal: 'برگشت سند'
+});
+
+const FINANCIAL_KIND_FA = Object.freeze({
+  bank: 'حساب بانکی',
+  cash: 'صندوق',
+  card: 'کارت',
+  wallet: 'کیف پول',
+  other: 'حساب مالی'
+});
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 function today() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -241,20 +261,122 @@ function setTwinNavActive(active) {
   document.querySelector('[data-digital-twin-nav]')?.classList.toggle('active', Boolean(active));
 }
 
-function openingEvidenceModal(prepared) {
+function uniqueEvidenceIds(prepared, type, limit = 12) {
+  return [...new Set((prepared?.opening?.evidence || [])
+    .filter(ref => ref?.type === type && UUID_RE.test(String(ref?.id || '')))
+    .map(ref => String(ref.id)))]
+    .slice(0, limit);
+}
+
+async function loadOpeningEvidenceDetails(prepared) {
+  if (!C?.select || !UUID_RE.test(String(prepared?.workspace?.id || ''))) {
+    return { financialById: new Map(), accountById: new Map(), journalById: new Map() };
+  }
+
+  const workspaceId = String(prepared.workspace.id);
+  const financialIds = uniqueEvidenceIds(prepared, 'financial_account');
+  const journalIds = uniqueEvidenceIds(prepared, 'journal_entry');
+  const [financialAccounts, journalEntries] = await Promise.all([
+    financialIds.length
+      ? C.select('financial_accounts', `select=id,ledger_account_id,kind,bank_name&workspace_id=eq.${workspaceId}&id=in.(${financialIds.join(',')})`)
+      : Promise.resolve([]),
+    journalIds.length
+      ? C.select('journal_entries', `select=id,journal_no,entry_date,source_type,description&workspace_id=eq.${workspaceId}&id=in.(${journalIds.join(',')})`)
+      : Promise.resolve([])
+  ]);
+
+  const financialById = new Map((financialAccounts || []).map(row => [String(row.id), row]));
+  const ledgerIds = [...new Set((financialAccounts || [])
+    .map(row => String(row?.ledger_account_id || ''))
+    .filter(id => UUID_RE.test(id)))];
+  const accounts = ledgerIds.length
+    ? await C.select('accounts', `select=id,code,name&workspace_id=eq.${workspaceId}&id=in.(${ledgerIds.join(',')})`)
+    : [];
+
+  return {
+    financialById,
+    accountById: new Map((accounts || []).map(row => [String(row.id), row])),
+    journalById: new Map((journalEntries || []).map(row => [String(row.id), row]))
+  };
+}
+
+function humanOpeningEvidence(ref, details) {
+  if (ref?.type === 'financial_account') {
+    const financial = details?.financialById?.get(String(ref.id));
+    const account = financial?.ledger_account_id
+      ? details?.accountById?.get(String(financial.ledger_account_id))
+      : null;
+    const kind = FINANCIAL_KIND_FA[String(financial?.kind || '')] || 'حساب مالی';
+    const title = financial?.bank_name ? `${kind} — ${financial.bank_name}` : kind;
+    const meta = [
+      account?.code ? `کد حساب ${account.code}` : null,
+      account?.name || null
+    ].filter(Boolean).join(' · ') || 'حساب مؤثر در مانده نقد و بانک';
+    return { title, meta };
+  }
+
+  if (ref?.type === 'journal_entry') {
+    const journal = details?.journalById?.get(String(ref.id));
+    const title = journal?.journal_no !== null && journal?.journal_no !== undefined
+      ? `سند حسابداری شماره ${journal.journal_no}`
+      : 'سند حسابداری مؤثر در مانده نقد';
+    const meta = [
+      journal?.entry_date ? `تاریخ ${dateFa(String(journal.entry_date).slice(0, 10))}` : null,
+      journal?.source_type ? (SOURCE_TYPE_FA[journal.source_type] || 'منبع حسابداری') : null,
+      journal?.description || null
+    ].filter(Boolean).join(' · ') || 'سند ثبت‌شده مؤثر در مانده نقد و بانک';
+    return { title, meta };
+  }
+
+  return {
+    title: EVIDENCE_TYPE_FA[ref?.type] || 'مرجع حسابداری',
+    meta: 'مرجع ثبت‌شده در گراف شواهد آوان'
+  };
+}
+
+function openingEvidenceListHtml(prepared, details) {
   const grouped = new Map();
-  prepared.opening.evidence.forEach(ref => {
+  (prepared?.opening?.evidence || []).forEach(ref => {
     if (!ref?.type || !ref?.id) return;
     if (!grouped.has(ref.type)) grouped.set(ref.type, []);
-    grouped.get(ref.type).push(ref.id);
+    grouped.get(ref.type).push(ref);
   });
+
+  if (!grouped.size) return '<div class="empty">مرجع جزئی برای نمایش وجود ندارد.</div>';
+
+  return [...grouped.entries()].map(([type, refs]) => `
+    <div class="card">
+      <div class="section-head"><b>${esc(EVIDENCE_TYPE_FA[type] || 'مرجع حسابداری')}</b><span class="muted">${Number(refs.length).toLocaleString('fa-IR')} مرجع</span></div>
+      <div class="avan-twin-evidence-human-list">
+        ${refs.slice(0, 12).map(ref => {
+          const human = humanOpeningEvidence(ref, details);
+          return `<div class="avan-twin-evidence-human-row"><b>${esc(human.title)}</b><span class="muted">${esc(human.meta)}</span></div>`;
+        }).join('')}
+      </div>
+      ${refs.length > 12 ? `<span class="muted">و ${Number(refs.length - 12).toLocaleString('fa-IR')} مرجع دیگر</span>` : ''}
+    </div>`).join('');
+}
+
+async function openingEvidenceModal(prepared) {
+  openModal(`
+    <div data-digital-twin-evidence-modal>
+      <div class="section-head"><div><h2>منشأ نقد و بانک ابتدای سناریو</h2><span class="muted">در حال آماده‌سازی شواهد حسابداری…</span></div><span class="cloud-badge">قابل ردیابی</span></div>
+      <div class="loading">در حال خواندن عنوان حساب‌ها و اسناد مؤثر…</div>
+    </div>
+  `);
+
+  let details = { financialById: new Map(), accountById: new Map(), journalById: new Map() };
+  try {
+    details = await loadOpeningEvidenceDetails(prepared);
+  } catch (error) {
+    console.error('[Avan Financial Digital Twin evidence]', error);
+  }
+
   openModal(`
     <div data-digital-twin-evidence-modal>
       <div class="section-head"><div><h2>منشأ نقد و بانک ابتدای سناریو</h2><span class="muted">مانده واقعی تا پایان ${dateFa(prepared.opening.asOf)}</span></div><span class="cloud-badge">قابل ردیابی</span></div>
       <div class="info-box">${esc(prepared.opening.explanation || 'این عدد از حساب‌های مالی فعال و اسناد ثبت‌شده شرکت محاسبه شده است.')}</div>
-      <div class="section avan-twin-evidence-list">
-        ${grouped.size ? [...grouped.entries()].map(([type, ids]) => `<div class="card"><b>${esc(EVIDENCE_TYPE_FA[type] || type)}</b><span class="muted">${Number(ids.length).toLocaleString('fa-IR')} مرجع</span><div>${ids.slice(0, 12).map(id => `<code>${esc(id)}</code>`).join('')}</div>${ids.length > 12 ? `<span class="muted">و ${Number(ids.length - 12).toLocaleString('fa-IR')} مرجع دیگر</span>` : ''}</div>`).join('') : '<div class="empty">مرجع جزئی برای نمایش وجود ندارد.</div>'}
-      </div>
+      <div class="section avan-twin-evidence-list">${openingEvidenceListHtml(prepared, details)}</div>
       <div class="form-actions"><button type="button" class="ghost" data-digital-twin-close-evidence>بستن</button></div>
     </div>
   `);
@@ -291,7 +413,7 @@ function bindActions() {
   const root = document.querySelector('[data-financial-digital-twin-page]');
   if (!root || !state) return;
 
-  root.querySelector('[data-digital-twin-opening-evidence]')?.addEventListener('click', () => openingEvidenceModal(state.prepared));
+  root.querySelector('[data-digital-twin-opening-evidence]')?.addEventListener('click', () => void openingEvidenceModal(state.prepared));
   root.querySelector('[data-digital-twin-reset]')?.addEventListener('click', () => void openFinancialDigitalTwin(defaults()));
   root.querySelector('[data-digital-twin-control-tower]')?.addEventListener('click', () => window.AvanControlTower?.open?.());
 
