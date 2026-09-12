@@ -39,7 +39,18 @@ const evidenceTypeFa = Object.freeze({
   party: 'طرف‌حساب',
   journal_entry: 'سند حسابداری',
   journal_line: 'ردیف سند',
-  invoice: 'فاکتور'
+  invoice: 'فاکتور',
+  open_item: 'مانده باز'
+});
+
+const sourceTypeFa = Object.freeze({
+  invoice: 'فاکتور',
+  receipt: 'دریافت',
+  payment: 'پرداخت',
+  transfer: 'انتقال',
+  manual: 'سند دستی',
+  opening: 'افتتاحیه',
+  reversal: 'برگشت سند'
 });
 
 function priorityClass(tier) {
@@ -62,7 +73,7 @@ function collectionHtml(items) {
   return `
     <section class="card">
       <div class="section-head">
-        <div><h2>اولویت‌های وصول</h2><span class="muted">اولویت قاعده‌محور؛ بدون امتیاز ساختگی و بدون ارسال خودکار پیام.</span></div>
+        <div><h2>اولویت‌های وصول</h2><span class="muted">اولویت بر اساس مانده واقعی و مدت تأخیر تعیین می‌شود؛ هیچ پیام یا وصولی خودکار انجام نمی‌شود.</span></div>
         <span class="summary-pill">${Number(items.length).toLocaleString('fa-IR')} طرف‌حساب</span>
       </div>
       ${items.length ? `<div class="avan-working-capital-list">${items.map(item => `
@@ -73,7 +84,7 @@ function collectionHtml(items) {
           </div>
           <div class="avan-working-capital-money"><span>مانده</span><b data-avan-number-output="1">${money(item.total)}</b></div>
           <div class="avan-working-capital-money"><span>سررسیدگذشته</span><b data-avan-number-output="1">${money(item.overdue)}</b></div>
-          <button type="button" class="ghost small" data-working-capital-evidence="collection:${esc(item.partyId)}">شواهد</button>
+          <button type="button" class="ghost small" data-working-capital-evidence="1" data-working-capital-evidence-kind="collection" data-working-capital-evidence-id="${esc(item.partyId)}">شواهد</button>
         </div>`).join('')}</div>` : '<div class="success-box">مطالبه بازی برای اولویت‌بندی وصول دیده نشد.</div>'}
     </section>`;
 }
@@ -82,7 +93,7 @@ function paymentHtml(items) {
   return `
     <section class="card">
       <div class="section-head">
-        <div><h2>تقویم پرداختنی ۳۰ روزه</h2><span class="muted">نمای تعهدات؛ پرداخت خودکار یا پیشنهاد انتقال وجه انجام نمی‌شود.</span></div>
+        <div><h2>تقویم پرداختنی ۳۰ روزه</h2><span class="muted">تعهدات سررسیدشده و ۳۰ روز آینده را نشان می‌دهد؛ پرداخت فقط با اقدام کاربر انجام می‌شود.</span></div>
         <span class="summary-pill">${Number(items.length).toLocaleString('fa-IR')} تعهد</span>
       </div>
       ${items.length ? `<div class="avan-working-capital-list">${items.map(item => `
@@ -92,7 +103,7 @@ function paymentHtml(items) {
             <span class="muted">سررسید ${esc(dateFa(item.dueDate))} · ${esc(item.paymentPriority?.label || '')}</span>
           </div>
           <div class="avan-working-capital-money"><span>مبلغ باز</span><b data-avan-number-output="1">${money(item.remaining)}</b></div>
-          <button type="button" class="ghost small" data-working-capital-evidence="payment:${esc(item.id)}">شواهد</button>
+          <button type="button" class="ghost small" data-working-capital-evidence="1" data-working-capital-evidence-kind="payment" data-working-capital-evidence-id="${esc(item.id)}">شواهد</button>
         </div>`).join('')}</div>` : '<div class="success-box">تعهد پرداختنی سررسیدشده یا ۳۰ روز آینده دیده نشد.</div>'}
     </section>`;
 }
@@ -120,17 +131,17 @@ export function workingCapitalPageHtml({ workspace, snapshot }) {
         ${metric('بدهی‌های باز', m.grossPayables)}
         ${metric('بدهی سررسیدگذشته', m.overduePayables)}
         ${metric('پرداختنی تا ۳۰ روز آینده', m.payablesDueWithin30Days)}
-        ${metric('نقد پس از پوشش بدهی معوق و ۳۰ روزه', m.cashLessOverdueAnd30DayPayables, 'شاخص سناریویی نیست؛ فقط تفاضل نقد فعلی با تعهدات شناسایی‌شده است.')}
+        ${metric('نقد پس از پوشش بدهی معوق و ۳۰ روزه', m.cashLessOverdueAnd30DayPayables, 'این عدد فقط تفاضل نقد فعلی با تعهدات شناسایی‌شده است.')}
       </div>
 
       ${collectionHtml(snapshot.collectionPriorities)}
       ${paymentHtml(snapshot.paymentCalendar)}
 
       <section class="card avan-working-capital-evidence-summary">
-        <div class="section-head"><div><h2>گراف شواهد</h2><span class="muted">هر مانده باز به شواهد حسابداری قابل ردیابی متصل است.</span></div><span class="cloud-badge">قابل ردیابی</span></div>
+        <div class="section-head"><div><h2>گراف شواهد</h2><span class="muted">هر مانده باز به طرف‌حساب، سند، ردیف و فاکتور مربوط متصل است.</span></div><span class="cloud-badge">قابل ردیابی</span></div>
         <div class="avan-working-capital-evidence-kpis">
-          <span class="summary-pill">${Number(snapshot.evidenceGraph.nodes.length).toLocaleString('fa-IR')} گره</span>
-          <span class="summary-pill">${Number(snapshot.evidenceGraph.edges.length).toLocaleString('fa-IR')} ارتباط</span>
+          <button type="button" class="summary-pill" data-working-capital-graph="nodes">${Number(snapshot.evidenceGraph.nodes.length).toLocaleString('fa-IR')} گره</button>
+          <button type="button" class="summary-pill" data-working-capital-graph="edges">${Number(snapshot.evidenceGraph.edges.length).toLocaleString('fa-IR')} ارتباط</button>
         </div>
       </section>
 
@@ -138,18 +149,159 @@ export function workingCapitalPageHtml({ workspace, snapshot }) {
     </div>`;
 }
 
-function evidenceModal(title, refs = []) {
+function allOpenItems() {
+  return [
+    ...(state?.snapshot?.receivables?.openItems || []),
+    ...(state?.snapshot?.payables?.openItems || [])
+  ];
+}
+
+function refMatches(candidate, ref) {
+  return String(candidate?.type || '') === String(ref?.type || '') && String(candidate?.id || '') === String(ref?.id || '');
+}
+
+function relatedOpenItems(ref) {
+  return allOpenItems().filter(item => (item.evidence || []).some(candidate => refMatches(candidate, ref)));
+}
+
+function partyNameForId(id, fallback = 'طرف‌حساب') {
+  const rows = [
+    ...(state?.snapshot?.receivables?.parties || []),
+    ...(state?.snapshot?.payables?.parties || []),
+    ...(state?.snapshot?.collectionPriorities || [])
+  ];
+  return rows.find(row => String(row.partyId || '') === String(id || ''))?.partyName || fallback;
+}
+
+function tenthsToCanonicalDecimal(tenths) {
+  const sign = tenths < 0n ? '-' : '';
+  const abs = tenths < 0n ? -tenths : tenths;
+  return `${sign}${abs / 10n}${abs % 10n ? `.${abs % 10n}` : ''}`;
+}
+
+function sumRelatedAmount(items) {
+  let total = 0n;
+  for (const item of items) {
+    const parsed = String(item.remaining ?? '0').match(/^(-?)(\d+)(?:\.(\d))?$/);
+    if (!parsed) continue;
+    const tenths = BigInt(parsed[2]) * 10n + BigInt(parsed[3] || '0');
+    total += parsed[1] ? -tenths : tenths;
+  }
+  return total;
+}
+
+function humanEvidenceRef(ref, contextItem = null) {
+  const related = relatedOpenItems(ref);
+  const row = related[0] || (contextItem?.remaining !== undefined ? contextItem : null);
+  const amountText = related.length ? money(tenthsToCanonicalDecimal(sumRelatedAmount(related))) : (row?.remaining !== undefined ? money(row.remaining) : null);
+
+  if (ref?.type === 'party') {
+    return {
+      title: partyNameForId(ref.id, contextItem?.partyName || 'طرف‌حساب'),
+      meta: 'طرف‌حساب مرتبط با این مانده'
+    };
+  }
+
+  if (ref?.type === 'journal_entry') {
+    const journal = row?.journalNo ?? '—';
+    const parts = [
+      row?.entryDate ? `تاریخ ${dateFa(row.entryDate)}` : null,
+      row?.sourceType ? (sourceTypeFa[row.sourceType] || 'ثبت حسابداری') : null,
+      amountText ? `مانده مرتبط ${amountText}` : null
+    ].filter(Boolean);
+    return { title: `سند حسابداری شماره ${journal}`, meta: parts.join(' · ') || 'سند مؤثر در مانده باز' };
+  }
+
+  if (ref?.type === 'journal_line') {
+    const journal = row?.journalNo ?? '—';
+    const parts = [
+      row?.entryDate ? `تاریخ ${dateFa(row.entryDate)}` : null,
+      row?.invoiceNo ? `فاکتور ${row.invoiceNo}` : null,
+      amountText ? `مانده مرتبط ${amountText}` : null
+    ].filter(Boolean);
+    return { title: `ردیف مرتبط با سند شماره ${journal}`, meta: parts.join(' · ') || 'ردیف مؤثر در مانده باز' };
+  }
+
+  if (ref?.type === 'invoice') {
+    const invoice = row?.invoiceNo ?? '—';
+    const parts = [row?.dueDate ? `سررسید ${dateFa(row.dueDate)}` : null, amountText ? `مانده باز ${amountText}` : null].filter(Boolean);
+    return { title: `فاکتور شماره ${invoice}`, meta: parts.join(' · ') || 'فاکتور مرتبط با این مانده' };
+  }
+
+  return { title: evidenceTypeFa[ref?.type] || 'مرجع حسابداری', meta: 'مرجع مؤثر در مانده باز' };
+}
+
+function evidenceListHtml(refs = [], contextItem = null) {
   const grouped = new Map();
-  refs.forEach(item => {
-    if (!item?.type || !item?.id) return;
-    if (!grouped.has(item.type)) grouped.set(item.type, []);
-    grouped.get(item.type).push(item.id);
+  refs.forEach(ref => {
+    if (!ref?.type || !ref?.id) return;
+    if (!grouped.has(ref.type)) grouped.set(ref.type, []);
+    grouped.get(ref.type).push(ref);
   });
+  if (!grouped.size) return '<div class="empty">مرجع جزئی برای این ردیف موجود نیست.</div>';
+
+  return [...grouped.entries()].map(([type, items]) => `
+    <div class="card">
+      <div class="section-head"><b>${esc(evidenceTypeFa[type] || 'مرجع حسابداری')}</b><span class="muted">${Number(items.length).toLocaleString('fa-IR')} مرجع</span></div>
+      <div class="avan-working-capital-evidence-human-list">
+        ${items.slice(0, 12).map(ref => {
+          const human = humanEvidenceRef(ref, contextItem);
+          return `<div class="avan-working-capital-evidence-human-row"><b>${esc(human.title)}</b><span class="muted">${esc(human.meta)}</span></div>`;
+        }).join('')}
+      </div>
+      ${items.length > 12 ? `<span class="muted">و ${Number(items.length - 12).toLocaleString('fa-IR')} مرجع دیگر</span>` : ''}
+    </div>`).join('');
+}
+
+function evidenceModal(title, refs = [], contextItem = null) {
   openModal(`
     <div data-working-capital-evidence-modal>
-      <div class="section-head"><div><h2>${esc(title)}</h2><span class="muted">مسیر شواهد مالی</span></div><span class="cloud-badge">فقط خواندنی</span></div>
-      <div class="avan-working-capital-evidence-list">${grouped.size ? [...grouped.entries()].map(([type, ids]) => `
-        <div class="card"><b>${esc(evidenceTypeFa[type] || type)}</b><span class="muted">${Number(ids.length).toLocaleString('fa-IR')} مرجع</span><div>${ids.slice(0, 12).map(id => `<code>${esc(id)}</code>`).join(' ')}</div></div>`).join('') : '<div class="empty">مرجع جزئی برای این ردیف موجود نیست.</div>'}</div>
+      <div class="section-head"><div><h2>${esc(title)}</h2><span class="muted">شواهد حسابداری مرتبط</span></div><span class="cloud-badge">فقط خواندنی</span></div>
+      <div class="avan-working-capital-evidence-list">${evidenceListHtml(refs, contextItem)}</div>
+      <div class="form-actions"><button type="button" class="ghost" data-working-capital-close>بستن</button></div>
+    </div>`);
+  document.querySelector('[data-working-capital-close]')?.addEventListener('click', closeModal, { once: true });
+}
+
+function openItemById(id) {
+  return allOpenItems().find(item => String(item.id || '') === String(id || '')) || null;
+}
+
+function humanGraphNode(node) {
+  if (node?.type === 'open_item') {
+    const item = openItemById(node.id);
+    if (!item) return { title: 'مانده باز', meta: 'مانده باز متصل به شواهد حسابداری' };
+    const party = partyNameForId(item.partyId, 'طرف‌حساب');
+    const doc = item.invoiceNo ? `فاکتور ${item.invoiceNo}` : `سند ${item.journalNo || '—'}`;
+    return { title: `${doc} — ${party}`, meta: `مانده ${money(item.remaining)} · سررسید ${dateFa(item.dueDate)}` };
+  }
+  return humanEvidenceRef({ type: node?.type, id: node?.id });
+}
+
+function evidenceGraphModal(mode) {
+  const graph = state?.snapshot?.evidenceGraph;
+  if (!graph) return;
+  const isEdges = mode === 'edges';
+  const rows = isEdges ? graph.edges : graph.nodes;
+  const title = isEdges ? 'ارتباط‌های گراف شواهد' : 'گره‌های گراف شواهد';
+  const body = rows.slice(0, 40).map(row => {
+    if (!isEdges) {
+      const human = humanGraphNode(row);
+      return `<div class="avan-working-capital-evidence-human-row"><b>${esc(human.title)}</b><span class="muted">${esc(human.meta)}</span></div>`;
+    }
+    const fromKey = String(row.from || '');
+    const toKey = String(row.to || '');
+    const fromNode = graph.nodes.find(node => node.key === fromKey);
+    const toNode = graph.nodes.find(node => node.key === toKey);
+    const from = humanGraphNode(fromNode);
+    const to = humanGraphNode(toNode);
+    return `<div class="avan-working-capital-evidence-human-row"><b>${esc(from.title)}</b><span class="muted">متصل به: ${esc(to.title)}${to.meta ? ` · ${esc(to.meta)}` : ''}</span></div>`;
+  }).join('');
+
+  openModal(`
+    <div data-working-capital-graph-modal>
+      <div class="section-head"><div><h2>${esc(title)}</h2><span class="muted">نمای حسابداری ارتباط مانده‌ها با اسناد و فاکتورها</span></div><span class="cloud-badge">${Number(rows.length).toLocaleString('fa-IR')} مورد</span></div>
+      <div class="avan-working-capital-evidence-list"><div class="card"><div class="avan-working-capital-evidence-human-list">${body || '<div class="empty">موردی برای نمایش وجود ندارد.</div>'}</div>${rows.length > 40 ? `<span class="muted">۴۰ مورد نخست نمایش داده شده است؛ ${Number(rows.length - 40).toLocaleString('fa-IR')} مورد دیگر نیز در گراف وجود دارد.</span>` : ''}</div></div>
       <div class="form-actions"><button type="button" class="ghost" data-working-capital-close>بستن</button></div>
     </div>`);
   document.querySelector('[data-working-capital-close]')?.addEventListener('click', closeModal, { once: true });
@@ -164,15 +316,21 @@ function bindActions() {
     if (!asOf) return toast('تاریخ مبنا را انتخاب کنید.');
     void openWorkingCapital(asOf);
   });
-  root.querySelectorAll('[data-working-capital-evidence]').forEach(button => button.addEventListener('click', () => {
-    const [kind, id] = String(button.dataset.workingCapitalEvidence || '').split(':');
+  root.querySelectorAll('[data-working-capital-evidence-kind]').forEach(button => button.addEventListener('click', () => {
+    const kind = String(button.dataset.workingCapitalEvidenceKind || '');
+    const id = String(button.dataset.workingCapitalEvidenceId || '');
     if (kind === 'collection') {
-      const item = state.snapshot.collectionPriorities.find(row => row.partyId === id);
-      if (item) evidenceModal(`شواهد وصول — ${item.partyName}`, item.evidence);
+      const item = state.snapshot.collectionPriorities.find(row => String(row.partyId) === id);
+      if (item) evidenceModal(`شواهد وصول — ${item.partyName}`, item.evidence, item);
       return;
     }
-    const item = state.snapshot.paymentCalendar.find(row => row.id === id);
-    if (item) evidenceModal('شواهد تعهد پرداختنی', item.evidence);
+    if (kind === 'payment') {
+      const item = state.snapshot.paymentCalendar.find(row => String(row.id) === id);
+      if (item) evidenceModal('شواهد تعهد پرداختنی', item.evidence, item);
+    }
+  }));
+  root.querySelectorAll('[data-working-capital-graph]').forEach(button => button.addEventListener('click', () => {
+    evidenceGraphModal(String(button.dataset.workingCapitalGraph || 'nodes'));
   }));
 }
 
