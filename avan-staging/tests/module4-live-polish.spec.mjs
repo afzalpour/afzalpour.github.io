@@ -41,10 +41,19 @@ for (const title of ['برج کنترل مالی', 'دوقلوی مالی', 'م�
 assert.ok(print.includes('AvanPrintExport'));
 assert.ok(print.includes('printElement(content, title)'));
 
+const printBoundary = read('rc12-print-export.js');
+assert.ok(printBoundary.includes("Intl.DateTimeFormat('fa-IR-u-ca-persian'"), 'Print/PDF header date must use explicit Persian calendar.');
+assert.ok(!printBoundary.includes("Intl.DateTimeFormat('fa-IR', {\n    dateStyle: 'medium'"), 'Ambiguous fa-IR print date formatter must not return.');
+
+const module4Css = read('module4-continuous-close-audit.css');
+assert.ok(module4Css.includes('.avan-working-capital-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important'), 'Working Capital desktop KPI layout must remain 4 columns (4+3 for seven cards).');
+assert.ok(module4Css.includes('@media(max-width:900px){.avan-working-capital-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important'), 'Working Capital responsive two-column guard must remain.');
+assert.ok(module4Css.includes('@media(max-width:560px){.avan-working-capital-grid{grid-template-columns:1fr!important'), 'Working Capital mobile single-column guard must remain.');
+
 const module4 = read('src/ui/intelligence/continuous-close-audit-workspace.js');
 assert.ok(module4.includes("import './intelligence-print-export.js';"), 'Module 4 bootstrap must load unified intelligence Print/PDF controls.');
 
 const sw = read('sw.js');
-assert.ok(sw.includes('avan-staging-rc1-v113-module4-live-polish-runtime-parity'));
+assert.ok(sw.includes('avan-staging-rc1-v114-module4-live-polish-v2'));
 
 console.log('Module 4 Live polish regression PASS');
