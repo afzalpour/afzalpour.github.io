@@ -19,6 +19,7 @@
     { "path": "src/ui/intelligence/continuous-close-audit-workspace.js", "reason": "Module 4 Staging-only و Live correction جاری." },
     { "path": "src/ui/intelligence/intelligence-print-export.js", "reason": "Unified intelligence Print/PDF و پشتیبانی Module 5 در next-release است و هنوز Production-promoted نشده است." },
     { "path": "src/ui/intelligence/iran-compliance-radar-workspace.js", "reason": "Module 5 Iran Compliance Radar workspace فعلاً Staging-only است." },
+    { "path": "src/ui/localization/user-facing-fa.js", "reason": "قرارداد فارسی‌سازی سخت‌گیرانه ADR-0025 در Staging فعال شده و تا Promotion بعدی عمداً از Production متفاوت است." },
     { "path": "src/ui/money/money-output-contract.js", "reason": "اصلاح idempotency واحد مبالغ برای Evidence modal در Live correction جاری." },
     { "path": "runtime-divergence-allowlist.json", "reason": "متادیتای مخصوص قرارداد parity در Staging." }
   ]

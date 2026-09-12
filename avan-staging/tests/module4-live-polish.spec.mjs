@@ -61,6 +61,8 @@ const module4 = read('src/ui/intelligence/continuous-close-audit-workspace.js');
 assert.ok(module4.includes("import './intelligence-print-export.js';"), 'Module 4 bootstrap must load unified intelligence Print/PDF controls.');
 
 const sw = read('sw.js');
-assert.ok(sw.includes('avan-staging-rc1-v117-module5-iran-compliance-radar'));
+const cacheVersion = sw.match(/avan-staging-rc1-v(\d+)-/);
+assert.ok(cacheVersion, 'Staging Service Worker must retain a versioned rc1 cache identity.');
+assert.ok(Number(cacheVersion[1]) >= 114, 'Module 4 Live polish requires cache v114 or newer.');
 
 console.log('Module 4 Live polish regression PASS');

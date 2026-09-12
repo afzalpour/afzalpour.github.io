@@ -76,6 +76,17 @@ assert.ok(ui.includes('فهرست اقدام‌های انطباق'));
 assert.ok(ui.includes('تغییرات قواعد ثبت‌شده در آوان'));
 assert.ok(ui.includes('موعد قانونی نیست'));
 assert.ok(ui.includes('جایگزین نظر حرفه‌ای مالیاتی، حقوقی یا بیمه‌ای نیست'));
+assert.ok(ui.includes('اطلاعات مالیاتی ثبت‌شده برای برخی ردیف‌های فروش ناقص است'));
+assert.ok(ui.includes('بر پایه قواعد نسخه‌دار و اطلاعات مالیاتی ثبت‌شده'));
+assert.ok(ui.includes('در نسخه فعلی پوشش داده نمی‌شود'));
+assert.ok(ui.includes('مرجع معتبر داده‌های حقوق و دستمزد'));
+assert.ok(ui.includes('مرجع معتبر داده‌های بیمه'));
+assert.ok(ui.includes("import { safeDatabaseFacingFa } from '../localization/user-facing-fa.js';"));
+assert.ok(ui.includes("active: 'فعال'"));
+assert.ok(ui.includes("open: 'باز'"));
+assert.ok(!ui.includes('در Foundation فعلی پوشش داده نمی‌شود'));
+assert.ok(!ui.includes('بر پایه قواعد نسخه‌دار و Snapshot مالیاتی'));
+assert.ok(!ui.includes('تا اضافه‌شدن Source of Truth حقوق'));
 assert.ok(ui.includes("import './intelligence-print-export.js';"));
 assert.ok(ui.includes('data-compliance-evidence'));
 assert.ok(!ui.includes('${ref.id}'), 'Raw evidence IDs must not be rendered to users.');
@@ -89,6 +100,6 @@ assert.ok(index.includes('module5-iran-compliance-radar.css'));
 assert.ok(index.includes('src/ui/intelligence/iran-compliance-radar-workspace.js'));
 
 const sw = read('sw.js');
-assert.ok(sw.includes('avan-staging-rc1-v117-module5-iran-compliance-radar'));
+assert.ok(sw.includes('avan-staging-rc1-v118-persian-user-facing-contract'));
 
 console.log('Iran Compliance Radar foundation PASS');

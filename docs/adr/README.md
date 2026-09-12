@@ -60,6 +60,7 @@
 | [0022](0022-bank-statement-reconciliation-boundary.md) | Bank Statement Reconciliation با Human-controlled matching و RLS boundary | Accepted |
 | [0023](0023-intelligent-finance-operating-system.md) | Intelligent Finance OS، ۹ ماژول تمایز و Early Priority برای Control Tower + Digital Twin | Accepted |
 | [0024](0024-production-staging-runtime-parity-contract.md) | Production/Staging Runtime Parity + allowlisted next-release divergence | Accepted |
+| [0025](0025-strict-persian-user-facing-language-contract.md) | فارسی روان اجباری برای متن‌های قابل مشاهده کاربر و بومی‌سازی مقادیر سیستمی/دیتابیس در مرز نمایش | Accepted |
 
 ## اصل حاکم
 
