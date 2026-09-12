@@ -10,6 +10,7 @@ import { toast } from '../feedback/toast.js';
 const HAS_BROWSER = typeof window !== 'undefined' && typeof document !== 'undefined';
 const C = HAS_BROWSER ? installAvanCloud() : null;
 const Service = HAS_BROWSER ? createControlTowerSnapshotService({ cloud: C }) : null;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const esc = value => String(value ?? '').replace(/[&<>'"]/g, char => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
@@ -44,8 +45,37 @@ const evidenceTypeFa = Object.freeze({
   inventory_reconciliation: 'کنترل انبار'
 });
 
+const sourceTypeFa = Object.freeze({
+  invoice: 'فاکتور',
+  receipt: 'دریافت',
+  payment: 'پرداخت',
+  transfer: 'انتقال',
+  manual: 'سند دستی',
+  opening: 'افتتاحیه',
+  reversal: 'برگشت سند'
+});
+
+const financialKindFa = Object.freeze({
+  bank: 'حساب بانکی',
+  cash: 'صندوق',
+  card: 'کارت',
+  wallet: 'کیف پول',
+  other: 'حساب مالی'
+});
+
 export function controlTowerStatusFa(status) {
   return status === 'ready' ? 'آماده' : status === 'attention' ? 'نیازمند رسیدگی' : 'عادی';
+}
+
+function metricExplanationFa(metric) {
+  const explanations = {
+    cash_position: 'این مبلغ، جمع مانده حساب‌های بانکی و صندوق‌های فعال تا تاریخ انتخاب‌شده است.',
+    gross_receivables: 'این مبلغ، جمع مطالبات باز از طرف‌حساب‌هاست. طلب و بدهی طرف‌های مختلف با هم تهاتر نشده‌اند.',
+    gross_payables: 'این مبلغ، جمع بدهی‌های باز به طرف‌حساب‌هاست. بدهی و طلب طرف‌های مختلف با هم تهاتر نشده‌اند.',
+    unresolved_bank_reconciliation: 'این مبلغ، جمع ردیف‌های صورتحساب بانکی است که هنوز با تراکنش‌های ثبت‌شده تطبیق داده نشده‌اند.',
+    inventory_control_risks: 'این شاخص، تعداد کنترل‌های انبار و حسابداری است که هنوز مغایرت آن‌ها تعیین تکلیف نشده است.'
+  };
+  return explanations[metric?.id] || metric?.explanation || 'این شاخص از ثبت‌های معتبر حسابداری شرکت محاسبه شده است.';
 }
 
 function metricCard(metric, { count = null } = {}) {
@@ -135,21 +165,6 @@ export function controlTowerPageHtml({ workspace, snapshot }) {
 
       ${readinessHtml(snapshot.closeReadiness)}
       ${actionsHtml(snapshot.actions)}
-
-      <section class="card avan-control-tower-twin-preview">
-        <div class="section-head">
-          <div>
-            <h2>دوقلوی مالی</h2>
-            <span class="muted">موتور سناریو از داده واقعی جداست و هیچ تغییری در دفترکل ایجاد نمی‌کند.</span>
-          </div>
-          <span class="cloud-badge">زیرساخت آماده</span>
-        </div>
-        <p>مرحله بعد همین چرخه: مقایسه حالت مبنا و سناریو برای فروش، وصول، هزینه و شوک نقدینگی با نمایش فرض‌ها و منشأ هر عدد.</p>
-      </section>
-
-      <div class="info-box avan-control-tower-contract">
-        تاریخ مبنا: ${dateFa(snapshot.asOf)} · دقت پولی: یک ریال · تهاتر بین طرف‌حساب‌ها: غیرفعال · عملیات نوشتنی این صفحه: صفر
-      </div>
     </div>
   `;
 }
@@ -162,25 +177,155 @@ function setControlTowerNavActive(active) {
   document.querySelector('[data-control-tower-nav]')?.classList.toggle('active', Boolean(active));
 }
 
-function evidenceModal(title, explanation, evidence = []) {
+function idsOf(evidence, type) {
+  return [...new Set((evidence || [])
+    .filter(ref => ref?.type === type && UUID_RE.test(String(ref?.id || '')))
+    .map(ref => String(ref.id)))];
+}
+
+async function loadEvidenceDetails(evidence = []) {
+  const workspaceId = String(currentResult?.workspace?.id || '');
+  const empty = {
+    financialById: new Map(), accountById: new Map(), journalById: new Map(),
+    partyById: new Map(), bankLineById: new Map()
+  };
+  if (!C?.select || !UUID_RE.test(workspaceId)) return empty;
+
+  const financialIds = idsOf(evidence, 'financial_account');
+  const partyIds = idsOf(evidence, 'party');
+  const bankLineIds = idsOf(evidence, 'bank_statement_line');
+  const journalIds = new Set(idsOf(evidence, 'journal_entry'));
+  for (const ref of evidence || []) {
+    if (ref?.type !== 'journal_line') continue;
+    const journalId = String(ref.id || '').split(':')[0];
+    if (UUID_RE.test(journalId)) journalIds.add(journalId);
+  }
+
+  const [financialAccounts, journalEntries, parties, bankLines] = await Promise.all([
+    financialIds.length
+      ? C.select('financial_accounts', `select=id,ledger_account_id,kind,bank_name&workspace_id=eq.${workspaceId}&id=in.(${financialIds.join(',')})`)
+      : Promise.resolve([]),
+    journalIds.size
+      ? C.select('journal_entries', `select=id,journal_no,entry_date,source_type,description&workspace_id=eq.${workspaceId}&id=in.(${[...journalIds].join(',')})`)
+      : Promise.resolve([]),
+    partyIds.length
+      ? C.select('parties', `select=id,name&workspace_id=eq.${workspaceId}&id=in.(${partyIds.join(',')})`)
+      : Promise.resolve([]),
+    bankLineIds.length
+      ? C.select('bank_statement_lines', `select=id,booking_date,direction,amount,description&workspace_id=eq.${workspaceId}&id=in.(${bankLineIds.join(',')})`)
+      : Promise.resolve([])
+  ]);
+
+  const ledgerIds = [...new Set((financialAccounts || [])
+    .map(row => String(row?.ledger_account_id || ''))
+    .filter(id => UUID_RE.test(id)))];
+  const accounts = ledgerIds.length
+    ? await C.select('accounts', `select=id,code,name&workspace_id=eq.${workspaceId}&id=in.(${ledgerIds.join(',')})`)
+    : [];
+
+  return {
+    financialById: new Map((financialAccounts || []).map(row => [String(row.id), row])),
+    accountById: new Map((accounts || []).map(row => [String(row.id), row])),
+    journalById: new Map((journalEntries || []).map(row => [String(row.id), row])),
+    partyById: new Map((parties || []).map(row => [String(row.id), row])),
+    bankLineById: new Map((bankLines || []).map(row => [String(row.id), row]))
+  };
+}
+
+function humanEvidenceRef(ref, details) {
+  if (ref?.type === 'financial_account') {
+    const financial = details.financialById.get(String(ref.id));
+    const account = financial?.ledger_account_id ? details.accountById.get(String(financial.ledger_account_id)) : null;
+    const kind = financialKindFa[String(financial?.kind || '')] || 'حساب مالی';
+    return {
+      title: financial?.bank_name ? `${kind} — ${financial.bank_name}` : kind,
+      meta: [account?.code ? `کد حساب ${account.code}` : null, account?.name || null].filter(Boolean).join(' · ') || 'حساب مؤثر در این شاخص'
+    };
+  }
+
+  if (ref?.type === 'journal_entry') {
+    const journal = details.journalById.get(String(ref.id));
+    return {
+      title: journal?.journal_no !== null && journal?.journal_no !== undefined ? `سند حسابداری شماره ${journal.journal_no}` : 'سند حسابداری مؤثر',
+      meta: [
+        journal?.entry_date ? `تاریخ ${dateFa(String(journal.entry_date).slice(0, 10))}` : null,
+        journal?.source_type ? (sourceTypeFa[journal.source_type] || 'ثبت حسابداری') : null,
+        journal?.description || null
+      ].filter(Boolean).join(' · ') || 'سند مؤثر در محاسبه این شاخص'
+    };
+  }
+
+  if (ref?.type === 'journal_line') {
+    const [journalId, lineNo] = String(ref.id || '').split(':');
+    const journal = details.journalById.get(journalId);
+    return {
+      title: journal?.journal_no !== null && journal?.journal_no !== undefined
+        ? `ردیف ${lineNo || 'مرتبط'} از سند شماره ${journal.journal_no}`
+        : `ردیف حسابداری ${lineNo || 'مرتبط'}`,
+      meta: journal?.entry_date ? `تاریخ سند ${dateFa(String(journal.entry_date).slice(0, 10))}` : 'ردیف نیازمند بررسی در سند حسابداری'
+    };
+  }
+
+  if (ref?.type === 'party') {
+    const party = details.partyById.get(String(ref.id));
+    return { title: party?.name || 'طرف‌حساب مرتبط', meta: 'طرف‌حساب مؤثر در مانده دریافتنی یا پرداختنی' };
+  }
+
+  if (ref?.type === 'bank_statement_line') {
+    const line = details.bankLineById.get(String(ref.id));
+    const direction = ['credit', 'in', 'deposit'].includes(String(line?.direction || '').toLowerCase()) ? 'واریز' : 'برداشت';
+    return {
+      title: line?.booking_date ? `صورتحساب بانکی — ${dateFa(String(line.booking_date).slice(0, 10))}` : 'ردیف صورتحساب بانکی',
+      meta: [direction, line?.amount !== undefined ? money(line.amount) : null, line?.description || null].filter(Boolean).join(' · ') || 'ردیف بانکی تطبیق‌داده‌نشده'
+    };
+  }
+
+  if (ref?.type === 'inventory_reconciliation') {
+    return { title: 'کنترل مغایرت انبار و حسابداری', meta: 'این کنترل هنوز به وضعیت تطبیق‌شده نرسیده است.' };
+  }
+
+  return { title: evidenceTypeFa[ref?.type] || 'مرجع حسابداری', meta: 'مرجع مؤثر در محاسبه این شاخص' };
+}
+
+async function evidenceModal(title, explanation, evidence = []) {
+  openModal(`
+    <div data-control-tower-evidence-modal>
+      <div class="section-head"><div><h2>${esc(title)}</h2><span class="muted">شواهد حسابداری</span></div><span class="cloud-badge">قابل ردیابی</span></div>
+      <div class="info-box">${esc(explanation || 'این شاخص از ثبت‌های معتبر حسابداری شرکت محاسبه شده است.')}</div>
+      <div class="loading">در حال آماده‌سازی عنوان حساب‌ها و اسناد…</div>
+    </div>
+  `);
+
+  let details;
+  try {
+    details = await loadEvidenceDetails(evidence);
+  } catch (error) {
+    console.error('[Avan Control Tower evidence]', error);
+    details = { financialById: new Map(), accountById: new Map(), journalById: new Map(), partyById: new Map(), bankLineById: new Map() };
+  }
+
   const grouped = new Map();
   evidence.forEach(ref => {
     if (!ref?.type || !ref?.id) return;
     if (!grouped.has(ref.type)) grouped.set(ref.type, []);
-    grouped.get(ref.type).push(ref.id);
+    grouped.get(ref.type).push(ref);
   });
 
   openModal(`
     <div data-control-tower-evidence-modal>
-      <div class="section-head"><div><h2>${esc(title)}</h2><span class="muted">چرا این عدد؟</span></div><span class="cloud-badge">قابل ردیابی</span></div>
-      <div class="info-box">${esc(explanation || 'این شاخص از داده‌های معتبر شرکت محاسبه شده است.')}</div>
+      <div class="section-head"><div><h2>${esc(title)}</h2><span class="muted">شواهد حسابداری</span></div><span class="cloud-badge">قابل ردیابی</span></div>
+      <div class="info-box">${esc(explanation || 'این شاخص از ثبت‌های معتبر حسابداری شرکت محاسبه شده است.')}</div>
       <div class="section avan-control-tower-evidence-list">
-        ${grouped.size ? [...grouped.entries()].map(([type, ids]) => `
+        ${grouped.size ? [...grouped.entries()].map(([type, refs]) => `
           <div class="card">
-            <b>${esc(evidenceTypeFa[type] || type)}</b>
-            <span class="muted">${Number(ids.length).toLocaleString('fa-IR')} مرجع</span>
-            <div class="avan-control-tower-evidence-ids">${ids.slice(0, 12).map(id => `<code>${esc(id)}</code>`).join('')}</div>
-            ${ids.length > 12 ? `<span class="muted">و ${Number(ids.length - 12).toLocaleString('fa-IR')} مرجع دیگر</span>` : ''}
+            <div class="section-head"><b>${esc(evidenceTypeFa[type] || 'مرجع حسابداری')}</b><span class="muted">${Number(refs.length).toLocaleString('fa-IR')} مرجع</span></div>
+            <div class="avan-control-tower-evidence-human-list">
+              ${refs.slice(0, 12).map(ref => {
+                const human = humanEvidenceRef(ref, details);
+                return `<div class="avan-control-tower-evidence-human-row"><b>${esc(human.title)}</b><span class="muted">${esc(human.meta)}</span></div>`;
+              }).join('')}
+            </div>
+            ${refs.length > 12 ? `<span class="muted">و ${Number(refs.length - 12).toLocaleString('fa-IR')} مرجع دیگر</span>` : ''}
           </div>
         `).join('') : '<div class="empty">برای این شاخص در وضعیت فعلی مرجع جزئی وجود ندارد.</div>'}
       </div>
@@ -206,7 +351,7 @@ function bindPageActions() {
     button.addEventListener('click', () => {
       const metric = Object.values(currentResult.snapshot.metrics).find(item => item.id === button.dataset.controlTowerWhy);
       if (!metric) return;
-      evidenceModal(metric.label, metric.explanation, metric.evidence);
+      void evidenceModal(metric.label, metricExplanationFa(metric), metric.evidence);
     });
   });
 
@@ -214,7 +359,7 @@ function bindPageActions() {
     button.addEventListener('click', () => {
       const action = currentResult.snapshot.actions.find(item => item.id === button.dataset.controlTowerActionEvidence);
       if (!action) return;
-      evidenceModal(action.title, 'این اقدام از کنترل‌های قطعی و قاعده‌محور برج کنترل استخراج شده است.', action.evidence);
+      void evidenceModal(action.title, 'این مورد به‌دلیل وجود ثبت یا مغایرت باز در حسابداری نیازمند بررسی است. شواهد مؤثر در ادامه آمده‌اند.', action.evidence);
     });
   });
 }

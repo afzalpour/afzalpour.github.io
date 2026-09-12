@@ -116,6 +116,8 @@ assert.doesNotMatch(ui, /localStorage|sessionStorage/,
   'scenario UI must not persist financial scenario data in browser storage');
 assert.doesNotMatch(ui, /\.insert\(|\.update\(|\.delete\(|\.rpc\(/,
   'scenario UI must not expose a write path');
+assert.match(css, /\.avan-twin-contract-badges\{display:none!important\}/,
+  'redundant precision/ledger/user-assumption badges must not be shown');
 assert.match(css, /@media\(max-width:760px\)/,
   'Digital Twin workspace must remain responsive on mobile');
 assert.match(css, /avan-twin-table th,\.avan-twin-table td\{text-align:center!important/);

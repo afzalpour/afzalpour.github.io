@@ -146,9 +146,15 @@ assert.match(index, /rc17-dashboard-intelligence-live-fix-v2\.css/);
 assert.match(index, /dashboard-intelligence-live-fix-v2\.js/);
 assert.match(index, /dashboard-accounting-correctness-hotfix\.js/);
 assert.match(index, /rc14-invoice-live-refinements\.js/);
-assert.match(sw, /avan-staging-rc1-v110-runtime-cache-live-correction/);
-assert.match(sw, /new Request\(request,\{cache:'reload'\}\)/);
-assert.match(sw, /client\.navigate\(client\.url\)/);
+const cacheVersion = Number(sw.match(/const CACHE='avan-staging-rc1-v(\d+)-/)?.[1] || 0);
+assert.ok(cacheVersion >= 110,
+  'Staging cache identity must not regress below the v110 fresh-runtime delivery milestone');
+assert.match(sw, /new Request\(new URL\(asset,self\.registration\.scope\),\{cache:'reload'\}\)/,
+  'install-time precache must keep fetching fresh runtime assets');
+assert.match(sw, /new Request\(request,\{cache:'reload'\}\)/,
+  'runtime fetches must keep crossing the browser HTTP-cache boundary');
+assert.match(sw, /client\.navigate\(client\.url\)/,
+  'activation must move open clients to the active service-worker runtime');
 assert.match(sw, /dashboard-accounting-correctness-hotfix\.js/);
 assert.match(sw, /dashboard-intelligence-live-fix-v2\.js/);
 

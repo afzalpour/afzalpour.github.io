@@ -58,11 +58,21 @@ assert.equal(controlTowerStatusFa('attention'), 'نیازمند رسیدگی');
 const html = controlTowerPageHtml(result);
 assert.match(html, /برج کنترل مالی/);
 assert.match(html, /چرا این عدد؟/);
-assert.match(html, /دوقلوی مالی/);
 assert.match(html, /data-control-tower-date-form/);
 assert.match(html, /type="date"/);
-assert.match(html, /عملیات نوشتنی این صفحه: صفر/);
+assert.doesNotMatch(html, /موتور سناریو از داده واقعی جداست/);
+assert.doesNotMatch(html, /زیرساخت آماده/);
+assert.doesNotMatch(html, /تاریخ مبنا:/);
+assert.doesNotMatch(html, /عملیات نوشتنی این صفحه: صفر/);
 assert.doesNotMatch(html, /Evidence-backed|Ledger|Scenario|Actual/);
+
+const ui = fs.readFileSync(new URL('../src/ui/intelligence/control-tower-workspace.js', import.meta.url), 'utf8');
+assert.match(ui, /شواهد حسابداری/);
+assert.match(ui, /سند حسابداری شماره/);
+assert.match(ui, /طرف‌حساب مؤثر در مانده دریافتنی یا پرداختنی/);
+assert.match(ui, /صورتحساب بانکی/);
+assert.doesNotMatch(ui, /<code>\$\{esc\(id\)\}<\/code>/,
+  'Control Tower evidence must not render raw technical ids');
 
 const index = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const sw = fs.readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
@@ -73,6 +83,9 @@ assert.match(sw, /src\/application\/intelligence\/control-tower-snapshot-service
 assert.match(sw, /src\/intelligence\/control-tower-foundation\.js/);
 assert.match(sw, /rc17-control-tower\.css/);
 assert.match(css, /\.avan-control-tower-grid/);
+assert.match(css, /container-type:inline-size/);
+assert.match(css, /font-size:clamp\(13px,9cqw,22px\)/);
+assert.match(css, /avan-control-tower-evidence-human-row/);
 assert.match(css, /@media \(max-width:760px\)/);
 
 console.log('control-tower-workspace.spec.mjs: PASS');

@@ -5,6 +5,7 @@ const read = rel => fs.readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8
 const engine = read('src/intelligence/working-capital-foundation.js');
 const service = read('src/application/intelligence/working-capital-service.js');
 const ui = read('src/ui/intelligence/working-capital-workspace.js');
+const css = read('rc17-working-capital.css');
 const index = read('index.html');
 const sw = read('sw.js');
 
@@ -26,12 +27,30 @@ assert.match(ui, /مرکز سرمایه در گردش/);
 assert.match(ui, /اولویت‌های وصول/);
 assert.match(ui, /تقویم پرداختنی ۳۰ روزه/);
 assert.match(ui, /گراف شواهد/);
-assert.match(ui, /شواهد/);
+assert.match(ui, /شواهد حسابداری مرتبط/);
+assert.match(ui, /data-working-capital-evidence-kind="collection"/);
+assert.match(ui, /data-working-capital-evidence-kind="payment"/);
+assert.match(ui, /data-working-capital-evidence-id="\$\{esc\(item\.id\)\}"/,
+  'payable evidence must preserve the full composite open-item id instead of splitting on colon');
+assert.doesNotMatch(ui, /split\(':'\)/,
+  'payable evidence binding must not truncate composite ids');
+assert.match(ui, /data-working-capital-graph="nodes"/);
+assert.match(ui, /data-working-capital-graph="edges"/);
+assert.match(ui, /سند حسابداری شماره/);
+assert.match(ui, /فاکتور شماره/);
+assert.doesNotMatch(ui, /<code>\$\{esc\(id\)\}<\/code>/,
+  'Working Capital evidence must not expose raw technical ids');
 assert.match(ui, /تهاتر بین طرف‌حساب‌ها: غیرفعال/);
 assert.match(ui, /عملیات وصول خودکار: صفر/);
 assert.match(ui, /عملیات پرداخت خودکار: صفر/);
 assert.match(ui, /data-working-capital-nav/);
 assert.match(ui, /data-working-capital-report-launcher/);
+
+assert.match(css, /grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/,
+  'seven Working Capital KPIs must use a compact 4+3 desktop layout');
+assert.match(css, /avan-working-capital-evidence-kpis button\.summary-pill/,
+  'evidence graph counts must be interactive controls');
+assert.match(css, /avan-working-capital-evidence-human-row/);
 
 assert.match(index, /rc17-working-capital\.css/);
 assert.match(index, /src\/ui\/intelligence\/working-capital-workspace\.js/);

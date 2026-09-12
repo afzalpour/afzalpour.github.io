@@ -17,8 +17,8 @@ assert.match(ui, /تصمیم‌یار عملیاتی/);
 assert.match(ui, /چرا این پیشنهاد؟/);
 assert.match(ui, /آزمایش وصول در دوقلو/);
 assert.match(ui, /آزمایش پرداخت در دوقلو/);
-assert.match(ui, /شواهد قابل‌فهم/,
-  'why modal must explicitly present human-readable evidence');
+assert.match(ui, /قاعده، اثر نقدی و شواهد حسابداری/,
+  'why modal must use plain Persian accounting language');
 assert.match(ui, /سند حسابداری شماره/,
   'journal evidence must use journal number instead of exposing internal UUID');
 assert.match(ui, /ردیف مرتبط با سند شماره/,
@@ -47,13 +47,23 @@ assert.equal(roundTrip.ok, true);
 assert.equal(roundTrip.value, '104692.8',
   'Rial display handoff must round-trip exactly to the canonical one-Rial amount');
 
-assert.match(ui, /Human-controlled/);
+assert.match(ui, /تحت کنترل کاربر/);
+assert.doesNotMatch(ui, /Human-controlled/);
+assert.doesNotMatch(ui, /RC1\.7-D · Evidence-backed Decision Layer/);
+assert.match(ui, /آوان در این بخش مبلغ ساختگی تولید نمی‌کند و محاسبات با دقت یک ریال انجام می‌شود/);
+assert.doesNotMatch(ui, /AI arithmetic|Actual Ledger/);
+assert.match(ui, /avan-decision-row collection/);
+assert.match(ui, /avan-decision-row payment/);
 assert.doesNotMatch(ui, /localStorage|sessionStorage/,
   'decision workspace must not persist financial decision data in browser storage');
 assert.doesNotMatch(ui, /\.insert\(|\.update\(|\.delete\(|\.rpc\(/,
   'decision workspace must not expose financial write operations');
 assert.match(css, /avan-decision-evidence-human-row/,
   'human-readable evidence rows must have stable presentation styling');
+assert.match(css, /grid-template-columns:minmax\(220px,1\.3fr\) minmax\(135px,\.42fr\) minmax\(145px,\.46fr\) minmax\(210px,\.65fr\)/,
+  'payment decisions must have a stable four-column desktop layout');
+assert.match(css, /font-size:clamp\(14px,8cqw,20px\)/,
+  'summary KPI numbers must use one consistent responsive font scale');
 assert.match(css, /@media\(max-width:600px\)/,
   'decision layer must remain responsive on mobile');
 assert.match(index, /rc17-working-capital-decisions\.css/);
@@ -62,7 +72,8 @@ assert.match(sw, /rc17-working-capital-decisions\.css/);
 assert.match(sw, /src\/intelligence\/working-capital-decisions\.js/);
 assert.match(sw, /src\/application\/intelligence\/working-capital-decision-service\.js/);
 assert.match(sw, /src\/ui\/intelligence\/working-capital-decision-workspace\.js/);
-assert.match(sw, /avan-staging-rc1-v10[5-9]-/,
-  'PWA cache must advance beyond the RC1.7-C v104 cache');
+const cacheVersion = Number(sw.match(/avan-staging-rc1-v(\d+)-/)?.[1] || 0);
+assert.ok(cacheVersion >= 105,
+  'PWA cache must remain beyond the RC1.7-C v104 cache');
 
 console.log('working-capital-decisions-ui.spec.mjs: PASS');
