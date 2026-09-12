@@ -325,11 +325,12 @@ Progress after RC1.7 closure:
 - Module 1: Financial Control Tower first scope = **Production Live PASS**.
 - Module 2: Financial Digital Twin first scope = **Production Live PASS**.
 - Module 3: Working Capital + Decision Layer current scope = **Production Live PASS**.
+- Module 4: Continuous Close + Continuous Audit foundation = **Engineering PASS / Staging Live Gate pending**.
 - Module 6: Counterparty 360 foundation = **Production Live PASS**.
 - Module 8: Evidence foundation + graph drilldown current scope = **Production Live PASS**.
-- Modules 4, 5, 7 and 9 remain the next strategic release trains.
+- Modules 5, 7 and 9 remain subsequent strategic release trains.
 
-Default next architectural train after RC1.7 closure: **Module 4 — Continuous Close + Continuous Audit**, while preserving the accepted RC1.7 boundaries and without rebuilding passed work.
+Current architectural train: **Module 4 — Continuous Close + Continuous Audit**. Engineering is complete for the foundation; authenticated Staging Live Gate is the next required acceptance step. Production RC1.7 remains unchanged until a later explicit release approval.
 
 Guardrails: deterministic calculation before narrative; evidence before recommendation; Actual/Forecast/Scenario separation; no silent AI posting/payment; every important number drillable; Company/RLS and one-Rial exactness everywhere.
 
@@ -350,5 +351,55 @@ Guardrails: deterministic calculation before narrative; evidence before recommen
 - Production Pages = #401 original release; #405 Smoke UX delivery hotfix, both PASS.
 - explicit authenticated final Smoke result = **«RC1.7 Production Smoke UX PASS»**.
 - **RC1.7 Production Smoke = PASS**.
-- current Live validation pending = **none for RC1.7 current scope**.
-- current release-engineering pending = **none for RC1.7**.
+- Module 4 Staging Engineering PR = **#164**; merge = `4549e56a934431e2e09826ee510800ecbdc8709a`.
+- Module 4 Architecture Gate = **#282 pre-merge / #283 post-merge PASS**.
+- Module 4 Staging Pages = **#407 PASS**.
+- Module 4 Staging cache = `avan-staging-rc1-v112-module4-continuous-close-audit`.
+- Module 4 Live validation pending = **authenticated Staging Live Gate**.
+- Module 4 Production promotion = **not authorized / not performed**.
+
+---
+
+## 15) Module 4 — Continuous Close + Continuous Audit Foundation
+
+Status: **Engineering PASS / Staging Live Gate pending / Production unchanged**.
+
+Engineering delivery:
+- PR = **#164**.
+- merge = `4549e56a934431e2e09826ee510800ecbdc8709a`.
+- Frontend Architecture Gate = **#282 pre-merge PASS / #283 post-merge PASS**.
+- GitHub Pages = **#407 PASS**.
+- changes are confined to `avan-staging/`; repository-root Production runtime remains RC1.7.
+- no database schema migration and no financial data mutation were part of this Engineering delivery.
+
+Accepted Engineering foundation:
+- official read-only `avan-continuous-close-audit-foundation-v1`.
+- Close status is deterministic `Ready / Attention / Blocked`; **no arbitrary readiness score** is used by the official Module 4 workspace.
+- existing accepted Control Tower reconciliation controls and legacy close/audit rules are reused instead of creating a second accounting truth.
+- unified Exception Register covers integrity, close-readiness/reconciliation, duplicate and anomaly findings.
+- duplicate-journal detection uses exact posted-ledger signatures and canonical one-Rial money; sub-Rial canonical values are rejected rather than silently rounded.
+- evidence/provenance is attached to duplicate documents, invoices, financial transactions, unusual transactions, new-party payments and relevant Close controls.
+- evidence UI resolves accounting-facing journal/invoice/document/transaction/party/bank descriptions; raw UUID presentation is prohibited by regression tests.
+- every table read in the Module 4 service is explicitly `workspace_id` scoped and existing RLS remains mandatory.
+- `avan_core_integrity` and `invoice_integrity` are read-only control inputs; no posting/payment/period-close action is executed by the Module 4 workspace.
+- contracts lock `writeOperations = 0`, `actualLedgerMutation = false`, deterministic calculation and human-controlled decisions.
+
+Permanent regression coverage includes:
+- one-Rial exactness and explicit sub-Rial rejection;
+- deterministic exception severity ordering;
+- no arbitrary Close score;
+- evidence-linked duplicate/anomaly findings;
+- explicit company/workspace scope for table reads and RPC arguments;
+- no-write contract;
+- no raw provenance IDs in the user-facing evidence path.
+
+Pre-Live read-only mutation baseline on `Avan-production` after Engineering merge:
+- journal entries = **93**, latest `2026-09-10 21:16:55.697626+00`;
+- financial transactions = **24**, latest `2026-09-10 21:16:55.697626+00`;
+- invoices = **42**, latest `2026-09-10 16:37:20.676074+00`;
+- documents = **23**, latest `2026-09-07 21:11:31.272166+00`.
+
+Required next acceptance:
+- authenticated Staging Live Gate for page load, Close status, Exception Register, accounting-readable evidence drilldown, date rerun and mutation-free behavior.
+- do **not** mark Module 4 Live PASS until explicit user confirmation.
+- do **not** promote Module 4 into Production without a separate explicit Production release approval.
