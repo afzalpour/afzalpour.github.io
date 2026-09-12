@@ -148,12 +148,31 @@ function portfolioHtml(required) {
     : empty
       ? 'این حساب هنوز شرکتی ندارد. اولین شرکت را ایجاد کنید تا هسته مالی آوان برای شما راه‌اندازی شود.'
       : 'هر شرکت یک Tenant مستقل است. شرکت تعلیق/آرشیوشده همچنان دیده می‌شود اما دفتر مالی آن قابل ورود نیست.';
-  return `<div class="avan-company-portfolio-panel" role="dialog" aria-modal="true"><div class="avan-company-portfolio-head"><div><span class="eyebrow">آوان · Company Portfolio</span><h2>شرکت‌های من</h2><p>${intro}</p></div>${!required && current ? '<button type="button" class="ghost" id="avanCloseCompanyPortfolio">بستن</button>' : ''}</div><div class="avan-company-portfolio-list">${body}</div><div class="avan-company-portfolio-foot"><span class="muted" id="avanCompanyPortfolioStatus">${status}</span></div></div>`;
+  const headerAction = required
+    ? '<button type="button" class="ghost" id="avanSwitchAccount">خروج و ورود با حساب دیگر</button>'
+    : current
+      ? '<button type="button" class="ghost" id="avanCloseCompanyPortfolio">بستن</button>'
+      : '';
+  return `<div class="avan-company-portfolio-panel" role="dialog" aria-modal="true"><div class="avan-company-portfolio-head"><div><span class="eyebrow">آوان · Company Portfolio</span><h2>شرکت‌های من</h2><p>${intro}</p></div>${headerAction}</div><div class="avan-company-portfolio-list">${body}</div><div class="avan-company-portfolio-foot"><span class="muted" id="avanCompanyPortfolioStatus">${status}</span></div></div>`;
 }
 
 function closePortfolio() {
   document.getElementById('avanCompanyPortfolio')?.remove();
   document.body.classList.remove('avan-company-portfolio-open');
+}
+
+async function switchAccount() {
+  const button = document.getElementById('avanSwitchAccount');
+  if (button) button.disabled = true;
+  try {
+    companyContext.clearSelection({ emit: false });
+    await cloud.logout();
+  } catch (error) {
+    console.warn('[Avan company shell] logout failed', error);
+  } finally {
+    closePortfolio();
+    location.reload();
+  }
 }
 
 function bindPortfolio(required) {
@@ -163,6 +182,7 @@ function bindPortfolio(required) {
     button.onclick = () => void chooseCompany(button.dataset.enterCompany);
   });
   document.getElementById('avanCloseCompanyPortfolio')?.addEventListener('click', closePortfolio);
+  document.getElementById('avanSwitchAccount')?.addEventListener('click', () => void switchAccount());
   overlay.onclick = event => {
     if (!required && event.target === overlay) closePortfolio();
   };
@@ -180,12 +200,16 @@ function openPortfolio({ required = false } = {}) {
   overlay.innerHTML = portfolioHtml(required);
   document.body.classList.add('avan-company-portfolio-open');
   bindPortfolio(required);
-  overlay.querySelector('[data-enter-company]:not(:disabled)')?.focus();
+  overlay.querySelector('[data-enter-company]:not(:disabled), #avanSwitchAccount')?.focus();
 }
 
 function syncRequiredPortfolio() {
   if (loading || !resolved) return;
-  const firstCompanyRequired = appVisible() && !current && companies.length === 0;
+  if (!appVisible()) {
+    closePortfolio();
+    return;
+  }
+  const firstCompanyRequired = !current && companies.length === 0;
   if ((selectionRequired && companies.length) || firstCompanyRequired) {
     openPortfolio({ required: true });
     return;
@@ -220,7 +244,7 @@ function projectState() {
   syncRequiredPortfolio();
   projectCompanyLabels();
   const overlay = document.getElementById('avanCompanyPortfolio');
-  if (overlay && overlay.dataset.required !== 'true') openPortfolio({ required: false });
+  if (overlay && overlay.dataset.required !== 'true' && appVisible()) openPortfolio({ required: false });
 }
 
 async function refresh(force = false) {
