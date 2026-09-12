@@ -28,7 +28,10 @@ Repository: `afzalpour/afzalpour.github.io`
 - Production promotion was frontend/runtime-only; no database schema/data mutation was part of PR #158.
 - deployment-contract smoke = **PASS**: deployed Pages workflow succeeded, Production `main` contains the RC1.7 runtime modules, and root `sw.js` has the approved Production cache identity.
 - direct unauthenticated HTTP fetch from the assistant execution environment was not available because that environment could not resolve the fresh GitHub Pages hostname; do not misstate this as an HTTP smoke PASS.
-- authenticated Production smoke by the user = **PENDING**.
+- authenticated Production smoke is **NOT yet PASS**. User confirmed login/Dashboard and base RC1.7 navigation, then reported UX defects in Control Tower, Digital Twin and Working Capital/Decision Layer.
+- Staging-only correction PR **#160** is merged at `e377fe75eadf1a5c00487630313320bcd77682ae`; pre-merge Architecture Gate #278 = **PASS**, post-merge Gate #279 = **PASS**, Pages #403 = **PASS**.
+- current Staging cache = `avan-staging-rc1-v111-production-smoke-ux-hotfix`.
+- Production root runtime has **not** received PR #160 changes; targeted authenticated Staging retest is required before any Production hotfix promotion.
 
 Historical previous release:
 - RC1.6 Production release PR = **#117**.
@@ -51,18 +54,24 @@ Historical previous release:
 
 ## 3) RC1.7-A — Avan Financial Control Tower
 
-Status: **Engineering PASS + Live PASS + Production released**.
+Status: **Engineering PASS + Live PASS + Production released; Production Smoke UX correction pending promotion**.
 
 - PR #118 merge = `b260c6995c233f097661082092767373416e1fe9`.
 - Gate #202/#203 = PASS; Pages #355 = PASS.
 
 Accepted scope: Company/RLS-scoped cash/bank, gross AR/AP by real `party_id`, bank/inventory risk indicators, deterministic close-readiness blockers, prioritized actions, `چرا این عدد؟`, Persian/Jalali responsive UI, exact one-Rial precision, zero AI-generated accounting amount and zero financial write path.
 
+Production Smoke UX correction in PR #160:
+- KPI amounts use responsive, consistent numeric typography and no longer rely on unrestricted fixed sizing inside narrow cards.
+- `چرا این عدد؟` / `مشاهده شواهد` are converted from raw technical references to accounting-facing account, journal, party and bank-statement descriptions.
+- redundant Control Tower footer contract and obsolete Digital Twin preview copy are removed.
+- all new evidence detail reads remain explicit `workspace_id` scoped and read-only.
+
 ---
 
 ## 4) RC1.7-B — Financial Digital Twin
 
-Status: **Engineering PASS + Live PASS + Production released**.
+Status: **Engineering PASS + Live PASS + Production released; minor Production Smoke UX correction pending promotion**.
 
 - PR #119 merge = `d522dd47d825adc7e0458ca3d755c3752ccde069`.
 - Gate #204/#205 = PASS; Pages #356 = PASS.
@@ -79,11 +88,13 @@ Opening-evidence readability polish:
 
 Accepted scope: real opening cash/bank, explicit scenario flows, deterministic Base vs Scenario cash, liquidity stress, human-readable accounting provenance for opening cash, no scenario persistence, no Actual Ledger mutation and no AI arithmetic.
 
+Production Smoke UX correction in PR #160 hides the redundant hero badges `دقت یک‌ریال`, `بدون تغییر دفترکل` and `فرض‌های صریح کاربر`; scenario calculations and contracts are unchanged.
+
 ---
 
 ## 5) RC1.7-C — Working Capital + Evidence Foundation
 
-Status: **Engineering PASS + Live PASS + Production released**.
+Status: **Engineering PASS + Live PASS + Production released; Production Smoke UX correction pending promotion**.
 
 - PR #121 merge = `197503177b04b7f0fd30bedd2173645decb944ab`.
 - final Gate #208/#209 = PASS; Pages #358 = PASS.
@@ -91,11 +102,17 @@ Status: **Engineering PASS + Live PASS + Production released**.
 
 Accepted scope: one-Rial Working Capital model; gross AR/AP by real `party_id`; no cross-party netting; FIFO reduction allocation; invoice due-date aging/fallbacks; collection priority; 30-day payable calendar; liquidity indicator; Evidence links; Company/RLS scope; no autonomous collection/payment/posting and no Actual Ledger mutation.
 
+Production Smoke UX correction in PR #160:
+- seven KPI cards use a compact **4+3** desktop layout with responsive numeric typography.
+- collection/payment evidence is accounting-readable rather than raw technical IDs.
+- payable evidence click defect is fixed by preserving the full composite open-item id; the prior `split(':')` truncation path is removed.
+- Evidence Graph node/edge counts are interactive and open accounting-readable drilldowns.
+
 ---
 
 ## 6) RC1.7-D — Evidence-backed Operational Decision Layer
 
-Status: **Engineering PASS + Full Live PASS + Production released**.
+Status: **Engineering PASS + Full Live PASS + Production released; Production Smoke UX correction pending promotion**.
 
 Foundation:
 - PR #123 merge = `ba642265a33d43aca25937dac0721358dcb11a5c`.
@@ -124,6 +141,8 @@ Digital Twin numeric-entry polish:
 - Gate #266/#267 = **PASS**; Pages #396 = **PASS**.
 
 Accepted RC1.7-D scope: deterministic collection recommendations; payable sequencing; exact one-Rial `cash before`/`cash after`; liquidity-gap recommendation; human-readable `چرا این پیشنهاد؟`; controlled Digital Twin handoff with real open amount as editable seed; no auto-run; no autonomous message/payment/posting; no DB write and no Actual Ledger mutation.
+
+Production Smoke UX correction in PR #160 removes the technical RC label, replaces `Human-controlled` with `تحت کنترل کاربر`, standardizes KPI/row numeric typography, stabilizes payment row layout, and rewrites the technical zero/AI/Actual-Ledger disclosure into plain Persian. No decision math or write contract changes.
 
 ---
 
@@ -175,7 +194,7 @@ Accepted foundation scope:
 
 ---
 
-## 9) RC1.7 release closure and Production promotion
+## 9) RC1.7 release closure, Production promotion and Smoke UX correction
 
 - PR #148 refreshed Source of Truth after repository/Supabase reconciliation.
 - PR #149 added the permanent **RC1.7 Release Closure Regression Gate**; merge `55a447f9492ebe5e61b2cd77e666c7a3de92cb50`; Gate #261/#262 = **PASS**.
@@ -195,10 +214,28 @@ Accepted foundation scope:
 - post-merge Production Release Gate #13 = **PASS**.
 - post-merge Frontend Architecture Gate #276 = **PASS**.
 - GitHub Pages #401 build/deploy = **PASS**.
-- root `index.html` now contains RC1.7 Control Tower, Digital Twin, Working Capital/Decision Layer, Dashboard intelligence, Party Master and Counterparty 360 runtime assets.
+- root `index.html` contains RC1.7 Control Tower, Digital Twin, Working Capital/Decision Layer, Dashboard intelligence, Party Master and Counterparty 360 runtime assets.
 - root `sw.js` = approved Production transform with `CACHE_PREFIX='avan-prod-'` and `CACHE='avan-prod-rc1-7-v1'`.
 - Production rollback point = `prod-backup-20260912-rc1-7-pre-promotion`.
 - no database migration/data write was executed as part of Production promotion.
+
+Authenticated Production Smoke on 2026-09-12:
+- login/company context + Dashboard = **PASS**.
+- Control Tower loads = **PASS**, but UX issues reported: KPI numeric overflow, technical evidence wording, redundant footer and obsolete Digital Twin preview copy.
+- Digital Twin loads, but three redundant contract badges should be removed.
+- Working Capital loads, but UX issues reported: inefficient 7-card layout, technical collection evidence, inactive payable evidence, technical Decision Layer labels/disclosure, numeric layout consistency, and non-interactive Evidence Graph counts.
+- therefore overall **RC1.7 Production Smoke remains PENDING**, not PASS.
+
+Staging correction:
+- PR #160 = **RC1.7 Production Smoke UX hotfix**.
+- first Gate #277 failed only because an older Dashboard regression pinned the exact v110 cache marker; all directly changed hotfix tests had already PASSed.
+- the stale assertion was corrected without weakening PWA freshness: cache version must remain at/above the v110 milestone and install/runtime `cache:'reload'` plus activation navigation are still required.
+- pre-merge Architecture Gate #278 = **PASS**.
+- PR #160 merge = `e377fe75eadf1a5c00487630313320bcd77682ae`.
+- post-merge Architecture Gate #279 = **PASS**.
+- Pages #403 build/deploy = **PASS**.
+- Staging service-worker cache = `avan-staging-rc1-v111-production-smoke-ux-hotfix`.
+- PR #160 changes are Staging-only; Production root runtime is intentionally unchanged pending user Live retest.
 
 ---
 
@@ -266,41 +303,57 @@ ADR-0023 is **Accepted**. Official capabilities:
 9. Avan Connect / Automation Marketplace.
 
 Progress after RC1.7 Production release:
-- Module 1: first scope Live PASS and released.
-- Module 2: first scope Live PASS including accounting-readable opening provenance and released.
-- Module 3: foundation + Decision Layer current scope = **Full Live PASS** and released.
+- Module 1: first scope Live PASS and released; Production Smoke UX correction is validated in Staging pending user retest.
+- Module 2: first scope Live PASS including accounting-readable opening provenance and released; redundant badges removed in Staging hotfix.
+- Module 3: foundation + Decision Layer current scope = **Full Live PASS** and released; Production Smoke UX correction is validated in Staging pending user retest.
 - Module 6: Counterparty 360 foundation Live PASS and released.
-- Module 8: Evidence foundation Live PASS and released across recommendations/Counterparty views.
-- Modules 4, 5, 7 and 9 remain planned for subsequent release trains.
+- Module 8: Evidence foundation Live PASS and released; additional Evidence Graph drilldown interaction is in Staging hotfix.
+- Modules 4, 5, 7 and 9 remain planned for subsequent release trains after the RC1.7 smoke boundary is closed.
 
 Guardrails: deterministic calculation before narrative; evidence before recommendation; Actual/Forecast/Scenario separation; no silent AI posting/payment; every important number drillable; Company/RLS and one-Rial exactness everywhere.
 
 ---
 
-## 14) RC1.7 Production release COMPLETE — authenticated smoke pending
+## 14) RC1.7 Production Smoke correction loop — targeted Staging retest pending
 
-All current-scope Staging Live validations and release-engineering gates are closed.
+RC1.7 Production is deployed, but authenticated Smoke is not yet accepted because the user reported presentation/usability defects after login.
 
-- required functional confirmations include **«RC1.7-D Live PASS — Handoff Fixed»** and **«Digital Twin Evidence Readable PASS»**.
-- explicit Production approval received = **«RC1.7 Production Release APPROVED»**.
-- Production promotion completed through PR #158 after actual runtime Release Gate PASS.
-- direct post-Live Supabase mutation check remained **93 journal entries / 24 financial transactions / 42 invoices** before promotion; Production promotion itself performed no DB writes.
-- deployment/engineering verification = PASS (Release Gate #12/#13, Architecture #275/#276, Pages #401).
-- authenticated Production smoke is the only remaining release acceptance item because it requires the user's signed-in Production session.
-- do not repeat the full Staging Live suite; Production smoke should be narrowly scoped to login/company context, Dashboard and representative RC1.7 navigation/read-only rendering.
+What is already accepted in Production Smoke:
+- login and active-company context = **PASS**.
+- Dashboard = **PASS**.
+- Control Tower / Digital Twin / Working Capital routes load successfully.
+
+What PR #160 corrects in Staging:
+1. Control Tower: fit KPI values to card width with consistent numeric font; make `چرا این عدد؟` / action evidence accounting-readable; remove redundant footer and obsolete Digital Twin preview copy.
+2. Digital Twin: remove the three redundant hero badges.
+3. Working Capital: 7 KPI cards → 4+3 desktop layout; readable collection/payment evidence; fix payable evidence click; interactive Evidence Graph node/edge drilldown.
+4. Decision Layer: remove technical RC label, translate `Human-controlled`, normalize KPI/row numbers, stabilize payment rows, replace technical disclosure with plain Persian.
+5. Staging PWA cache advanced to v111 with fresh-network safeguards retained.
+
+Engineering status:
+- PR #160 pre-merge Architecture Gate #278 = **PASS**.
+- merge = `e377fe75eadf1a5c00487630313320bcd77682ae`.
+- post-merge Architecture Gate #279 = **PASS**.
+- Pages #403 = **PASS**.
+- no database/schema/accounting math changes.
+- Production runtime remains the original RC1.7 release projection from PR #158 until this hotfix receives targeted authenticated Staging Live PASS and a separate Production hotfix approval/promotion.
 
 ---
 
 ## 15) Canonical current pointers
 
-- Production runtime = **RC1.7**.
+- Production runtime = **RC1.7 original release projection; Smoke UX hotfix not yet promoted**.
 - Production release PR = **#158**.
-- Production merge = `cf08f25703b84c0049103eb97e15d59945973658`.
+- Production release merge = `cf08f25703b84c0049103eb97e15d59945973658`.
 - Production rollback = `prod-backup-20260912-rc1-7-pre-promotion`.
 - Production Service Worker cache = `avan-prod-rc1-7-v1`.
 - Production Release Gate = pre-merge #12 PASS; post-merge #13 PASS.
-- Frontend Architecture Gate = pre-merge #275 PASS; post-merge #276 PASS.
-- Production Pages = #401 PASS.
-- current Staging service-worker cache identity = `avan-staging-rc1-v109-dashboard-live-contract-v3` with fresh-network delivery safeguards and release-closure regression coverage.
-- current Live validation pending = **none for RC1.7 current scope**.
-- current release-engineering pending = **authenticated Production smoke only**.
+- Frontend Architecture Gate for Production release = pre-merge #275 PASS; post-merge #276 PASS.
+- Production Pages release = #401 PASS.
+- RC1.7 Smoke UX Staging hotfix PR = **#160**.
+- RC1.7 Smoke UX Staging hotfix merge = `e377fe75eadf1a5c00487630313320bcd77682ae`.
+- hotfix Architecture Gate = #278/#279 PASS.
+- hotfix Pages = #403 PASS.
+- current Staging service-worker cache identity = `avan-staging-rc1-v111-production-smoke-ux-hotfix`.
+- current Live validation pending = **targeted authenticated Staging retest of PR #160**.
+- current release-engineering pending = **Staging Live PASS → explicit Production hotfix approval → exact Staging→Production hotfix promotion → Production Gate/Pages → final authenticated Production Smoke**.
