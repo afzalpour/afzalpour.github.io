@@ -10,11 +10,17 @@ const INTEGER_NAMES = new Set([
 ]);
 const DECIMAL_NAMES = new Set(['cost', 'unit_cost']);
 const INVOICE_DECIMAL_NAMES = new Set(['unit_price', 'discount']);
+const DIGITAL_TWIN_GROUPED_NAMES = new Set([
+  'revenue', 'collections', 'operatingCosts', 'payments',
+  'revenueChange', 'collectionChange', 'operatingCostChange', 'paymentChange',
+  'oneOffCashImpact'
+]);
 
 function moneyMode(input) {
   if (!(input instanceof HTMLInputElement)) return null;
   if (input.dataset.moneyInput === 'false' || input.dataset.money === 'false') return null;
   if (input.dataset.moneyDecimalInput === 'true') return 'decimal';
+  if (input.closest?.('[data-digital-twin-form]') && DIGITAL_TWIN_GROUPED_NAMES.has(input.name || '')) return 'signed-decimal';
   if (input.closest?.('#invoiceForm') && INVOICE_DECIMAL_NAMES.has(input.name || '')) return 'decimal';
   if (input.dataset.moneyInput === 'true' || input.dataset.money === 'true') return 'integer';
   if (DECIMAL_NAMES.has(input.name || '')) return 'decimal';
@@ -75,6 +81,25 @@ function decimalInputText(value) {
   return hasDecimal ? `${grouped}٫${rawFraction}` : grouped;
 }
 
+function signedDecimalInputText(value) {
+  const normalized = latinDigits(value)
+    .trim()
+    .replace(/[٬\s]/g, '')
+    .replace(/٫|,/g, '.');
+  const negative = normalized.startsWith('-');
+  const unsigned = normalized.replace(/-/g, '');
+  const dot = unsigned.indexOf('.');
+  const rawWhole = (dot >= 0 ? unsigned.slice(0, dot) : unsigned).replace(/\D/g, '');
+  const rawFraction = dot >= 0
+    ? unsigned.slice(dot + 1).replace(/\D/g, '').slice(0, 6)
+    : '';
+  const hasDecimal = dot >= 0;
+  const whole = rawWhole.replace(/^0+(?=\d)/, '') || (hasDecimal ? '0' : '');
+  const grouped = whole ? whole.replace(/\B(?=(\d{3})+(?!\d))/g, '٬') : '';
+  const sign = negative ? '-' : '';
+  return hasDecimal ? `${sign}${grouped}٫${rawFraction}` : `${sign}${grouped}`;
+}
+
 function format(input, preserveCaret = false) {
   const mode = moneyMode(input);
   if (!mode) return;
@@ -88,7 +113,9 @@ function format(input, preserveCaret = false) {
   const count = caret === null ? null : digitsBefore(old.slice(0, caret));
   let next = old;
 
-  if (mode === 'decimal') {
+  if (mode === 'signed-decimal') {
+    next = signedDecimalInputText(old);
+  } else if (mode === 'decimal') {
     next = decimalInputText(old);
   } else {
     const amount = integerFromText(old);
@@ -109,7 +136,7 @@ function enhance(input) {
   input.dataset.avanMoneyInputBound = '1';
   input.dataset.avanMoneyInputMode = mode;
   input.classList.add('money-input-enhanced');
-  input.inputMode = mode === 'decimal' ? 'decimal' : 'numeric';
+  input.inputMode = mode === 'integer' ? 'numeric' : 'decimal';
   input.autocomplete = 'off';
   input.addEventListener('input', () => format(input, true));
   input.addEventListener('change', () => format(input, false));

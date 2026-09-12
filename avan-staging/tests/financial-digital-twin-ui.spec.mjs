@@ -66,6 +66,7 @@ await assert.rejects(
 
 const read = rel => fs.readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
 const ui = read('src/ui/intelligence/financial-digital-twin-workspace.js');
+const moneyInputs = read('src/ui/money/money-inputs.js');
 const css = read('rc17-financial-digital-twin.css');
 const index = read('index.html');
 const sw = read('sw.js');
@@ -83,6 +84,24 @@ assert.match(ui, /Math\.round\(number \* 100\)/,
   'percentage inputs must be converted explicitly to basis points');
 assert.match(ui, /MoneyRuntime\?\.parseInput/,
   'money inputs must use the central Money Runtime');
+
+assert.match(moneyInputs, /\[data-digital-twin-form\]/,
+  'Digital Twin editable numbers must be enhanced through the central money-input lifecycle');
+for (const name of [
+  'revenue', 'collections', 'operatingCosts', 'payments',
+  'revenueChange', 'collectionChange', 'operatingCostChange', 'paymentChange',
+  'oneOffCashImpact'
+]) {
+  assert.match(moneyInputs, new RegExp(`['"]${name}['"]`),
+    `Digital Twin input ${name} must receive live three-digit grouping`);
+}
+assert.match(moneyInputs, /signed-decimal/,
+  'Digital Twin grouping must preserve signed decimal values');
+assert.match(moneyInputs, /startsWith\('-'\)/,
+  'negative percentage and one-off scenario inputs must retain their sign');
+assert.match(moneyInputs, /replace\(\/\\B\(\?=\(\\d\{3\}\)\+\(\?!\\d\)\)\/g, '٬'\)/,
+  'Digital Twin numeric inputs must use the Persian thousands separator');
+
 assert.doesNotMatch(ui, /localStorage|sessionStorage/,
   'scenario UI must not persist financial scenario data in browser storage');
 assert.doesNotMatch(ui, /\.insert\(|\.update\(|\.delete\(|\.rpc\(/,
