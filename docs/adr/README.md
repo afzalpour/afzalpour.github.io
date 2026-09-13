@@ -61,6 +61,7 @@
 | [0023](0023-intelligent-finance-operating-system.md) | Intelligent Finance OS، ۹ ماژول تمایز و Early Priority برای Control Tower + Digital Twin | Accepted |
 | [0024](0024-production-staging-runtime-parity-contract.md) | Production/Staging Runtime Parity + allowlisted next-release divergence | Accepted |
 | [0025](0025-strict-persian-user-facing-language-contract.md) | فارسی روان اجباری برای متن‌های قابل مشاهده کاربر و بومی‌سازی مقادیر سیستمی/دیتابیس در مرز نمایش | Accepted |
+| [0026](0026-avan-connect-automation-execution-boundary.md) | مرز اجرای اتصال و اتوماسیون: جلوگیری از تکرار، حسابرسی و تأیید انسانی برای عملیات حساس | Accepted |
 
 ## اصل حاکم
 
