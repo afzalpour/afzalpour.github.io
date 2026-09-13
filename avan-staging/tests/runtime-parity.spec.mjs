@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
@@ -23,6 +24,11 @@ function assertSameBytes(path) {
   const stagingBytes = readFileSync(stagingPath);
   const productionBytes = readFileSync(productionPath);
   assert.ok(stagingBytes.equals(productionBytes), `Unexpected Production/Staging runtime drift: ${path}. Add a justified allowlist entry only for intentional next-release divergence.`);
+}
+
+function gitBlobSha(bytes) {
+  const header = Buffer.from(`blob ${bytes.length}\0`);
+  return createHash('sha1').update(header).update(bytes).digest('hex');
 }
 
 const stagingRuntime = declaredRuntimeAssets(stagingRoot);
@@ -55,4 +61,56 @@ const polishProd = readFileSync(join(productionRoot, 'src/ui/intelligence/dashbo
 const polishStage = readFileSync(join(stagingRoot, 'src/ui/intelligence/dashboard-intelligence-live-polish.js'));
 assert.ok(polishProd.equals(polishStage), 'Expanded dashboard intelligence question bank must match Production byte-for-byte.');
 
-console.log(`runtime parity PASS — ${stagingRuntime.length} Staging assets / ${productionRuntime.length} Production assets checked; ${allowed.size} intentional divergences declared`);
+// RC1.8 controlled promotion gate. These files were accepted on authenticated Staging
+// and must be byte-identical when promoted. Production config and cache identity remain environment-specific.
+const rc18PromotedRuntime = [
+  'index.html',
+  'module4-continuous-close-audit.css',
+  'module5-iran-compliance-radar.css',
+  'module7-procurement-spend-control.css',
+  'rc12-print-export.js',
+  'rc15-tax-ux.css',
+  'src/ai/risk-audit.js',
+  'src/application/intelligence/continuous-close-audit-service.js',
+  'src/application/intelligence/iran-compliance-radar-service.js',
+  'src/application/intelligence/smart-procurement-spend-service.js',
+  'src/application/intelligence/avan-connect-service.js',
+  'src/intelligence/continuous-close-audit-foundation.js',
+  'src/intelligence/iran-compliance-radar-foundation.js',
+  'src/intelligence/smart-procurement-spend-foundation.js',
+  'src/intelligence/avan-connect-contract.js',
+  'src/intelligence/avan-connect-catalog.js',
+  'src/intelligence/avan-connect-foundation.js',
+  'src/ui/date/jalali-picker.js',
+  'src/ui/intelligence/continuous-close-audit-workspace.js',
+  'src/ui/intelligence/iran-compliance-radar-workspace.js',
+  'src/ui/intelligence/smart-procurement-spend-view.js',
+  'src/ui/intelligence/smart-procurement-spend-workspace.js',
+  'src/ui/intelligence/avan-connect-view.js',
+  'src/ui/intelligence/avan-connect-interactions.js',
+  'src/ui/intelligence/avan-connect-workspace.js',
+  'src/ui/intelligence/intelligence-print-export.js',
+  'src/ui/localization/user-facing-fa.js',
+  'src/ui/money/money-output-contract.js'
+];
+for (const path of rc18PromotedRuntime) assertSameBytes(path);
+
+const productionConfig = readFileSync(join(productionRoot, 'config.js'));
+assert.equal(gitBlobSha(productionConfig), '4acd55ba116b8c764167d6165d72192ccb5affda', 'Production config.js changed during RC1.8 promotion.');
+assert.ok(!existsSync(join(productionRoot, 'runtime-divergence-allowlist.json')), 'Staging runtime-divergence metadata must not be copied to Production root.');
+
+const productionSw = readFileSync(join(productionRoot, 'sw.js'), 'utf8');
+assert.ok(productionSw.includes("const CACHE_PREFIX='avan-prod-';"), 'Production SW must retain the Production cache prefix.');
+assert.ok(productionSw.includes("const CACHE='avan-prod-rc1-8-v1';"), 'RC1.8 Production cache identity is missing.');
+assert.ok(!productionSw.includes('avan-staging'), 'Staging cache/path marker leaked into Production Service Worker.');
+assert.deepEqual([...productionRuntime].sort(), [...stagingRuntime].sort(), 'Production and accepted Staging Service Worker asset sets must match for RC1.8.');
+
+const productionIndex = readFileSync(join(productionRoot, 'index.html'), 'utf8');
+for (const entrypoint of [
+  'src/ui/intelligence/continuous-close-audit-workspace.js',
+  'src/ui/intelligence/iran-compliance-radar-workspace.js',
+  'src/ui/intelligence/smart-procurement-spend-workspace.js',
+  'src/ui/intelligence/avan-connect-workspace.js'
+]) assert.ok(productionIndex.includes(entrypoint), `RC1.8 Production entrypoint missing: ${entrypoint}`);
+
+console.log(`runtime parity PASS — ${stagingRuntime.length} Staging assets / ${productionRuntime.length} Production assets checked; ${allowed.size} intentional divergences declared; RC1.8 promotion contract PASS`);
