@@ -293,7 +293,7 @@ function openPrintWindow(source, title) {
   }
 
   const clone = printableClone(source);
-  const now = new Intl.DateTimeFormat('fa-IR', {
+  const now = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
     dateStyle: 'medium',
     timeStyle: 'short'
   }).format(new Date());
