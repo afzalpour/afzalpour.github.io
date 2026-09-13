@@ -1,6 +1,6 @@
 # AVAN — Current Project State
 
-آخرین به‌روزرسانی مرجع: **2026-09-13**
+آخرین به‌روزرسانی مرجع: **2026-09-14**
 
 این فایل Source of Truth وضعیت جاری پروژه است. ترتیب مرجع: `AVAN_MASTER_PROMPT.md` → این فایل → ADRهای Accepted → Repository → گزارش واقعی Live کاربر. Engineering/Backend PASS جایگزین Live PASS نیست.
 
@@ -17,8 +17,8 @@ Repository: `afzalpour/afzalpour.github.io`
 - RC1.7 Production release PR = **#158**; merge = `cf08f25703b84c0049103eb97e15d59945973658`.
 - explicit release approval = **«RC1.7 Production Release APPROVED»**.
 - explicit final Production Smoke confirmation = **«RC1.7 Production Smoke UX PASS»**.
-- current Live validation pending = **none for RC1.7 current scope**.
-- current release-engineering pending = **none for RC1.7**.
+- current Live validation pending = **none for accepted Staging Modules 4, 5, 7 and 9**.
+- current release-engineering pending = **Production promotion decision for Staging-only modules; no promotion is authorized implicitly**.
 - Production Service Worker cache = `avan-prod-rc1-7-v1`.
 - Modules 4, 5, 7 and 9 are **not Production-promoted**.
 
@@ -94,9 +94,9 @@ Progress:
 - Module 4 = Engineering PASS + authenticated Staging Live PASS; CLOSED for Staging acceptance.
 - Module 5 = Engineering PASS + authenticated Staging Live PASS; CLOSED for Staging acceptance.
 - Module 7 = Engineering PASS + authenticated Staging Live PASS; CLOSED for Staging acceptance.
-- Module 9 = **Engineering PASS; authenticated Staging Live pending**.
+- Module 9 = **Engineering PASS + authenticated Staging Live PASS; CLOSED for Staging acceptance**.
 
-Current architectural train: **Module 9 — Avan Connect / Automation Marketplace Live Gate**.
+ADR-0023 capability train is now complete for the currently defined scope. Current architectural train: **Staging release consolidation / Production promotion readiness for Modules 4, 5, 7 and 9**. Production promotion still requires separate explicit approval.
 
 ---
 
@@ -203,7 +203,7 @@ Module 7 Production promotion = **not authorized / not performed**.
 
 ---
 
-## 8) Module 9 — Avan Connect / Automation Marketplace — Engineering PASS / Live pending
+## 8) Module 9 — Avan Connect / Automation Marketplace — Engineering + authenticated Staging Live PASS
 
 Architecture and safety contract:
 - architecture id = `avan-connect-automation-marketplace-v1`.
@@ -236,21 +236,33 @@ Engineering delivery:
 - merge = `979222ec84755d463610d056503fd8984bfb00fb`.
 - post-merge Architecture Gate #316 = **PASS**.
 - GitHub Pages #427 = **PASS**.
-- Staging cache = `avan-staging-rc1-v120-avan-connect-marketplace`.
+- initial Module 9 Staging cache = `avan-staging-rc1-v120-avan-connect-marketplace`.
 - permanent regression marker = **`Avan Connect / Automation Marketplace foundation PASS`**.
 - `sw-precache-integrity = PASS (214 declared runtime entries)`.
 - runtime parity = **213 Staging assets / 192 Production assets checked; 32 intentional divergences declared**.
 - architecture high findings = **0**; money architecture findings = **0**.
 - Production runtime = unchanged.
 
-Pre-Live read-only mutation baseline captured after Engineering delivery:
+Authenticated Staging Live acceptance:
+- explicit main Live confirmation = **«ماژول ۹ اتصال و اتوماسیون — آزمون زنده پاس شد»**.
+- Live confirmed truthful connector states, preview-only workflows, Persian presentation, refresh/print surfaces and no automatic financial/external execution.
+- user reported two visual defects after functional PASS: compact spacing in **«قواعد اجرای امن»** and text overflow/collision in multi-part labels/cards such as **«ورود فایل / پیش‌نمایش / تطبیق بانکی»**.
+- PR #186 **Module 9 Live polish: fix text wrapping and guardrail spacing** fixed the defects with styles scoped only to `.avan-connect`; no financial logic, connector execution or database behavior changed.
+- PR #186 merge = `8b4da9fddd782b11e5b92e96ca37e8bbafbb2e69`.
+- pre-merge Architecture Gate #317 = **PASS**; post-merge Architecture Gate #318 = **PASS**; GitHub Pages #429 = **PASS**.
+- current Staging cache = `avan-staging-rc1-v121-module9-live-layout-polish`.
+- explicit final visual confirmation = **«چیدمان ماژول ۹ نهایی PASS»**.
+- Module 9 authenticated Staging Live = **PASS / CLOSED**.
+
+Pre-Live baseline and final post-Live read-only mutation verification are identical:
 - journal_entries = **94**; latest created_at = `2026-09-12 19:32:07.685779+00`.
 - financial_transactions = **24**; latest = `2026-09-10 21:16:55.697626+00`.
 - invoices = **42**; latest = `2026-09-10 16:37:20.676074+00`.
 - documents = **23**; latest = `2026-09-07 21:11:31.272166+00`.
 - inventory_documents = **9**; latest = `2026-09-07 12:44:33.272324+00`.
+- therefore Module 9 remained mutation-free throughout authenticated Live and final layout retest.
 
-Authenticated Staging Live Gate is now the only pending Module 9 acceptance step.
+Module 9 Production promotion = **not authorized / not performed**.
 
 ---
 
@@ -262,13 +274,13 @@ Production:
 - Modules 4, 5, 7 and 9 = not Production-promoted.
 
 Staging:
-- Module 4 = Live PASS / CLOSED.
-- Module 5 = Live PASS / CLOSED.
+- Module 4 = Engineering + authenticated Live PASS / CLOSED.
+- Module 5 = Engineering + authenticated Live PASS / CLOSED.
 - Module 7 = Engineering + authenticated Live PASS / CLOSED.
-- Module 9 = Engineering PASS / authenticated Live pending.
-- current Staging cache = `avan-staging-rc1-v120-avan-connect-marketplace`.
-- latest runtime merge = `979222ec84755d463610d056503fd8984bfb00fb`.
-- latest Architecture = #316 PASS.
-- latest Pages = #427 PASS.
+- Module 9 = Engineering + authenticated Live PASS / CLOSED.
+- current Staging cache = `avan-staging-rc1-v121-module9-live-layout-polish`.
+- latest runtime merge = `8b4da9fddd782b11e5b92e96ca37e8bbafbb2e69`.
+- latest Architecture = #318 PASS.
+- latest Pages = #429 PASS.
 
-Next required user action: authenticated Staging Live Gate for Module 9. Production promotion of Staging-only modules still requires separate explicit approval and has not been performed.
+Next train: **consolidated release-readiness review for Staging-only Modules 4, 5, 7 and 9**. Any Production promotion requires separate explicit user approval and has not been performed.
