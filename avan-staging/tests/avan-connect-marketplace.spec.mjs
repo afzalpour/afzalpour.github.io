@@ -51,6 +51,12 @@ assert.ok(html.includes('مرکز اتصال‌ها و اتوماسیون'));
 assert.ok(html.includes('بازارچه اتصال‌ها'));
 assert.ok(html.includes('قواعد اجرای امن'));
 assert.ok(html.includes('چاپ / ذخیره PDF'));
+assert.ok(html.includes('data-avan-connect-layout'));
+assert.ok(html.includes('avan-connect-guardrails'));
+assert.ok(html.includes('avan-connect-guardrail'));
+assert.ok(html.includes('overflow-wrap:anywhere'));
+assert.ok(html.includes('flex-wrap:wrap'));
+assert.ok(html.includes('grid-template-columns:minmax(0,1fr)'));
 const visible=html.replace(/<[^>]+>/g,' ');
 for(const leaked of ['Snapshot','Foundation','Source of Truth','available','limited','not_connected'])assert.ok(!visible.includes(leaked),`user-facing English leakage: ${leaked}`);
 
@@ -66,5 +72,7 @@ const index=read('index.html');
 const sw=read('sw.js');
 assert.ok(index.includes('src/ui/intelligence/avan-connect-workspace.js'));
 for(const asset of ['src/intelligence/avan-connect-contract.js','src/intelligence/avan-connect-catalog.js','src/intelligence/avan-connect-foundation.js','src/application/intelligence/avan-connect-service.js','src/ui/intelligence/avan-connect-view.js','src/ui/intelligence/avan-connect-interactions.js','src/ui/intelligence/avan-connect-workspace.js'])assert.ok(sw.includes(`./${asset}`),`missing Module 9 precache asset ${asset}`);
+const cacheVersion=Number(sw.match(/avan-staging-rc1-v(\d+)-/)?.[1]||0);
+assert.ok(cacheVersion>=121,'Module 9 Live layout correction must advance Staging cache identity to v121 or newer.');
 
 console.log('Avan Connect / Automation Marketplace foundation PASS');
