@@ -7,7 +7,8 @@ const PRINTABLE_INTELLIGENCE_TITLES = new Set([
   'مرکز سرمایه در گردش',
   'تصمیم‌یار عملیاتی',
   'بستن و حسابرسی پیوسته',
-  'رادار انطباق مالی ایران'
+  'رادار انطباق مالی ایران',
+  'کنترل هوشمند خرید و مخارج'
 ]);
 
 function currentTitle() {
@@ -20,7 +21,7 @@ function removeStaleToolbar() {
 
 function intelligencePrintSource(content) {
   const clone = content.cloneNode(true);
-  clone.querySelectorAll('.avan-working-capital-date-form,.avan-cca-date-form,.avan-compliance-date-form').forEach(form => {
+  clone.querySelectorAll('.avan-working-capital-date-form,.avan-cca-date-form,.avan-compliance-date-form,.avan-procurement-date-form').forEach(form => {
     const visibleDate = form.querySelector('[data-jalalized]')?.value || '—';
     const replacement = document.createElement('div');
     replacement.className = 'muted';
@@ -75,6 +76,7 @@ export function installIntelligencePrintExport() {
   window.addEventListener('avan:control-tower-rendered', schedule);
   window.addEventListener('avan:continuous-close-audit-rendered', schedule);
   window.addEventListener('avan:iran-compliance-radar-rendered', schedule);
+  window.addEventListener('avan:smart-procurement-rendered', schedule);
   window.addEventListener('avan:company-context-changed', schedule);
   schedule();
   return api;

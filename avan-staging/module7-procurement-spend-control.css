@@ -1,0 +1,16 @@
+.avan-procurement{display:grid;gap:14px}
+.avan-procurement-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+.avan-procurement-hero>div{min-width:0;flex:1}
+.avan-procurement-date-form{display:flex;align-items:end;gap:8px;flex:0 0 auto}
+.avan-procurement-date-form .field{min-width:180px}
+.avan-procurement-summary{align-items:stretch}
+.avan-procurement-summary small{display:block;margin-top:5px;color:var(--muted,#746f7f)}
+.avan-procurement-status{font-size:20px}.avan-procurement-status.ready{color:#16765c}.avan-procurement-status.attention{color:#9a641d}.avan-procurement-status.blocked{color:#a63b48}
+.avan-procurement-section{overflow:hidden}.avan-procurement-table-wrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}.avan-procurement-table-wrap table{min-width:820px}.avan-procurement-table-wrap td small{display:block;margin-top:3px}
+.avan-procurement-severity{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:800;white-space:nowrap}
+.avan-procurement-severity.critical{background:#fce8eb;color:#9d3140}.avan-procurement-severity.high{background:#fff1dc;color:#8d5a16}.avan-procurement-severity.medium{background:#edf1ff;color:#4c568f}.avan-procurement-severity.low{background:#eef7f4;color:#2f6c5c}
+.avan-procurement-coverage{display:grid;gap:9px}.avan-procurement-coverage .card{display:grid;gap:4px}.avan-procurement-coverage small{color:var(--muted,#746f7f);line-height:1.8}
+.avan-procurement-evidence-list{display:grid;gap:8px;max-height:62vh;overflow:auto;margin-top:10px}.avan-procurement-evidence-list .card{display:grid;gap:4px}
+.avan-procurement-report-launcher{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.avan-procurement-report-launcher>div{display:grid;gap:3px}
+@media(max-width:900px){.avan-procurement-hero{display:grid}.avan-procurement-date-form{width:100%;display:grid;grid-template-columns:1fr auto}}
+@media(max-width:560px){.avan-procurement-date-form{grid-template-columns:1fr}.avan-procurement-date-form .field{min-width:0}.avan-procurement-date-form button{width:100%}.avan-procurement-report-launcher{align-items:stretch;flex-direction:column}.avan-procurement-report-launcher button{width:100%}}
