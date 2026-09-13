@@ -6,6 +6,9 @@ import { AVAN_CONNECT_ARCHITECTURE, AVAN_CONNECT_EXECUTION_CONTRACT } from '../s
 import { AVAN_CONNECT_CATALOG } from '../src/intelligence/avan-connect-catalog.js';
 import { AVAN_AUTOMATION_RECIPES, buildAvanConnectMarketplace, buildAutomationPreview } from '../src/intelligence/avan-connect-foundation.js';
 import { avanConnectPageHtml } from '../src/ui/intelligence/avan-connect-view.js';
+await import('../src/application/intelligence/avan-connect-service.js');
+await import('../src/ui/intelligence/avan-connect-interactions.js');
+await import('../src/ui/intelligence/avan-connect-workspace.js');
 
 const testsDir=path.dirname(fileURLToPath(import.meta.url));
 const stagingRoot=path.resolve(testsDir,'..');
