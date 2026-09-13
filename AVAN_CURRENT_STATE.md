@@ -92,10 +92,10 @@ Progress:
 - Modules 1, 2, 3, 6 and current Module 8 scope = Production Live PASS.
 - Module 4 = Engineering PASS + authenticated Staging Live PASS; CLOSED for Staging acceptance.
 - Module 5 = Engineering PASS + authenticated Staging Live PASS; CLOSED for Staging acceptance.
-- Module 7 = **Engineering PASS; authenticated Staging Live pending**.
-- Module 9 remains future train.
+- Module 7 = **Engineering PASS + authenticated Staging Live PASS; CLOSED for Staging acceptance**.
+- Module 9 remains the next architectural train.
 
-Current architectural train: **Module 7 — Smart Procurement & Spend Control Live Gate**.
+Current architectural train: **Module 9 — Avan Connect / Automation Marketplace**.
 
 ---
 
@@ -135,7 +135,7 @@ ADR-0025 — Strict Persian User-Facing Language Contract = **Accepted / permane
 
 ---
 
-## 7) Module 7 — Smart Procurement & Spend Control — Engineering PASS / Live pending
+## 7) Module 7 — Smart Procurement & Spend Control — Engineering + authenticated Staging Live PASS
 
 Architecture:
 - id = `avan-smart-procurement-spend-control-v1`.
@@ -144,7 +144,7 @@ Architecture:
 - read-only: `writeOperations = 0`, `actualLedgerMutation = false`, approval/payment mutation = false.
 - every company-owned source query carries explicit `workspace_id` filter and remains behind RLS.
 
-Current supported controls:
+Supported controls:
 - purchase invoice ↔ inventory receipt two-source matching.
 - reused receipt-line detection.
 - quantity mismatch and unit-price/receipt-cost mismatch.
@@ -175,14 +175,22 @@ Engineering delivery:
 - Staging cache = `avan-staging-rc1-v119-smart-procurement-spend-control`.
 - Production runtime = unchanged.
 
-Pre-Live read-only mutation baseline captured on 2026-09-13:
+Authenticated Staging Live acceptance:
+- first Live pass confirmed navigation, date rerun, Persian UI, Print/PDF and other visible surfaces; no operational finding was available in the initially selected company/date, so evidence controls were not yet observable.
+- user changed the as-of date to **۱۴۰۵/۰۵/۰۷** and confirmed the displayed data changed accordingly without creating records.
+- direct read-only database inspection identified real test data in **«شرکت وفاداران نیما»** on `2026-09-07` / **۱۴۰۵/۰۶/۱۶**: one inventory receipt line linked to 5 purchase-invoice lines and 4 quantity mismatches.
+- targeted follow-up Live test on that real-data scope was accepted by the user with **«اوکی بود پاس شود»**.
+- Module 7 authenticated Staging Live = **PASS / CLOSED**.
+
+Pre-Live baseline and post-Live mutation verification are identical:
 - journal_entries = **94**; latest created_at = `2026-09-12 19:32:07.685779+00`.
 - financial_transactions = **24**; latest = `2026-09-10 21:16:55.697626+00`.
 - invoices = **42**; latest = `2026-09-10 16:37:20.676074+00`.
 - documents = **23**; latest = `2026-09-07 21:11:31.272166+00`.
 - inventory_documents = **9**; latest = `2026-09-07 12:44:33.272324+00`.
+- therefore Module 7 remained mutation-free in authenticated Live use.
 
-Authenticated Staging Live Gate is now the only pending Module 7 acceptance step.
+Module 7 Production promotion = **not authorized / not performed**.
 
 ---
 
@@ -196,10 +204,10 @@ Production:
 Staging:
 - Module 4 = Live PASS / CLOSED.
 - Module 5 = Live PASS / CLOSED.
-- Module 7 = Engineering PASS / Live pending.
+- Module 7 = Engineering + authenticated Live PASS / CLOSED.
 - current Staging cache = `avan-staging-rc1-v119-smart-procurement-spend-control`.
-- latest runtime merge = `06f77810bf6d754a449a1ab1b03f8910e98b41a5`.
-- latest Architecture = #313 PASS.
-- latest Pages = #424 PASS.
+- latest Module 7 runtime merge = `06f77810bf6d754a449a1ab1b03f8910e98b41a5`.
+- Module 7 Architecture = #312/#313 PASS.
+- Module 7 Pages = #424 PASS.
 
-Next required user action: authenticated Staging Live Gate for Module 7. Production promotion requires separate explicit approval and has not been performed.
+Next architectural train: **Module 9 — Avan Connect / Automation Marketplace**. Production promotion of Staging-only modules still requires separate explicit approval and has not been performed.
