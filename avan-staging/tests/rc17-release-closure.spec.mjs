@@ -98,21 +98,26 @@ assert.ok(currentState.includes('RC1.7-D Live PASS — Handoff Fixed'),
 assert.ok(currentState.includes('Digital Twin Evidence Readable PASS'),
   'Source of Truth must record the explicit readable opening-evidence Live PASS');
 
-const initialLiveClosureComplete = currentState.includes('current Live validation pending = **none for RC1.7 current scope**');
+const initialLiveClosureComplete =
+  currentState.includes('current Live validation pending = **none for RC1.7 current scope**') ||
+  (currentState.includes('Production current release = **RC1.7**') &&
+   currentState.includes('explicit final Production Smoke confirmation = **«RC1.7 Production Smoke UX PASS»**'));
 const postReleaseSmokeCorrectionTracked = productionApproved &&
   currentState.includes('## 14) RC1.7 Production Smoke correction loop') &&
   currentState.includes('current Live validation pending = **targeted authenticated Staging retest of PR #160**') &&
   currentState.includes('no database/schema/accounting math changes');
 assert.ok(initialLiveClosureComplete || postReleaseSmokeCorrectionTracked,
-  'RC1.7 feature Live closure must remain complete; after release only a documented authenticated Smoke correction loop may remain pending');
+  'RC1.7 feature Live closure must remain complete; later accepted release trains must not invalidate the historical RC1.7 closure');
 
 assert.ok(currentState.includes('93 journal entries / 24 financial transactions / 42 invoices'),
   'Source of Truth must retain the post-Live no-mutation certification');
 
-assert.ok(productionGate.includes("const CACHE='avan-prod-rc1-7-v1';"),
-  'RC1.7 release engineering must advance the Production service-worker cache identity');
+assert.ok(productionGate.includes("const CACHE_PREFIX='avan-prod-';"),
+  'Production release engineering must preserve the Production-only Service Worker cache namespace');
+assert.ok(productionGate.includes('PRODUCTION_SW_CACHE_INVALID'),
+  'Production release engineering must continue to validate the release-specific Service Worker cache identity');
 assert.ok(!productionGate.includes("const CACHE='avan-prod-rc1-6-v1';"),
-  'RC1.6 cache identity must not remain hardcoded in the RC1.7 Production gate');
+  'Obsolete RC1.6 cache identity must not remain hardcoded in the current Production gate');
 assert.ok(twinUi.includes('avan-twin-evidence-human-list'),
   'Digital Twin opening evidence must render accounting-facing rows');
 assert.ok(!twinUi.includes('<code>${esc(id)}</code>'),

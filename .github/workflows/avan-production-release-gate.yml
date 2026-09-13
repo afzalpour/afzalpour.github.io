@@ -145,13 +145,16 @@ jobs:
             }
           }
 
+          const expectedCache = 'avan-prod-rc1-8-v1';
           const expectedSw = stagingSw
             .replace("const CACHE_PREFIX='avan-staging-rc1-';", "const CACHE_PREFIX='avan-prod-';")
-            .replace(/const CACHE='avan-staging-rc1-v[^']+';/, "const CACHE='avan-prod-rc1-7-v1';");
+            .replace(/^\/\/ Release audit marker: .*$/m, `// Release audit marker: ${expectedCache}`)
+            .replace(/const CACHE='avan-staging-rc1-v[^']+';/, `const CACHE='${expectedCache}';`);
           const actualSw = fs.readFileSync('sw.js', 'utf8');
           if (actualSw !== expectedSw) throw new Error('PRODUCTION_SW_NOT_EXACT_TRANSFORM');
           if (!actualSw.includes("const CACHE_PREFIX='avan-prod-';")) throw new Error('PRODUCTION_SW_PREFIX_INVALID');
-          if (!actualSw.includes("const CACHE='avan-prod-rc1-7-v1';")) throw new Error('PRODUCTION_SW_CACHE_INVALID');
+          if (!actualSw.includes(`const CACHE='${expectedCache}';`)) throw new Error('PRODUCTION_SW_CACHE_INVALID');
+          if (actualSw.includes('avan-staging')) throw new Error('STAGING_MARKER_LEAKED_TO_PRODUCTION_SW');
           if (!actualSw.includes("if(request.mode==='navigate')")) throw new Error('PRODUCTION_SW_NAVIGATION_FALLBACK_INVALID');
           NODE
 

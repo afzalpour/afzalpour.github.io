@@ -54,6 +54,18 @@ function concentration(side) {
   };
 }
 
+function evidence(type, rows = []) {
+  const seen = new Set();
+  return Object.freeze(rows.flatMap(row => {
+    const id = row?.id;
+    if (!id) return [];
+    const key = `${type}:${id}`;
+    if (seen.has(key)) return [];
+    seen.add(key);
+    return [Object.freeze({ type, id: String(id) })];
+  }));
+}
+
 function finding({
   id,
   severity,
@@ -63,9 +75,13 @@ function finding({
   value = null,
   entityType = null,
   entityId = null,
-  confidence = 'rule'
+  confidence = 'rule',
+  evidence: findingEvidence = []
 }) {
-  return Object.freeze({ id, severity, title, description, count, value, entityType, entityId, confidence });
+  return Object.freeze({
+    id, severity, title, description, count, value, entityType, entityId, confidence,
+    evidence: Object.freeze([...(findingEvidence || [])])
+  });
 }
 
 function groupDuplicates(rows, keyBuilder) {
@@ -91,7 +107,8 @@ function documentDuplicateFindings(documents) {
     count: group.length,
     entityType: 'document',
     entityId: group[0]?.id || null,
-    confidence: 'exact_hash'
+    confidence: 'exact_hash',
+    evidence: evidence('document', group)
   }));
 }
 
@@ -116,7 +133,8 @@ function invoiceDuplicateFindings(invoices) {
     value: decimal(toTenths(group[0]?.total_amount, 'invoice_total')),
     entityType: 'invoice',
     entityId: group[0]?.id || null,
-    confidence: 'exact_fields'
+    confidence: 'exact_fields',
+    evidence: evidence('invoice', group)
   }));
 }
 
@@ -140,7 +158,10 @@ function transactionDuplicateFindings(transactions) {
     description: `${group.length} عملیات مالی با تاریخ، نوع، مبلغ و طرف‌های اصلی یکسان دیده شد. احتمال ثبت تکراری را بررسی کنید.`,
     count: group.length,
     value: decimal(toTenths(group[0]?.amount, 'transaction_amount')),
-    confidence: 'exact_fields'
+    entityType: 'transaction',
+    entityId: group[0]?.id || null,
+    confidence: 'exact_fields',
+    evidence: evidence('financial_transaction', group)
   }));
 }
 
@@ -166,7 +187,10 @@ function unusualTransactionFindings(transactions) {
       title: 'مبلغ غیرعادی نسبت به الگوی اخیر',
       description: 'مبلغ این عملیات حداقل چهار برابر میانه عملیات مالی موجود است. این یک هشدار آماری است و به معنی تخلف یا اشتباه قطعی نیست.',
       value: decimal(item.amountTenths),
-      confidence: 'statistical_rule'
+      entityType: 'transaction',
+      entityId: item.transaction?.id || null,
+      confidence: 'statistical_rule',
+      evidence: evidence('financial_transaction', [item.transaction])
     }));
 }
 
@@ -198,9 +222,19 @@ function newPartyPaymentFindings({ parties, transactions }) {
       title: 'پرداخت نسبتاً بزرگ به طرف‌حساب جدید',
       description: `پرداختی به «${party?.name || 'طرف‌حساب جدید'}» در هفت روز اول ایجاد آن ثبت شده و مبلغ آن حداقل دو برابر میانه پرداخت‌هاست. بررسی کنترلی پیشنهاد می‌شود.`,
       value: decimal(item.amountTenths),
-      confidence: 'behavioral_rule'
+      entityType: 'transaction',
+      entityId: item.transaction?.id || null,
+      confidence: 'behavioral_rule',
+      evidence: Object.freeze([
+        ...evidence('financial_transaction', [item.transaction]),
+        ...evidence('party', [party])
+      ])
     });
   });
+}
+
+function integrityEvidence() {
+  return Object.freeze([{ type: 'integrity_control', id: 'ledger_invoice_integrity' }]);
 }
 
 function integrityFindings({ integrity, invoiceIntegrity }) {
@@ -209,24 +243,25 @@ function integrityFindings({ integrity, invoiceIntegrity }) {
   if (unbalanced > 0) result.push(finding({
     id: 'unbalanced_posted', severity: 'critical', title: 'سند ثبت‌شده نامتوازن',
     description: 'کنترل یکپارچگی، سند Posted نامتوازن گزارش کرده است. این مورد باید فوراً بررسی شود.',
-    count: unbalanced, confidence: 'database_integrity'
+    count: unbalanced, confidence: 'database_integrity', evidence: integrityEvidence()
   }));
   const orphanLines = Number(integrity?.orphan_lines || 0);
   if (orphanLines > 0) result.push(finding({
     id: 'orphan_lines', severity: 'critical', title: 'ردیف Ledger یتیم',
-    description: 'ردیف حسابداری بدون سند والد گزارش شده است.', count: orphanLines, confidence: 'database_integrity'
+    description: 'ردیف حسابداری بدون سند والد گزارش شده است.', count: orphanLines,
+    confidence: 'database_integrity', evidence: integrityEvidence()
   }));
   const withoutJournal = Number(invoiceIntegrity?.posted_without_journal || 0);
   if (withoutJournal > 0) result.push(finding({
     id: 'posted_invoice_without_journal', severity: 'critical', title: 'فاکتور ثبت‌شده بدون سند حسابداری',
     description: 'یک یا چند فاکتور Posted فاقد اتصال معتبر به Journal هستند.',
-    count: withoutJournal, confidence: 'database_integrity'
+    count: withoutJournal, confidence: 'database_integrity', evidence: integrityEvidence()
   }));
   const mismatch = Number(invoiceIntegrity?.total_mismatch || 0);
   if (mismatch > 0) result.push(finding({
     id: 'invoice_total_mismatch', severity: 'high', title: 'اختلاف جمع فاکتور',
     description: 'کنترل یکپارچگی، اختلاف بین جمع فاکتور و ردیف‌های آن را گزارش کرده است.',
-    count: mismatch, confidence: 'database_integrity'
+    count: mismatch, confidence: 'database_integrity', evidence: integrityEvidence()
   }));
   return result;
 }
