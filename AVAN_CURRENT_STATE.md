@@ -20,7 +20,7 @@ Repository: `afzalpour/afzalpour.github.io`
 - current Live validation pending = **none for RC1.7 current scope**.
 - current release-engineering pending = **none for RC1.7**.
 - Production Service Worker cache = `avan-prod-rc1-7-v1`.
-- Modules 4, 5 and 7 are **not Production-promoted**.
+- Modules 4, 5, 7 and 9 are **not Production-promoted**.
 
 Production rollback points retained:
 - `prod-backup-20260912-rc1-7-pre-promotion`
@@ -59,7 +59,8 @@ Permanent explicit regression/history markers:
 - canonical money = Toman with `0.1 Toman = 1 Rial`; no silent sub-Rial rounding.
 - Journal lifecycle = `Draft → Posted → Reversed`; Posted entries/lines are immutable.
 - Company/RLS boundary is mandatory; browser never receives Service Role/private secrets.
-- no silent posting, payment, approval or submission from intelligence features.
+- no silent posting, payment, approval or submission from intelligence/automation features.
+- integration writes must be idempotent, auditable, workspace-scoped and human-controlled.
 - every important financial number should remain drillable to readable evidence.
 - Session guard = 60-minute inactivity + 12-hour maximum session + clock-skew protection.
 - password guard = minimum 12 chars + letter + number + symbol + common-password denylist.
@@ -92,10 +93,10 @@ Progress:
 - Modules 1, 2, 3, 6 and current Module 8 scope = Production Live PASS.
 - Module 4 = Engineering PASS + authenticated Staging Live PASS; CLOSED for Staging acceptance.
 - Module 5 = Engineering PASS + authenticated Staging Live PASS; CLOSED for Staging acceptance.
-- Module 7 = **Engineering PASS + authenticated Staging Live PASS; CLOSED for Staging acceptance**.
-- Module 9 remains the next architectural train.
+- Module 7 = Engineering PASS + authenticated Staging Live PASS; CLOSED for Staging acceptance.
+- Module 9 = **Engineering PASS; authenticated Staging Live pending**.
 
-Current architectural train: **Module 9 — Avan Connect / Automation Marketplace**.
+Current architectural train: **Module 9 — Avan Connect / Automation Marketplace Live Gate**.
 
 ---
 
@@ -117,7 +118,7 @@ Module 5 — Iran Compliance Radar:
 
 ---
 
-## 6) ADR-0024 and ADR-0025
+## 6) ADR-0024, ADR-0025 and ADR-0026
 
 ADR-0024 — Production/Staging Runtime Parity Contract = **Accepted**.
 - shared runtime must be byte-identical unless explicitly allowlisted.
@@ -132,6 +133,14 @@ ADR-0025 — Strict Persian User-Facing Language Contract = **Accepted / permane
 - user-entered Latin data, legal IDs, URLs and exact technical references are exempt only when exact form is required.
 - each new module requires regression against unnecessary English UI leakage.
 - PR #179 localization correction merge `96064e6d4009b9c0e1c5e01b60c14d0dc933f526`; Architecture #309/#310 PASS; Pages #422 PASS.
+
+ADR-0026 — Avan Connect Automation Execution Boundary = **Accepted**.
+- connector status must reflect real capability; disconnected providers must never be presented as active.
+- a future real execution path must be workspace-scoped, idempotent and auditable.
+- deduplication identity is server-side and includes workspace, connector, source reference and payload identity.
+- financial write, posting, payment and external submission remain human-controlled.
+- provider credentials/sensitive connection data are forbidden from browser financial storage.
+- Module 9 foundation intentionally enables registry/marketplace/preview only; it does not activate generic external execution.
 
 ---
 
@@ -194,20 +203,72 @@ Module 7 Production promotion = **not authorized / not performed**.
 
 ---
 
-## 8) Current canonical pointers
+## 8) Module 9 — Avan Connect / Automation Marketplace — Engineering PASS / Live pending
+
+Architecture and safety contract:
+- architecture id = `avan-connect-automation-marketplace-v1`.
+- Foundation v1 is **registry + marketplace + deterministic preview only**.
+- `writeOperations = 0`; `actualLedgerMutation = false`; `workflowExecution = false`; `connectionMutation = false`.
+- human approval, idempotency and auditability are permanent execution requirements under ADR-0026.
+- no provider credentials or sensitive connector values are introduced into browser financial storage.
+- no database migration or new generic execution table/function was introduced in this foundation.
+
+Truthful connector registry:
+- **ورود فایل صورت‌حساب بانکی** = فعال در آوان; reuses accepted CSV import/reconciliation.
+- **استخراج هوشمند اسناد** = فعال در آوان; reuses authenticated `avan-document-extract` Edge Function and human review.
+- **پیش‌اعتبارسنجی صورتحساب الکترونیکی** = آماده با محدودیت; provider-neutral preflight exists, real external submission remains disabled.
+- **اتصال پایانه فروش** = متصل‌نشده.
+- **اتصال فروشگاه اینترنتی** = متصل‌نشده.
+- **اتصال عمومی داده** = متصل‌نشده.
+No unavailable provider is fabricated as connected.
+
+Workflow preview scope:
+- bank statement → controlled reconciliation preview.
+- smart document → human financial review preview.
+- sales invoice → electronic-invoice preflight preview.
+- POS/store flows are visible only as disconnected future recipes and cannot execute.
+- every preview returns `willExecute = false`, `writeOperations = 0` and `requiresHumanApproval = true`.
+
+Engineering delivery:
+- PR #184 **Module 9: Avan Connect / Automation Marketplace foundation**.
+- initial Gate #314 found only a stale Module 7 exact-cache-name assertion; that historical test was corrected to require v119-or-newer while preserving all Module 7 behavioral guards.
+- pre-merge Architecture Gate #315 = **PASS**.
+- merge = `979222ec84755d463610d056503fd8984bfb00fb`.
+- post-merge Architecture Gate #316 = **PASS**.
+- GitHub Pages #427 = **PASS**.
+- Staging cache = `avan-staging-rc1-v120-avan-connect-marketplace`.
+- permanent regression marker = **`Avan Connect / Automation Marketplace foundation PASS`**.
+- `sw-precache-integrity = PASS (214 declared runtime entries)`.
+- runtime parity = **213 Staging assets / 192 Production assets checked; 32 intentional divergences declared**.
+- architecture high findings = **0**; money architecture findings = **0**.
+- Production runtime = unchanged.
+
+Pre-Live read-only mutation baseline captured after Engineering delivery:
+- journal_entries = **94**; latest created_at = `2026-09-12 19:32:07.685779+00`.
+- financial_transactions = **24**; latest = `2026-09-10 21:16:55.697626+00`.
+- invoices = **42**; latest = `2026-09-10 16:37:20.676074+00`.
+- documents = **23**; latest = `2026-09-07 21:11:31.272166+00`.
+- inventory_documents = **9**; latest = `2026-09-07 12:44:33.272324+00`.
+
+Authenticated Staging Live Gate is now the only pending Module 9 acceptance step.
+
+---
+
+## 9) Current canonical pointers
 
 Production:
 - current release = **RC1.7**.
 - Production Service Worker = `avan-prod-rc1-7-v1`.
-- Modules 4, 5 and 7 = not Production-promoted.
+- Modules 4, 5, 7 and 9 = not Production-promoted.
 
 Staging:
 - Module 4 = Live PASS / CLOSED.
 - Module 5 = Live PASS / CLOSED.
 - Module 7 = Engineering + authenticated Live PASS / CLOSED.
-- current Staging cache = `avan-staging-rc1-v119-smart-procurement-spend-control`.
-- latest Module 7 runtime merge = `06f77810bf6d754a449a1ab1b03f8910e98b41a5`.
-- Module 7 Architecture = #312/#313 PASS.
-- Module 7 Pages = #424 PASS.
+- Module 9 = Engineering PASS / authenticated Live pending.
+- current Staging cache = `avan-staging-rc1-v120-avan-connect-marketplace`.
+- latest runtime merge = `979222ec84755d463610d056503fd8984bfb00fb`.
+- latest Architecture = #316 PASS.
+- latest Pages = #427 PASS.
 
-Next architectural train: **Module 9 — Avan Connect / Automation Marketplace**. Production promotion of Staging-only modules still requires separate explicit approval and has not been performed.
+Next required user action: authenticated Staging Live Gate for Module 9. Production promotion of Staging-only modules still requires separate explicit approval and has not been performed.
