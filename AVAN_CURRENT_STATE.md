@@ -13,19 +13,33 @@ Repository: `afzalpour/afzalpour.github.io`
 - repository root = **Production runtime**.
 - `avan-staging/` = **Staging / next-release workspace**.
 - Supabase financial Source of Truth = `Avan-production` (`dkyqsxnllvxypigxpygo`).
-- Production current release = **RC1.7**.
-- RC1.7 Production release PR = **#158**; merge = `cf08f25703b84c0049103eb97e15d59945973658`.
-- explicit release approval = **«RC1.7 Production Release APPROVED»**.
-- explicit final Production Smoke confirmation = **«RC1.7 Production Smoke UX PASS»**.
-- current Live validation pending = **none for accepted Staging Modules 4, 5, 7 and 9**.
-- current release-engineering pending = **Production promotion decision for Staging-only modules; no promotion is authorized implicitly**.
-- Production Service Worker cache = `avan-prod-rc1-7-v1`.
-- Modules 4, 5, 7 and 9 are **not Production-promoted**.
+- Production current release = **RC1.8 — promoted / automated release gates PASS / authenticated Production Smoke pending**.
+- RC1.8 readiness PR = **#188**; merge = `1286c6bb887a532f0cca7c2fe799e5aad831a1d3`.
+- RC1.8 Production promotion PR = **#189**; merge = `aa80efa8cba2a798f649d81021ecafa930949208`.
+- explicit promotion approval = **«RC1.8 Production Promotion APPROVED»**.
+- pre-merge promotion branch head = `c3c2fe5f448aa4937bc08bad8debbadfa436b0f3`.
+- pre-merge Architecture Gate #322 = **PASS**.
+- pre-merge Production Release Gate #25 = **PASS**.
+- post-merge Architecture Gate #323 = **PASS**.
+- post-merge Production Release Gate #26 = **PASS**.
+- GitHub Pages #432 = **PASS**.
+- Production Service Worker cache = `avan-prod-rc1-8-v1`.
+- Modules 4, 5, 7 and 9 are **Production-promoted at the release/runtime layer**.
+- current Live validation pending = **authenticated RC1.8 Production Smoke for Modules 4, 5, 7 and 9**.
+- RC1.8 must **not** be marked final Production Live PASS until that smoke test is explicitly accepted by the user and the post-smoke read-only integrity check is closed.
 
 Production rollback points retained:
+- `prod-backup-20260914-rc1-8-pre-promotion`
 - `prod-backup-20260912-rc1-7-pre-promotion`
 - `prod-backup-20260912-rc1-7-pre-smoke-ux-hotfix`
 - `prod-backup-20260912-company-onboarding-auth-hotfix-pre-promotion`
+
+RC1.8 promotion invariants verified by release contract:
+- Production `config.js` remained Production-only and was not replaced by Staging config.
+- Staging package/tooling/tests/scripts and runtime-divergence metadata were not promoted into Production runtime.
+- Production Service Worker is the exact vetted Staging asset projection with a Production-only cache prefix/identity.
+- no database migration was introduced solely for Modules 4, 5, 7 or 9.
+- no connector credential, Service Role secret, automatic posting/payment/approval or external submission was enabled.
 
 ---
 
@@ -51,6 +65,12 @@ Permanent explicit regression/history markers:
 - **«Counterparty 360 Live PASS»**
 - historical post-Live mutation certification = **93 journal entries / 24 financial transactions / 42 invoices**.
 
+RC1.8 current status is deliberately separated from those permanent Live markers:
+- Modules 4, 5, 7 and 9 = authenticated **Staging Live PASS / CLOSED**.
+- RC1.8 runtime promotion = **MERGED**.
+- RC1.8 automated Production gates + Pages = **PASS**.
+- RC1.8 authenticated Production Smoke = **PENDING**.
+
 ---
 
 ## 3) Governing invariants
@@ -68,11 +88,18 @@ Permanent explicit regression/history markers:
 - isolated external disaster restore remains **OPEN**; never restore against `Avan-production` itself.
 - Leaked Password Protection remains disabled by provider/plan limitation and must not be falsely marked fixed.
 
-Current backend truth retained:
+Current backend truth retained from RC1.8 readiness verification:
+- journal_entries = **94**.
+- financial_transactions = **24**.
+- invoices = **42**.
+- documents = **23**.
+- inventory_documents = **9**.
 - orphan journal lines = 0; cross-workspace journal-line mismatches = 0; unbalanced Posted journals = 0.
 - orphan invoice lines = 0; cross-workspace invoice-line mismatches = 0.
 - journal lines with fractional Toman = 42; one-Rial exactness is exercised by real data.
 - effective public anon/auth `SECURITY DEFINER` exposure = 0.
+
+A fresh post-Production-Smoke read-only verification is still required before RC1.8 final Live closure.
 
 ---
 
@@ -91,30 +118,32 @@ Official capabilities:
 
 Progress:
 - Modules 1, 2, 3, 6 and current Module 8 scope = Production Live PASS.
-- Module 4 = Engineering PASS + authenticated Staging Live PASS; CLOSED for Staging acceptance.
-- Module 5 = Engineering PASS + authenticated Staging Live PASS; CLOSED for Staging acceptance.
-- Module 7 = Engineering PASS + authenticated Staging Live PASS; CLOSED for Staging acceptance.
-- Module 9 = **Engineering PASS + authenticated Staging Live PASS; CLOSED for Staging acceptance**.
+- Module 4 = Engineering PASS + authenticated Staging Live PASS + RC1.8 Production-promoted; Production Smoke pending.
+- Module 5 = Engineering PASS + authenticated Staging Live PASS + RC1.8 Production-promoted; Production Smoke pending.
+- Module 7 = Engineering PASS + authenticated Staging Live PASS + RC1.8 Production-promoted; Production Smoke pending.
+- Module 9 = Engineering PASS + authenticated Staging Live PASS + RC1.8 Production-promoted; Production Smoke pending.
 
-ADR-0023 capability train is now complete for the currently defined scope. Current architectural train: **Staging release consolidation / Production promotion readiness for Modules 4, 5, 7 and 9**. Production promotion still requires separate explicit approval.
+ADR-0023 capability train is complete for the currently defined scope. Current architectural train: **RC1.8 Production smoke / release closure for Modules 4, 5, 7 and 9**.
 
 ---
 
-## 5) Modules 4 and 5 — Staging accepted
+## 5) Modules 4 and 5 — Staging accepted / RC1.8 Production-promoted
 
 Module 4 — Continuous Close + Continuous Audit:
 - PR #164 foundation; PR #170 Live polish/parity; PR #172 print/4+3; PR #175 final Jalali hidden-ISO fix.
-- final user acceptance = **«مورد تایید است برو گام بعد»**.
+- final Staging user acceptance = **«مورد تایید است برو گام بعد»**.
 - `writeOperations = 0`; `actualLedgerMutation = false`.
-- Production promotion not authorized / not performed.
+- promoted to Production in RC1.8 via PR #189.
+- authenticated Production Smoke = **pending**.
 
 Module 5 — Iran Compliance Radar:
 - PR #176 foundation merge `2f7185aa3cc46f735387689274f4db8667d56081`.
 - PR #177 runtime-parity hardening merge `7c3fcb636fa419200b37da30fc477771a7c0a6fb`.
-- explicit user confirmation = **«Module 5 Iran Compliance Radar Live PASS»**.
+- explicit Staging user confirmation = **«Module 5 Iran Compliance Radar Live PASS»**.
 - post-Live read-only Supabase verification = **94 journal entries / 24 financial transactions / 42 invoices / 23 documents** with unchanged latest timestamps.
 - no fabricated legal deadlines; payroll/insurance remain explicitly unsupported until authoritative data exists.
-- Production promotion not authorized / not performed.
+- promoted to Production in RC1.8 via PR #189.
+- authenticated Production Smoke = **pending**.
 
 ---
 
@@ -123,8 +152,9 @@ Module 5 — Iran Compliance Radar:
 ADR-0024 — Production/Staging Runtime Parity Contract = **Accepted**.
 - shared runtime must be byte-identical unless explicitly allowlisted.
 - active runtime scope is Service Worker `ASSETS`.
-- parity never authorizes Production promotion.
+- parity never authorizes Production promotion by itself.
 - Staging runtime changes advance cache identity.
+- RC1.8 promotion used the exact vetted Staging runtime projection, excluding Production-only configuration and Staging-only tooling/metadata.
 
 ADR-0025 — Strict Persian User-Facing Language Contract = **Accepted / permanent product invariant**.
 - all unnecessary English user-facing text must be fluent Persian.
@@ -140,11 +170,11 @@ ADR-0026 — Avan Connect Automation Execution Boundary = **Accepted**.
 - deduplication identity is server-side and includes workspace, connector, source reference and payload identity.
 - financial write, posting, payment and external submission remain human-controlled.
 - provider credentials/sensitive connection data are forbidden from browser financial storage.
-- Module 9 foundation intentionally enables registry/marketplace/preview only; it does not activate generic external execution.
+- Module 9 foundation intentionally enables registry/marketplace/preview only; RC1.8 promotion does not activate generic external execution.
 
 ---
 
-## 7) Module 7 — Smart Procurement & Spend Control — Engineering + authenticated Staging Live PASS
+## 7) Module 7 — Smart Procurement & Spend Control — Staging Live PASS / RC1.8 Production-promoted
 
 Architecture:
 - id = `avan-smart-procurement-spend-control-v1`.
@@ -181,8 +211,7 @@ Engineering delivery:
 - merge = `06f77810bf6d754a449a1ab1b03f8910e98b41a5`.
 - post-merge Architecture Gate #313 = **PASS**.
 - GitHub Pages #424 = **PASS**.
-- Staging cache = `avan-staging-rc1-v119-smart-procurement-spend-control`.
-- Production runtime = unchanged.
+- Staging acceptance cache = `avan-staging-rc1-v119-smart-procurement-spend-control`.
 
 Authenticated Staging Live acceptance:
 - first Live pass confirmed navigation, date rerun, Persian UI, Print/PDF and other visible surfaces; no operational finding was available in the initially selected company/date, so evidence controls were not yet observable.
@@ -191,19 +220,22 @@ Authenticated Staging Live acceptance:
 - targeted follow-up Live test on that real-data scope was accepted by the user with **«اوکی بود پاس شود»**.
 - Module 7 authenticated Staging Live = **PASS / CLOSED**.
 
-Pre-Live baseline and post-Live mutation verification are identical:
+Pre-Live baseline and post-Live mutation verification were identical:
 - journal_entries = **94**; latest created_at = `2026-09-12 19:32:07.685779+00`.
 - financial_transactions = **24**; latest = `2026-09-10 21:16:55.697626+00`.
 - invoices = **42**; latest = `2026-09-10 16:37:20.676074+00`.
 - documents = **23**; latest = `2026-09-07 21:11:31.272166+00`.
 - inventory_documents = **9**; latest = `2026-09-07 12:44:33.272324+00`.
-- therefore Module 7 remained mutation-free in authenticated Live use.
+- therefore Module 7 remained mutation-free in authenticated Staging Live use.
 
-Module 7 Production promotion = **not authorized / not performed**.
+RC1.8 Production status:
+- promoted through PR #189.
+- automated Production gates = PASS.
+- authenticated Production Smoke = **pending**.
 
 ---
 
-## 8) Module 9 — Avan Connect / Automation Marketplace — Engineering + authenticated Staging Live PASS
+## 8) Module 9 — Avan Connect / Automation Marketplace — Staging Live PASS / RC1.8 Production-promoted
 
 Architecture and safety contract:
 - architecture id = `avan-connect-automation-marketplace-v1`.
@@ -239,9 +271,7 @@ Engineering delivery:
 - initial Module 9 Staging cache = `avan-staging-rc1-v120-avan-connect-marketplace`.
 - permanent regression marker = **`Avan Connect / Automation Marketplace foundation PASS`**.
 - `sw-precache-integrity = PASS (214 declared runtime entries)`.
-- runtime parity = **213 Staging assets / 192 Production assets checked; 32 intentional divergences declared**.
 - architecture high findings = **0**; money architecture findings = **0**.
-- Production runtime = unchanged.
 
 Authenticated Staging Live acceptance:
 - explicit main Live confirmation = **«ماژول ۹ اتصال و اتوماسیون — آزمون زنده پاس شد»**.
@@ -250,28 +280,63 @@ Authenticated Staging Live acceptance:
 - PR #186 **Module 9 Live polish: fix text wrapping and guardrail spacing** fixed the defects with styles scoped only to `.avan-connect`; no financial logic, connector execution or database behavior changed.
 - PR #186 merge = `8b4da9fddd782b11e5b92e96ca37e8bbafbb2e69`.
 - pre-merge Architecture Gate #317 = **PASS**; post-merge Architecture Gate #318 = **PASS**; GitHub Pages #429 = **PASS**.
-- current Staging cache = `avan-staging-rc1-v121-module9-live-layout-polish`.
+- final Staging acceptance cache = `avan-staging-rc1-v121-module9-live-layout-polish`.
 - explicit final visual confirmation = **«چیدمان ماژول ۹ نهایی PASS»**.
 - Module 9 authenticated Staging Live = **PASS / CLOSED**.
 
-Pre-Live baseline and final post-Live read-only mutation verification are identical:
+Pre-Live baseline and final post-Live read-only mutation verification were identical:
 - journal_entries = **94**; latest created_at = `2026-09-12 19:32:07.685779+00`.
 - financial_transactions = **24**; latest = `2026-09-10 21:16:55.697626+00`.
 - invoices = **42**; latest = `2026-09-10 16:37:20.676074+00`.
 - documents = **23**; latest = `2026-09-07 21:11:31.272166+00`.
 - inventory_documents = **9**; latest = `2026-09-07 12:44:33.272324+00`.
-- therefore Module 9 remained mutation-free throughout authenticated Live and final layout retest.
+- therefore Module 9 remained mutation-free throughout authenticated Staging Live and final layout retest.
 
-Module 9 Production promotion = **not authorized / not performed**.
+RC1.8 Production status:
+- promoted through PR #189.
+- automated Production gates = PASS.
+- generic external execution remains disabled.
+- authenticated Production Smoke = **pending**.
 
 ---
 
-## 9) Current canonical pointers
+## 9) RC1.8 release evidence
+
+Readiness closure:
+- PR #188 = **RC1.8 release readiness: freeze rollback and promotion manifest**.
+- readiness result = **PASS**, while promotion remained separately approval-gated.
+- rollback point = `prod-backup-20260914-rc1-8-pre-promotion`.
+- accepted Staging runtime baseline includes final Module 9 runtime merge `8b4da9fddd782b11e5b92e96ca37e8bbafbb2e69`.
+- accepted Staging cache = `avan-staging-rc1-v121-module9-live-layout-polish`.
+
+Controlled Production promotion:
+- PR #189 = **RC1.8 Production promotion: Modules 4, 5, 7 and 9**.
+- explicit approval = **«RC1.8 Production Promotion APPROVED»**.
+- promotion branch head = `c3c2fe5f448aa4937bc08bad8debbadfa436b0f3`.
+- Production merge = `aa80efa8cba2a798f649d81021ecafa930949208`.
+- Production cache = `avan-prod-rc1-8-v1`.
+- Production configuration was preserved; no Staging config/tooling/metadata was copied into the Production contract.
+- pre-merge Architecture Gate #322 = PASS; Production Release Gate #25 = PASS.
+- post-merge Architecture Gate #323 = PASS; Production Release Gate #26 = PASS; GitHub Pages #432 = PASS.
+
+Release acceptance boundary:
+- automated engineering/deployment evidence is complete.
+- authenticated Production behavior has **not yet been explicitly accepted** after RC1.8 merge.
+- therefore the release is **promoted but not yet final Production Live-closed**.
+
+---
+
+## 10) Current canonical pointers
 
 Production:
-- current release = **RC1.7**.
-- Production Service Worker = `avan-prod-rc1-7-v1`.
-- Modules 4, 5, 7 and 9 = not Production-promoted.
+- current release = **RC1.8**.
+- merge = `aa80efa8cba2a798f649d81021ecafa930949208`.
+- Production Service Worker = `avan-prod-rc1-8-v1`.
+- Modules 4, 5, 7 and 9 = Production-promoted.
+- Architecture Gate #323 = PASS.
+- Production Release Gate #26 = PASS.
+- GitHub Pages #432 = PASS.
+- authenticated Production Smoke = **PENDING**.
 
 Staging:
 - Module 4 = Engineering + authenticated Live PASS / CLOSED.
@@ -279,8 +344,8 @@ Staging:
 - Module 7 = Engineering + authenticated Live PASS / CLOSED.
 - Module 9 = Engineering + authenticated Live PASS / CLOSED.
 - current Staging cache = `avan-staging-rc1-v121-module9-live-layout-polish`.
-- latest runtime merge = `8b4da9fddd782b11e5b92e96ca37e8bbafbb2e69`.
-- latest Architecture = #318 PASS.
-- latest Pages = #429 PASS.
+- final accepted runtime merge before promotion = `8b4da9fddd782b11e5b92e96ca37e8bbafbb2e69`.
+- latest Staging acceptance Architecture marker = #318 PASS.
+- latest Staging acceptance Pages marker = #429 PASS.
 
-Next train: **consolidated release-readiness review for Staging-only Modules 4, 5, 7 and 9**. Any Production promotion requires separate explicit user approval and has not been performed.
+Next train: **RC1.8 authenticated Production Smoke for Modules 4, 5, 7 and 9 → post-smoke read-only DB/integrity verification → final RC1.8 Production Live closure**.
