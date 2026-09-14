@@ -6,6 +6,7 @@ on:
     branches:
       - ops/dr-logical-restore-workflow
     paths:
+      - '.github/workflows/avan-isolated-dr-restore.yml'
       - 'docs/release/.dr-run-trigger'
 
 permissions:
@@ -20,6 +21,7 @@ jobs:
       RECOVERY_DB_URL: ${{ secrets.AVAN_RECOVERY_DB_URL }}
       SOURCE_PROJECT_REF: dkyqsxnllvxypigxpygo
       RECOVERY_PROJECT_REF: summnepwuziwulzvpcms
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.AVAN_SUPABASE_PAT }}
       SUPABASE_CLI_VERSION: 2.117.0
 
     steps:
@@ -31,12 +33,13 @@ jobs:
         run: |
           set -euo pipefail
           set +x
-          if [ -z "${SOURCE_DB_URL:-}" ] || [ -z "${RECOVERY_DB_URL:-}" ]; then
-            echo 'Required database connection secrets are not configured.' >&2
-            exit 1
-          fi
+          if [ -z "${SOURCE_DB_URL:-}" ] || [ -z "${RECOVERY_DB_URL:-}" ] || [ -z "${SUPABASE_ACCESS_TOKEN:-}" ]; then
+  echo 'Required recovery credentials are not configured.' >&2
+  exit 1
+fi
           echo "::add-mask::$SOURCE_DB_URL"
           echo "::add-mask::$RECOVERY_DB_URL"
+          echo "::add-mask::$SUPABASE_ACCESS_TOKEN"
           case "$SOURCE_DB_URL" in
             *"$SOURCE_PROJECT_REF"*) ;;
             *) echo 'Source connection does not belong to the approved Production project.' >&2; exit 1 ;;
@@ -65,6 +68,97 @@ jobs:
           psql --version
           docker --version
           npx --yes "supabase@${SUPABASE_CLI_VERSION}" --version
+      - name: Prepare isolated Recovery credential
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+
+          TEMP_RECOVERY_PASSWORD="$(openssl rand -hex 24)"
+          export TEMP_RECOVERY_PASSWORD
+          echo "::add-mask::$TEMP_RECOVERY_PASSWORD"
+
+          PAYLOAD="$(python3 - <<'PY'
+          import json, os
+          print(json.dumps({"password": os.environ["TEMP_RECOVERY_PASSWORD"]}))
+          PY
+          )"
+
+          HTTP_CODE="$(curl -sS \
+            -o "$RUNNER_TEMP/avan-password-response.json" \
+            -w '%{http_code}' \
+            -X PATCH \
+            "https://api.supabase.com/v1/projects/${RECOVERY_PROJECT_REF}/database/password" \
+            -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+            -H 'Content-Type: application/json' \
+            --data "$PAYLOAD")"
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "Recovery password synchronization failed with HTTP $HTTP_CODE." >&2
+            rm -f "$RUNNER_TEMP/avan-password-response.json"
+            exit 1
+          fi
+
+          rm -f "$RUNNER_TEMP/avan-password-response.json"
+
+          NEW_RECOVERY_DB_URL="$(python3 - <<'PY'
+          import os, shlex
+          from urllib.parse import urlsplit, urlunsplit, quote, unquote
+
+          raw = os.environ["RECOVERY_DB_URL"].strip()
+          password = os.environ["TEMP_RECOVERY_PASSWORD"]
+
+          if raw.startswith(("postgresql://", "postgres://")):
+              u = urlsplit(raw)
+              user = unquote(u.username or "")
+              host = u.hostname or ""
+              port = u.port or 5432
+              netloc = f"{quote(user, safe='.') }:{password}@{host}:{port}"
+              print(urlunsplit((u.scheme, netloc, u.path or "/postgres", u.query, "")))
+          else:
+              values = {}
+              for item in shlex.split(raw):
+                  if "=" in item:
+                      k, v = item.split("=", 1)
+                      values[k] = v
+
+              host = values["host"]
+              user = values["user"]
+              port = values.get("port", "5432")
+              dbname = values.get("dbname", "postgres")
+              print(
+                  f"postgresql://{quote(user, safe='.')}:{password}@"
+                  f"{host}:{port}/{quote(dbname, safe='')}"
+                  "?sslmode=require"
+              )
+          PY
+          )"
+
+          echo "::add-mask::$NEW_RECOVERY_DB_URL"
+
+          connected=0
+          for attempt in $(seq 1 20); do
+            if psql "$NEW_RECOVERY_DB_URL" -Atv ON_ERROR_STOP=1 \
+              -c 'select 1' >/dev/null 2>&1; then
+              connected=1
+              break
+            fi
+            sleep 15
+          done
+
+          if [ "$connected" -ne 1 ]; then
+            echo 'Recovery database did not accept the synchronized credential.' >&2
+            exit 1
+          fi
+
+          {
+            echo 'RECOVERY_DB_URL<<AVAN_RECOVERY_URL'
+            echo "$NEW_RECOVERY_DB_URL"
+            echo 'AVAN_RECOVERY_URL'
+          } >> "$GITHUB_ENV"
+
+          unset TEMP_RECOVERY_PASSWORD PAYLOAD NEW_RECOVERY_DB_URL
+          echo 'Isolated Recovery credential prepared successfully.'
 
       - name: Create logical backup from Production read-only path
         shell: bash
