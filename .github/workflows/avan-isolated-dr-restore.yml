@@ -1,0 +1,128 @@
+name: Avan Isolated Disaster Restore
+
+on:
+  push:
+    branches:
+      - ops/dr-logical-restore-workflow
+    paths:
+      - 'docs/release/.dr-run-trigger'
+
+permissions:
+  contents: read
+
+jobs:
+  restore-rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SOURCE_DB_URL: ${{ secrets.AVAN_PROD_DB_URL }}
+      RECOVERY_DB_URL: ${{ secrets.AVAN_RECOVERY_DB_URL }}
+      SOURCE_PROJECT_REF: dkyqsxnllvxypigxpygo
+      RECOVERY_PROJECT_REF: summnepwuziwulzvpcms
+      SUPABASE_CLI_VERSION: 2.117.0
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Guard source and recovery boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          if [ -z "${SOURCE_DB_URL:-}" ] || [ -z "${RECOVERY_DB_URL:-}" ]; then
+            echo 'Required database connection secrets are not configured.' >&2
+            exit 1
+          fi
+          echo "::add-mask::$SOURCE_DB_URL"
+          echo "::add-mask::$RECOVERY_DB_URL"
+          case "$SOURCE_DB_URL" in
+            *"$SOURCE_PROJECT_REF"*) ;;
+            *) echo 'Source connection does not belong to the approved Production project.' >&2; exit 1 ;;
+          esac
+          case "$RECOVERY_DB_URL" in
+            *"$RECOVERY_PROJECT_REF"*) ;;
+            *) echo 'Recovery connection does not belong to the approved isolated recovery project.' >&2; exit 1 ;;
+          esac
+          if [ "$SOURCE_DB_URL" = "$RECOVERY_DB_URL" ]; then
+            echo 'Source and recovery connections must never be identical.' >&2
+            exit 1
+          fi
+          echo 'Source/target isolation guard passed.'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install PostgreSQL client
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client
+          psql --version
+          docker --version
+          npx --yes "supabase@${SUPABASE_CLI_VERSION}" --version
+
+      - name: Create logical backup from Production read-only path
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          WORKDIR="$RUNNER_TEMP/avan-dr"
+          mkdir -p "$WORKDIR"
+          cd "$WORKDIR"
+
+          npx --yes "supabase@${SUPABASE_CLI_VERSION}" db dump --db-url "$SOURCE_DB_URL" -f roles.sql --role-only
+          npx --yes "supabase@${SUPABASE_CLI_VERSION}" db dump --db-url "$SOURCE_DB_URL" -f schema.sql
+          npx --yes "supabase@${SUPABASE_CLI_VERSION}" db dump --db-url "$SOURCE_DB_URL" -f data.sql --use-copy --data-only -x "storage.buckets_vectors" -x "storage.vector_indexes"
+          npx --yes "supabase@${SUPABASE_CLI_VERSION}" db dump --db-url "$SOURCE_DB_URL" -f history_schema.sql --schema supabase_migrations
+          npx --yes "supabase@${SUPABASE_CLI_VERSION}" db dump --db-url "$SOURCE_DB_URL" -f history_data.sql --use-copy --data-only --schema supabase_migrations
+
+          for f in roles.sql schema.sql data.sql history_schema.sql history_data.sql; do
+            test -s "$f" || { echo "Backup component missing or empty: $f" >&2; exit 1; }
+          done
+          sha256sum roles.sql schema.sql data.sql history_schema.sql history_data.sql | sed 's#  .*/#  #' > manifest.sha256
+          echo 'Logical backup components created in ephemeral runner storage.'
+
+      - name: Restore only into isolated recovery project
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          cd "$RUNNER_TEMP/avan-dr"
+          psql \
+            --single-transaction \
+            --variable ON_ERROR_STOP=1 \
+            --file roles.sql \
+            --file schema.sql \
+            --command 'SET session_replication_role = replica' \
+            --file data.sql \
+            --dbname "$RECOVERY_DB_URL"
+
+          psql \
+            --single-transaction \
+            --variable ON_ERROR_STOP=1 \
+            --file history_schema.sql \
+            --file history_data.sql \
+            --dbname "$RECOVERY_DB_URL"
+
+      - name: Minimal restore sanity check
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          result="$(psql "$RECOVERY_DB_URL" -Atv ON_ERROR_STOP=1 -c "select (select count(*) from public.journal_entries),(select count(*) from public.invoices),(select count(*) from auth.users);")"
+          IFS='|' read -r journals invoices users <<< "$result"
+          test "${journals:-0}" -gt 0
+          test "${invoices:-0}" -gt 0
+          test "${users:-0}" -gt 0
+          echo "Recovery sanity counts: journals=$journals invoices=$invoices auth_users=$users"
+
+      - name: Destroy ephemeral backup files
+        if: always()
+        shell: bash
+        run: |
+          rm -rf "$RUNNER_TEMP/avan-dr"
+          echo 'Ephemeral backup files removed.'
