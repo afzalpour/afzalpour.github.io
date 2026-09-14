@@ -1,104 +1,117 @@
-# AVAN — RC1.8 Release Readiness
+# AVAN — RC1.8 Release Readiness / Production Closure
 
-Status: **READINESS PASS — Production promotion NOT authorized**
+Status: **CLOSED — Production Live PASS**
 
 Date: **2026-09-14**
 
-This checklist governs the release candidate that promotes the already accepted Staging scope of Modules 4, 5, 7 and 9 to Production. It does not itself copy Staging runtime to Production and does not authorize a Production merge.
+این سند ابتدا برای کنترل آمادگی ارتقای RC1.8 ایجاد شد و اکنون به‌عنوان رکورد نهایی آمادگی، ارتقا و پذیرش عملیاتی RC1.8 نگهداری می‌شود.
 
-## Release boundary
+## محدوده انتشار
 
-- Production root remains **RC1.7**.
-- Modules 4, 5, 7 and 9 remain under `avan-staging/` only.
-- Frozen accepted Staging runtime merge: `8b4da9fddd782b11e5b92e96ca37e8bbafbb2e69`.
-- Source-of-Truth closure merge: `6dc872e98124c4312f2c2462a192c46a6098c662`.
-- Current Staging cache: `avan-staging-rc1-v121-module9-live-layout-polish`.
-- Pre-promotion Production rollback branch: `prod-backup-20260914-rc1-8-pre-promotion`.
-- Production Service Worker remains `avan-prod-rc1-7-v1`.
+قابلیت‌های پذیرفته‌شده این انتشار:
+- **بستن مستمر حساب‌ها و ممیزی مستمر**.
+- **رادار انطباق ایران**.
+- **کنترل هوشمند خرید و هزینه**.
+- **اتصال و بازار اتوماسیون آوان**.
 
-## Accepted feature scope
+مبنای runtime آماده‌سازی:
+- frozen accepted Staging runtime merge = `8b4da9fddd782b11e5b92e96ca37e8bbafbb2e69`.
+- Source-of-Truth closure merge = `6dc872e98124c4312f2c2462a192c46a6098c662`.
+- accepted Staging cache = `avan-staging-rc1-v121-module9-live-layout-polish`.
+- pre-promotion rollback branch = `prod-backup-20260914-rc1-8-pre-promotion`.
 
-### Module 4 — Continuous Close + Continuous Audit
+## پذیرش قابلیت‌ها در محیط آماده‌سازی
 
+### بستن مستمر حساب‌ها و ممیزی مستمر
 - [x] Engineering PASS.
 - [x] Authenticated Staging Live PASS / CLOSED.
-- [x] Read-only intelligence; no silent ledger mutation.
-- [x] readable evidence and Jalali Print/PDF accepted.
+- [x] Read-only intelligence؛ بدون mutation پنهان دفتر کل.
+- [x] شواهد قابل‌خواندن و خروجی تاریخ جلالی پذیرفته شد.
 
-### Module 5 — Iran Compliance Radar
-
+### رادار انطباق ایران
 - [x] Engineering PASS.
 - [x] Authenticated Staging Live PASS / CLOSED.
-- [x] no fabricated legal deadlines.
-- [x] payroll/insurance remain explicit non-coverage without authoritative data.
-- [x] ADR-0025 Persian user-facing contract applied.
+- [x] مهلت قانونی جعلی تولید نمی‌شود.
+- [x] حقوق و بیمه بدون منبع حقیقت معتبر خارج از پوشش اعلام می‌شوند.
+- [x] قرارداد فارسی‌سازی ADR-0025 برقرار است.
 
-### Module 7 — Smart Procurement & Spend Control
-
+### کنترل هوشمند خرید و هزینه
 - [x] Engineering PASS.
 - [x] Authenticated Staging Live PASS / CLOSED.
-- [x] purchase/receipt matching, reused-receipt detection, quantity/price mismatch and stock/supplier controls accepted.
-- [x] purchase request / PO / budget / approval workflow remain explicit non-coverage until authoritative sources exist.
-- [x] Live usage remained mutation-free.
+- [x] تطبیق خرید/رسید، تشخیص استفاده مجدد از رسید، اختلاف مقدار/قیمت و کنترل موجودی/تأمین‌کننده پذیرفته شد.
+- [x] درخواست خرید، سفارش خرید، بودجه، گردش تأیید و پرداخت تا زمان وجود منبع حقیقت معتبر خارج از دامنه‌اند.
+- [x] استفاده Live در محیط آماده‌سازی mutation-free باقی ماند.
 
-### Module 9 — Avan Connect / Automation Marketplace
-
+### اتصال و بازار اتوماسیون آوان
 - [x] Engineering PASS.
 - [x] Authenticated Staging Live PASS / CLOSED.
-- [x] final layout correction explicitly accepted with `«چیدمان ماژول ۹ نهایی PASS»`.
-- [x] registry/marketplace/preview remain truthful; disconnected providers are not fabricated as connected.
-- [x] workflow execution, connection mutation and financial writes remain disabled in Foundation v1.
-- [x] ADR-0026 idempotency/audit/human-approval execution boundary accepted.
+- [x] اصلاح نهایی چیدمان با نشانگر **«چیدمان ماژول ۹ نهایی PASS»** در تاریخچه پذیرفته شد.
+- [x] registry/marketplace/preview وضعیت واقعی اتصال‌دهنده‌ها را نشان می‌دهند.
+- [x] اجرای workflow، تغییر اتصال و financial write در Foundation v1 غیرفعال باقی ماند.
+- [x] مرز idempotency/audit/human-approval تحت ADR-0026 حفظ شد.
 
-## Frozen runtime gates
+## Gateهای runtime آماده‌سازی
 
-- [x] Module 9 pre-merge Architecture Gate #317 = PASS.
-- [x] Module 9 post-merge Architecture Gate #318 = PASS.
-- [x] Module 9 runtime Pages #429 = PASS.
+- [x] Architecture Gate #317 = PASS.
+- [x] Architecture Gate #318 = PASS.
+- [x] GitHub Pages #429 = PASS.
 - [x] Source-of-Truth closure Pages #430 = PASS.
-- [x] full Staging quality suite includes Modules 4/5/7/9 regressions.
-- [x] PWA precache integrity covered by the Architecture Gate.
-- [x] Runtime Parity contract ADR-0024 covered by the Architecture Gate.
-- [x] strict Persian presentation contract ADR-0025 covered by regression.
-- [x] canonical Toman / one-Rial precision regressions remain in the full gate.
+- [x] PWA precache integrity در Architecture Gate پوشش داده شد.
+- [x] Runtime Parity تحت ADR-0024 پوشش داده شد.
+- [x] Persian presentation تحت ADR-0025 پوشش داده شد.
+- [x] canonical Toman / one-Rial precision regression در gate کامل حفظ شد.
 
-## Fresh read-only database integrity — 2026-09-14
+## ارتقای کنترل‌شده به محیط عملیاتی
 
-- [x] journal_entries = **94**; latest `2026-09-12 19:32:07.685779+00`.
-- [x] financial_transactions = **24**; latest `2026-09-10 21:16:55.697626+00`.
-- [x] invoices = **42**; latest `2026-09-10 16:37:20.676074+00`.
-- [x] documents = **23**; latest `2026-09-07 21:11:31.272166+00`.
-- [x] inventory_documents = **9**; latest `2026-09-07 12:44:33.272324+00`.
+- [x] rollback branch پیش از ارتقا freeze شد: `prod-backup-20260914-rc1-8-pre-promotion`.
+- [x] controlled Staging → Production runtime diff ساخته شد.
+- [x] Production-only configuration/secrets boundary حفظ شد.
+- [x] Staging-only tooling/tests/scripts/runtime-divergence metadata وارد محیط عملیاتی نشد.
+- [x] Production Service Worker به `avan-prod-rc1-8-v1` ارتقا یافت.
+- [x] Production Release Gate پیش از merge اجرا شد.
+- [x] تأیید صریح کاربر دریافت شد: **«RC1.8 Production Promotion APPROVED»**.
+- [x] PR #189 merge شد؛ Production merge = `aa80efa8cba2a798f649d81021ecafa930949208`.
+- [x] pre-merge Architecture Gate #322 = PASS.
+- [x] pre-merge Production Release Gate #25 = PASS.
+- [x] post-merge Architecture Gate #323 = PASS.
+- [x] post-merge Production Release Gate #26 = PASS.
+- [x] GitHub Pages #432 = PASS.
+
+## مرزهای حفظ‌شده در ارتقا
+
+- [x] `config.js` محیط عملیاتی با تنظیمات محیط آماده‌سازی جایگزین نشد.
+- [x] هیچ migration پایگاه داده‌ای صرفاً برای این چهار قابلیت وارد نشد.
+- [x] هیچ connector credential یا Service Role secret به مرورگر منتقل نشد.
+- [x] ثبت، پرداخت، تأیید یا ارسال بیرونی خودکار فعال نشد.
+- [x] generic external execution در اتصال و بازار اتوماسیون آوان غیرفعال باقی ماند.
+
+## آزمون نهایی محیط عملیاتی
+
+- [x] کاربر آزمون تجربه کاربری احراز هویت‌شده محیط عملیاتی را انجام داد.
+- [x] نشانگر صریح پذیرش = **«RC1.8 Production Smoke UX PASS»**.
+- [x] چهار قابلیت پذیرفته‌شده در محیط عملیاتی بازبینی شدند.
+- [x] مسیرهای نمایش/تاریخ/چاپ/پیش‌نمایش بدون فعال‌شدن mutation ناخواسته پذیرفته شدند.
+- [x] refresh و بارگذاری مجدد runtime پذیرفته شد.
+
+## تأیید نهایی فقط‌خواندنی پایگاه داده پس از آزمون عملیاتی
+
+- [x] journal_entries = **94**؛ latest `2026-09-12 19:32:07.685779+00`.
+- [x] financial_transactions = **24**؛ latest `2026-09-10 21:16:55.697626+00`.
+- [x] invoices = **42**؛ latest `2026-09-10 16:37:20.676074+00`.
+- [x] documents = **23**؛ latest `2026-09-07 21:11:31.272166+00`.
+- [x] inventory_documents = **9**؛ latest `2026-09-07 12:44:33.272324+00`.
 - [x] orphan journal lines = **0**.
 - [x] cross-workspace journal-line mismatch = **0**.
 - [x] unbalanced Posted journals = **0**.
 - [x] orphan invoice lines = **0**.
 - [x] cross-workspace invoice-line mismatch = **0**.
-- [x] public `SECURITY DEFINER` functions executable by `anon` or `authenticated` = **0**.
+- [x] journal lines with fractional Toman = **42**؛ دقت یک‌ریالی حفظ شد.
+- [x] effective public anon/auth `SECURITY DEFINER` exposure = **0**.
+- [x] شمار رکوردها و latest timestampها با baseline پیش از آزمون عملیاتی یکسان ماندند.
+- [x] financial mutation ناخواسته = **none detected**.
 
-## Promotion preparation
+## نتیجه نهایی انتشار
 
-- [x] Production rollback branch frozen before promotion: `prod-backup-20260914-rc1-8-pre-promotion`.
-- [ ] build controlled Staging → Production runtime diff while preserving Production-only configuration/secrets boundary.
-- [ ] run Production Release Gate on the promotion branch before merge.
-- [ ] obtain separate explicit user approval for RC1.8 Production promotion.
-- [ ] merge Production promotion only after approval.
-- [ ] run post-merge Architecture/Release Gate + Pages.
-- [ ] perform Production authenticated smoke and read-only DB mutation/integrity verification.
-- [ ] update `AVAN_CURRENT_STATE.md` to RC1.8 only after Production acceptance.
+**RC1.8 = Production Live PASS / CLOSED.**
 
-## Promotion exclusions / preservation rules
-
-The controlled promotion must not blindly copy the entire `avan-staging/` directory. In particular:
-
-- preserve Production environment configuration and secrets boundary;
-- do not copy Staging-only quality tooling (`package.json`, tests, scripts) into Production runtime;
-- create a new Production Service Worker cache identity rather than copying the Staging cache name;
-- remove Staging runtime-divergence metadata from the Production runtime;
-- copy only runtime files required by the accepted next-release scope and shared accepted fixes;
-- do not introduce any database migration solely for the four modules unless separately reviewed and required;
-- no connector credentials, Service Role secrets, automatic posting, payment, approval or external submission may be activated by promotion.
-
-## Release rule
-
-**RC1.8 is technically ready for construction of a controlled Production promotion PR, but Production promotion is not authorized by this document.** A separate explicit user approval is mandatory before the promotion PR may be merged.
+هیچ Live Gate معوقی برای RC1.8 باقی نمانده است. `AVAN_CURRENT_STATE.md` باید RC1.8 را به‌عنوان نسخه عملیاتی جاری و بسته‌شده نگهداری کند. قطار بعدی فقط پس از انتخاب Requirement/Backlog/ADR بعدی آغاز می‌شود.
