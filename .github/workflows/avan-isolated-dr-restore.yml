@@ -1,6 +1,7 @@
 name: Avan Isolated Disaster Restore
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - ops/dr-logical-restore-workflow
