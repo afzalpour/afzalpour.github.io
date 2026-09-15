@@ -4,52 +4,57 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#07111f">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="شکارچی سهم">
-  <title>شکارچی سهم ـ نسخه ۴</title>
+  <title>شکارچی سهم</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icon.svg">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<header class="topbar">
-  <div class="brand">
-    <div class="logo"><img src="icon.svg" alt="نشان شکارچی سهم"></div>
-    <div><h1>شکارچی سهم <span>نسخه ۴</span></h1><p>سامانه هوشمند کشف زودهنگام و پیش‌بینی تداوم حرکت سهام</p></div>
-  </div>
-  <div class="designer">طراح: <b>دکتر نیما افضل پور</b></div>
-</header>
-<main class="wrap">
-  <section class="status-strip">
-    <div><span class="dot" id="feedDot"></span><b id="feedState">در حال بررسی خوراک بازار...</b><small id="scanTimes">—</small></div>
-    <div class="regime"><span>وضعیت کلی بازار</span><b id="regime">—</b><small id="breadth">—</small></div>
-    <div class="actions"><button id="soundBtn">🔔 هشدار روشن</button><button id="scanBtn">↻ تازه‌سازی</button><button id="exportBtn">دریافت خروجی</button></div>
-  </section>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand">
+      <img class="brand-icon" src="icon.svg" alt="نشان شکارچی سهم">
+      <div><h1>شکارچی سهم <span>۴.۰.۵</span></h1><p>سامانه هوشمند پایش لحظه‌ای سهام</p></div>
+    </div>
+    <div class="top-actions"><span id="feedBadge" class="feed-badge bad">خوراک قطع است</span><button id="soundBtn">🔔 هشدار روشن</button></div>
+  </header>
 
-  <section class="kpis">
-    <article><span>🚀 شکار ویژه</span><b id="specialCount">۰</b><small>تداوم چندروزه قوی</small></article>
-    <article><span>⚡ هشدار فوری</span><b id="urgentCount">۰</b><small>شتاب غیرعادی سفارش‌ها</small></article>
-    <article><span>🟢 خرید / ورود</span><b id="buyCount">۰</b><small>نشانه فعلی بازار</small></article>
-    <article><span>🏆 شکار برتر</span><b id="topSymbol">—</b><small id="topMeta">—</small></article>
-  </section>
+  <main class="workspace">
+    <section class="summary-row">
+      <article><span>شکار ویژه</span><b id="specialCount">۰</b></article>
+      <article><span>هشدار فوری</span><b id="urgentCount">۰</b></article>
+      <article><span>خرید / ورود</span><b id="buyCount">۰</b></article>
+      <article class="top-pick"><span>شکار برتر</span><b id="topSymbol">—</b><small id="topMeta">—</small></article>
+      <article class="feed-info"><span>وضعیت خوراک</span><b id="feedState">در حال بررسی…</b><small id="scanTimes">—</small></article>
+    </section>
 
-  <section class="filters">
-    <input id="search" placeholder="جست‌وجوی نماد یا نام شرکت..." autocomplete="off">
-    <select id="hunt"><option value="">همه وضعیت‌ها</option><option>شکار ویژه</option><option>هشدار فوری</option><option>شکار زودهنگام</option><option>مستعد تداوم</option><option>رصد</option></select>
-    <label>امتیاز لحظه‌ای ≥ <output id="fastVal">۰</output><input id="minFast" type="range" min="0" max="95" value="0"></label>
-    <label>تداوم دو روزه ≥ <output id="contVal">۰</output><input id="minCont" type="range" min="0" max="95" value="0"></label>
-  </section>
+    <section class="toolbar">
+      <input id="search" placeholder="جست‌وجوی نماد یا نام شرکت…" autocomplete="off">
+      <select id="hunt"><option value="">همه وضعیت‌ها</option><option>شکار ویژه</option><option>هشدار فوری</option><option>شکار زودهنگام</option><option>مستعد تداوم</option><option>رصد</option><option>عادی</option></select>
+      <select id="decision"><option value="">همه تصمیم‌ها</option><option>خرید قوی</option><option>ورود اولیه</option><option>تحت نظر</option><option>نخر</option></select>
+      <select id="pageSize" title="تعداد ردیف"><option value="15">۱۵ ردیف</option><option value="25" selected>۲۵ ردیف</option><option value="50">۵۰ ردیف</option><option value="100">۱۰۰ ردیف</option></select>
+      <button id="columnsBtn">☷ ستون‌ها</button>
+      <button id="refreshBtn">↻ تازه‌سازی</button>
+    </section>
 
-  <section id="alertBox" class="alert-box" hidden></section>
-  <section class="table-card desktop-table"><table><thead><tr><th>ردیف</th><th>نماد</th><th>شکار</th><th>تصمیم</th><th>امتیاز لحظه‌ای</th><th>شتاب</th><th>تداوم ۲ روزه</th><th>تداوم ۳ روزه</th><th>ریسک</th><th>عدم‌تعادل صف</th><th>جریان سفارش</th><th>انباشت خرید</th><th>عقب‌نشینی فروش</th><th>حجم نسبی</th><th>قیمت</th><th>جزئیات</th></tr></thead><tbody id="tbody"></tbody></table></section>
-  <section id="mobileList" class="mobile-list"></section>
+    <section id="alertBox" class="alert-box" hidden></section>
 
-  <section class="notice" id="modelStats">سنجش دقت مدل پس از جمع‌شدن داده کافی فعال می‌شود.</section>
-  <section class="notice"><b>توجه:</b> درصدهای تداوم، برآورد تجربی سامانه هستند و تضمین سود یا تشکیل صف خرید محسوب نمی‌شوند.</section>
-</main>
+    <section class="table-panel">
+      <div class="table-wrap"><table id="mainTable"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+      <div class="pager"><button id="prevPage">صفحه قبل</button><span id="pageInfo">—</span><button id="nextPage">صفحه بعد</button></div>
+    </section>
 
-<dialog id="detailDialog"><div class="detail-head"><div><h2 id="dSymbol">—</h2><p id="dCompany">—</p></div><button id="closeDetail" aria-label="بستن">×</button></div><div id="detailBody"></div></dialog>
+    <section id="mobileList" class="mobile-list"></section>
+  </main>
+</div>
+
+<aside id="columnPanel" class="side-panel" aria-hidden="true">
+  <div class="side-head"><div><b>انتخاب ستون‌ها</b><small>چیدمان دلخواه شما در همین دستگاه ذخیره می‌شود.</small></div><button id="closeColumns">×</button></div>
+  <div id="columnOptions" class="column-options"></div>
+  <div class="side-actions"><button id="defaultColumns">چیدمان پیشنهادی</button><button id="allColumns">نمایش همه</button></div>
+</aside>
+<div id="panelBackdrop" class="backdrop" hidden></div>
+
+<dialog id="detailDialog"><div class="detail-head"><div><h2 id="dSymbol">—</h2><p id="dCompany">—</p></div><button id="closeDetail">×</button></div><div id="detailBody"></div></dialog>
 <script src="config.js"></script><script src="app.js"></script>
 </body></html>
