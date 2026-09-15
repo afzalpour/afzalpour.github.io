@@ -3,9 +3,12 @@ on:
   push:
     branches: [main]
     paths:
-      - 'stock-hunter-v4/app.js'
+      - 'stock-hunter-v4/app-core.js'
+      - 'stock-hunter-v4/app-forecast.js'
+      - 'stock-hunter-v4/app-runtime.js'
       - 'stock-hunter-v4/index.html'
       - 'stock-hunter-v4/styles.css'
+      - 'stock-hunter-v4/extra.css'
       - 'stock-hunter-v4/methodology.html'
       - 'stock-hunter-v4/manifest.webmanifest'
       - 'stock-hunter-v4/icon.svg'
@@ -16,15 +19,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check JavaScript
-        run: node --check stock-hunter-v4/app.js
+        run: |
+          node --check stock-hunter-v4/app-core.js
+          node --check stock-hunter-v4/app-forecast.js
+          node --check stock-hunter-v4/app-runtime.js
       - name: Check manifest
         run: python -m json.tool stock-hunter-v4/manifest.webmanifest >/dev/null
       - name: Check required Persian UI
         run: |
           grep -q 'دکتر نیما افضل پور' stock-hunter-v4/index.html
-          grep -q 'بازار بورس در این لحظه تعطیل است' stock-hunter-v4/app.js
-          grep -q 'ورود پیشنهادی' stock-hunter-v4/app.js
-          grep -q 'پیش‌بینی بر پایه ایچیموکو' stock-hunter-v4/app.js
+          grep -q 'بازار بورس در این لحظه تعطیل است' stock-hunter-v4/app-runtime.js
+          grep -q '۸:۲۵' stock-hunter-v4/app-runtime.js
+          grep -q '۱۷:۰۰' stock-hunter-v4/app-runtime.js
+          grep -q 'ورود پیشنهادی' stock-hunter-v4/app-core.js
+          grep -q 'پیش‌بینی بر پایه ایچیموکو' stock-hunter-v4/app-forecast.js
+          grep -q 'چاپ / ذخیره PDF' stock-hunter-v4/index.html
+          grep -q 'شکار زودهنگام' stock-hunter-v4/index.html
           grep -q 'راهنمای محاسبات' stock-hunter-v4/index.html
           grep -q 'Vazirmatn' stock-hunter-v4/styles.css
           grep -q '>A<' stock-hunter-v4/icon.svg
