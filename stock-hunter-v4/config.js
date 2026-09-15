@@ -1,4 +1,6 @@
 window.STOCK_HUNTER_CONFIG = {
-  supabaseUrl: "__SUPABASE_URL__",
-  publishableKey: "__SUPABASE_PUBLISHABLE_KEY__"
+  SUPABASE_URL: 'https://summnepwuziwulzvpcms.supabase.co',
+  SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_NYVQwMabwGow-UFVcPx0qw_IvFCIjdr',
+  TABLE: 'stock_hunter_signals_v4',
+  REFRESH_MS: 5000
 };
