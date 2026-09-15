@@ -1,1 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#0fd37d"/><stop offset="1" stop-color="#168be9"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="#07111f"/><path d="M92 336l92-103 66 58 98-126 72 0-161 205-70-62-48 54z" fill="url(#g)"/><circle cx="394" cy="150" r="31" fill="#39d98a"/><text x="256" y="447" font-size="65" text-anchor="middle" fill="#dff7ed" font-family="sans-serif" font-weight="700">شکارچی</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="نشان شکارچی سهم">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#07111f"/><stop offset="1" stop-color="#102d49"/></linearGradient>
+    <linearGradient id="a" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#18dc92"/><stop offset="1" stop-color="#48b7ff"/></linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect x="18" y="18" width="476" height="476" rx="116" fill="url(#bg)" stroke="#274966" stroke-width="10"/>
+  <path d="M112 371L231 112h50l119 259h-58l-27-64H195l-27 64h-56zm103-114h80l-40-96-40 96z" fill="url(#a)" filter="url(#glow)"/>
+  <path d="M108 330c45-4 79-24 111-55l44 31c42-31 80-76 123-140" fill="none" stroke="#f3fbff" stroke-width="19" stroke-linecap="round" stroke-linejoin="round" opacity=".96"/>
+  <path d="M348 164h48v49" fill="none" stroke="#f3fbff" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="111" cy="330" r="13" fill="#18dc92"/>
+</svg>
