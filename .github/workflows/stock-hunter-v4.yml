@@ -1,0 +1,27 @@
+name: Stock Hunter v4 Worker
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'stock-hunter-v4/worker.py'
+      - '.github/workflows/stock-hunter-v4.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '20 5 * * 0,1,2,3,6'
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: stock-hunter-v4
+  cancel-in-progress: true
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 260
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run Stock Hunter scanner
+        run: python stock-hunter-v4/worker.py
