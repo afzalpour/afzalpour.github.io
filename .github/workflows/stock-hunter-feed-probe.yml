@@ -1,0 +1,19 @@
+name: Stock Hunter Alternate Feed Probe
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'stock-hunter-v4/probe_feed.py'
+      - '.github/workflows/stock-hunter-feed-probe.yml'
+  workflow_dispatch:
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Probe alternate feed
+        run: python stock-hunter-v4/probe_feed.py
