@@ -1,47 +1,55 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#07111f"><title>شکارچی سهم v4</title>
-  <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07111f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="شکارچی سهم">
+  <title>شکارچی سهم ـ نسخه ۴</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <header class="topbar">
-  <div class="brand"><div class="logo">ش</div><div><h1>شکارچی سهم <span>v4.0</span></h1><p>سامانه هوشمند کشف زودهنگام و پیش‌بینی تداوم حرکت سهام</p></div></div>
+  <div class="brand">
+    <div class="logo"><img src="icon.svg" alt="نشان شکارچی سهم"></div>
+    <div><h1>شکارچی سهم <span>نسخه ۴</span></h1><p>سامانه هوشمند کشف زودهنگام و پیش‌بینی تداوم حرکت سهام</p></div>
+  </div>
   <div class="designer">طراح: <b>دکتر نیما افضل پور</b></div>
 </header>
 <main class="wrap">
   <section class="status-strip">
-    <div><span class="dot" id="feedDot"></span><b id="feedState">در حال اتصال...</b><small id="scanTimes">—</small></div>
-    <div class="regime"><span>رژیم بازار</span><b id="regime">—</b><small id="breadth">—</small></div>
-    <div class="actions"><button id="soundBtn">🔔 هشدار روشن</button><button id="scanBtn">↻ اسکن</button><button id="exportBtn">خروجی CSV</button></div>
+    <div><span class="dot" id="feedDot"></span><b id="feedState">در حال بررسی خوراک بازار...</b><small id="scanTimes">—</small></div>
+    <div class="regime"><span>وضعیت کلی بازار</span><b id="regime">—</b><small id="breadth">—</small></div>
+    <div class="actions"><button id="soundBtn">🔔 هشدار روشن</button><button id="scanBtn">↻ تازه‌سازی</button><button id="exportBtn">دریافت خروجی</button></div>
   </section>
 
   <section class="kpis">
-    <article><span>🚀 شکار ویژه</span><b id="specialCount">۰</b><small>تداوم ۲–۳ روزه قوی</small></article>
-    <article><span>⚡ هشدار فوری</span><b id="urgentCount">۰</b><small>شتاب غیرعادی سفارشات</small></article>
-    <article><span>🟢 خرید / ورود</span><b id="buyCount">۰</b><small>تریگر فعلی بازار</small></article>
+    <article><span>🚀 شکار ویژه</span><b id="specialCount">۰</b><small>تداوم چندروزه قوی</small></article>
+    <article><span>⚡ هشدار فوری</span><b id="urgentCount">۰</b><small>شتاب غیرعادی سفارش‌ها</small></article>
+    <article><span>🟢 خرید / ورود</span><b id="buyCount">۰</b><small>نشانه فعلی بازار</small></article>
     <article><span>🏆 شکار برتر</span><b id="topSymbol">—</b><small id="topMeta">—</small></article>
   </section>
 
-  <section class="explain">
-    <div><b>Fast</b><span>تغییر لحظه‌ای دفتر سفارش</span></div><div><b>1D/2D/3D</b><span>احتمال تجربی تداوم</span></div><div><b>Risk</b><span>ریسک فیک/برگشت</span></div><div><b>Accel</b><span>شتاب تغییر سیگنال</span></div>
-  </section>
-
   <section class="filters">
-    <input id="search" placeholder="جست‌وجوی نماد..." autocomplete="off">
+    <input id="search" placeholder="جست‌وجوی نماد یا نام شرکت..." autocomplete="off">
     <select id="hunt"><option value="">همه وضعیت‌ها</option><option>شکار ویژه</option><option>هشدار فوری</option><option>شکار زودهنگام</option><option>مستعد تداوم</option><option>رصد</option></select>
-    <label>Fast ≥ <output id="fastVal">0</output><input id="minFast" type="range" min="0" max="95" value="0"></label>
-    <label>2-Day ≥ <output id="contVal">0</output><input id="minCont" type="range" min="0" max="95" value="0"></label>
+    <label>امتیاز لحظه‌ای ≥ <output id="fastVal">۰</output><input id="minFast" type="range" min="0" max="95" value="0"></label>
+    <label>تداوم دو روزه ≥ <output id="contVal">۰</output><input id="minCont" type="range" min="0" max="95" value="0"></label>
   </section>
 
   <section id="alertBox" class="alert-box" hidden></section>
-  <section class="table-card desktop-table"><table><thead><tr><th>#</th><th>نماد</th><th>شکار</th><th>تصمیم</th><th>Fast</th><th>Accel</th><th>۲ روز</th><th>۳ روز</th><th>Risk</th><th>QI</th><th>OFI</th><th>Bid Stack</th><th>Ask Pull</th><th>RVOL روزانه</th><th>قیمت</th><th>جزئیات</th></tr></thead><tbody id="tbody"></tbody></table></section>
+  <section class="table-card desktop-table"><table><thead><tr><th>ردیف</th><th>نماد</th><th>شکار</th><th>تصمیم</th><th>امتیاز لحظه‌ای</th><th>شتاب</th><th>تداوم ۲ روزه</th><th>تداوم ۳ روزه</th><th>ریسک</th><th>عدم‌تعادل صف</th><th>جریان سفارش</th><th>انباشت خرید</th><th>عقب‌نشینی فروش</th><th>حجم نسبی</th><th>قیمت</th><th>جزئیات</th></tr></thead><tbody id="tbody"></tbody></table></section>
   <section id="mobileList" class="mobile-list"></section>
 
-  <section class="notice" id="modelStats">کالیبراسیون مدل: در حال دریافت...</section><section class="notice"><b>توجه:</b> درصدهای ۱ تا ۳ روزه در نسخه ۴ «احتمال تجربی» هستند و تا زمانی که دیتاست کافی برای کالیبراسیون جمع نشود، تضمین آماری محسوب نمی‌شوند. هیچ سیگنالی تضمین سود یا صف خرید نیست.</section>
+  <section class="notice" id="modelStats">سنجش دقت مدل پس از جمع‌شدن داده کافی فعال می‌شود.</section>
+  <section class="notice"><b>توجه:</b> درصدهای تداوم، برآورد تجربی سامانه هستند و تضمین سود یا تشکیل صف خرید محسوب نمی‌شوند.</section>
 </main>
 
-<dialog id="detailDialog"><div class="detail-head"><div><h2 id="dSymbol">—</h2><p id="dCompany">—</p></div><button id="closeDetail">×</button></div><div id="detailBody"></div></dialog>
+<dialog id="detailDialog"><div class="detail-head"><div><h2 id="dSymbol">—</h2><p id="dCompany">—</p></div><button id="closeDetail" aria-label="بستن">×</button></div><div id="detailBody"></div></dialog>
 <script src="config.js"></script><script src="app.js"></script>
 </body></html>
