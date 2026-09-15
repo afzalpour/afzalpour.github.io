@@ -6,6 +6,7 @@ on:
       - 'stock-hunter-v4/app.js'
       - 'stock-hunter-v4/index.html'
       - 'stock-hunter-v4/styles.css'
+      - 'stock-hunter-v4/methodology.html'
       - 'stock-hunter-v4/manifest.webmanifest'
       - 'stock-hunter-v4/icon.svg'
       - '.github/workflows/stock-hunter-ui-check.yml'
@@ -20,7 +21,10 @@ jobs:
         run: python -m json.tool stock-hunter-v4/manifest.webmanifest >/dev/null
       - name: Check required Persian UI
         run: |
-          grep -q 'ستون‌ها' stock-hunter-v4/index.html
-          grep -q 'پل داده فعال نیست' stock-hunter-v4/app.js
+          grep -q 'دکتر نیما افضل پور' stock-hunter-v4/index.html
+          grep -q 'بازار بورس در این لحظه تعطیل است' stock-hunter-v4/app.js
+          grep -q 'ورود پیشنهادی' stock-hunter-v4/app.js
+          grep -q 'پیش‌بینی بر پایه ایچیموکو' stock-hunter-v4/app.js
+          grep -q 'راهنمای محاسبات' stock-hunter-v4/index.html
           grep -q 'Vazirmatn' stock-hunter-v4/styles.css
           grep -q '>A<' stock-hunter-v4/icon.svg
