@@ -81,23 +81,44 @@ jobs:
           grep -q 'app-hunt-v416.js' stock-hunter-v4/sw.js
           grep -q 'app-hunt-hierarchy-v416.js' stock-hunter-v4/sw.js
           grep -q '>A<' stock-hunter-v4/icon.svg
-      - name: Check load order, search isolation and single service worker registration
+      - name: Check Hunt load order
         run: |
           python - <<'PY'
           from pathlib import Path
-          root=Path('stock-hunter-v4')
-          html=(root/'index.html').read_text(encoding='utf-8')
+          html=Path('stock-hunter-v4/index.html').read_text(encoding='utf-8')
           assert html.index('app-session-v413.js') < html.index('app-hunt-v416.js') < html.index('app-hunt-hierarchy-v416.js')
           assert 'مستعد تداوم</option>' not in html
-          universe=(root/'app-universe.js').read_text(encoding='utf-8')
+          print('load-order: PASS')
+          PY
+      - name: Check universal search isolation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          universe=Path('stock-hunter-v4/app-universe.js').read_text(encoding='utf-8')
           assert 'return universeRows.slice().sort' in universe
-          hunt=(root/'app-hunt-v416.js').read_text(encoding='utf-8')
+          print('search-isolation: PASS')
+          PY
+      - name: Check forecast models excluded from Hunt Score
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          hunt=Path('stock-hunter-v4/app-hunt-v416.js').read_text(encoding='utf-8')
           body=hunt[hunt.index('function applyHuntV416'):hunt.index('function isGoalCandidateV416')]
           forbidden=['forecastIchimoku','forecastGann','bollinger','macd','obv']
           for token in forbidden:
               assert token.lower() not in body.lower(), token
-          regs=0
+          print('forecast-exclusion: PASS')
+          PY
+      - name: Check single service worker registration
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          root=Path('stock-hunter-v4')
+          matches=[]
           for p in root.glob('app-*.js'):
-              regs += p.read_text(encoding='utf-8').count("serviceWorker.register('./sw.js")
-          assert regs == 1, f'expected one SW registration, got {regs}'
+              n=p.read_text(encoding='utf-8').count("serviceWorker.register('./sw.js")
+              if n: matches.append((p.name,n))
+          print('registrations:', matches)
+          assert sum(n for _,n in matches) == 1, matches
+          assert matches == [('app-runtime.js',1)], matches
           PY
