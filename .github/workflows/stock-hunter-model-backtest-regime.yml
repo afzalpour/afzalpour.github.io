@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - 'stock-hunter-v4/research/backtest_5models_regime_adaptive.py'
+      - 'stock-hunter-v4/research/backtest_symbol_regime_affinity.py'
       - 'stock-hunter-v4/research/backtest_5models_v415.py'
       - 'stock-hunter-v4/research/backtest_5models_fast.py'
       - '.github/workflows/stock-hunter-model-backtest-regime.yml'
@@ -11,8 +12,10 @@ on:
 jobs:
   backtest:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - name: Run 180-case regime-aware adaptive backtest
         run: python stock-hunter-v4/research/backtest_5models_regime_adaptive.py
+      - name: Run symbol-by-regime affinity analysis
+        run: python stock-hunter-v4/research/backtest_symbol_regime_affinity.py
