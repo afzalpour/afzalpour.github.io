@@ -50,7 +50,7 @@ function snapshotDynamicsV416(x){
   const first=sn[0],last=sn[sn.length-1],prev=sn[sn.length-2];
   const span=Math.max(0,last.t-first.t),lastDt=Math.max(0,last.t-prev.t);
   const temporal=span>=20&&span<=15*60&&lastDt>0&&lastDt<=5*60;
-  const hasCore=(first.last>0&&last.last>0)||(first.buyDepth+first.sellDepth+last.buyDepth+last.sellDepth>0)||(last.volume>=first.volume);
+  const hasCore=(first.last>0&&last.last>0)||(first.buyDepth+first.sellDepth+last.buyDepth+last.sellDepth>0)||(first.volume>0||last.volume>0);
   const pv15=temporal&&first.last>0?pctH416(last.last,first.last)*(15/span):0;
   const db=last.buyDepth-first.buyDepth,ds=last.sellDepth-first.sellDepth;
   const den=Math.abs(db)+Math.abs(ds)+Math.max(last.buyDepth+last.sellDepth,1)*.08;
@@ -66,14 +66,21 @@ function snapshotDynamicsV416(x){
   }
   return {ready:Boolean(temporal&&hasCore),count:sn.length,span,lastDt,pv15,ofi,bidStack,askPull,tradeAccel};
 }
+function reconcileDynamicV416(current,windowValue,deadband){
+  const cur=Number(current||0),win=Number(windowValue||0);
+  // A non-trivial current delta is more recent and therefore wins, especially when it turns negative.
+  // Use the wider snapshot window only when the latest delta is effectively flat/noisy.
+  if(Math.abs(cur)>deadband)return cur>0&&win>0?Math.max(cur,win):cur;
+  return win;
+}
 function effectiveDynamicV416(x,dyn){
   return {
-    pv:Math.max(Number(x.pv||0),Number(dyn.pv15||0)),
-    ofi:Math.max(Number(x.ofi||0),Number(dyn.ofi||0)),
-    tradeAccel:Math.max(Number(x.tradeAccel||0),Number(dyn.tradeAccel||0)),
+    pv:reconcileDynamicV416(x.pv,dyn.pv15,.005),
+    ofi:reconcileDynamicV416(x.ofi,dyn.ofi,.01),
+    tradeAccel:reconcileDynamicV416(x.tradeAccel,dyn.tradeAccel,1),
     accel:Number(x.accel||0),
-    bidStack:Math.max(Number(x.bidStack||0),Number(dyn.bidStack||0)),
-    askPull:Math.max(Number(x.askPull||0),Number(dyn.askPull||0))
+    bidStack:reconcileDynamicV416(x.bidStack,dyn.bidStack,1),
+    askPull:reconcileDynamicV416(x.askPull,dyn.askPull,1)
   };
 }
 
