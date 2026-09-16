@@ -6,6 +6,7 @@ global.rows=[
   {id:'2',symbol:'وبملت',company:'بانک ملت',analyzed:true,market:'بورس',assetType:'سهام / سایر',updated:'2026-09-16T08:31:00Z'}
 ];
 global.filtered=()=>[];global.updateSummary=()=>{};global.cfg={};global.headers=()=>({});global.render=()=>{};global.page=1;
+global.setTimeout=()=>0;global.setInterval=()=>0;
 global.normUniverse=(r,m)=>m.get(String(r.ins_code))||({id:String(r.ins_code),symbol:r.symbol,company:r.company_name,analyzed:false});
 let controls={search:{value:'',textContent:''},hunt:{value:'',textContent:''},decision:{value:'',textContent:''},specialCount:{textContent:''},urgentCount:{textContent:''},buyCount:{textContent:''},topSymbol:{textContent:''},topMeta:{textContent:''}};
 global.$=id=>controls[id]||{value:'',textContent:'',addEventListener:()=>{}};
@@ -34,11 +35,21 @@ rows=[
   {id:'4',symbol:'D',company:'D',tradeTs:after17Tehran,volume:100,dayChangeV416:.1,hunt:'شکار ویژه',decision:'',huntScoreV416:95,todayOpportunityV416:95,fast:90,huntModeLabelV416:'شتاب مثبت'}
 ];
 const eodSrc=fs.readFileSync(__dirname+'/app-eod-v416.js','utf8');
-vm.runInThisContext(eodSrc+'\n;globalThis.__eodV416={isEndOfDayV416,hadActivity9to17V416,endOfDayPoolV416};');
+vm.runInThisContext(eodSrc+'\n;globalThis.__eodV416={isEndOfDayV416,hadActivity9to17V416,endOfDayPoolV416,strongestLedgerEventsV416,mergeEodLedgerV416};');
 assert.equal(__eodV416.isEndOfDayV416(),true);
 assert.equal(__eodV416.hadActivity9to17V416(rows[0]),true);
 assert.equal(__eodV416.hadActivity9to17V416(rows[3]),false);
 assert.equal(minutesLeftV416(rows[0]),30,'after close, feasibility clock should use last valid equity-session activity');
-const out=filtered();
-assert.deepEqual(out.map(x=>x.symbol),['A','B']);
+const fallback=filtered();
+assert.deepEqual(fallback.map(x=>x.symbol),['A','B']);
+
+const events=[
+  {symbol_id:'1',hunt_state:'هشدار فوری',hunt_mode:'acceleration',max_hunt_score:79,max_today_opportunity:82,day_change:.3,evidence_count:3,dynamic_evidence_count:2,first_seen_at:'2026-09-16T07:00:00Z',last_seen_at:'2026-09-16T07:10:00Z'},
+  {symbol_id:'1',hunt_state:'شکار ویژه',hunt_mode:'acceleration',max_hunt_score:88,max_today_opportunity:90,day_change:.5,evidence_count:5,dynamic_evidence_count:3,first_seen_at:'2026-09-16T08:00:00Z',last_seen_at:'2026-09-16T08:05:00Z'},
+  {symbol_id:'2',hunt_state:'هشدار فوری',hunt_mode:'reversal',max_hunt_score:74,max_today_opportunity:78,day_change:-.4,evidence_count:4,dynamic_evidence_count:2,first_seen_at:'2026-09-16T08:10:00Z',last_seen_at:'2026-09-16T08:20:00Z'}
+];
+const merged=__eodV416.mergeEodLedgerV416(events,rows);
+assert.deepEqual(merged.map(x=>[x.symbol,x.hunt]),[['A','شکار ویژه'],['B','هشدار فوری']]);
+assert.equal(merged[0].eodArchivedV416,true);
+assert.equal(applyHuntV416(merged[0]).hunt,'شکار ویژه','archived status must not be recomputed away after close');
 console.log('search-eod-v416 smoke: PASS');
