@@ -26,7 +26,7 @@ global.isHuntableNowV413=()=>true;
 
 const src=fs.readFileSync(__dirname+'/app-hunt-v416.js','utf8');
 vm.runInThisContext(src+'\n;globalThis.__hunt={applyHuntV416,snapshotDynamicsV416,feasibilityScoreV416};');
-const {applyHuntV416}=global.__hunt;
+const {applyHuntV416,snapshotDynamicsV416}=global.__hunt;
 
 function snaps(prices=[98.5,98.7,99.0],buy=[1000,1200,1500],sell=[1200,1000,800],vol=[10000,12000,16000]){
   const t=1789548000;
@@ -59,6 +59,17 @@ assert(acc.huntEvidenceV416>=3);
 assert(acc.huntDynamicEvidenceV416>=2);
 assert.equal(acc.huntGate,'');
 
+const stalePositive=applyHuntV416(base({
+  last_price:100.5,yesterday_price:100,low_price:99.5,high_price:101.5,
+  qi:.05,ofi:-.20,price_velocity:-.08,trade_accel:-20,signal_accel:-3,bid_stack_15s:-15,ask_pull_15s:-15,
+  daily_rvol:.5,real_flow_ratio:.8,
+  snapshots:snaps([100.0,100.2,100.5],[1000,1400,1900],[1400,1000,700],[10000,14000,21000])
+}));
+assert(stalePositive.effectiveOfiV416<0,'current negative OFI must override an older positive window');
+assert(stalePositive.effectivePvV416<0,'current negative price velocity must override an older positive window');
+assert(stalePositive.huntDynamicEvidenceV416<2,'stale positive window must not create enough dynamic evidence');
+assert(stalePositive.huntGate.includes('دو شاهد پویا'));
+
 const outside=applyHuntV416(base({last_price:101,yesterday_price:100}));
 assert.equal(outside.huntModeV416,'outside');
 assert(outside.huntGate.includes('+۱٪'));
@@ -66,6 +77,9 @@ assert(outside.huntGate.includes('+۱٪'));
 const noDelta=applyHuntV416(base({snapshots:[{T:1789548000,Last:99,Volume:16000,BuyDepth:1000,SellDepth:1000}]}));
 assert.equal(noDelta.deltaReadyV416,false);
 assert(noDelta.huntGate.includes('Delta'));
+
+const emptyTemporal=snapshotDynamicsV416({snapshots:[{T:1789548000},{T:1789548030},{T:1789548060}]});
+assert.equal(emptyTemporal.ready,false,'timestamps without price/depth/volume are not valid Delta history');
 
 const body=src.slice(src.indexOf('function applyHuntV416'),src.indexOf('function isGoalCandidateV416'));
 for(const forbidden of ['forecastIchimoku','forecastGann','bollinger','macd','obv']){
