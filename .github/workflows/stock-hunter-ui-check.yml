@@ -60,7 +60,7 @@ jobs:
           node --check stock-hunter-v4/sw.js
       - name: Hunt engine deterministic smoke
         run: node stock-hunter-v4/hunt-smoke-v416.js
-      - name: Universal search and end-of-day deterministic smoke
+      - name: Universal search and persistent end-of-day deterministic smoke
         run: node stock-hunter-v4/search-eod-smoke-v416.js
       - name: Check manifest
         run: python -m json.tool stock-hunter-v4/manifest.webmanifest >/dev/null
@@ -85,12 +85,15 @@ jobs:
           grep -q 'if(q)return universalRowsV416(q)' stock-hunter-v4/app-universal-search-v416.js
           grep -q "defaultStates=new Set(\['شکار ویژه','هشدار فوری'\])" stock-hunter-v4/app-eod-v416.js
           grep -q 'hadActivity9to17V416' stock-hunter-v4/app-eod-v416.js
+          grep -q 'stock_hunter_hunt_archive_v416' stock-hunter-v4/app-eod-v416.js
+          grep -q 'persistentEndOfDayPoolV416' stock-hunter-v4/app-eod-v416.js
+          grep -q 'ثبت پایدار روزانه' stock-hunter-v4/app-eod-v416.js
           grep -q 'تأیید تکمیلی ۱–۳ روزه' stock-hunter-v4/app-hunt-hierarchy-v416.js
           grep -q 'موتور شکار درون‌روزی' stock-hunter-v4/methodology.html
           grep -q 'پنج مدل ۱۰روزه' stock-hunter-v4/methodology.html
           grep -q 'Engineering Heuristic' stock-hunter-v4/methodology.html
           grep -q 'RequiredVelocity_15sec' stock-hunter-v4/hunt-methodology-v416.html
-          grep -q "shikar-sahm-v4.1.6-r3" stock-hunter-v4/sw.js
+          grep -q "shikar-sahm-v4.1.6-r4" stock-hunter-v4/sw.js
           grep -q 'app-hunt-v416.js' stock-hunter-v4/sw.js
           grep -q 'app-hunt-hierarchy-v416.js' stock-hunter-v4/sw.js
           grep -q 'app-universal-search-v416.js' stock-hunter-v4/sw.js
@@ -118,16 +121,21 @@ jobs:
           assert "$('hunt')" not in search and "$('decision')" not in search
           print('search-isolation: PASS')
           PY
-      - name: Check end-of-day retention rules
+      - name: Check persistent end-of-day retention rules
         run: |
           python - <<'PY'
           from pathlib import Path
           eod=Path('stock-hunter-v4/app-eod-v416.js').read_text(encoding='utf-8')
+          smoke=Path('stock-hunter-v4/search-eod-smoke-v416.js').read_text(encoding='utf-8')
           assert 'hm>=9*60&&hm<=17*60' in eod
           assert "['شکار ویژه','هشدار فوری']" in eod
           assert "now.hm>17*60" in eod
           assert 'minutesLeftV416=function' in eod
-          print('eod-retention: PASS')
+          assert 'stock_hunter_hunt_archive_v416' in eod
+          assert 'persistentEodArchiveReadyV416' in eod
+          assert 'peak_state' in eod and 'peak_score' in eod and 'sample_count' in eod
+          assert "hunt:'عادی'" in smoke and "peak_state:'شکار ویژه'" in smoke
+          print('persistent-eod-retention: PASS')
           PY
       - name: Check forecast models excluded from Hunt Score
         run: |
