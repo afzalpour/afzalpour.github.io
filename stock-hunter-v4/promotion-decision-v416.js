@@ -9,6 +9,13 @@ function promoMode(m){return m==='reversal'?'Reversal':m==='acceleration'?'Accel
 function promoGate(v){return v?'<span class="ok-text">پاس</span>':'<span class="warn-text">رد</span>'}
 function promoAssessmentRow(r){return `<tr><td>${promoMode(r.hunt_mode)}</td><td>${r.candidate_id||'—'}</td><td>${promoFa(r.candidate_selected_count,0)}</td><td>${promoPctRatio(r.selected_coverage_ratio)}</td><td>${promoSigned(r.utility_lift)}</td><td>${promoSigned(r.return_lift_3d_pct)}</td><td>${promoSigned(r.mae_delta_3d_pct)}</td><td>${promoSigned(r.positive_rate_delta_pp,1)}</td><td>${promoGate(r.pass_distinct_candidate)}</td><td>${promoGate(r.pass_min_samples)}</td><td>${promoGate(r.pass_coverage)}</td><td>${promoGate(r.pass_utility)}</td><td>${promoGate(r.pass_return)}</td><td>${promoGate(r.pass_mae_guard)}</td><td>${promoGate(r.pass_positive_rate_guard)}</td><td>${promoGate(r.promotion_gate_pass)}</td></tr>`}
 function promoProposalRow(r){return `<tr><td>${promoFa(r.proposal_id,0)}</td><td>${r.target_engine_version||'—'}</td><td>${r.proposal_status||'—'}</td><td>${r.created_at?new Date(r.created_at).toLocaleString('fa-IR'):'—'}</td><td class="mono">${r.dataset_fingerprint||'—'}</td><td>${r.proposal_note||'—'}</td></tr>`}
+function ensureRolloutLinkV417(){
+  const nav=document.querySelector('.cal-nav');
+  if(!nav||nav.querySelector('[data-rollout-v417]'))return;
+  const a=document.createElement('a');
+  a.className='top-link';a.href='rollout-v417.html';a.dataset.rolloutV417='1';a.textContent='Forward Shadow 4.1.7';
+  nav.appendChild(a);
+}
 async function loadPromotionDecision(){
   const base=String(promoCfg.SUPABASE_URL||promoCfg.supabaseUrl||'').replace(/\/$/,'');
   if(!base){promo$('promoStatus').textContent='تنظیمات اتصال موجود نیست.';return}
@@ -35,5 +42,6 @@ async function loadPromotionDecision(){
     promo$('promoStatus').textContent=`آخرین بررسی: ${new Date().toLocaleTimeString('fa-IR')}`;
   }catch(e){promo$('promoStatus').textContent=e.message||'خطا در Promotion Protocol'}
 }
+ensureRolloutLinkV417();
 promo$('refreshPromo').onclick=loadPromotionDecision;
 loadPromotionDecision();
