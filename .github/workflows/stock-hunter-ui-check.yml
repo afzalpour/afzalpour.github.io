@@ -10,6 +10,7 @@ on:
       - 'stock-hunter-v4/app-hotfix-v410.js'
       - 'stock-hunter-v4/app-integrated-v410.js'
       - 'stock-hunter-v4/app-integrated-summary-v410.js'
+      - 'stock-hunter-v4/app-explain-v411.js'
       - 'stock-hunter-v4/config.js'
       - 'stock-hunter-v4/index.html'
       - 'stock-hunter-v4/styles.css'
@@ -32,18 +33,18 @@ jobs:
           node --check stock-hunter-v4/app-hotfix-v410.js
           node --check stock-hunter-v4/app-integrated-v410.js
           node --check stock-hunter-v4/app-integrated-summary-v410.js
+          node --check stock-hunter-v4/app-explain-v411.js
       - name: Check manifest
         run: python -m json.tool stock-hunter-v4/manifest.webmanifest >/dev/null
-      - name: Check integrated Persian UI
+      - name: Check 4.1.1 Persian interpretation UI
         run: |
-          grep -q '۴.۱.۰' stock-hunter-v4/index.html
+          grep -q '۴.۱.۱' stock-hunter-v4/index.html
           grep -q 'دکتر نیما افضل پور' stock-hunter-v4/index.html
-          grep -q 'تصمیم نهایی' stock-hunter-v4/app-integrated-v410.js
-          grep -q 'امتیاز اجماع' stock-hunter-v4/app-integrated-v410.js
-          grep -q 'احتمال کالیبره‌شده نیست' stock-hunter-v4/app-integrated-v410.js
-          grep -q 'صبر برای تأیید' stock-hunter-v4/index.html
-          grep -q 'stock_hunter_integrated_v1' stock-hunter-v4/config.js
-          grep -q 'موتور تصمیم یکپارچه ۴.۱.۰' stock-hunter-v4/methodology.html
+          grep -q 'امتیاز تصمیم' stock-hunter-v4/app-explain-v411.js
+          grep -q 'قدرت عمق تقاضا' stock-hunter-v4/app-explain-v411.js
+          grep -q 'شاخص قدرت نسبی' stock-hunter-v4/app-explain-v411.js
+          grep -q 'DepthRatio=BuyDepth/SellDepth' stock-hunter-v4/methodology.html
+          grep -q 'درصد احتمال موفقیت نیست' stock-hunter-v4/methodology.html
           grep -q 'چاپ / ذخیره PDF' stock-hunter-v4/index.html
           grep -q 'تمام نمادهای بورس' stock-hunter-v4/app-universe.js
           grep -q 'Vazirmatn' stock-hunter-v4/styles.css
