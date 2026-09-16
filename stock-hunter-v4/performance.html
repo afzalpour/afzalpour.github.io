@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07111f">
+  <title>ارزیابی عملکرد شکارچی سهم ۴.۱.۶</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=4.1.6">
+  <link rel="stylesheet" href="extra.css?v=4.1.6">
+  <style>
+    .perf-shell{max-width:1500px;margin:auto;padding:18px}.perf-head{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:18px}.perf-head h1{margin:0;font-size:25px}.perf-head p{margin:6px 0 0;color:var(--muted,#94a3b8)}.perf-nav{display:flex;gap:8px;flex-wrap:wrap}.perf-nav a{text-decoration:none}.perf-note{padding:14px 16px;border:1px solid var(--border,#25324a);border-radius:14px;background:var(--panel,#0b1728);line-height:1.9;margin:14px 0}.perf-note strong{color:#fbbf24}.perf-controls{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.perf-controls select,.perf-controls button{min-height:42px}.perf-cards{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:10px;margin:14px 0}.perf-card{padding:15px;border:1px solid var(--border,#25324a);border-radius:14px;background:var(--panel,#0b1728)}.perf-card span{display:block;color:var(--muted,#94a3b8);font-size:12px}.perf-card b{display:block;font-size:24px;margin-top:8px}.perf-card small{display:block;color:var(--muted,#94a3b8);margin-top:5px}.perf-section{margin-top:18px}.perf-section h2{font-size:17px;margin:0 0 10px}.perf-table-wrap{overflow:auto;border:1px solid var(--border,#25324a);border-radius:14px}.perf-table{width:100%;border-collapse:collapse;min-width:1120px}.perf-table th,.perf-table td{padding:10px 9px;border-bottom:1px solid var(--border,#25324a);text-align:center;white-space:nowrap}.perf-table th{position:sticky;top:0;background:var(--panel,#0b1728);z-index:1}.perf-empty{padding:24px;text-align:center;color:var(--muted,#94a3b8)}.pos{color:#34d399}.neg{color:#fb7185}.muted{color:var(--muted,#94a3b8)}.perf-status{margin:10px 0;color:var(--muted,#94a3b8)}
+    @media(max-width:900px){.perf-head{align-items:flex-start;flex-direction:column}.perf-cards{grid-template-columns:repeat(2,minmax(130px,1fr))}.perf-shell{padding:12px}}
+  </style>
+</head>
+<body>
+<main class="perf-shell">
+  <header class="perf-head">
+    <div>
+      <h1>ارزیابی تجربی Hunt 4.1.6</h1>
+      <p>Outcome Tracking برای Reversal و Early Acceleration — بر پایه قیمت واقعی بعد از اولین Event</p>
+    </div>
+    <nav class="perf-nav">
+      <a class="top-link" href="index.html">بازگشت به شکارچی سهم</a>
+      <a class="top-link" href="hunt-methodology-v416.html">منطق شکار</a>
+    </nav>
+  </header>
+
+  <section class="perf-note">
+    <strong>این صفحه Probability مدل نیست.</strong>
+    «نرخ بازده مثبت» فقط سهم نمونه‌های بالغ‌شده‌ای است که بازده Close آن‌ها نسبت به قیمت اولین Alert بیشتر از صفر بوده است. MFE بیشترین حرکت مساعد و MAE بیشترین حرکت نامساعد از همان قیمت مبناست. معیارهای ۱/۲/۳ جلسه فقط پس از مشاهده واقعی جلسه بعدی تکمیل می‌شوند و هیچ داده آینده‌ای در زمان ثبت Event استفاده نمی‌شود.
+  </section>
+
+  <section class="perf-controls">
+    <select id="modeFilter"><option value="">هر دو سناریو</option><option value="reversal">Reversal</option><option value="acceleration">Acceleration</option></select>
+    <select id="stateFilter"><option value="">شکار ویژه + هشدار فوری</option><option value="شکار ویژه">شکار ویژه</option><option value="هشدار فوری">هشدار فوری</option></select>
+    <button id="refreshPerf">↻ تازه‌سازی</button>
+  </section>
+  <div id="perfStatus" class="perf-status">در حال دریافت داده عملکرد…</div>
+
+  <section class="perf-cards">
+    <article class="perf-card"><span>کل Eventها</span><b id="eventsTotal">۰</b><small>ثبت پایدار Intraday</small></article>
+    <article class="perf-card"><span>نمونه بالغ ۱ جلسه</span><b id="matured1">۰</b><small id="avgRet1">میانگین بازده: —</small></article>
+    <article class="perf-card"><span>بازده مثبت ۱ جلسه</span><b id="positive1">—</b><small>Empirical rate، نه Probability</small></article>
+    <article class="perf-card"><span>MFE / MAE تا ۱ جلسه</span><b id="mfeMae1">—</b><small>از قیمت اولین Alert</small></article>
+    <article class="perf-card"><span>نمونه بالغ ۳ جلسه</span><b id="matured3">۰</b><small id="avgRet3">میانگین بازده: —</small></article>
+    <article class="perf-card"><span>بازده مثبت ۳ جلسه</span><b id="positive3">—</b><small>فقط نمونه‌های بالغ</small></article>
+    <article class="perf-card"><span>رسیدن به +۱٪ تا ۳ جلسه</span><b id="plus1_3">—</b><small>بر مبنای High واقعی</small></article>
+    <article class="perf-card"><span>افت تا -۱٪ تا ۳ جلسه</span><b id="minus1_3">—</b><small>بر مبنای Low واقعی</small></article>
+  </section>
+
+  <section class="perf-section">
+    <h2>تفکیک عملکرد بر اساس سناریو، سطح Hunt و Score Bucket</h2>
+    <div class="perf-table-wrap"><table class="perf-table"><thead><tr>
+      <th>سناریو</th><th>وضعیت</th><th>Score</th><th>Event</th><th>بالغ ۱D</th><th>بازده ۱D</th><th>مثبت ۱D</th><th>MFE ۱D</th><th>MAE ۱D</th><th>بالغ ۳D</th><th>بازده ۳D</th><th>مثبت ۳D</th><th>+۱٪ تا ۳D</th><th>-۱٪ تا ۳D</th>
+    </tr></thead><tbody id="perfBody"></tbody></table></div>
+  </section>
+
+  <section class="perf-section">
+    <h2>آخرین Eventها و بلوغ Outcome</h2>
+    <div class="perf-table-wrap"><table class="perf-table"><thead><tr>
+      <th>تاریخ</th><th>نماد</th><th>سناریو</th><th>Hunt</th><th>Score</th><th>قیمت مبنا</th><th>جلسات مشاهده‌شده</th><th>بازده ۱D</th><th>MFE ۱D</th><th>MAE ۱D</th><th>بازده ۳D</th><th>MFE ۳D</th><th>MAE ۳D</th>
+    </tr></thead><tbody id="recentBody"></tbody></table></div>
+  </section>
+</main>
+<script src="config.js?v=4.1.6"></script>
+<script src="performance-v416.js?v=4.1.6"></script>
+</body>
+</html>
