@@ -1,0 +1,18 @@
+name: Stock Hunter Regime Adaptive Backtest
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'stock-hunter-v4/research/backtest_5models_regime_adaptive.py'
+      - 'stock-hunter-v4/research/backtest_5models_v415.py'
+      - 'stock-hunter-v4/research/backtest_5models_fast.py'
+      - '.github/workflows/stock-hunter-model-backtest-regime.yml'
+  workflow_dispatch:
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run 180-case regime-aware adaptive backtest
+        run: python stock-hunter-v4/research/backtest_5models_regime_adaptive.py
