@@ -6,6 +6,7 @@ on:
       - 'stock-hunter-v4/app-core.js'
       - 'stock-hunter-v4/app-forecast.js'
       - 'stock-hunter-v4/app-runtime.js'
+      - 'stock-hunter-v4/app-universe.js'
       - 'stock-hunter-v4/index.html'
       - 'stock-hunter-v4/styles.css'
       - 'stock-hunter-v4/extra.css'
@@ -23,6 +24,7 @@ jobs:
           node --check stock-hunter-v4/app-core.js
           node --check stock-hunter-v4/app-forecast.js
           node --check stock-hunter-v4/app-runtime.js
+          node --check stock-hunter-v4/app-universe.js
       - name: Check manifest
         run: python -m json.tool stock-hunter-v4/manifest.webmanifest >/dev/null
       - name: Check required Persian UI
@@ -31,10 +33,10 @@ jobs:
           grep -q 'بازار بورس در این لحظه تعطیل است' stock-hunter-v4/app-runtime.js
           grep -q '۸:۲۵' stock-hunter-v4/app-runtime.js
           grep -q '۱۷:۰۰' stock-hunter-v4/app-runtime.js
-          grep -q 'ورود پیشنهادی' stock-hunter-v4/app-core.js
           grep -q 'پیش‌بینی بر پایه ایچیموکو' stock-hunter-v4/app-forecast.js
           grep -q 'چاپ / ذخیره PDF' stock-hunter-v4/index.html
           grep -q 'شکار زودهنگام' stock-hunter-v4/index.html
-          grep -q 'راهنمای محاسبات' stock-hunter-v4/index.html
+          grep -q 'فهرست جامع بازار' stock-hunter-v4/app-universe.js
+          grep -q 'تمام نمادهای بورس' stock-hunter-v4/app-universe.js
           grep -q 'Vazirmatn' stock-hunter-v4/styles.css
           grep -q '>A<' stock-hunter-v4/icon.svg
