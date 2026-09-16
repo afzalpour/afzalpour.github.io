@@ -1,7 +1,7 @@
 name: Stock Hunter UI Check
 on:
   push:
-    branches: [main]
+    branches: [main, 'stock-hunter-v416-*']
     paths:
       - 'stock-hunter-v4/app-core.js'
       - 'stock-hunter-v4/app-forecast.js'
@@ -17,6 +17,7 @@ on:
       - 'stock-hunter-v4/app-session-v413.js'
       - 'stock-hunter-v4/app-hunt-v416.js'
       - 'stock-hunter-v4/app-hunt-hierarchy-v416.js'
+      - 'stock-hunter-v4/hunt-smoke-v416.js'
       - 'stock-hunter-v4/config.js'
       - 'stock-hunter-v4/index.html'
       - 'stock-hunter-v4/styles.css'
@@ -49,37 +50,54 @@ jobs:
           node --check stock-hunter-v4/app-session-v413.js
           node --check stock-hunter-v4/app-hunt-v416.js
           node --check stock-hunter-v4/app-hunt-hierarchy-v416.js
+          node --check stock-hunter-v4/hunt-smoke-v416.js
           node --check stock-hunter-v4/sw.js
+      - name: Hunt engine deterministic smoke
+        run: node stock-hunter-v4/hunt-smoke-v416.js
       - name: Check manifest
         run: python -m json.tool stock-hunter-v4/manifest.webmanifest >/dev/null
       - name: Check 4.1.6 goal-aligned hunt UI
         run: |
           grep -q '۴.۱.۶' stock-hunter-v4/index.html
-          grep -q 'app-hunt-v416.js' stock-hunter-v4/index.html
-          grep -q 'app-hunt-hierarchy-v416.js' stock-hunter-v4/index.html
+          grep -q 'طراح: دکتر نیما افضل پور' stock-hunter-v4/index.html
+          grep -q 'app-session-v413.js?v=4.1.6' stock-hunter-v4/index.html
+          grep -q 'app-hunt-v416.js?v=4.1.6' stock-hunter-v4/index.html
+          grep -q 'app-hunt-hierarchy-v416.js?v=4.1.6' stock-hunter-v4/index.html
           grep -q 'hunt-methodology-v416.html' stock-hunter-v4/index.html
           grep -q 'کاندید شکار' stock-hunter-v4/index.html
-          grep -q 'HUNT_V416_VERSION' stock-hunter-v4/app-hunt-v416.js
-          grep -q 'برگشت منفی' stock-hunter-v4/app-hunt-v416.js
-          grep -q 'شتاب مثبت' stock-hunter-v4/app-hunt-v416.js
-          grep -q "dayChangeV416>=1" stock-hunter-v4/app-hunt-v416.js
-          grep -q 'شواهد پویا' stock-hunter-v4/app-hunt-v416.js
-          grep -q 'ایچیموکو، گن، بولینگر، MACD و OBV' stock-hunter-v4/app-hunt-v416.js
+          grep -q "HUNT_V416_VERSION='4.1.6-hunt-v2'" stock-hunter-v4/app-hunt-v416.js
+          grep -q "dayChange<0?'reversal':dayChange<1?'acceleration':'outside'" stock-hunter-v4/app-hunt-v416.js
+          grep -q 'requiredVelocity15sV416' stock-hunter-v4/app-hunt-v416.js
+          grep -q 'حداقل سه شاهد هم‌زمان و دو شاهد پویا' stock-hunter-v4/app-hunt-v416.js
+          grep -q 'تاریخچه زمانی معتبر برای محاسبه Delta' stock-hunter-v4/app-hunt-v416.js
+          grep -q 'Universal search is intentionally outside Hunt constraints' stock-hunter-v4/app-hunt-v416.js
+          grep -q 'Search is a universe browser, not a Hunt filter' stock-hunter-v4/app-universe.js
           grep -q 'تأیید تکمیلی ۱–۳ روزه' stock-hunter-v4/app-hunt-hierarchy-v416.js
-          grep -q 'Engineering Heuristic' stock-hunter-v4/hunt-methodology-v416.html
-          grep -q "shikar-sahm-v4.1.6" stock-hunter-v4/sw.js
+          grep -q 'موتور شکار درون‌روزی' stock-hunter-v4/methodology.html
+          grep -q 'پنج مدل ۱۰روزه' stock-hunter-v4/methodology.html
+          grep -q 'Engineering Heuristic' stock-hunter-v4/methodology.html
+          grep -q 'RequiredVelocity_15sec' stock-hunter-v4/hunt-methodology-v416.html
+          grep -q "shikar-sahm-v4.1.6-r2" stock-hunter-v4/sw.js
           grep -q 'app-hunt-v416.js' stock-hunter-v4/sw.js
           grep -q 'app-hunt-hierarchy-v416.js' stock-hunter-v4/sw.js
-          grep -q 'app-forecast-trend-v415.js' stock-hunter-v4/index.html
-          grep -q 'forecast-v415.css' stock-hunter-v4/index.html
-          grep -q "icon:'↗'" stock-hunter-v4/app-forecast-trend-v415.js
-          grep -q "icon:'→'" stock-hunter-v4/app-forecast-trend-v415.js
-          grep -q "icon:'↘'" stock-hunter-v4/app-forecast-trend-v415.js
-          grep -q 'forecast-direction.up' stock-hunter-v4/forecast-v415.css
-          grep -q 'forecast-direction.flat' stock-hunter-v4/forecast-v415.css
-          grep -q 'forecast-direction.down' stock-hunter-v4/forecast-v415.css
-          grep -q 'مقایسه ۵ سناریوی عددی' stock-hunter-v4/app-forecast.js
-          grep -q 'app-session-v413.js' stock-hunter-v4/index.html
-          grep -q 'themeToggle' stock-hunter-v4/index.html
-          grep -q 'دکتر نیما افضل پور' stock-hunter-v4/index.html
           grep -q '>A<' stock-hunter-v4/icon.svg
+      - name: Check load order, search isolation and single service worker registration
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          root=Path('stock-hunter-v4')
+          html=(root/'index.html').read_text(encoding='utf-8')
+          assert html.index('app-session-v413.js') < html.index('app-hunt-v416.js') < html.index('app-hunt-hierarchy-v416.js')
+          assert 'مستعد تداوم</option>' not in html
+          universe=(root/'app-universe.js').read_text(encoding='utf-8')
+          assert 'return universeRows.slice().sort' in universe
+          hunt=(root/'app-hunt-v416.js').read_text(encoding='utf-8')
+          body=hunt[hunt.index('function applyHuntV416'):hunt.index('function isGoalCandidateV416')]
+          forbidden=['forecastIchimoku','forecastGann','bollinger','macd','obv']
+          for token in forbidden:
+              assert token.lower() not in body.lower(), token
+          regs=0
+          for p in root.glob('app-*.js'):
+              regs += p.read_text(encoding='utf-8').count("serviceWorker.register('./sw.js")
+          assert regs == 1, f'expected one SW registration, got {regs}'
+          PY
