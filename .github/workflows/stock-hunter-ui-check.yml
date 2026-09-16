@@ -19,6 +19,8 @@ on:
       - 'stock-hunter-v4/app-hunt-hierarchy-v416.js'
       - 'stock-hunter-v4/app-universal-search-v416.js'
       - 'stock-hunter-v4/app-eod-v416.js'
+      - 'stock-hunter-v4/performance-v416.js'
+      - 'stock-hunter-v4/performance.html'
       - 'stock-hunter-v4/hunt-smoke-v416.js'
       - 'stock-hunter-v4/search-eod-smoke-v416.js'
       - 'stock-hunter-v4/config.js'
@@ -55,6 +57,7 @@ jobs:
           node --check stock-hunter-v4/app-hunt-hierarchy-v416.js
           node --check stock-hunter-v4/app-universal-search-v416.js
           node --check stock-hunter-v4/app-eod-v416.js
+          node --check stock-hunter-v4/performance-v416.js
           node --check stock-hunter-v4/hunt-smoke-v416.js
           node --check stock-hunter-v4/search-eod-smoke-v416.js
           node --check stock-hunter-v4/sw.js
@@ -68,6 +71,7 @@ jobs:
         run: |
           grep -q '۴.۱.۶' stock-hunter-v4/index.html
           grep -q 'طراح: دکتر نیما افضل پور' stock-hunter-v4/index.html
+          grep -q 'performance.html' stock-hunter-v4/index.html
           grep -q 'app-session-v413.js?v=4.1.6' stock-hunter-v4/index.html
           grep -q 'app-hunt-v416.js?v=4.1.6' stock-hunter-v4/index.html
           grep -q 'app-hunt-hierarchy-v416.js?v=4.1.6' stock-hunter-v4/index.html
@@ -90,12 +94,29 @@ jobs:
           grep -q 'پنج مدل ۱۰روزه' stock-hunter-v4/methodology.html
           grep -q 'Engineering Heuristic' stock-hunter-v4/methodology.html
           grep -q 'RequiredVelocity_15sec' stock-hunter-v4/hunt-methodology-v416.html
-          grep -q "shikar-sahm-v4.1.6-r3" stock-hunter-v4/sw.js
+          grep -q "shikar-sahm-v4.1.6-r4" stock-hunter-v4/sw.js
+          grep -q 'performance.html' stock-hunter-v4/sw.js
+          grep -q 'performance-v416.js' stock-hunter-v4/sw.js
           grep -q 'app-hunt-v416.js' stock-hunter-v4/sw.js
           grep -q 'app-hunt-hierarchy-v416.js' stock-hunter-v4/sw.js
           grep -q 'app-universal-search-v416.js' stock-hunter-v4/sw.js
           grep -q 'app-eod-v416.js' stock-hunter-v4/sw.js
           grep -q '>A<' stock-hunter-v4/icon.svg
+      - name: Check performance semantics
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          html=Path('stock-hunter-v4/performance.html').read_text(encoding='utf-8')
+          js=Path('stock-hunter-v4/performance-v416.js').read_text(encoding='utf-8')
+          assert 'Probability مدل نیست' in html
+          assert 'قیمت اولین Alert' in html
+          assert 'stock_hunter_hunt_performance_v416' in js
+          assert 'stock_hunter_hunt_outcomes_v416' in js
+          assert 'positive_rate_1d_pct' in js
+          assert 'mfe_1d_pct' in js and 'mae_1d_pct' in js
+          assert 'return_3d_pct' in js
+          print('performance-semantics: PASS')
+          PY
       - name: Check Hunt load order
         run: |
           python - <<'PY'
