@@ -4,13 +4,14 @@ on:
     branches: [main]
     paths:
       - 'stock-hunter-v4/research/backtest_5models_v415.py'
+      - 'stock-hunter-v4/research/backtest_5models_fast.py'
       - '.github/workflows/stock-hunter-model-backtest.yml'
   workflow_dispatch:
 jobs:
   backtest:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
-      - name: Run point-in-time backtest
-        run: python stock-hunter-v4/research/backtest_5models_v415.py
+      - name: Run archive-backed point-in-time backtest
+        run: python stock-hunter-v4/research/backtest_5models_fast.py
