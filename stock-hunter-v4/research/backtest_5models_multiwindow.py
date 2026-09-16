@@ -1,11 +1,23 @@
 #!/usr/bin/env python3
-import csv, json, statistics, sys
+import csv, json, statistics, sys, time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import backtest_5models_v415 as b
 import backtest_5models_fast as fast
 
 ANCHORS = [20, 40, 60, 80, 100, 120]
 HORIZON = 10
+
+
+def fetch_tv_retry(symbol, kind, attempts=3):
+    last = None
+    for i in range(attempts):
+        try:
+            return fast.fetch_tv(symbol, kind)
+        except Exception as e:
+            last = e
+            if i + 1 < attempts:
+                time.sleep(1.0 + i)
+    raise last
 
 
 def eval_case(symbol, meta, hist, sessions_back):
@@ -89,7 +101,6 @@ def affinity_for_symbol(rows):
     advantage_pct = ((second_mean - best_mean) / second_mean * 100) if second_mean else 0.0
     wins = stats[best]['winner_count']
     beats = stats[best]['beat_baseline_count']
-    # Descriptive only; six partially-overlapping windows are too few for statistical proof.
     if wins >= 3 and beats >= 4 and advantage_pct >= 10:
         strength = 'قوی'
     elif wins >= 2 and beats >= 3 and advantage_pct >= 5:
@@ -112,8 +123,8 @@ def affinity_for_symbol(rows):
 
 def main():
     histories, errors = {}, {}
-    with ThreadPoolExecutor(max_workers=10) as ex:
-        fs = {ex.submit(fast.fetch_tv, sym, meta[2]): sym for sym, meta in b.SYMBOLS.items()}
+    with ThreadPoolExecutor(max_workers=5) as ex:
+        fs = {ex.submit(fetch_tv_retry, sym, meta[2]): sym for sym, meta in b.SYMBOLS.items()}
         for f in as_completed(fs):
             sym = fs[f]
             try:
