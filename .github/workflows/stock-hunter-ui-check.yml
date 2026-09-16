@@ -15,12 +15,15 @@ on:
       - 'stock-hunter-v4/app-forecast-trend-v415.js'
       - 'stock-hunter-v4/app-theme-v412.js'
       - 'stock-hunter-v4/app-session-v413.js'
+      - 'stock-hunter-v4/app-hunt-v416.js'
       - 'stock-hunter-v4/config.js'
       - 'stock-hunter-v4/index.html'
       - 'stock-hunter-v4/styles.css'
       - 'stock-hunter-v4/extra.css'
       - 'stock-hunter-v4/forecast-v415.css'
       - 'stock-hunter-v4/methodology.html'
+      - 'stock-hunter-v4/hunt-methodology-v416.html'
+      - 'stock-hunter-v4/sw.js'
       - 'stock-hunter-v4/manifest.webmanifest'
       - 'stock-hunter-v4/icon.svg'
       - '.github/workflows/stock-hunter-ui-check.yml'
@@ -43,11 +46,25 @@ jobs:
           node --check stock-hunter-v4/app-forecast-trend-v415.js
           node --check stock-hunter-v4/app-theme-v412.js
           node --check stock-hunter-v4/app-session-v413.js
+          node --check stock-hunter-v4/app-hunt-v416.js
+          node --check stock-hunter-v4/sw.js
       - name: Check manifest
         run: python -m json.tool stock-hunter-v4/manifest.webmanifest >/dev/null
-      - name: Check 4.1.5 forecast trend visuals
+      - name: Check 4.1.6 goal-aligned hunt UI
         run: |
-          grep -q '۴.۱.۵' stock-hunter-v4/index.html
+          grep -q '۴.۱.۶' stock-hunter-v4/index.html
+          grep -q 'app-hunt-v416.js' stock-hunter-v4/index.html
+          grep -q 'hunt-methodology-v416.html' stock-hunter-v4/index.html
+          grep -q 'کاندید شکار' stock-hunter-v4/index.html
+          grep -q 'HUNT_V416_VERSION' stock-hunter-v4/app-hunt-v416.js
+          grep -q 'برگشت منفی' stock-hunter-v4/app-hunt-v416.js
+          grep -q 'شتاب مثبت' stock-hunter-v4/app-hunt-v416.js
+          grep -q "dayChangeV416>=1" stock-hunter-v4/app-hunt-v416.js
+          grep -q 'شواهد پویا' stock-hunter-v4/app-hunt-v416.js
+          grep -q 'ایچیموکو، گن، بولینگر، MACD و OBV' stock-hunter-v4/app-hunt-v416.js
+          grep -q 'Engineering Heuristic' stock-hunter-v4/hunt-methodology-v416.html
+          grep -q "shikar-sahm-v4.1.6" stock-hunter-v4/sw.js
+          grep -q 'app-hunt-v416.js' stock-hunter-v4/sw.js
           grep -q 'app-forecast-trend-v415.js' stock-hunter-v4/index.html
           grep -q 'forecast-v415.css' stock-hunter-v4/index.html
           grep -q "icon:'↗'" stock-hunter-v4/app-forecast-trend-v415.js
