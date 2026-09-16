@@ -1,4 +1,4 @@
-const CACHE='shikar-sahm-v4.1.6-r3';
+const CACHE='shikar-sahm-v4.1.6-r4';
 const STATIC=[
   './','./index.html','./styles.css','./extra.css','./forecast-v415.css',
   './app-core.js','./app-forecast.js','./app-runtime.js','./app-universe.js',
