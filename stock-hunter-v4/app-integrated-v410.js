@@ -151,6 +151,6 @@ printDetail = function(){
 
 if($('printDetailBtn')) $('printDetailBtn').onclick=printDetail;
 if(typeof renderColumnOptions==='function') renderColumnOptions();
-if('serviceWorker'in navigator) navigator.serviceWorker.register('./sw.js?v=4.1.0').catch(()=>{});
+// Service Worker registration is centralized in app-runtime.js (4.1.6).
 // Reload once so rows already fetched by the previous runtime are remapped from the integrated view.
 setTimeout(()=>{try{load()}catch{}},60);
