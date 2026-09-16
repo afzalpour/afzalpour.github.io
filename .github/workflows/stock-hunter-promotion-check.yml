@@ -1,0 +1,37 @@
+name: Stock Hunter Promotion Protocol Check
+on:
+  push:
+    branches: [main, 'stock-hunter-v416-*']
+    paths:
+      - 'stock-hunter-v4/promotion-decision-v416.js'
+      - 'stock-hunter-v4/calibration.html'
+      - 'stock-hunter-v4/sw.js'
+      - '.github/workflows/stock-hunter-promotion-check.yml'
+jobs:
+  validate-promotion:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check promotion JavaScript
+        run: node --check stock-hunter-v4/promotion-decision-v416.js
+      - name: Check promotion protocol semantics
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          html=Path('stock-hunter-v4/calibration.html').read_text(encoding='utf-8')
+          js=Path('stock-hunter-v4/promotion-decision-v416.js').read_text(encoding='utf-8')
+          sw=Path('stock-hunter-v4/sw.js').read_text(encoding='utf-8')
+          assert 'Promotion Decision Protocol' in html
+          assert 'معیارهای Promotion قبل از مشاهده OOS فریز شده‌اند' in html
+          assert 'UI هیچ مسیر نوشتنی برای Promotion ندارد' in html
+          assert 'promotion-decision-v416.js?v=4.1.6' in html
+          assert 'stock_hunter_promotion_policy_v416' in js
+          assert 'stock_hunter_promotion_readiness_v416' in js
+          assert 'stock_hunter_promotion_assessment_v416' in js
+          assert 'stock_hunter_promotion_proposals_v416' in js
+          assert '/rpc/' not in js
+          assert 'fetch(' in js and 'method:' not in js
+          assert 'promotion-decision-v416.js' in sw
+          assert "shikar-sahm-v4.1.6-r7" in sw
+          print('promotion-protocol: PASS')
+          PY
