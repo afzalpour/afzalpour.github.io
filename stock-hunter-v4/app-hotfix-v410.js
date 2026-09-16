@@ -76,4 +76,3 @@ openDetail=async function(id){
   const ichi=forecastIchimoku(x),gann=forecastGann(x);
   $('detailBody').innerHTML=detailHTML(x,ichi,gann);
 };
-if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=4.0.10').catch(()=>{});
