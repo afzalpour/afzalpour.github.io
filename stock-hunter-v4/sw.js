@@ -5,7 +5,7 @@ const STATIC=[
   './app-hotfix-v410.js','./app-integrated-v410.js','./app-integrated-summary-v410.js',
   './app-explain-v411.js','./app-forecast-bridge-v414.js','./app-forecast-trend-v415.js',
   './app-theme-v412.js','./app-session-v413.js','./app-hunt-v416.js','./app-hunt-hierarchy-v416.js',
-  './app-universal-search-v416.js','./app-eod-v416.js','./performance.html','./performance-v416.js','./calibration.html','./calibration-v416.js','./candidate-evaluator-v416.js','./robustness-gate-v416.js','./promotion-decision-v416.js',
+  './app-universal-search-v416.js','./app-eod-v416.js','./performance.html','./performance-v416.js','./calibration.html','./calibration-v416.js','./candidate-evaluator-v416.js','./robustness-gate-v416.js','./promotion-decision-v416.js','./rollout-v417.html','./rollout-v417.js',
   './config.js','./manifest.webmanifest','./icon.svg','./methodology.html','./hunt-methodology-v416.html'
 ];
 self.addEventListener('install',e=>{
