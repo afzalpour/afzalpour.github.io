@@ -1,3 +1,4 @@
+(function(){
 'use strict';
 const cfg=window.STOCK_HUNTER_CONFIG||{};
 const $=id=>document.getElementById(id);
@@ -34,3 +35,4 @@ async function loadEvaluator(){
 }
 $('refreshEval').onclick=loadEvaluator;
 loadEvaluator();
+})();
