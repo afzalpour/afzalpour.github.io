@@ -33,7 +33,7 @@ jobs:
           assert '/rpc/' not in oos
           for verb in ['POST','PATCH','DELETE','PUT']:
               assert f"method:'{verb}'" not in oos and f'method:"{verb}"' not in oos
-          assert "shikar-sahm-v4.1.6-r8" in sw
+          assert "shikar-sahm-v4.1.6-r7" in sw
           assert "./oos-release-v416.js" in sw
           print('oos-release-semantics: PASS')
           PY
