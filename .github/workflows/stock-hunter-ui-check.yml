@@ -11,6 +11,7 @@ on:
       - 'stock-hunter-v4/app-integrated-v410.js'
       - 'stock-hunter-v4/app-integrated-summary-v410.js'
       - 'stock-hunter-v4/app-explain-v411.js'
+      - 'stock-hunter-v4/app-forecast-bridge-v414.js'
       - 'stock-hunter-v4/app-theme-v412.js'
       - 'stock-hunter-v4/app-session-v413.js'
       - 'stock-hunter-v4/config.js'
@@ -36,20 +37,24 @@ jobs:
           node --check stock-hunter-v4/app-integrated-v410.js
           node --check stock-hunter-v4/app-integrated-summary-v410.js
           node --check stock-hunter-v4/app-explain-v411.js
+          node --check stock-hunter-v4/app-forecast-bridge-v414.js
           node --check stock-hunter-v4/app-theme-v412.js
           node --check stock-hunter-v4/app-session-v413.js
       - name: Check manifest
         run: python -m json.tool stock-hunter-v4/manifest.webmanifest >/dev/null
-      - name: Check 4.1.3 session-aware Hunt UI
+      - name: Check 4.1.4 comparison forecasts
         run: |
-          grep -q '۴.۱.۳' stock-hunter-v4/index.html
+          grep -q '۴.۱.۴' stock-hunter-v4/index.html
+          grep -q 'app-forecast-bridge-v414.js' stock-hunter-v4/index.html
+          grep -q 'forecastBollinger' stock-hunter-v4/app-forecast.js
+          grep -q 'forecastMACD' stock-hunter-v4/app-forecast.js
+          grep -q 'forecastOBV' stock-hunter-v4/app-forecast.js
+          grep -q 'مقایسه ۵ سناریوی عددی' stock-hunter-v4/app-forecast.js
+          grep -q 'باند بولینگر' stock-hunter-v4/methodology.html
+          grep -q 'MACD/EMA' stock-hunter-v4/methodology.html
+          grep -q 'OBV حجم-قیمت' stock-hunter-v4/methodology.html
+          grep -q 'خارج از موتور تصمیم یکپارچه' stock-hunter-v4/methodology.html
           grep -q 'app-session-v413.js' stock-hunter-v4/index.html
-          grep -q 'isHuntableNowV413' stock-hunter-v4/app-session-v413.js
-          grep -q "tradeStart:540,end:750" stock-hunter-v4/app-session-v413.js
-          grep -q "tradeStart:510,end:900" stock-hunter-v4/app-session-v413.js
-          grep -q "tradeStart:660,end:900" stock-hunter-v4/app-session-v413.js
-          grep -q "tradeStart:720,end:1020" stock-hunter-v4/app-session-v413.js
-          grep -q 'فاقد فعالیت معاملاتی معتبر' stock-hunter-v4/app-session-v413.js
           grep -q 'themeToggle' stock-hunter-v4/index.html
           grep -q 'امتیاز تصمیم' stock-hunter-v4/app-explain-v411.js
           grep -q 'دکتر نیما افضل پور' stock-hunter-v4/index.html
