@@ -1,12 +1,168 @@
-<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>راهنمای محاسبات شکارچی سهم</title><style>@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');*{box-sizing:border-box;font-family:"Vazirmatn","IRANSans",Tahoma,sans-serif}body{margin:0;background:#07111f;color:#edf6ff;line-height:1.9}.w{max-width:1180px;margin:auto;padding:18px}.c{background:#0d1d2f;border:1px solid #1c3953;border-radius:14px;padding:16px;margin:11px 0}h1,h2{margin-top:0}.m{color:#8ea7bd}.t{width:100%;border-collapse:collapse}.t th,.t td{border-bottom:1px solid #19344e;padding:8px;text-align:right;vertical-align:top}.t th{background:#10243a;color:#adc2d4}.e{direction:ltr;text-align:left;background:#071827;border:1px solid #173750;border-radius:7px;padding:6px;color:#bde8ff;font-size:12px}.b{color:#8bd8ff;text-decoration:none}.warn{border:1px solid #705b25;background:#292311;border-radius:9px;padding:10px;color:#e6cc81}.good{color:#7ee0ad}.bad{color:#ef8da0}.mid{color:#e3cd75}.tag{display:inline-block;padding:2px 7px;border:1px solid #36566f;border-radius:8px;margin:2px;font-size:11px}@media(max-width:700px){.w{padding:9px}.t{font-size:10px}}</style></head><body><div class="w">
-<section class="c"><a class="b" href="./">← بازگشت به شکارچی سهم</a><h1>راهنمای محاسبات، تعریف و تفسیر شاخص‌ها</h1><p class="m">نسخه ۴.۱.۴ — طراح: دکتر نیما افضل پور</p><p>این سند شاخص‌های اصلی رابط شکارچی سهم را با تعریف، فرمول و تفسیر کاربردی توضیح می‌دهد.</p><div class="warn"><b>نکته مهم:</b> «امتیاز تصمیم» یک شاخص ۰ تا ۱۰۰ است و درصد احتمال موفقیت نیست. همچنین پنج سناریوی ۱۰روزه بخش «نمایش» فقط برای مشاهده و مقایسه کاربر هستند و رأی مستقل خرید/فروش محسوب نمی‌شوند.</div></section>
-<section class="c"><h2>۱. تصمیم نهایی و موتور یکپارچه</h2><table class="t"><tr><th>عنوان</th><th>تعریف / فرمول</th><th>تفسیر</th></tr><tr><td><b>تصمیم نهایی</b></td><td>ترکیب ریزساختار، تداوم، جریان پول/حجم، روند، مومنتوم، ریسک، تازگی داده و رژیم بازار.</td><td><span class="tag">ورود قوی</span><span class="tag">ورود اولیه</span><span class="tag">صبر برای تأیید</span><span class="tag">تحت نظر</span><span class="tag">عدم ورود</span></td></tr><tr><td><b>امتیاز تصمیم</b></td><td><div class="e">Score=clip(0.38×Fast+0.22×Continuation+0.18×Flow+0.14×Trend+0.08×Momentum−0.28×Risk+RegimeAdj,0,100)</div></td><td>۶۷+ قوی؛ ۵۷–۶۷ مناسب مشروط؛ ۴۷–۵۷ نیازمند تأیید؛ ۳۹–۴۷ ضعیف؛ زیر ۳۹ نامناسب.</td></tr><tr><td><b>اعتماد مدل</b></td><td><div class="e">Confidence=0.45×Agreement+0.35×DataQuality+0.20×Separation</div></td><td>۷۲+ بالا؛ ۵۵–۷۲ متوسط؛ زیر ۵۵ پایین. اعتماد بالا تضمین سود نیست.</td></tr><tr><td><b>Risk Gate</b></td><td>قفل ایمنی مستقل از امتیاز.</td><td>داده نامعتبر، ریسک ≥۷۲ یا لغو بسیار بالا همراه جذب ضعیف می‌تواند ورود را مسدود کند.</td></tr></table></section>
-<section class="c"><h2>۲. ریزساختار و رفتار سفارش‌ها</h2><table class="t"><tr><th>شاخص</th><th>تعریف و فرمول</th><th>تفسیر نسخه شکارچی سهم</th></tr><tr><td><b>امتیاز لحظه‌ای</b></td><td>ترکیب QI، OFI، کاهش صف فروش، انباشت خرید، Microprice، شتاب معامله، سرعت قیمت، جذب عرضه و Recovery؛ ۰–۱۰۰.</td><td>۷۰+ قوی؛ ۵۵–۷۰ متوسط؛ ۴۵–۵۵ خنثی/ضعیف؛ زیر ۴۵ ضعیف.</td></tr><tr><td><b>شتاب سیگنال</b></td><td><div class="e">SignalAccel=FastScore_now−FastScore_prev</div></td><td>+۲۰ به بالا تقویت شدید؛ +۸ تا +۲۰ مثبت؛ ±۸ خنثی؛ زیر −۸ تضعیف.</td></tr><tr><td><b>QI</b></td><td><div class="e">QI=(BuyDepth−SellDepth)/(BuyDepth+SellDepth)</div></td><td>بالای +۰٫۳۵ تقاضای قوی؛ ±۰٫۱۰ متعادل؛ زیر −۰٫۳۵ عرضه قوی.</td></tr><tr><td><b>OFI</b></td><td><div class="e">OFI=(ΔBuyDepth−ΔSellDepth)/(|ΔBuyDepth|+|ΔSellDepth|+0.08×TotalDepth)</div></td><td>بالاتر از +۰٫۲۵ قوی؛ ±۰٫۰۵ خنثی؛ کمتر از −۰٫۲۵ فشار فروش قوی.</td></tr><tr><td><b>انباشت خرید ۱۵ ثانیه</b></td><td><div class="e">100×(BuyDepth_now−BuyDepth_prev)/BuyDepth_prev</div></td><td>۵۰٪+ قوی؛ ۱۵–۵۰٪ مثبت؛ ±۱۵٪ خنثی.</td></tr><tr><td><b>عقب‌نشینی فروش</b></td><td><div class="e">100×(SellDepth_prev−SellDepth_now)/SellDepth_prev</div></td><td>۳۵٪+ قوی؛ ۱۰–۳۵٪ مثبت؛ منفی محسوس یعنی افزایش عرضه.</td></tr><tr><td><b>جذب عرضه</b></td><td><div class="e">Absorption%=100×ΔTradeVolume/RemovedSellVolume</div></td><td>۶۰٪+ قوی؛ ۳۰–۶۰٪ متوسط؛ زیر ۱۵٪ ضعیف/مشکوک.</td></tr><tr><td><b>لغو سفارش</b></td><td><div class="e">CancellationRatio=100−Absorption</div></td><td>زیر ۲۰٪ مطلوب؛ ۲۰–۵۰٪ متوسط؛ ۵۰–۸۰٪ پرریسک؛ ۸۰٪+ بسیار پرریسک.</td></tr><tr><td><b>سرعت قیمت</b></td><td><div class="e">PriceVelocity=%Change(Last_now,Last_prev)×15/Δt</div></td><td>بیش از +۰٫۲۰ قوی؛ ±۰٫۰۵ خنثی؛ کمتر از −۰٫۲۰ افت پرشتاب.</td></tr><tr><td><b>کاهش صف فروش</b></td><td><div class="e">100×(SellQueue_prev−SellQueue_now)/SellQueue_prev</div></td><td>۴۰٪+ قوی؛ ۱۵–۴۰٪ مثبت؛ مقدار منفی یعنی صف بزرگ‌تر شده است.</td></tr><tr><td><b>قدرت عمق تقاضا</b></td><td><div class="e">DepthRatio=BuyDepth/SellDepth</div></td><td>بالاتر از ۲ قوی؛ ۱٫۲–۲ مثبت؛ ۰٫۸–۱٫۲ متعادل؛ زیر ۰٫۸ ضعیف. مقدار ۹٫۹ یعنی عمق تقاضای قابل مشاهده ۹٫۹ برابر عرضه است، ولی باید همراه لغو سفارش سنجیده شود.</td></tr></table></section>
-<section class="c"><h2>۳. حجم، جریان پول و تداوم</h2><table class="t"><tr><th>شاخص</th><th>تعریف / فرمول</th><th>تفسیر</th></tr><tr><td><b>قدرت خریدار حقیقی</b></td><td><div class="e">RealFlowRatio=(RealBuyVol/RealBuyCount)/(RealSellVol/RealSellCount)</div></td><td>بیش از ۱ به نفع خریدار؛ بالاتر از ۱٫۵ قابل‌توجه؛ کمتر از ۱ به نفع فروشنده.</td></tr><tr><td><b>RVOL</b></td><td>حجم فعلی / حجم معمول دوره قابل مقایسه.</td><td>۲+ بسیار قوی؛ ۱٫۵–۲ قوی؛ ۱–۱٫۵ عادی/مثبت؛ زیر ۰٫۷ کم‌حجم.</td></tr><tr><td><b>تداوم ۲ روزه</b></td><td><div class="e">P2=logistic((Continuation−0.35×Risk−38)/12)×100</div></td><td>۷۰+ قوی؛ ۵۵–۷۰ مثبت؛ ۴۵–۵۵ خنثی؛ زیر ۴۵ ضعیف. احتمال کالیبره‌شده نیست.</td></tr><tr><td><b>تداوم ۳ روزه</b></td><td><div class="e">P3=logistic((Continuation−0.45×Risk−43)/13)×100</div></td><td>برای افق طولانی‌تر جریمه ریسک بیشتر است.</td></tr><tr><td><b>ریسک</b></td><td>ترکیب لغو سفارش، QI/OFI منفی، RSI بسیار بالا، مومنتوم منفی و نشانه‌های فیک.</td><td>زیر ۳۵ کم؛ ۳۵–۵۵ کنترل‌پذیر؛ ۵۵–۷۲ بالا؛ ۷۲+ Risk Gate.</td></tr></table></section>
-<section class="c"><h2>۴. شاخص‌های تکنیکال</h2><table class="t"><tr><th>شاخص</th><th>تعریف / فرمول</th><th>تفسیر</th></tr><tr><td><b>RSI14</b></td><td><div class="e">RS=AvgGain14/AvgLoss14; RSI=100−100/(1+RS)</div></td><td>بالای ۷۰ اشباع خرید؛ ۶۰–۷۰ مثبت؛ ۴۰–۶۰ متعادل؛ زیر ۳۰ اشباع فروش. اشباع به‌تنهایی سیگنال خرید/فروش نیست.</td></tr><tr><td><b>EMA9 / EMA21</b></td><td><div class="e">EMA_t=Price_t×k+EMA_prev×(1−k), k=2/(n+1)</div></td><td>EMA9 بالاتر از EMA21 همراه قیمت بالای EMA9 تأیید مثبت کوتاه‌مدت است.</td></tr><tr><td><b>VWAP</b></td><td><div class="e">VWAP=CumulativeTradeValue/CumulativeTradeVolume</div></td><td>قیمت بالای VWAP نشانه قدرت نسبی جلسه؛ پایین آن ضعف نسبی. مستقل سیگنال معامله نیست.</td></tr><tr><td><b>ATR14</b></td><td><div class="e">TR=max(H−L,|H−Cprev|,|L−Cprev|); ATR=mean(TR,14)</div></td><td>خوب/بد نیست؛ شدت نوسان را می‌سنجد. ATR/Price بالای ۴٪ بسیار پرنوسان است.</td></tr></table></section>
-<section class="c"><h2>۵. برنامه معامله</h2><table class="t"><tr><th>متغیر</th><th>معنی</th><th>تفسیر</th></tr><tr><td><b>ورود پیشنهادی</b></td><td>بهترین فروش قابل معامله یا قیمت آخر/پایانی.</td><td>فقط با تصمیم نهایی و داده تازه معتبر است.</td></tr><tr><td><b>حد ضرر</b></td><td>مرز ابطال سناریو.</td><td>عبور معتبر از آن یعنی فرض اولیه نقض شده است.</td></tr><tr><td><b>اهداف ۱ تا ۳</b></td><td>اهداف پلکانی بر پایه ریسک/نوسان.</td><td>سناریویی، نه تضمینی.</td></tr><tr><td><b>R/R</b></td><td><div class="e">R/R=(Target1−Entry)/(Entry−Stop)</div></td><td>۲+ مطلوب؛ ۱٫۵–۲ قابل قبول؛ ۱–۱٫۵ ضعیف؛ زیر ۱ نامطلوب.</td></tr></table></section>
-<section class="c"><h2>۶. پنج سناریوی مقایسه‌ای ۱۰ روز کاری</h2><p>داده ورودی این بخش، تاریخچه روزانه واقعی قیمت/حجم نماد است. این پنج روش <b>خارج از موتور تصمیم یکپارچه</b> هستند و فقط برای مقایسه کاربر نمایش داده می‌شوند.</p><table class="t"><tr><th>روش</th><th>فرمول/منطق پایه</th><th>نحوه تفسیر</th></tr><tr><td><b>ایچیموکو</b></td><td><div class="e">Tenkan=(HH9+LL9)/2; Kijun=(HH26+LL26)/2; SenkouA=(Tenkan+Kijun)/2; SenkouB=(HH52+LL52)/2</div>جهت تنکان/کیجون و جایگاه قیمت نسبت به ابر با ATR به مسیر عددی تبدیل می‌شود.</td><td>قیمت بالای ابر و Tenkan>Kijun مثبت‌تر؛ زیر ابر و Tenkan<Kijun منفی‌تر. حداقل ۵۲ روز داده.</td></tr><tr><td><b>گن</b></td><td><div class="e">GannLevel_k=Low20+k×(High20−Low20)/8</div>سطوح ۱/۸ با شیب ۲۰روزه قیمت ترکیب می‌شود.</td><td>برای مقایسه سطوح و سناریوی قیمت؛ روش آزمایشی با وزن صفر در تصمیم نهایی. حداقل ۲۰ روز.</td></tr><tr><td><b>باند بولینگر ۲۰،۲</b></td><td><div class="e">Middle=SMA20; Upper=SMA20+2σ20; Lower=SMA20−2σ20</div>در سناریوی شکارچی سهم، شیب ۱۰ روز اخیر و میزان فاصله قیمت از میانگین نیز برای برآورد مرکز مسیر استفاده می‌شود.</td><td>حرکت بالای میانگین و گسترش باندها معمولاً مومنتوم/نوسان قوی‌تر؛ نزدیکی باند بالا الزاماً فروش و نزدیکی باند پایین الزاماً خرید نیست. حداقل ۲۰ روز.</td></tr><tr><td><b>MACD/EMA</b></td><td><div class="e">MACD=EMA12−EMA26; Signal=EMA9(MACD); Histogram=MACD−Signal</div>شیب قیمت با اندازه و جهت Histogram ترکیب و به مسیر ۱۰روزه تبدیل می‌شود.</td><td>MACD بالای Signal و Histogram مثبت تأیید صعودی؛ حالت معکوس نزولی؛ عبورهای نزدیک صفر ضعیف‌تر. حداقل ۳۵ روز.</td></tr><tr><td><b>OBV حجم-قیمت</b></td><td><div class="e">OBV_t=OBV_prev+Volume (Close↑); OBV_prev−Volume (Close↓)</div>شیب OBV نسبت به متوسط حجم با شیب قیمت ترکیب می‌شود.</td><td>قیمت صعودی همراه OBV صعودی تأیید حجمی؛ رشد قیمت با OBV نزولی واگرایی هشداردهنده. حداقل ۲۰ روز قیمت و حجم.</td></tr></table><div class="warn"><b>توجه:</b> بولینگر، MACD/EMA و OBV در نسخه ۴.۱.۴ فقط ابزار مقایسه‌ای هستند و هیچ وزنی در «امتیاز تصمیم» ندارند. اعداد ۱۰روزه خروجی سناریوی کمی شکارچی سهم بر پایه فرمول‌های فوق و ATR هستند؛ خود اندیکاتور کلاسیک به‌تنهایی «قیمت آینده» تولید نمی‌کند.</div></section>
-<section class="c"><h2>۷. منطق شکارها</h2><table class="t"><tr><th>برچسب</th><th>معنی</th></tr><tr><td>شکار ویژه</td><td>امتیاز لحظه‌ای و تداوم بالا همراه ریسک کنترل‌شده.</td></tr><tr><td>هشدار فوری</td><td>جهش سریع امتیاز لحظه‌ای یا شتاب سیگنال.</td></tr><tr><td>شکار زودهنگام</td><td>نشانه‌های اولیه مناسب بدون تأیید کامل.</td></tr><tr><td>مستعد تداوم</td><td>قدرت بیشتر در افق چندروزه.</td></tr><tr><td>رصد</td><td>شرایط قابل پیگیری بدون مزیت کافی برای ورود.</td></tr><tr><td>عادی</td><td>مزیت خاصی مشاهده نشده است.</td></tr></table></section>
-<section class="c"><h2>۸. چرا شاخص‌ها باید با هم دیده شوند؟</h2><p>یک عدد منفرد می‌تواند گمراه‌کننده باشد. DepthRatio بالا همراه CancellationRatio بسیار بالا می‌تواند ناشی از سفارش ناپایدار باشد. RSI بالای ۷۰ نیز در روند قوی ممکن است مدت زیادی بالا بماند. همین منطق درباره پنج سناریوی ۱۰روزه صادق است: اختلاف بین آنها اطلاعات مفید درباره عدم قطعیت می‌دهد و نباید با رأی قطعی اشتباه شود.</p></section>
-<section class="c"><h2>۹. زمان‌بندی و تازگی داده</h2><p>روزهای معاملاتی شنبه تا چهارشنبه و ساعت تهران مبناست. جدول شکار فقط ابزارهایی را نشان می‌دهد که در جلسه معاملاتی نوع خود هستند و فعالیت معتبر امروز دارند؛ جست‌وجو همچنان کل نمادها را نمایش می‌دهد.</p><ul><li>سهام، صندوق سهامی، حق‌تقدم و اختیار سهام: معاملات ۹:۰۰ تا ۱۲:۳۰؛ پیش‌گشایش ۸:۴۵ تا ۹:۰۰.</li><li>صندوق درآمد ثابت: معاملات ۸:۳۰ تا ۱۵:۰۰؛ پیش‌گشایش ۸:۲۵ تا ۸:۳۰.</li><li>املاک، تسهیلات مسکن و بدهی: ۹:۰۰ تا ۱۵:۰۰.</li><li>صندوق سپرده کالایی انرژی: ۱۱:۰۰ تا ۱۵:۰۰؛ پیش‌گشایش ۱۰:۴۵ تا ۱۱:۰۰.</li><li>طلا، نقره، زعفران و گواهی کالایی: ۱۲:۰۰ تا ۱۷:۰۰؛ پیش‌گشایش ۱۱:۴۵ تا ۱۲:۰۰.</li></ul><p>برای تصمیم لحظه‌ای، رکورد قدیمی‌تر از ۱۰ دقیقه اجازه ورود جدید نمی‌دهد.</p></section>
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>راهنمای محاسبات شکارچی سهم ۴.۱.۶</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
+*{box-sizing:border-box;font-family:"Vazirmatn","IRANSans",Tahoma,sans-serif}
+body{margin:0;background:#07111f;color:#edf6ff;line-height:1.9}.w{max-width:1180px;margin:auto;padding:18px}
+.c{background:#0d1d2f;border:1px solid #1c3953;border-radius:14px;padding:16px;margin:11px 0}
+h1,h2,h3{margin-top:0}.m{color:#8ea7bd}.t{width:100%;border-collapse:collapse}.t th,.t td{border-bottom:1px solid #19344e;padding:8px;text-align:right;vertical-align:top}.t th{background:#10243a;color:#adc2d4}
+.e{direction:ltr;text-align:left;background:#071827;border:1px solid #173750;border-radius:7px;padding:6px;color:#bde8ff;font-size:12px;white-space:normal}
+.b{color:#8bd8ff;text-decoration:none}.warn{border:1px solid #705b25;background:#292311;border-radius:9px;padding:10px;color:#e6cc81}
+.good{color:#7ee0ad}.bad{color:#ef8da0}.mid{color:#e3cd75}.tag{display:inline-block;padding:2px 7px;border:1px solid #36566f;border-radius:8px;margin:2px;font-size:11px}
+@media(max-width:700px){.w{padding:9px}.t{font-size:10px}}
+</style>
+</head>
+<body><div class="w">
+<section class="c">
+<a class="b" href="./">← بازگشت به شکارچی سهم</a>
+<h1>راهنمای محاسبات، تعریف و تفسیر شاخص‌ها</h1>
+<p class="m">نسخه ۴.۱.۶ — طراح: دکتر نیما افضل پور</p>
+<p>هسته این نسخه «موتور شکار درون‌روزی» است. هدف موتور، شناسایی <b>برگشت منفی به مثبت در همان جلسه</b> و <b>حرکت‌های اولیه از ۰ تا کمتر از +۱٪</b> است؛ نه پیش‌بینی قیمت روز دهم.</p>
+<div class="warn"><b>اصل روش‌شناسی:</b> Hunt Score یک امتیاز مهندسی ۰ تا ۱۰۰ است و احتمال موفقیت نیست. پنج مدل ۱۰روزه ایچیموکو، گن، بولینگر، MACD/EMA و OBV فقط برای نمایش/مقایسه‌اند و هیچ وزن مستقیمی در Hunt Score ندارند.</div>
+</section>
+
+<section class="c"><h2>۱. موتور شکار درون‌روزی</h2>
+<table class="t">
+<tr><th>موضوع</th><th>تعریف / فرمول</th><th>تفسیر</th><th>نقش</th></tr>
+<tr><td><b>Reversal</b></td><td><div class="e">dayChange &lt; 0</div></td><td>نماد منفی است؛ موتور بررسی می‌کند آیا در زمان باقی‌مانده قابلیت رسیدن به صفر و ترجیحاً مثبت‌شدن دارد.</td><td>هدف A</td></tr>
+<tr><td><b>Acceleration</b></td><td><div class="e">0 ≤ dayChange &lt; 1%</div></td><td>نماد هنوز در ابتدای حرکت است؛ فقط با چند شاهد هم‌زمان و پویا وارد Hunt می‌شود.</td><td>هدف B</td></tr>
+<tr><td><b>Outside</b></td><td><div class="e">dayChange ≥ 1%</div></td><td>از دامنه «آغاز حرکت» عبور کرده و در جدول Hunt نمی‌آید؛ در Search عمومی همچنان قابل مشاهده است.</td><td>عدم شکار</td></tr>
+<tr><td><b>Hunt Score</b></td><td><div class="e">HuntScore = TodayOpportunity × (0.82 + 0.18 × Continuation/100)</div></td><td>Modifier بین ۰٫۸۲ تا ۱ است؛ تداوم نمی‌تواند Setup ضعیف امروز را به شکار قوی تبدیل کند.</td><td>رتبه‌بندی Hunt</td></tr>
+</table>
+
+<h3>وزن‌های Engineering Heuristic</h3>
+<table class="t">
+<tr><th>حالت</th><th>فرمول TodayOpportunity</th></tr>
+<tr><td>Reversal</td><td><div class="e">0.28×OrderPressure + 0.27×Impulse + 0.20×Feasibility + 0.15×FlowVolume + 0.10×MarketContext − RiskPenalty</div></td></tr>
+<tr><td>Acceleration</td><td><div class="e">0.30×OrderPressure + 0.30×Impulse + 0.15×Feasibility + 0.15×FlowVolume + 0.10×MarketContext − RiskPenalty</div></td></tr>
+</table>
+<p class="m">این وزن‌ها آموزش‌دیده یا کالیبره‌شده نیستند و پس از جمع‌آوری Snapshotهای Intraday باید با Walk-Forward Backtest تنظیم شوند.</p>
+</section>
+
+<section class="c"><h2>۲. آمادگی Delta و تاریخچه Snapshot</h2>
+<p>سیگنال‌های پویا فقط وقتی معتبرند که چند Snapshot زمان‌دار واقعی وجود داشته باشد. موتور نسخه ۴.۱.۶ وجود حداقل سه Snapshot، فاصله زمانی معتبر و قابلیت محاسبه تغییرات قیمت/عمق/حجم را کنترل می‌کند. صفر بودن OFI یا Price Velocity به‌تنهایی «خرابی Feed» محسوب نمی‌شود؛ اگر تاریخچه معتبر باشد، صفر می‌تواند واقعاً به معنی عدم تغییر در بازه اخیر باشد.</p>
+<table class="t">
+<tr><th>شاخص</th><th>فرمول / تعریف</th><th>مناسب</th><th>نامناسب</th><th>نقش</th></tr>
+<tr><td><b>Delta Readiness</b></td><td>حداقل ۳ Snapshot زمان‌دار؛ Span حداقل ۲۰ ثانیه و آخرین فاصله حداکثر ۵ دقیقه.</td><td>Ready</td><td>تاریخچه ناکافی/زمان نامعتبر</td><td>Risk Gate برای هر دو حالت</td></tr>
+<tr><td><b>Window Price Velocity</b></td><td><div class="e">%Change(Last_first, Last_last) × 15 / span_seconds</div></td><td>&gt;+0.05% در ۱۵ ثانیه معادل</td><td>منفی محسوس</td><td>Reversal + Acceleration</td></tr>
+<tr><td><b>Window OFI</b></td><td><div class="e">(ΔBuyDepth−ΔSellDepth)/(|ΔBuyDepth|+|ΔSellDepth|+0.08×TotalDepth)</div></td><td>&gt;+0.05؛ قوی‌تر از +0.25</td><td>&lt;−0.25</td><td>هر دو</td></tr>
+<tr><td><b>Bid Stack</b></td><td><div class="e">100×(BuyDepth_last−BuyDepth_first)/BuyDepth_first</div></td><td>&gt;+10%؛ قوی &gt;+50%</td><td>کاهش شدید</td><td>شاهد پویا</td></tr>
+<tr><td><b>Ask Pull</b></td><td><div class="e">100×(SellDepth_first−SellDepth_last)/SellDepth_first</div></td><td>&gt;+10%؛ قوی &gt;+35%</td><td>منفی محسوس</td><td>شاهد پویا</td></tr>
+</table>
+</section>
+
+<section class="c"><h2>۳. فشار سفارش (Order Pressure)</h2>
+<table class="t">
+<tr><th>شاخص</th><th>تعریف / فرمول</th><th>بازه مناسب / نامناسب</th><th>نقش</th></tr>
+<tr><td><b>QI</b></td><td><div class="e">QI=(BuyDepth−SellDepth)/(BuyDepth+SellDepth)</div></td><td>+۰٫۳۵ به بالا قوی؛ ±۰٫۱۰ متعادل؛ زیر −۰٫۳۵ عرضه قوی.</td><td>هر دو؛ مؤلفه OrderPressure</td></tr>
+<tr><td><b>OFI</b></td><td><div class="e">OFI=(ΔBuyDepth−ΔSellDepth)/(|ΔBuyDepth|+|ΔSellDepth|+0.08×TotalDepth)</div></td><td>+۰٫۲۵ قوی؛ ±۰٫۰۵ خنثی؛ زیر −۰٫۲۵ منفی.</td><td>هر دو؛ شاهد پویا</td></tr>
+<tr><td><b>Depth Ratio</b></td><td><div class="e">BuyDepth / SellDepth</div></td><td>&gt;۲ قوی؛ ۱٫۲–۲ مثبت؛ ۰٫۸–۱٫۲ متعادل؛ &lt;۰٫۸ ضعیف.</td><td>هر دو</td></tr>
+<tr><td><b>Bid Stack</b></td><td>رشد عمق خرید نسبت به Snapshot قبلی/پنجره.</td><td>&gt;۱۰٪ شاهد مثبت؛ &gt;۵۰٪ قوی.</td><td>هر دو؛ پویا</td></tr>
+<tr><td><b>Ask Pull</b></td><td>کاهش عمق فروش نسبت به Snapshot قبلی/پنجره.</td><td>&gt;۱۰٪ مثبت؛ &gt;۳۵٪ قوی.</td><td>هر دو؛ پویا</td></tr>
+</table>
+<p class="m">وزن داخلی OrderPressure: QI=32%، OFI=30%، DepthRatio=18%، BidStack=10%، AskPull=10%.</p>
+</section>
+
+<section class="c"><h2>۴. شتاب حرکت (Impulse)</h2>
+<table class="t">
+<tr><th>شاخص</th><th>تعریف</th><th>تفسیر</th><th>نقش</th></tr>
+<tr><td><b>Price Velocity</b></td><td>در Feed به نرخ معادل <b>۱۵ ثانیه</b> نرمال می‌شود.</td><td>&gt;+۰٫۰۵ شاهد شروع حرکت؛ مقدار منفی فشار خلاف جهت است.</td><td>Reversal + Acceleration</td></tr>
+<tr><td><b>Trade Acceleration</b></td><td>تغییر نرخ حجم معامله بین دو بازه متوالی.</td><td>&gt;+۱۵٪ شاهد مثبت؛ مقادیر بسیار بزرگ باید همراه نقدشوندگی و سایر شواهد خوانده شوند.</td><td>پویا</td></tr>
+<tr><td><b>Signal Acceleration</b></td><td><div class="e">FastScore_now − FastScore_prev</div></td><td>&gt;+۵ شاهد تقویت؛ +۲۰ به بالا تقویت شدید.</td><td>پویا</td></tr>
+<tr><td><b>Recovery</b></td><td>موقعیت قیمت در فاصله Low تا High یا برای Reversal میزان بازیابی Low تا قیمت دیروز.</td><td>۵۵+ برای برگشت آرام حمایتی؛ پایین یعنی بازیابی ضعیف.</td><td>بیشتر Reversal</td></tr>
+<tr><td><b>VWAP</b></td><td><div class="e">CumulativeTradeValue / CumulativeTradeVolume</div></td><td>قیمت بالای VWAP تأیید مثبت؛ مستقل سیگنال Hunt نیست.</td><td>تأیید Impulse</td></tr>
+<tr><td><b>EMA9 / EMA21</b></td><td>میانگین متحرک نمایی کوتاه‌مدت.</td><td>EMA9 بالاتر از EMA21 تأیید روند کوتاه‌مدت.</td><td>تأیید Impulse</td></tr>
+<tr><td><b>RSI</b></td><td><div class="e">RSI=100−100/(1+AvgGain/AvgLoss)</div></td><td>۴۵–۷۲ مساعد؛ بالای ۸۲ جریمه؛ زیر ۳۰ به‌تنهایی سیگنال خرید نیست.</td><td>تأیید Impulse</td></tr>
+</table>
+</section>
+
+<section class="c"><h2>۵. امکان تکمیل حرکت امروز (Feasibility)</h2>
+<table class="t">
+<tr><th>شاخص</th><th>فرمول</th><th>تفسیر</th></tr>
+<tr><td><b>Distance to Zero</b></td><td><div class="e">max(0, −dayChange)</div></td><td>هرچه فاصله کمتر، شانس عملی رسیدن به صفر در زمان باقی‌مانده بیشتر.</td></tr>
+<tr><td><b>Required Velocity</b></td><td><div class="e">RequiredVelocity_15min = DistanceToZero / MinutesToClose × 15</div></td><td>برای نمایش انسانی استفاده می‌شود.</td></tr>
+<tr><td><b>مقایسه هم‌واحد</b></td><td><div class="e">RequiredVelocity_15sec = DistanceToZero / (MinutesToClose×60) × 15</div></td><td>Price Velocity در Feed «۱۵ ثانیه‌ای» است؛ بنابراین برای امتیازدهی فقط با RequiredVelocity_15sec مقایسه می‌شود. این اصلاح از خطای واحد زمان جلوگیری می‌کند.</td></tr>
+<tr><td><b>Acceleration Headroom</b></td><td>فاصله قیمت فعلی تا سقف مجاز روز + زمان باقی‌مانده + وضعیت تکنیکال.</td><td>برای نمادهای ۰ تا کمتر از +۱٪؛ فضای حرکتی بیشتر مفید است اما بدون شواهد پویا کافی نیست.</td></tr>
+</table>
+</section>
+
+<section class="c"><h2>۶. جریان پول و حجم</h2>
+<table class="t">
+<tr><th>شاخص</th><th>تعریف</th><th>تفسیر</th><th>نقش</th></tr>
+<tr><td><b>Real Flow Ratio</b></td><td><div class="e">(RealBuyVolume/RealBuyCount) / (RealSellVolume/RealSellCount)</div></td><td>&gt;۱٫۱ مثبت؛ &gt;۱٫۵ قابل‌توجه؛ &lt;۱ فشار فروشنده حقیقی.</td><td>هر دو</td></tr>
+<tr><td><b>RVOL</b></td><td>حجم بازه فعلی نسبت به حجم معمول بازه‌های قابل مقایسه.</td><td>۱٫۱+ شاهد؛ ۱٫۵+ قوی؛ ۲+ بسیار قوی. صفر در صورت ناکافی‌بودن Candle history نباید به‌تنهایی به‌عنوان سیگنال منفی قطعی تفسیر شود.</td><td>هر دو</td></tr>
+<tr><td><b>Absorption</b></td><td><div class="e">100×ΔTradeVolume / RemovedSellVolume</div></td><td>۶۰+ قوی؛ ۳۰–۶۰ متوسط؛ زیر ۱۵ ضعیف.</td><td>Flow + Risk Gate</td></tr>
+<tr><td><b>Cancellation</b></td><td><div class="e">100 − Absorption</div></td><td>۹۰+ همراه Absorption زیر ۱۲، Risk Gate ایجاد می‌کند.</td><td>ریسک</td></tr>
+</table>
+</section>
+
+<section class="c"><h2>۷. شرایط بازار و تداوم ۱–۲ روزه</h2>
+<table class="t">
+<tr><th>شاخص</th><th>تعریف</th><th>تفسیر</th></tr>
+<tr><td><b>Market Breadth</b></td><td>نسبت نمادهای مثبت در Universe واجد شرایط.</td><td>عرض قوی‌تر، Context مساعدتر؛ به‌تنهایی شکار تولید نمی‌کند.</td></tr>
+<tr><td><b>Market Regime</b></td><td>ترکیب Breadth، بازده متوسط و ریسک بازار.</td><td>صعودی/خنثی/نزولی/پرنوسان؛ فقط ۱۰٪ TodayOpportunity.</td></tr>
+<tr><td><b>Continuation 1–2D</b></td><td>ترکیب Continuation، Trend، Flow و Momentum موجود.</td><td>فقط Modifier محدود؛ حداکثر Hunt Score را تا TodayOpportunity نگه می‌دارد.</td></tr>
+</table>
+</section>
+
+<section class="c"><h2>۸. Evidence Count و False Positive Control</h2>
+<p>برای Acceleration، مثبت بودن قیمت به‌تنهایی کافی نیست. نسخه ۴.۱.۶ حداقل <b>۳ شاهد هم‌زمان</b> می‌خواهد که حداقل <b>۲ شاهد پویا</b> باشند. شواهد پویا: Price Velocity، OFI، Trade Acceleration، Signal Acceleration، Bid Stack و Ask Pull. شواهد تکمیلی: QI، RVOL و Real Flow Ratio.</p>
+<p>برای Reversal نیز تاریخچه Delta باید آماده باشد؛ اگر Feasibility بسیار ضعیف باشد یا هیچ شاهد پویایی وجود نداشته و Recovery کمتر از ۵۵ باشد، موتور Abstain می‌کند.</p>
+</section>
+
+<section class="c"><h2>۹. Risk Gate و Abstention</h2>
+<table class="t">
+<tr><th>شرط</th><th>اثر</th></tr>
+<tr><td>قیمت/حجم نامعتبر</td><td>عدم شکار</td></tr>
+<tr><td>Delta history ناکافی</td><td>عدم شکار</td></tr>
+<tr><td>Risk Score ≥ 75</td><td>عدم شکار</td></tr>
+<tr><td>Cancellation ≥ 90 و Absorption &lt; 12</td><td>عدم شکار</td></tr>
+<tr><td>Reversal با Feasibility &lt; 28</td><td>عدم شکار</td></tr>
+<tr><td>Acceleration با Evidence &lt; 3 یا Dynamic Evidence &lt; 2</td><td>عدم شکار</td></tr>
+<tr><td>dayChange ≥ +1%</td><td>خارج از جدول Hunt؛ قابل مشاهده در Search</td></tr>
+</table>
+<p class="m">خروجی «No Hunt / Abstention» یک پاسخ معتبر موتور است؛ موتور مجبور نیست همیشه فرصت تولید کند.</p>
+</section>
+
+<section class="c"><h2>۱۰. وضعیت‌های Hunt</h2>
+<table class="t">
+<tr><th>وضعیت</th><th>آستانه مهندسی فعلی</th></tr>
+<tr><td>شکار ویژه</td><td>HuntScore ≥ 78، TodayOpportunity ≥ 82، Risk ≤ 45، Evidence ≥ 4، بدون Gate</td></tr>
+<tr><td>هشدار فوری</td><td>HuntScore ≥ 68، TodayOpportunity ≥ 74، Risk ≤ 55، Evidence ≥ 3، بدون Gate</td></tr>
+<tr><td>شکار زودهنگام</td><td>HuntScore ≥ 58، TodayOpportunity ≥ 64، Risk ≤ 62، Evidence ≥ 3، بدون Gate</td></tr>
+<tr><td>رصد</td><td>HuntScore ≥ 50 و TodayOpportunity ≥ 55</td></tr>
+<tr><td>عادی / عدم شکار</td><td>Gate فعال یا امتیاز پایین‌تر</td></tr>
+</table>
+<p class="m">این آستانه‌ها Probability نیستند و باید با Backtest Intraday و Walk-Forward اعتبارسنجی شوند.</p>
+</section>
+
+<section class="c"><h2>۱۱. ساعات معاملات و دامنه نمایش</h2>
+<table class="t">
+<tr><th>گروه</th><th>پیش‌گشایش</th><th>معاملات</th></tr>
+<tr><td>سهام، صندوق سهامی، حق‌تقدم و اختیار سهام</td><td>08:45–09:00</td><td>09:00–12:30</td></tr>
+<tr><td>صندوق درآمد ثابت</td><td>08:25–08:30</td><td>08:30–15:00</td></tr>
+<tr><td>املاک، تسهیلات مسکن و بدهی</td><td>08:45–09:00</td><td>09:00–15:00</td></tr>
+<tr><td>صندوق سپرده کالایی انرژی</td><td>10:45–11:00</td><td>11:00–15:00</td></tr>
+<tr><td>طلا، نقره، زعفران و گواهی کالایی</td><td>11:45–12:00</td><td>12:00–17:00</td></tr>
+</table>
+<p>Hunt Table فقط نمادهای دارای فعالیت معتبر امروز و داخل ساعت معامله را نشان می‌دهد. <b>Search عمومی مستقل از این Gate است</b> و می‌تواند نماد بسته، متوقف، بالای +۱٪ یا فاقد سیگنال Hunt را نمایش دهد.</p>
+</section>
+
+<section class="c"><h2>۱۲. پنج مدل ۱۰روزه: فقط نمایش</h2>
+<p><span class="tag">Ichimoku</span><span class="tag">Gann</span><span class="tag">Bollinger</span><span class="tag">MACD/EMA</span><span class="tag">OBV</span></p>
+<p>این مدل‌ها برای مشاهده سناریوهای تکنیکال و مقایسه کاربر باقی می‌مانند. خروجی آنها نه وارد TodayOpportunity می‌شود، نه Risk Gate، نه Hunt Score و نه رتبه‌بندی شکار.</p>
+</section>
+
+<section class="c"><h2>۱۳. مسیر Backtest صحیح</h2>
+<p>برای ارزیابی موتور باید Snapshotهای Intraday در زمان‌های ثابت ذخیره شوند و سه Label ساخته شود:</p>
+<ol>
+<li><b>Label A:</b> نماد در Snapshot منفی بوده؛ آیا تا پایان جلسه از صفر عبور کرده و مثبت بسته شده است؟</li>
+<li><b>Label B:</b> نماد بین ۰ تا +۱٪ بوده؛ آیا بعداً همان روز به حرکت قوی، مثلاً +۲٪/+۳٪ یا نزدیک سقف روز رسیده است؟</li>
+<li><b>Label C:</b> آیا حرکت در D+1 یا D+2 ادامه داشته است؟</li>
+</ol>
+<p>تنظیم وزن‌ها باید Walk-Forward باشد؛ تا قبل از کالیبراسیون خارج از نمونه، هیچ عددی با عنوان «احتمال موفقیت» نمایش داده نمی‌شود.</p>
+</section>
 </div></body></html>
