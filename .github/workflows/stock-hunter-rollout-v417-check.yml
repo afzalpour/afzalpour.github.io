@@ -1,0 +1,49 @@
+name: Stock Hunter 4.1.7 Forward Shadow Check
+on:
+  push:
+    branches: [main, 'stock-hunter-v417-*']
+    paths:
+      - 'stock-hunter-v4/rollout-v417.html'
+      - 'stock-hunter-v4/rollout-v417.js'
+      - 'stock-hunter-v4/promotion-decision-v416.js'
+      - 'stock-hunter-v4/sw.js'
+      - '.github/workflows/stock-hunter-rollout-v417-check.yml'
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check JavaScript
+        run: |
+          node --check stock-hunter-v4/rollout-v417.js
+          node --check stock-hunter-v4/promotion-decision-v416.js
+          node --check stock-hunter-v4/sw.js
+      - name: Check forward shadow semantics
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          html=Path('stock-hunter-v4/rollout-v417.html').read_text(encoding='utf-8')
+          js=Path('stock-hunter-v4/rollout-v417.js').read_text(encoding='utf-8')
+          promo=Path('stock-hunter-v4/promotion-decision-v416.js').read_text(encoding='utf-8')
+          sw=Path('stock-hunter-v4/sw.js').read_text(encoding='utf-8')
+          assert 'Champion / Challenger Forward Shadow' in html
+          assert 'Auto-Activate خاموش است' in html
+          assert 'هیچ Button/RPC عمومی' in html
+          assert 'تعداد روزهای مشترک' in html
+          assert 'stock_hunter_rollout_policy_v417' in js
+          assert 'stock_hunter_rollout_readiness_v417' in js
+          assert 'stock_hunter_champion_challenger_metrics_v417' in js
+          assert 'stock_hunter_challenger_shadow_samples_v417' in js
+          assert 'activation_review_ready' in js and 'auto_activate' in js
+          lower=js.lower()
+          assert 'method:\'post\'' not in lower and 'method:"post"' not in lower
+          assert '/rpc/' not in lower
+          assert 'rollout-v417.html' in promo
+          assert "shikar-sahm-v4.1.6-r7" in sw
+          assert './rollout-v417.html' in sw and './rollout-v417.js' in sw
+          print('forward-shadow-semantics: PASS')
+          PY
+      - name: Verify production engine remains 4.1.6
+        run: |
+          grep -q "HUNT_V416_VERSION='4.1.6-hunt-v2'" stock-hunter-v4/app-hunt-v416.js
+          grep -q 'هیچ Button/RPC عمومی برای فعال‌سازی 4.1.7 وجود ندارد' stock-hunter-v4/rollout-v417.html
