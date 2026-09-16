@@ -1,4 +1,9 @@
 'use strict';
+const cellBeforeV410=cell;
+cell=function(k,x){
+  if(k==='details')return `<button class="detail-btn" data-id="${esc(x.id)}">نمایش</button>`;
+  return cellBeforeV410(k,x);
+};
 async function resolveLiveDetailRow(id){
   const key=String(id||'');
   let x=rows.find(r=>String(r.id)===key);
@@ -17,6 +22,10 @@ async function resolveLiveDetailRow(id){
     x.analyzed=true;
     const i=rows.findIndex(z=>String(z.id)===key);
     if(i>=0)rows[i]=x;else rows.push(x);
+    if(typeof universeRows!=='undefined'){
+      const u=universeRows.findIndex(z=>String(z.id)===key);
+      if(u>=0)universeRows[u]={...universeRows[u],...x,analyzed:true};
+    }
     return x;
   }catch{return null;}
 }
@@ -39,3 +48,4 @@ openDetail=async function(id){
   const ichi=forecastIchimoku(x),gann=forecastGann(x);
   $('detailBody').innerHTML=detailHTML(x,ichi,gann);
 };
+if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=4.0.10').catch(()=>{});
