@@ -43,16 +43,15 @@ function orderPressureScoreV416(x){
 }
 
 function technicalImpulseScoreV416(x){
-  let s=50,w=1;
-  if(x.vwap>0){s+=x.last>=x.vwap?12:-10;w+=.25;}
-  if(x.ema9>0&&x.ema21>0){s+=x.ema9>x.ema21?12:-10;w+=.25;}
+  let s=50;
+  if(x.vwap>0)s+=x.last>=x.vwap?12:-10;
+  if(x.ema9>0&&x.ema21>0)s+=x.ema9>x.ema21?12:-10;
   if(x.rsi>0){
     if(x.rsi>=45&&x.rsi<=72)s+=8;
     else if(x.rsi>82)s-=14;
     else if(x.rsi<30)s-=5;
-    w+=.2;
   }
-  return clampH416(s/w*1.35);
+  return clampH416(s);
 }
 
 function zeroRecoveryV416(x){
@@ -215,6 +214,7 @@ if(!columns.some(c=>c[0]==='huntSetupV416')){
 const cellBeforeHuntV416=cell;
 cell=function(k,x){
   if(x?.analyzed!==false)applyHuntV416(x);
+  if(x?.analyzed===false&&['dayMoveV416','huntSetupV416','huntScoreV416'].includes(k))return '—';
   if(k==='dayMoveV416'){
     const v=Number(x.dayChangeV416||0),cls=v<0?'risk-high':v<1?'risk-low':'';
     return `<b class="${cls}">${v>0?'+':''}${fa(v,2)}٪</b>`;
@@ -247,6 +247,15 @@ filtered=function(){
     if(d&&x.decision!==d)return false;
     return true;
   }).sort((a,b)=>b.huntScoreV416-a.huntScoreV416||b.todayOpportunityV416-a.todayOpportunityV416||b.fast-a.fast);
+};
+
+renderMobile=function(a){
+  $('mobileList').innerHTML=a.length?a.map(x=>{
+    if(x?.analyzed!==false)applyHuntV416(x);
+    const setup=x.huntModeV416==='reversal'?'↗ برگشت منفی':x.huntModeV416==='acceleration'?'⚡ شتاب مثبت':'—';
+    const ch=Number(x.dayChangeV416||0);
+    return `<article class="mobile-card"><div class="mobile-head"><div><div class="mobile-symbol">${esc(x.symbol)}</div><div class="company">${esc(x.company)}</div></div><div><span class="badge ${hc(x.hunt)}">${esc(x.hunt)}</span></div></div><div class="mobile-metrics"><div><span>نوع فرصت</span><b>${setup}</b></div><div><span>تغییر</span><b>${ch>0?'+':''}${fa(ch,2)}٪</b></div><div><span>امتیاز شکار</span><b>${fa(x.huntScoreV416,1)}</b></div><div><span>قدرت امروز</span><b>${fa(x.todayOpportunityV416,1)}</b></div><div><span>تداوم ۱–۲ روزه</span><b>${fa(x.continuation12V416,1)}</b></div></div><div class="mobile-foot"><span>${esc(x.huntDecisionV416||'')}</span><button class="detail-btn" data-id="${esc(x.id)}">جزئیات</button></div></article>`;
+  }).join(''):'<div class="alert-box">در این لحظه کاندید هدف‌محور مطابق فیلتر فعلی وجود ندارد.</div>';
 };
 
 updateSummary=function(){
