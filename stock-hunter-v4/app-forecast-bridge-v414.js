@@ -13,3 +13,12 @@ if(typeof detailBefore411==='function'){
     }finally{window.__shMetricContext411=null;}
   };
 }
+const forecastStyle414=document.createElement('style');
+forecastStyle414.textContent=`
+.forecast-table-wrap{overflow-x:auto!important}
+.forecast-table{min-width:760px}
+.forecast-box small{display:block;margin-top:5px;color:#7f9ab1;font-size:9px}
+html[data-theme="light"] .forecast-box small{color:#617b90}
+@media(max-width:760px){.forecast-table{min-width:720px}.forecast-box{grid-column:1/-1!important}}
+`;
+document.head.appendChild(forecastStyle414);
