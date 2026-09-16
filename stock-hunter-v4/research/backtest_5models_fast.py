@@ -4,31 +4,51 @@ from concurrent.futures import ThreadPoolExecutor,as_completed
 from urllib.request import Request,urlopen
 import backtest_5models_v415 as b
 
-def fetch_members(ins):
-    url=f'https://members.tsetmc.com/tsev2/chart/data/Financial.aspx?i={ins}&t=ph&a=0'
-    req=Request(url,headers={'User-Agent':b.UA,'Accept':'text/csv,text/plain,*/*'})
-    with urlopen(req,timeout=10) as r: raw=r.read()
-    if raw[:2]==b'\x1f\x8b': raw=gzip.decompress(raw)
-    text=raw.decode('utf-8','ignore').strip(); out=[]
-    for rec in text.split(';'):
-        parts=rec.strip().split(',')
-        if len(parts)<7: continue
+def _req(url,timeout=6):
+    req=Request(url,headers={'User-Agent':b.UA,'Accept':'application/json,text/plain,*/*'})
+    with urlopen(req,timeout=timeout) as r: return r.read()
+
+def _parse_daily_json(raw):
+    j=json.loads(raw.decode('utf-8','ignore')); arr=j.get('closingPriceDaily') or [] ; out=[]
+    for z in arr:
         try:
-            date,pmax,pmin,pf,pl,tvol,pc=parts[:7]
-            row={'date':date,'high':float(pmax),'low':float(pmin),'open':float(pf),'close':float(pc),'volume':float(tvol),'py':0.0}
+            row={'date':str(z.get('dEven') or ''),'high':float(z.get('priceMax') or 0),'low':float(z.get('priceMin') or 0),'open':float(z.get('priceFirst') or 0),'close':float(z.get('pClosing') or z.get('pDrCotVal') or 0),'volume':float(z.get('qTotTran5J') or 0),'py':float(z.get('priceYesterday') or 0)}
             if row['date'] and row['high']>0 and row['low']>0 and row['close']>0: out.append(row)
         except Exception: pass
-    out.sort(key=lambda r:r['date'])
-    if len(out)<90: raise RuntimeError(f'members API returned only {len(out)} rows')
-    return out
+    return sorted(out,key=lambda r:r['date'])
 
-def eval_symbol(symbol,meta,hist):
+def _parse_chart_json(raw):
+    j=json.loads(raw.decode('utf-8','ignore')); arr=j.get('closingPriceChartData') or []; out=[]
+    for z in arr:
+        try:
+            date=str(z.get('dEven') or z.get('date') or z.get('time') or z.get('t') or '')
+            row={'date':date,'open':float(z.get('priceFirst') or z.get('open') or z.get('o') or 0),'high':float(z.get('priceMax') or z.get('high') or z.get('h') or 0),'low':float(z.get('priceMin') or z.get('low') or z.get('l') or 0),'close':float(z.get('pClosing') or z.get('close') or z.get('c') or z.get('pDrCotVal') or 0),'volume':float(z.get('qTotTran5J') or z.get('volume') or z.get('v') or 0),'py':float(z.get('priceYesterday') or 0)}
+            if row['date'] and row['high']>0 and row['low']>0 and row['close']>0: out.append(row)
+        except Exception: pass
+    return sorted(out,key=lambda r:r['date'])
+
+def fetch_history(ins):
+    attempts=[]
+    urls=[
+      ('cdn10-daily',f'https://cdn10.tsetmc.com/api/ClosingPrice/GetClosingPriceDailyList/{ins}/0',_parse_daily_json),
+      ('cdn10-chart',f'https://cdn10.tsetmc.com/api/ClosingPrice/GetChartData/{ins}/D',_parse_chart_json),
+      ('cdn-chart',f'https://cdn.tsetmc.com/api/ClosingPrice/GetChartData/{ins}/D',_parse_chart_json),
+    ]
+    for label,url,parser in urls:
+        try:
+            out=parser(_req(url,6))
+            if len(out)>=90:return out,label
+            attempts.append(f'{label}:{len(out)} rows')
+        except Exception as e: attempts.append(f'{label}:{type(e).__name__}')
+    raise RuntimeError('; '.join(attempts))
+
+def eval_symbol(symbol,meta,hist,source):
     ins,sector,kind=meta; latest_i=len(hist)-1; anchor_i=latest_i-20; target_i=anchor_i+10
     train=hist[:anchor_i+1]; anchor=hist[anchor_i]['close']; actual=hist[target_i]['close']; adir=b.actual_dir(anchor,actual)
-    row={'symbol':symbol,'sector':sector,'source':'TSETMC-members','anchor_date':hist[anchor_i]['date'],'target_date':hist[target_i]['date'],'anchor':anchor,'actual':actual,'actual_dir':adir,'corp_action':b.corp_action_flag(hist,anchor_i)}; preds=[]
+    row={'symbol':symbol,'sector':sector,'source':source,'anchor_date':hist[anchor_i]['date'],'target_date':hist[target_i]['date'],'anchor':anchor,'actual':actual,'actual_dir':adir,'corp_action':b.corp_action_flag(hist,anchor_i)}; preds=[]
     for name,f in b.FUNCS.items():
         z=f(train); pred,mdir=z if z else (None,None); err=abs(pred-actual)/actual*100 if pred else None; ok=(mdir==adir) if mdir else None
-        row[name]={'pred':pred,'dir':mdir,'ape':err,'dir_ok':ok};
+        row[name]={'pred':pred,'dir':mdir,'ape':err,'dir_ok':ok}
         if pred: preds.append(pred)
     row['Baseline']={'pred':anchor,'ape':abs(anchor-actual)/actual*100}
     med=statistics.median(preds) if preds else None; row['Median5']={'pred':med,'ape':abs(med-actual)/actual*100 if med else None}
@@ -37,12 +57,13 @@ def eval_symbol(symbol,meta,hist):
 def main():
     histories={}; errors={}
     with ThreadPoolExecutor(max_workers=10) as ex:
-        fs={ex.submit(fetch_members,meta[0]):sym for sym,meta in b.SYMBOLS.items()}
+        fs={ex.submit(fetch_history,meta[0]):sym for sym,meta in b.SYMBOLS.items()}
         for f in as_completed(fs):
             sym=fs[f]
-            try: histories[sym]=f.result(); print(f'OK {sym}: {len(histories[sym])} rows',file=sys.stderr)
+            try:
+                hist,source=f.result(); histories[sym]=(hist,source); print(f'OK {sym}: {len(hist)} rows via {source}',file=sys.stderr)
             except Exception as e: errors[sym]=str(e); print(f'ERROR {sym}: {e}',file=sys.stderr)
-    results=[eval_symbol(sym,b.SYMBOLS[sym],histories[sym]) for sym in b.SYMBOLS if sym in histories]
+    results=[eval_symbol(sym,b.SYMBOLS[sym],*histories[sym]) for sym in b.SYMBOLS if sym in histories]
     if len(results)<10: raise SystemExit(f'Need 10 successful symbols; got {len(results)}. Errors={errors}')
     summary={}
     for name in b.MODELS+['Baseline','Median5']:
