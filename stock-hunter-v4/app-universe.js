@@ -1,10 +1,10 @@
 'use strict';
 let universeRows=[], universeLoading=false, universeTimer=null;
 if(!columns.some(c=>c[0]==='market')){columns.splice(columns.length-1,0,['market','بازار',false,10],['assetType','نوع ابزار',false,10]);}
-function normUniverse(r){
+function normUniverse(r,signalMap=new Map()){
   const id=String(r.ins_code||r.id||'');
-  const live=rows.find(x=>x.id===id);
-  if(live)return {...live,market:r.market||live.market||'',assetType:r.asset_type||live.assetType||''};
+  const live=signalMap.get(id)||rows.find(x=>x.id===id);
+  if(live)return {...live,analyzed:true,market:r.market||live.market||'',assetType:r.asset_type||live.assetType||''};
   return {id,symbol:r.symbol||'—',company:r.company_name||'—',market:r.market||'',assetType:r.asset_type||'نامشخص',analyzed:false,hunt:'در انتظار تحلیل لحظه‌ای',decision:'فاقد سیگنال زنده',reason:'این ابزار در فهرست جامع بازار وجود دارد اما در آخرین پایش، سیگنال لحظه‌ای برای آن ثبت نشده است.',candles:[]};
 }
 const oldCell=cell;
@@ -26,6 +26,17 @@ filtered=function(){
   if(!q)return oldFiltered();
   return universeRows.filter(x=>(!h||x.hunt===h)&&(!d||x.decision===d)).sort((a,b)=>(Number(b.analyzed)-Number(a.analyzed))+((Number(b.fast)||0)-(Number(a.fast)||0))||String(a.symbol).localeCompare(String(b.symbol),'fa'));
 };
+async function fetchSignalsForUniverse(base,items){
+  const ids=items.map(x=>String(x.ins_code||'')).filter(x=>/^\d+$/.test(x));
+  if(!ids.length)return new Map();
+  try{
+    const table=cfg.TABLE||'stock_hunter_signals_v4', p=new URLSearchParams();
+    p.set('select','*'); p.set('id',`in.(${ids.join(',')})`); p.set('limit',String(Math.max(150,ids.length)));
+    const r=await fetch(`${base}/rest/v1/${table}?${p.toString()}`,{headers:headers(),cache:'no-store'});
+    if(!r.ok)return new Map();
+    return new Map((await r.json()).map(s=>{const x=norm(s);x.analyzed=true;return[x.id,x]}));
+  }catch{return new Map();}
+}
 async function searchUniverse(q){
   const base=String(cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,'');
   if(!base||!q.trim()){universeRows=[];universeLoading=false;render();return;}
@@ -38,7 +49,8 @@ async function searchUniverse(q){
     p.set('limit','150');
     const r=await fetch(`${base}/rest/v1/stock_hunter_universe_v4?${p.toString()}`,{headers:headers(),cache:'no-store'});
     if(!r.ok)throw new Error('جست‌وجوی جامع ناموفق بود');
-    universeRows=(await r.json()).map(normUniverse);
+    const items=await r.json(), signalMap=await fetchSignalsForUniverse(base,items);
+    universeRows=items.map(x=>normUniverse(x,signalMap));
   }catch{universeRows=[]}
   finally{universeLoading=false;render();}
 }
