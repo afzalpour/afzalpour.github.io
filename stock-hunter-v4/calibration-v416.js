@@ -37,3 +37,11 @@ async function loadCalibration(){
 }
 $('refreshCal').onclick=loadCalibration;
 loadCalibration();
+(function loadFrozenOosProtocol(){
+  if(document.querySelector('script[data-oos-release-v416]'))return;
+  const s=document.createElement('script');
+  s.src='oos-release-v416.js?v=4.1.6';
+  s.async=false;
+  s.dataset.oosReleaseV416='1';
+  document.body.appendChild(s);
+})();
