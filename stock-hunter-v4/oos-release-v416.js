@@ -1,5 +1,23 @@
+(function(){
 'use strict';
 const oosCfg=window.STOCK_HUNTER_CONFIG||{};
+const root=document.querySelector('main.cal-shell');
+if(!root)return;
+root.insertAdjacentHTML('beforeend',`
+<section class="section note"><strong>OOS Release Protocol:</strong> بازگشایی Holdout فقط یک‌بار و فقط پس از پاس‌شدن Robustness هر دو Mode انجام می‌شود. هنگام Release، مرز Train/Validation/OOS، Candidateهای منتخب، Robustness، Fingerprint Dataset و نتیجه Candidate/Baseline در Snapshot غیرقابل‌ویرایش ثبت می‌شوند. نتیجه OOS پس از Release از Snapshot فریز‌شده خوانده می‌شود و با داده‌های بعدی تغییر نمی‌کند.</section>
+<div class="controls"><button id="refreshOosRelease">↻ تازه‌سازی OOS Release</button><span id="oosReleaseStatus" class="muted">در حال دریافت OOS Release Protocol…</span></div>
+<section class="cards">
+<article class="card"><span>وضعیت Protocol</span><b id="oosProtocolState" class="ok-text" style="font-size:16px">قفل</b><small id="oosReleaseReason" class="muted">—</small></article>
+<article class="card"><span>Protocol Version</span><b id="oosProtocolVersion" style="font-size:15px">4.1.6-oos-release-v1</b></article>
+<article class="card"><span>زمان Release</span><b id="oosReleasedAt" style="font-size:14px">—</b></article>
+<article class="card"><span>بازه Dataset فریز‌شده</span><b id="oosFrozenRange" style="font-size:14px">—</b></article>
+<article class="card"><span>بازه OOS فریز‌شده</span><b id="oosFrozenHoldout" style="font-size:14px">—</b></article>
+<article class="card"><span>OOS Samples / Days</span><b id="oosFrozenSamples" style="font-size:16px">—</b></article>
+<article class="card"><span>Dataset Fingerprint</span><b id="oosFingerprint" style="font-size:12px;word-break:break-all">—</b></article>
+</section>
+<section class="section"><h2>Frozen OOS — Candidate در برابر Baseline</h2><div class="table-wrap"><table class="table" style="min-width:1400px"><thead><tr><th>Mode</th><th>Role</th><th>Candidate</th><th>وزن‌ها O/I/F/FV/M</th><th>Selected N</th><th>Selected Days</th><th>Return 3D</th><th>MFE 3D</th><th>MAE 3D</th><th>Utility</th><th>Positive Rate</th></tr></thead><tbody id="oosComparisonBody"><tr><td colspan="11" class="muted">OOS هنوز Release نشده است.</td></tr></tbody></table></div></section>
+<section class="section note"><strong>عدم دست‌کاری:</strong> API عمومی هیچ عملیات Release ندارد. جدول Manifest و Result فقط خواندنی هستند و Trigger دیتابیس UPDATE/DELETE/TRUNCATE را رد می‌کند. فلگ OOS نیز فقط از مسیر Release خصوصی و یک‌طرفه قابل تغییر است.</section>
+`);
 const oos$=id=>document.getElementById(id);
 const oosFa=(v,d=2)=>{const n=Number(v);return Number.isFinite(n)?n.toLocaleString('fa-IR',{maximumFractionDigits:d}):'—'};
 const oosPct=v=>{const n=Number(v);return Number.isFinite(n)?`${n>=0?'+':''}${oosFa(n,2)}٪`:'—'};
@@ -36,3 +54,4 @@ async function loadOosRelease(){
 }
 oos$('refreshOosRelease').onclick=loadOosRelease;
 loadOosRelease();
+})();
