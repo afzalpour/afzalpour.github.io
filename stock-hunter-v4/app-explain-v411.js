@@ -172,4 +172,4 @@ updateSummary=function(){
   $('topMeta').textContent=t?`${t.company} — ${t.decision}${t.integratedEligible?` — امتیاز تصمیم ${fa(t.integratedScore,0)}`:''}`:'—';
 };
 try{updateSummary()}catch{}
-if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=4.1.1').catch(()=>{});
+// Service Worker registration is centralized in app-runtime.js (4.1.6).
