@@ -22,6 +22,7 @@ on:
       - 'stock-hunter-v4/performance-v416.js'
       - 'stock-hunter-v4/performance.html'
       - 'stock-hunter-v4/calibration-v416.js'
+      - 'stock-hunter-v4/candidate-evaluator-v416.js'
       - 'stock-hunter-v4/calibration.html'
       - 'stock-hunter-v4/hunt-smoke-v416.js'
       - 'stock-hunter-v4/search-eod-smoke-v416.js'
@@ -61,6 +62,7 @@ jobs:
           node --check stock-hunter-v4/app-eod-v416.js
           node --check stock-hunter-v4/performance-v416.js
           node --check stock-hunter-v4/calibration-v416.js
+          node --check stock-hunter-v4/candidate-evaluator-v416.js
           node --check stock-hunter-v4/hunt-smoke-v416.js
           node --check stock-hunter-v4/search-eod-smoke-v416.js
           node --check stock-hunter-v4/sw.js
@@ -98,11 +100,12 @@ jobs:
           grep -q 'پنج مدل ۱۰روزه' stock-hunter-v4/methodology.html
           grep -q 'Engineering Heuristic' stock-hunter-v4/methodology.html
           grep -q 'RequiredVelocity_15sec' stock-hunter-v4/hunt-methodology-v416.html
-          grep -q "shikar-sahm-v4.1.6-r5" stock-hunter-v4/sw.js
+          grep -q "shikar-sahm-v4.1.6-r6" stock-hunter-v4/sw.js
           grep -q 'performance.html' stock-hunter-v4/sw.js
           grep -q 'performance-v416.js' stock-hunter-v4/sw.js
           grep -q 'calibration.html' stock-hunter-v4/sw.js
           grep -q 'calibration-v416.js' stock-hunter-v4/sw.js
+          grep -q 'candidate-evaluator-v416.js' stock-hunter-v4/sw.js
           grep -q 'app-hunt-v416.js' stock-hunter-v4/sw.js
           grep -q 'app-hunt-hierarchy-v416.js' stock-hunter-v4/sw.js
           grep -q 'app-universal-search-v416.js' stock-hunter-v4/sw.js
@@ -129,13 +132,20 @@ jobs:
           from pathlib import Path
           html=Path('stock-hunter-v4/calibration.html').read_text(encoding='utf-8')
           js=Path('stock-hunter-v4/calibration-v416.js').read_text(encoding='utf-8')
+          ev=Path('stock-hunter-v4/candidate-evaluator-v416.js').read_text(encoding='utf-8')
           assert 'Shadow Dataset' in html
           assert 'Train / Validation / Out-of-Sample' in html
           assert 'Auto-Promote عمداً خاموش است' in html
+          assert 'OOS عمداً قفل است' in html
+          assert 'Candidate Weight Evaluator' in html
           assert 'stock_hunter_calibration_readiness_v416' in js
           assert 'stock_hunter_calibration_policy_v416' in js
           assert 'stock_hunter_shadow_samples_v416' in js
           assert 'auto_promote' in js
+          assert 'stock_hunter_candidate_leaderboard_v416' in ev
+          assert 'stock_hunter_candidate_selected_v416' in ev
+          assert 'stock_hunter_candidate_oos_v416' in ev
+          assert 'oos_unlocked' in ev and 'auto_promote' in ev
           print('calibration-semantics: PASS')
           PY
       - name: Check Hunt load order
