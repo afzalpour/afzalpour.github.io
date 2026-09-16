@@ -17,7 +17,10 @@ on:
       - 'stock-hunter-v4/app-session-v413.js'
       - 'stock-hunter-v4/app-hunt-v416.js'
       - 'stock-hunter-v4/app-hunt-hierarchy-v416.js'
+      - 'stock-hunter-v4/app-universal-search-v416.js'
+      - 'stock-hunter-v4/app-eod-v416.js'
       - 'stock-hunter-v4/hunt-smoke-v416.js'
+      - 'stock-hunter-v4/search-eod-smoke-v416.js'
       - 'stock-hunter-v4/config.js'
       - 'stock-hunter-v4/index.html'
       - 'stock-hunter-v4/styles.css'
@@ -50,10 +53,15 @@ jobs:
           node --check stock-hunter-v4/app-session-v413.js
           node --check stock-hunter-v4/app-hunt-v416.js
           node --check stock-hunter-v4/app-hunt-hierarchy-v416.js
+          node --check stock-hunter-v4/app-universal-search-v416.js
+          node --check stock-hunter-v4/app-eod-v416.js
           node --check stock-hunter-v4/hunt-smoke-v416.js
+          node --check stock-hunter-v4/search-eod-smoke-v416.js
           node --check stock-hunter-v4/sw.js
       - name: Hunt engine deterministic smoke
         run: node stock-hunter-v4/hunt-smoke-v416.js
+      - name: Universal search and end-of-day deterministic smoke
+        run: node stock-hunter-v4/search-eod-smoke-v416.js
       - name: Check manifest
         run: python -m json.tool stock-hunter-v4/manifest.webmanifest >/dev/null
       - name: Check 4.1.6 goal-aligned hunt UI
@@ -63,6 +71,8 @@ jobs:
           grep -q 'app-session-v413.js?v=4.1.6' stock-hunter-v4/index.html
           grep -q 'app-hunt-v416.js?v=4.1.6' stock-hunter-v4/index.html
           grep -q 'app-hunt-hierarchy-v416.js?v=4.1.6' stock-hunter-v4/index.html
+          grep -q 'app-universal-search-v416.js?v=4.1.6' stock-hunter-v4/index.html
+          grep -q 'app-eod-v416.js?v=4.1.6' stock-hunter-v4/index.html
           grep -q 'hunt-methodology-v416.html' stock-hunter-v4/index.html
           grep -q 'کاندید شکار' stock-hunter-v4/index.html
           grep -q "HUNT_V416_VERSION='4.1.6-hunt-v2'" stock-hunter-v4/app-hunt-v416.js
@@ -72,21 +82,26 @@ jobs:
           grep -q 'تاریخچه زمانی معتبر برای محاسبه Delta' stock-hunter-v4/app-hunt-v416.js
           grep -q 'Universal search is intentionally outside Hunt constraints' stock-hunter-v4/app-hunt-v416.js
           grep -q 'Search is a universe browser, not a Hunt filter' stock-hunter-v4/app-universe.js
+          grep -q 'if(q)return universalRowsV416(q)' stock-hunter-v4/app-universal-search-v416.js
+          grep -q "defaultStates=new Set(\['شکار ویژه','هشدار فوری'\])" stock-hunter-v4/app-eod-v416.js
+          grep -q 'hadActivity9to17V416' stock-hunter-v4/app-eod-v416.js
           grep -q 'تأیید تکمیلی ۱–۳ روزه' stock-hunter-v4/app-hunt-hierarchy-v416.js
           grep -q 'موتور شکار درون‌روزی' stock-hunter-v4/methodology.html
           grep -q 'پنج مدل ۱۰روزه' stock-hunter-v4/methodology.html
           grep -q 'Engineering Heuristic' stock-hunter-v4/methodology.html
           grep -q 'RequiredVelocity_15sec' stock-hunter-v4/hunt-methodology-v416.html
-          grep -q "shikar-sahm-v4.1.6-r2" stock-hunter-v4/sw.js
+          grep -q "shikar-sahm-v4.1.6-r3" stock-hunter-v4/sw.js
           grep -q 'app-hunt-v416.js' stock-hunter-v4/sw.js
           grep -q 'app-hunt-hierarchy-v416.js' stock-hunter-v4/sw.js
+          grep -q 'app-universal-search-v416.js' stock-hunter-v4/sw.js
+          grep -q 'app-eod-v416.js' stock-hunter-v4/sw.js
           grep -q '>A<' stock-hunter-v4/icon.svg
       - name: Check Hunt load order
         run: |
           python - <<'PY'
           from pathlib import Path
           html=Path('stock-hunter-v4/index.html').read_text(encoding='utf-8')
-          assert html.index('app-session-v413.js') < html.index('app-hunt-v416.js') < html.index('app-hunt-hierarchy-v416.js')
+          assert html.index('app-session-v413.js') < html.index('app-hunt-v416.js') < html.index('app-hunt-hierarchy-v416.js') < html.index('app-universal-search-v416.js') < html.index('app-eod-v416.js')
           assert 'مستعد تداوم</option>' not in html
           print('load-order: PASS')
           PY
@@ -95,8 +110,24 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           universe=Path('stock-hunter-v4/app-universe.js').read_text(encoding='utf-8')
+          search=Path('stock-hunter-v4/app-universal-search-v416.js').read_text(encoding='utf-8')
           assert 'return universeRows.slice().sort' in universe
+          assert "if(q)return universalRowsV416(q)" in search
+          assert "stock_hunter_universe_v4" in search
+          assert "limit','1000'" in search and "offset" in search
+          assert "$('hunt')" not in search and "$('decision')" not in search
           print('search-isolation: PASS')
+          PY
+      - name: Check end-of-day retention rules
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          eod=Path('stock-hunter-v4/app-eod-v416.js').read_text(encoding='utf-8')
+          assert 'hm>=9*60&&hm<=17*60' in eod
+          assert "['شکار ویژه','هشدار فوری']" in eod
+          assert "now.hm>17*60" in eod
+          assert 'minutesLeftV416=function' in eod
+          print('eod-retention: PASS')
           PY
       - name: Check forecast models excluded from Hunt Score
         run: |
