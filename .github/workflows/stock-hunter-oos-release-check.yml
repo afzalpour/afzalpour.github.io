@@ -1,0 +1,39 @@
+name: Stock Hunter OOS Release Check
+on:
+  push:
+    branches: [main, 'stock-hunter-v416-*']
+    paths:
+      - 'stock-hunter-v4/calibration-v416.js'
+      - 'stock-hunter-v4/oos-release-v416.js'
+      - 'stock-hunter-v4/sw.js'
+      - '.github/workflows/stock-hunter-oos-release-check.yml'
+jobs:
+  validate-oos-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check JavaScript syntax
+        run: |
+          node --check stock-hunter-v4/calibration-v416.js
+          node --check stock-hunter-v4/oos-release-v416.js
+          node --check stock-hunter-v4/sw.js
+      - name: Check frozen OOS semantics
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          cal=Path('stock-hunter-v4/calibration-v416.js').read_text(encoding='utf-8')
+          oos=Path('stock-hunter-v4/oos-release-v416.js').read_text(encoding='utf-8')
+          sw=Path('stock-hunter-v4/sw.js').read_text(encoding='utf-8')
+          assert 'oos-release-v416.js?v=4.1.6' in cal
+          assert 'stock_hunter_oos_release_manifest_v416' in oos
+          assert 'stock_hunter_oos_release_comparison_v416' in oos
+          assert 'stock_hunter_oos_unlock_readiness_v416' in oos
+          assert 'Snapshot فریز شده' in oos
+          assert 'هیچ نتیجه Holdout نمایش داده نمی‌شود' in oos
+          assert '/rpc/' not in oos
+          for verb in ['POST','PATCH','DELETE','PUT']:
+              assert f"method:'{verb}'" not in oos and f'method:"{verb}"' not in oos
+          assert "shikar-sahm-v4.1.6-r8" in sw
+          assert "./oos-release-v416.js" in sw
+          print('oos-release-semantics: PASS')
+          PY
