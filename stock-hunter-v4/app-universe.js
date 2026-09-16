@@ -12,19 +12,19 @@ cell=function(k,x){
   if(k==='market')return esc(x.market||'—');
   if(k==='assetType')return esc(x.assetType||'—');
   if(k==='symbol')return `<div class="symbol">${esc(x.symbol)}</div><div class="company">${esc(x.company)}${x.market||x.assetType?` • ${esc([x.market,x.assetType].filter(Boolean).join(' / '))}`:''}</div>`;
-  if(!x.analyzed&&['hunt','decision','fast','price','entry','target1','stop','accel','p2','p3','risk','qi','ofi','bidStack','askPull','rvol'].includes(k)){
+  if(x.analyzed===false&&['hunt','decision','fast','price','entry','target1','stop','accel','p2','p3','risk','qi','ofi','bidStack','askPull','rvol'].includes(k)){
     if(k==='hunt')return `<span class="badge watch">در انتظار تحلیل لحظه‌ای</span>`;
     if(k==='decision')return `<span class="badge watch">فاقد سیگنال زنده</span>`;
     return '—';
   }
-  if(k==='details'&&!x.analyzed)return `<button class="detail-btn" disabled title="پس از دریافت داده تحلیلی فعال می‌شود">در انتظار تحلیل</button>`;
+  if(k==='details'&&x.analyzed===false)return `<button class="detail-btn" disabled title="پس از دریافت داده تحلیلی فعال می‌شود">در انتظار تحلیل</button>`;
   return oldCell(k,x);
 };
 const oldFiltered=filtered;
 filtered=function(){
   const q=$('search').value.trim(),h=$('hunt').value,d=$('decision').value;
   if(!q)return oldFiltered();
-  return universeRows.filter(x=>(!h||x.hunt===h)&&(!d||x.decision===d)).sort((a,b)=>(Number(b.analyzed)-Number(a.analyzed))+((Number(b.fast)||0)-(Number(a.fast)||0))||String(a.symbol).localeCompare(String(b.symbol),'fa'));
+  return universeRows.filter(x=>(!h||x.hunt===h)&&(!d||x.decision===d)).sort((a,b)=>(Number(b.analyzed===true)-Number(a.analyzed===true))+((Number(b.fast)||0)-(Number(a.fast)||0))||String(a.symbol).localeCompare(String(b.symbol),'fa'));
 };
 async function fetchSignalsForUniverse(base,items){
   const ids=items.map(x=>String(x.ins_code||'')).filter(x=>/^\d+$/.test(x));
