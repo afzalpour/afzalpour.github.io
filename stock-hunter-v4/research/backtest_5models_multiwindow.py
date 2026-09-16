@@ -121,6 +121,58 @@ def affinity_for_symbol(rows):
     }
 
 
+def walk_forward_personalization(rows, min_history=2):
+    cases = []
+    by_symbol = {}
+    for sym in b.SYMBOLS:
+        # Oldest to newest. No future window may influence model selection.
+        srows = sorted([r for r in rows if r['symbol'] == sym], key=lambda r: r['anchor_date'])
+        by_symbol[sym] = []
+        for i in range(min_history, len(srows)):
+            past = srows[:i]
+            current = srows[i]
+            means = {
+                m: b.avg([r[m]['ape'] for r in past if r[m]['ape'] is not None])
+                for m in b.MODELS
+            }
+            chosen = min(means, key=means.get)
+            rec = {
+                'symbol': sym,
+                'anchor_date': current['anchor_date'],
+                'sessions_back': current['sessions_back'],
+                'chosen_model': chosen,
+                'chosen_ape': current[chosen]['ape'],
+                'baseline_ape': current['Baseline']['ape'],
+                'median5_ape': current['Median5']['ape'],
+                'actual_winner': current['winner'],
+                'winner_match': chosen == current['winner'],
+                'beat_baseline': current[chosen]['ape'] < current['Baseline']['ape'],
+                'prior_mean_ape': means[chosen],
+            }
+            cases.append(rec)
+            by_symbol[sym].append(rec)
+    summary = {
+        'n': len(cases),
+        'mean_ape': b.avg([x['chosen_ape'] for x in cases]),
+        'median_ape': statistics.median([x['chosen_ape'] for x in cases]),
+        'baseline_mean_ape': b.avg([x['baseline_ape'] for x in cases]),
+        'median5_mean_ape': b.avg([x['median5_ape'] for x in cases]),
+        'beat_baseline_rate_pct': 100 * sum(x['beat_baseline'] for x in cases) / len(cases),
+        'winner_match_rate_pct': 100 * sum(x['winner_match'] for x in cases) / len(cases),
+    }
+    per_symbol = {}
+    for sym, xs in by_symbol.items():
+        per_symbol[sym] = {
+            'n': len(xs),
+            'mean_ape': b.avg([x['chosen_ape'] for x in xs]) if xs else None,
+            'baseline_mean_ape': b.avg([x['baseline_ape'] for x in xs]) if xs else None,
+            'beat_baseline_count': sum(x['beat_baseline'] for x in xs),
+            'winner_match_count': sum(x['winner_match'] for x in xs),
+            'chosen_sequence': [x['chosen_model'] for x in xs],
+        }
+    return {'summary': summary, 'per_symbol': per_symbol, 'cases': cases}
+
+
 def main():
     histories, errors = {}, {}
     with ThreadPoolExecutor(max_workers=5) as ex:
@@ -151,6 +203,7 @@ def main():
     for sym in b.SYMBOLS:
         srows = [r for r in rows if r['symbol'] == sym]
         affinity[sym] = affinity_for_symbol(srows)
+    adaptive = walk_forward_personalization(rows, min_history=2)
 
     regime_counts = {}
     for r in rows:
@@ -169,6 +222,8 @@ def main():
     print(json.dumps(global_summary, ensure_ascii=False, indent=2))
     print('=== SYMBOL AFFINITY ===')
     print(json.dumps(affinity, ensure_ascii=False, indent=2))
+    print('=== WALK FORWARD PERSONALIZATION ===')
+    print(json.dumps(adaptive, ensure_ascii=False, indent=2))
 
     print('=== CASES CSV ===')
     hdr = ['symbol','sector','sessions_back','anchor_date','target_date','anchor','actual','actual_return_pct','actual_dir','corp_action','winner']
