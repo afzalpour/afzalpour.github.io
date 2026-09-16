@@ -4,6 +4,7 @@ cell=function(k,x){
   if(k==='details')return `<button class="detail-btn" data-id="${esc(x.id)}">نمایش</button>`;
   return cellBeforeV410(k,x);
 };
+function normalizeFaSearchV410(v){return String(v||'').toLowerCase().replace(/ي|ى/g,'ی').replace(/ك/g,'ک').replace(/[\u200c\u200d\sـ]+/g,'').trim();}
 async function resolveLiveDetailRow(id){
   const key=String(id||'');
   let x=rows.find(r=>String(r.id)===key);
@@ -29,6 +30,33 @@ async function resolveLiveDetailRow(id){
     return x;
   }catch{return null;}
 }
+searchUniverse=async function(q){
+  const base=String(cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,'');
+  const raw=String(q||'').trim(),key=normalizeFaSearchV410(raw);
+  if(!base||!raw){universeRows=[];universeLoading=false;render();return;}
+  universeLoading=true;
+  try{
+    const term=raw.replace(/[(),]/g,' '),p=new URLSearchParams();
+    p.set('select','ins_code,symbol,company_name,market,asset_type,is_active,updated_at');
+    p.set('or',`(search_key.like.*${key}*,symbol.ilike.*${term}*,company_name.ilike.*${term}*)`);
+    p.set('order','is_active.desc,symbol.asc');
+    p.set('limit','200');
+    const r=await fetch(`${base}/rest/v1/stock_hunter_universe_v4?${p.toString()}`,{headers:headers(),cache:'no-store'});
+    if(!r.ok)throw new Error('جست‌وجوی جامع ناموفق بود');
+    let items=await r.json();
+    if(!items.length){
+      const table=cfg.TABLE||'stock_hunter_signals_v4',sp=new URLSearchParams();
+      sp.set('select','id,symbol,company_name,updated_at');
+      sp.set('or',`(symbol.ilike.*${term}*,company_name.ilike.*${term}*)`);
+      sp.set('limit','200');
+      const sr=await fetch(`${base}/rest/v1/${table}?${sp.toString()}`,{headers:headers(),cache:'no-store'});
+      if(sr.ok)items=(await sr.json()).map(s=>({ins_code:String(s.id),symbol:s.symbol,company_name:s.company_name,market:'',asset_type:'',is_active:true,updated_at:s.updated_at}));
+    }
+    const signalMap=await fetchSignalsForUniverse(base,items);
+    universeRows=items.map(x=>normUniverse(x,signalMap));
+  }catch{universeRows=[]}
+  finally{universeLoading=false;render();}
+};
 openDetail=async function(id){
   const x=await resolveLiveDetailRow(id);
   if(!x){
