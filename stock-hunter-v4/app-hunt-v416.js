@@ -60,6 +60,25 @@ function zeroRecoveryV416(x){
   return clampH416((last-lo)/(y-lo)*100);
 }
 
+function huntAssetEligibleV416(x){
+  const txt=String(`${x.assetType||''} ${x.company||''} ${x.symbol||''}`).replace(/‌/g,' ');
+  if(/اختیار معامله|اختیارخ|اختیارف/.test(txt))return false;
+  if(/اوراق بدهی|اسناد خزانه|درآمد ?ثابت|درآمدثابت|تسهیلات مسکن/.test(txt))return false;
+  if(/^(اخزا|اراد|گام|افاد|تسه)/.test(String(x.symbol||'')))return false;
+  return true;
+}
+
+function dynamicEvidenceCountV416(x){
+  let c=0;
+  if(Number(x.pv)>0.05)c++;
+  if(Number(x.ofi)>0.05)c++;
+  if(Number(x.tradeAccel)>15)c++;
+  if(Number(x.accel)>5)c++;
+  if(Number(x.bidStack)>10)c++;
+  if(Number(x.askPull)>10)c++;
+  return c;
+}
+
 function signalEvidenceCountV416(x){
   let c=0;
   if(Number(x.pv)>0.05)c++;
@@ -173,6 +192,7 @@ function applyHuntV416(x){
   x.marketContextV416=marketContextScoreV416(x);
   x.continuation12V416=continuationScoreV416(x);
   x.huntEvidenceV416=signalEvidenceCountV416(x);
+  x.huntDynamicEvidenceV416=dynamicEvidenceCountV416(x);
   let today=mode==='reversal'
     ? .28*x.orderPressureV416+.27*x.impulseV416+.20*x.feasibilityV416+.15*x.flowVolumeV416+.10*x.marketContextV416
     : .30*x.orderPressureV416+.30*x.impulseV416+.15*x.feasibilityV416+.15*x.flowVolumeV416+.10*x.marketContextV416;
@@ -182,9 +202,11 @@ function applyHuntV416(x){
   // Continuation can confirm/reduce today's setup but can never create a strong hunt by itself.
   x.huntScoreV416=clampH416(today*(.82+.18*x.continuation12V416/100));
   let gate=huntRiskGateV416(x);
+  if(!huntAssetEligibleV416(x))gate=gate||'این نوع ابزار در موتور شکار سریع سهام/صندوق‌های ریسکی قرار نمی‌گیرد';
   if(mode==='outside')gate=dayChange>=1?'نماد از محدوده آغاز حرکت (+۱٪) عبور کرده است':gate;
-  if(mode==='acceleration'&&x.huntEvidenceV416<2)gate=gate||'برای شتاب مثبت هنوز شواهد هم‌زمان کافی وجود ندارد';
+  if(mode==='acceleration'&&(x.huntEvidenceV416<2||x.huntDynamicEvidenceV416<1))gate=gate||'برای شتاب مثبت هنوز شواهد پویا و هم‌زمان کافی وجود ندارد';
   if(mode==='reversal'&&x.feasibilityV416<28)gate=gate||'فاصله/زمان برای مثبت‌شدن امروز نامناسب است';
+  if(mode==='reversal'&&x.huntDynamicEvidenceV416<1&&zeroRecoveryV416(x)<45)gate=gate||'هنوز نشانه پویای کافی از شروع برگشت دیده نمی‌شود';
   x.huntGate=gate;
   x.hunt=huntStatusV416(x.huntScoreV416,x.todayOpportunityV416,Number(x.risk||0),x.huntEvidenceV416,gate);
   x.huntDecisionV416=huntDecisionV416(x);
@@ -304,7 +326,7 @@ function huntPanelV416(x){
       <div><span>شتاب حرکت</span><b>${fa(x.impulseV416,0)}</b><small>سرعت قیمت و معاملات</small></div>
       <div><span>امکان‌پذیری امروز</span><b>${fa(x.feasibilityV416,0)}</b><small>${fa(x.minutesLeftV416,0)} دقیقه تا پایان این بازار</small></div>
       <div><span>جریان پول/حجم</span><b>${fa(x.flowVolumeV416,0)}</b><small>حقیقی / RVOL / جذب عرضه</small></div>
-      <div><span>شواهد هم‌زمان</span><b>${fa(x.huntEvidenceV416,0)}</b><small>از ۷ نشانه کوتاه‌مدت</small></div>
+      <div><span>شواهد هم‌زمان</span><b>${fa(x.huntEvidenceV416,0)}</b><small>${fa(x.huntDynamicEvidenceV416,0)} نشانه پویا؛ از ۷ نشانه کل</small></div>
     </div>
     <div class="decision-reasons"><b>توضیح شکار:</b><ol>${reasons.map(r=>`<li>${esc(r)}</li>`).join('')}</ol></div>
     <div class="calibration-note">هدف این موتور فقط شناسایی برگشت منفی به مثبت همان روز یا شتاب‌گیری نمادهای کمتر از +۱٪ است. ایچیموکو، گن، بولینگر، MACD و OBV همچنان صرفاً برای مشاهده و مقایسه کاربر نمایش داده می‌شوند و در امتیاز شکار رأی ندارند.</div>`;
