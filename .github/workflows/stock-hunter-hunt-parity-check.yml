@@ -1,0 +1,58 @@
+name: Stock Hunter 4.1.6 Browser Server Parity Check
+on:
+  push:
+    branches: [main, 'stock-hunter-v416-*', 'stock-hunter-v417-*']
+    paths:
+      - 'stock-hunter-v4/app-session-v413.js'
+      - 'stock-hunter-v4/app-hunt-v416.js'
+      - 'stock-hunter-v4/hunt-parity-v416.js'
+      - 'stock-hunter-v4/parity/**'
+      - '.github/workflows/stock-hunter-hunt-parity-check.yml'
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check parity JavaScript
+        run: |
+          node --check stock-hunter-v4/app-session-v413.js
+          node --check stock-hunter-v4/app-hunt-v416.js
+          node --check stock-hunter-v4/hunt-parity-v416.js
+      - name: Run browser parity fixtures
+        run: node stock-hunter-v4/hunt-parity-v416.js
+      - name: Compare browser fixtures with deployed capture backend
+        env:
+          PARITY_URL: https://summnepwuziwulzvpcms.supabase.co/functions/v1/stock-hunter-capture-v416?parity=1
+        run: |
+          node stock-hunter-v4/hunt-parity-v416.js --json > /tmp/browser-parity.json
+          curl --fail --silent --show-error --retry 3 --retry-delay 2 "$PARITY_URL" > /tmp/server-parity.json
+          node - <<'NODE'
+          const fs=require('fs'),assert=require('assert');
+          const browser=JSON.parse(fs.readFileSync('/tmp/browser-parity.json','utf8'));
+          const server=JSON.parse(fs.readFileSync('/tmp/server-parity.json','utf8'));
+          assert.strictEqual(browser.protocol,'4.1.6-browser-server-parity-v1');
+          assert.strictEqual(browser.results.length,9);
+          assert.deepStrictEqual(server,browser);
+          console.log(`browser-server-parity: PASS (${browser.results.length} frozen fixtures)`);
+          NODE
+      - name: Verify capture endpoint rejects public callers
+        env:
+          CAPTURE_URL: https://summnepwuziwulzvpcms.supabase.co/functions/v1/stock-hunter-capture-v416
+        run: |
+          unauth_status=$(curl --silent --show-error --output /tmp/capture-unauth.json --write-out '%{http_code}' -X POST -H 'Content-Type: application/json' --data '{}' "$CAPTURE_URL")
+          test "$unauth_status" = "401"
+          grep -q '"unauthorized"' /tmp/capture-unauth.json
+          wrong_status=$(curl --silent --show-error --output /tmp/capture-wrong.json --write-out '%{http_code}' -X POST -H 'Content-Type: application/json' -H 'X-Stock-Hunter-Capture-Token: definitely-wrong-token' --data '{}' "$CAPTURE_URL")
+          test "$wrong_status" = "401"
+          grep -q '"unauthorized"' /tmp/capture-wrong.json
+          echo 'capture-auth-regression: PASS'
+      - name: Verify production Hunt contract unchanged
+        run: |
+          grep -q "HUNT_V416_VERSION='4.1.6-hunt-v2'" stock-hunter-v4/app-hunt-v416.js
+          grep -q "dayChange<0?'reversal':dayChange<1?'acceleration':'outside'" stock-hunter-v4/app-hunt-v416.js
+          grep -q 'sessionTsSecV413' stock-hunter-v4/app-session-v413.js
+          grep -q 'candle-only recent trade evidence must be huntable' stock-hunter-v4/hunt-parity-v416.js
+          grep -q 'recent quote/book movement must keep stale-trade symbol huntable' stock-hunter-v4/hunt-parity-v416.js
+          grep -q 'millisecond snapshot timestamps must be normalized' stock-hunter-v4/hunt-parity-v416.js
+          grep -q 'FIXTURE_COUNT: 9' stock-hunter-v4/parity/HUNT_PARITY_AUDIT_2026-09-17.md
+          grep -q 'PROOF_SCOPE: FROZEN_FIXTURES_NOT_EXHAUSTIVE' stock-hunter-v4/parity/HUNT_PARITY_AUDIT_2026-09-17.md
