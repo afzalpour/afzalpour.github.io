@@ -1,7 +1,7 @@
 name: Stock Hunter Promotion Protocol Check
 on:
   push:
-    branches: [main, 'stock-hunter-v416-*']
+    branches: [main, 'stock-hunter-v416-*', 'stock-hunter-v417-*']
     paths:
       - 'stock-hunter-v4/promotion-decision-v416.js'
       - 'stock-hunter-v4/calibration.html'
@@ -32,6 +32,7 @@ jobs:
           assert '/rpc/' not in js
           assert 'fetch(' in js and 'method:' not in js
           assert 'promotion-decision-v416.js' in sw
-          assert "shikar-sahm-v4.1.6-r7" in sw
+          assert "shikar-sahm-v4.1.6-r8" in sw
+          assert 'hunt-runtime-core-v417.js' in sw and 'app-runtime-router-v417.js' in sw
           print('promotion-protocol: PASS')
           PY
