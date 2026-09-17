@@ -32,9 +32,9 @@ jobs:
           assert 'array[5,10,25,50]' in migration
           assert "p_percent <> v_policy.initial_canary_percent" in migration
           assert 'v_authorized_state_version is distinct from v_status.state_version' in migration
-          assert "v_authorized_admission_ready" in migration
+          assert 'v_authorized_admission_ready' in migration
           assert 'canary admission gate recheck blocked start' in migration
-          assert "authorization_consumed" in migration
+          assert 'authorization_consumed' in migration
           assert 'revoke all on function private.start_stock_hunter_canary_v417' in migration.lower()
           assert 'service_role' in migration
 
@@ -50,10 +50,10 @@ jobs:
           assert 'LIVE_CONTRACT_PASS / REAL_CANARY_NOT_STARTED' in audit
           assert '5% -> 10% -> 25% -> 50%' in audit
           assert '20260917221339' in audit and '20260917221514' in audit
-          assert 'auto_start=false' in admission.replace(' ', '')
+          assert "p.auto_start?'ON':'OFF — MANUAL ONLY'" in admission
           assert 'stock_hunter_canary_expansion_readiness_v417' in expansion
-          assert 'Auto-Expand' in expansion
-          assert 'Auto-Rollback' in hold
-          assert 'Auto-Recover' in recovery
+          assert 'Auto-Expand خاموش است' in expansion
+          assert 'Auto-Rollback و Auto-Kill خاموش‌اند' in hold
+          assert 'Auto-Recover خاموش است' in recovery
           print('stock-hunter-staged-canary-contract: PASS')
           PY
