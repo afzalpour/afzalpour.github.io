@@ -1,10 +1,8 @@
 -- Stock Hunter 4.1.7 Promotion Proposal -> Forward Shadow -> Activation Review guard layer.
 -- PROMOTION_FORWARD_SHADOW_CONTRACT: OOS_FROZEN_MANUAL_ONLY_PROSPECTIVE_PAIRED
 --
--- This migration intentionally preserves the already-defined Promotion/Rollout policy
--- thresholds. It adds fail-closed guards around their write surfaces and requires the
--- one-time OOS freeze contract to exist first. It must be applied only after
--- oos-release-freeze-v416.sql is live and verified.
+-- Preserve the already-defined Promotion/Rollout numerical thresholds. Add fail-closed
+-- guards around write surfaces and require the one-time OOS freeze contract first.
 
 begin;
 
@@ -32,9 +30,9 @@ begin
   end if;
 end $$;
 
--- Preserve the existing frozen numerical policy. Only the already-documented structural
--- minimums are asserted here; utility/return/risk thresholds remain exactly as stored in
--- the existing policy rows and are not re-invented by this migration.
+-- Historical UI contract fixes these two structural minimums at 10 fresh paired dates
+-- and 30 Challenger selections per mode. Utility/return/risk guards remain whatever is
+-- already frozen in the existing live policy row; this migration does not redefine them.
 do $$
 declare
   v_days integer;
@@ -64,18 +62,17 @@ begin
   end if;
 end $$;
 
--- The existing Forward Shadow sample table is treated as a paired Champion/Challenger
--- observation surface. Require the stable provenance key used by the v4.1.6 shadow path.
+-- The existing Forward Shadow sample row is the paired Champion/Challenger unit. Require
+-- the stable provenance columns before installing a unique pair key.
 do $$
 declare
-  v_missing text[] := array[]::text[];
+  v_missing text[]:=array[]::text[];
   v_col text;
 begin
   foreach v_col in array array['sample_id','proposal_id','trade_date','symbol_id','hunt_mode','observed_at','bucket_minute','created_at']
   loop
     if not exists (
-      select 1
-      from information_schema.columns
+      select 1 from information_schema.columns
       where table_schema='public'
         and table_name='stock_hunter_challenger_shadow_samples_v417'
         and column_name=v_col
@@ -92,8 +89,9 @@ create unique index if not exists stock_hunter_forward_shadow_pair_key_v417
   on public.stock_hunter_challenger_shadow_samples_v417
   (proposal_id,trade_date,symbol_id,bucket_minute,hunt_mode);
 
--- Promotion proposal creation is permitted only after a valid one-time OOS release,
--- exact release/fingerprint binding, and a two-mode OOS Promotion assessment PASS.
+-- Promotion Proposal: only after the one-time OOS release is immutable and the existing
+-- two-mode OOS Promotion assessment passes. The Proposal is bound to the exact release,
+-- fingerprint and target engine; callers cannot back-date created_at.
 create or replace function private.guard_stock_hunter_promotion_proposal_v417()
 returns trigger
 language plpgsql
@@ -148,8 +146,7 @@ begin
   end if;
 
   if exists (
-    select 1
-    from public.stock_hunter_promotion_proposals_v416 p
+    select 1 from public.stock_hunter_promotion_proposals_v416 p
     where p.release_id=v_new_release and p.target_engine_version=v_target
   ) then
     raise exception 'Promotion Proposal already exists for this OOS release and target version';
@@ -170,9 +167,8 @@ for each row execute function private.guard_stock_hunter_promotion_proposal_v417
 create unique index if not exists stock_hunter_promotion_release_target_once_v417
   on public.stock_hunter_promotion_proposals_v416(release_id,target_engine_version);
 
--- Forward Shadow is prospective-only. A row must bind to an existing Proposal, occur
--- after Proposal creation, match Tehran trade_date, arrive within the same 10-minute
--- provenance envelope used by prospective Calibration, and represent one of both modes.
+-- Forward Shadow: strictly prospective after Proposal creation, same Tehran trade date,
+-- bounded ingestion lag and exactly one paired row per key.
 create or replace function private.guard_stock_hunter_forward_shadow_v417()
 returns trigger
 language plpgsql
@@ -214,11 +210,11 @@ begin
   if v_trade_date is distinct from (v_observed at time zone 'Asia/Tehran')::date then
     raise exception 'Forward Shadow trade_date must match observed_at Tehran date';
   end if;
-  if v_created < v_observed-interval '2 minutes'
-     or v_created > v_observed+interval '10 minutes' then
+  if v_created<v_observed-interval '2 minutes'
+     or v_created>v_observed+interval '10 minutes' then
     raise exception 'Forward Shadow capture provenance lag is outside allowed window';
   end if;
-  if v_mode not in ('reversal','acceleration') then
+  if v_mode is null or v_mode not in ('reversal','acceleration') then
     raise exception 'Forward Shadow hunt_mode must be reversal or acceleration';
   end if;
   return new;
@@ -232,9 +228,8 @@ create trigger stock_hunter_forward_shadow_prospective_guard_v417
 before insert on public.stock_hunter_challenger_shadow_samples_v417
 for each row execute function private.guard_stock_hunter_forward_shadow_v417();
 
--- Activation Review is an immutable audit record only. It can be inserted once per
--- proposal after the existing Forward Shadow readiness gate is true. It never activates
--- production and cannot be used to bypass the OOS freeze dependency.
+-- Activation Review: immutable audit/review only. It requires the existing Forward Shadow
+-- readiness gate and cannot activate production. One Review per Proposal.
 create or replace function private.guard_stock_hunter_activation_review_v417()
 returns trigger
 language plpgsql
@@ -246,7 +241,6 @@ declare
   v_integrity text;
   v_proposal_id bigint;
   v_ready boolean;
-  v_ready_proposal bigint;
   v_production_activated boolean;
 begin
   select integrity_state into v_integrity
@@ -265,12 +259,11 @@ begin
     raise exception 'Activation Review blocked: Promotion Proposal does not exist';
   end if;
 
-  select can_record_review,proposal_id
-    into v_ready,v_ready_proposal
+  select can_record_review into v_ready
   from public.stock_hunter_activation_review_readiness_v417
   limit 1;
-  if not coalesce(v_ready,false) or v_ready_proposal is distinct from v_proposal_id then
-    raise exception 'Activation Review blocked: Forward Shadow readiness is not PASS for this Proposal';
+  if not coalesce(v_ready,false) then
+    raise exception 'Activation Review blocked: Forward Shadow readiness is not PASS';
   end if;
   if exists(select 1 from public.stock_hunter_activation_reviews_v417 where proposal_id=v_proposal_id) then
     raise exception 'Activation Review already exists for this Proposal';
@@ -289,7 +282,7 @@ for each row execute function private.guard_stock_hunter_activation_review_v417(
 create unique index if not exists stock_hunter_activation_review_once_per_proposal_v417
   on public.stock_hunter_activation_reviews_v417(proposal_id);
 
--- Keep all automation OFF even if someone later edits policy rows directly.
+-- Automatic Promotion/Activation stays forbidden even if a policy row is edited later.
 create or replace function private.guard_stock_hunter_promotion_rollout_automation_v417()
 returns trigger
 language plpgsql
@@ -318,9 +311,8 @@ create trigger stock_hunter_rollout_policy_manual_only_v417
 before insert or update on public.stock_hunter_rollout_policy_v417
 for each row execute function private.guard_stock_hunter_promotion_rollout_automation_v417();
 
--- Unified, read-only state surface. The existing numerical readiness calculations remain
--- the source of truth; this view only adds the explicit OOS dependency and fail-closed
--- lifecycle state used by operators.
+-- Internal unified lifecycle surface. It is intentionally not exposed to anon/authenticated
+-- because it depends on the service-role-only OOS integrity surface.
 create or replace view public.stock_hunter_promotion_forward_shadow_gate_v417
 with (security_invoker=true)
 as
@@ -329,7 +321,7 @@ with oi as (
   from public.stock_hunter_oos_release_integrity_v416
   limit 1
 ), pp as (
-  select proposal_ready,passed_modes,mode_count,readiness_reason,proposal_id
+  select proposal_ready,passed_modes,mode_count,readiness_reason
   from public.stock_hunter_promotion_readiness_v416
   limit 1
 ), p as (
@@ -338,13 +330,13 @@ with oi as (
   order by proposal_id desc
   limit 1
 ), rr as (
-  select proposal_id,target_engine_version,min_fresh_trade_dates_observed,
+  select target_engine_version,min_fresh_trade_dates_observed,
          min_challenger_selected_observed,passed_modes,mode_count,
          activation_review_ready,readiness_reason
   from public.stock_hunter_rollout_readiness_v417
   limit 1
 ), ar as (
-  select proposal_id,can_record_review,review_reason
+  select can_record_review,review_reason
   from public.stock_hunter_activation_review_readiness_v417
   limit 1
 ), rv as (
@@ -392,9 +384,10 @@ left join rr on true
 left join ar on true
 left join rv on true;
 
-grant select on public.stock_hunter_promotion_forward_shadow_gate_v417 to anon,authenticated,service_role;
+revoke all on public.stock_hunter_promotion_forward_shadow_gate_v417 from public,anon,authenticated;
+grant select on public.stock_hunter_promotion_forward_shadow_gate_v417 to service_role;
 
 comment on view public.stock_hunter_promotion_forward_shadow_gate_v417 is
-  'Fail-closed read-only lifecycle: OOS freeze -> manual Promotion Proposal -> prospective paired Forward Shadow -> manual Activation Review. No traffic mutation.';
+  'Internal fail-closed lifecycle: OOS freeze -> manual Promotion Proposal -> prospective paired Forward Shadow -> manual Activation Review. No traffic mutation.';
 
 commit;
