@@ -112,8 +112,9 @@ for each statement execute function private.guard_stock_hunter_candidate_search_
 
 -- Preserve the exact output contract of calibration_dataset. Before release it is the
 -- live prospective dataset; after release it becomes the immutable frozen snapshot.
--- The switch reads the existing public readiness view rather than the private control
--- table/manifest directly, preserving security_invoker read compatibility.
+-- The switch is intentionally based only on whether the frozen snapshot table has rows.
+-- That avoids a circular dependency through readiness/robustness views and makes the
+-- switch atomic with the release transaction: rollback empties the snapshot again.
 create or replace view public.stock_hunter_calibration_dataset_v416
 with (security_invoker=true)
 as
@@ -155,10 +156,8 @@ with p as (
          1.0 / count(*) over(partition by m.trade_date,m.symbol_id)::numeric as cluster_weight
   from mature m
   join dates d using(trade_date)
-), ctrl as (
-  select oos_unlocked
-  from public.stock_hunter_oos_unlock_readiness_v416
-  limit 1
+), freeze_state as (
+  select exists(select 1 from public.stock_hunter_oos_release_dataset_v416) as frozen
 ), rows_union as (
   select
     b.sample_id,b.trade_date,b.symbol_id,b.symbol,b.company_name,b.hunt_mode,b.observed_at,b.bucket_minute,
@@ -168,8 +167,8 @@ with p as (
     b.return_3d_pct,b.mfe_1d_pct,b.mae_1d_pct,b.mfe_3d_pct,b.mae_3d_pct,b.future_sessions_observed,
     b.positive_1d,b.hit_plus_1pct_1d,b.hit_minus_1pct_3d,b.date_rank,b.date_count,b.split,b.cluster_weight
   from live_base b
-  cross join ctrl c
-  where not c.oos_unlocked
+  cross join freeze_state s
+  where not s.frozen
 
   union all
 
@@ -181,8 +180,8 @@ with p as (
     f.return_3d_pct,f.mfe_1d_pct,f.mae_1d_pct,f.mfe_3d_pct,f.mae_3d_pct,f.future_sessions_observed,
     f.positive_1d,f.hit_plus_1pct_1d,f.hit_minus_1pct_3d,f.date_rank,f.date_count,f.split,f.cluster_weight
   from public.stock_hunter_oos_release_dataset_v416 f
-  cross join ctrl c
-  where c.oos_unlocked
+  cross join freeze_state s
+  where s.frozen
 )
 select * from rows_union;
 
