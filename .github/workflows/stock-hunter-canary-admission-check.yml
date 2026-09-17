@@ -7,6 +7,7 @@ on:
       - 'stock-hunter-v4/canary-admission-v417.js'
       - 'stock-hunter-v4/canary-expansion-v417.js'
       - 'stock-hunter-v4/canary-hold-rollback-v417.js'
+      - 'stock-hunter-v4/canary-recovery-v417.js'
       - 'stock-hunter-v4/sw.js'
       - 'stock-hunter-v4/app-runtime-router-v417.js'
       - 'stock-hunter-v4/app-hunt-v416.js'
@@ -16,12 +17,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check admission expansion and hold JavaScript
+      - name: Check admission expansion hold and recovery JavaScript
         run: |
           node --check stock-hunter-v4/canary-admission-v417.js
           node --check stock-hunter-v4/canary-expansion-v417.js
           node --check stock-hunter-v4/canary-hold-rollback-v417.js
-      - name: Check admission expansion and hold semantics
+          node --check stock-hunter-v4/canary-recovery-v417.js
+      - name: Check admission expansion hold and recovery semantics
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -29,6 +31,7 @@ jobs:
           admission=Path('stock-hunter-v4/canary-admission-v417.js').read_text(encoding='utf-8')
           expansion=Path('stock-hunter-v4/canary-expansion-v417.js').read_text(encoding='utf-8')
           hold=Path('stock-hunter-v4/canary-hold-rollback-v417.js').read_text(encoding='utf-8')
+          recovery=Path('stock-hunter-v4/canary-recovery-v417.js').read_text(encoding='utf-8')
           sw=Path('stock-hunter-v4/sw.js').read_text(encoding='utf-8')
           router=Path('stock-hunter-v4/app-runtime-router-v417.js').read_text(encoding='utf-8')
           hunt=Path('stock-hunter-v4/app-hunt-v416.js').read_text(encoding='utf-8')
@@ -47,12 +50,14 @@ jobs:
           assert 'Canary Expansion Gate' in expansion
           assert 'stock_hunter_canary_expansion_policy_v417' in expansion
           assert 'stock_hunter_canary_expansion_readiness_v417' in expansion
+          assert 'stock_hunter_canary_recovery_gate_v417' in expansion
           assert 'pass_stage_duration' in expansion
           assert 'pass_routed_pairs' in expansion
           assert 'pass_routed_symbols' in expansion
           assert 'pass_routed_buckets' in expansion
           assert 'pass_freshness' in expansion and 'pass_recommendation' in expansion
           assert '۵٪ → ۱۰٪ → ۲۵٪ → ۵۰٪' in expansion
+          assert 'Recovery Gate نیز باید PASS باشد' in expansion
           assert 'Auto-Expand خاموش است' in expansion
           assert 'OFF — MANUAL ONLY' in expansion
           assert 'canary-hold-rollback-v417.js?v=4.1.7' in expansion
@@ -63,7 +68,17 @@ jobs:
           assert 'expansion_blocked' in hold and 'rollback_recommended' in hold
           assert 'Auto-Rollback و Auto-Kill خاموش‌اند' in hold
           assert 'OFF — MANUAL ONLY' in hold
-          for js in (admission,expansion,hold):
+          assert 'canary-recovery-v417.js?v=4.1.7' in hold
+          assert 'Canary Recovery / Re-entry Gate' in recovery
+          assert 'stock_hunter_canary_recovery_policy_v417' in recovery
+          assert 'stock_hunter_canary_recovery_gate_v417' in recovery
+          assert 'required_consecutive_pass_captures' in recovery
+          assert 'cooldown_minutes' in recovery and 'max_healthy_capture_gap_minutes' in recovery
+          assert 'same_review_reentry_blocked' in recovery
+          assert 'ROLLBACK_REQUIRED' in recovery and 'REVIEW_RETIRED' in recovery
+          assert 'Auto-Recover خاموش است' in recovery
+          assert 'OFF — MANUAL ONLY' in recovery
+          for js in (admission,expansion,hold,recovery):
             lower=js.lower()
             assert '/rpc/' not in lower
             assert "method:'post'" not in lower and 'method:"post"' not in lower
@@ -72,6 +87,7 @@ jobs:
           assert "routingMode:'CHAMPION_ONLY'" in router
           assert "killSwitch:true" in router
           assert "HUNT_V416_VERSION='4.1.6-hunt-v2'" in hunt
-          assert './canary-admission-v417.js' in sw and './canary-expansion-v417.js' in sw and './canary-hold-rollback-v417.js' in sw
-          print('canary-admission-expansion-hold-rollback-semantics: PASS')
+          assert './canary-admission-v417.js' in sw and './canary-expansion-v417.js' in sw and './canary-hold-rollback-v417.js' in sw and './canary-recovery-v417.js' in sw
+          assert "shikar-sahm-v4.1.6-r12" in sw
+          print('canary-admission-expansion-hold-recovery-semantics: PASS')
           PY
