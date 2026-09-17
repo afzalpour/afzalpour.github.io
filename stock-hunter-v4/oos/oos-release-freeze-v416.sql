@@ -112,6 +112,8 @@ for each statement execute function private.guard_stock_hunter_candidate_search_
 
 -- Preserve the exact output contract of calibration_dataset. Before release it is the
 -- live prospective dataset; after release it becomes the immutable frozen snapshot.
+-- The switch reads the existing public readiness view rather than the private control
+-- table/manifest directly, preserving security_invoker read compatibility.
 create or replace view public.stock_hunter_calibration_dataset_v416
 with (security_invoker=true)
 as
@@ -155,12 +157,7 @@ with p as (
   join dates d using(trade_date)
 ), ctrl as (
   select oos_unlocked
-  from public.stock_hunter_candidate_eval_control_v416
-  where singleton=true
-), rel as (
-  select release_id
-  from public.stock_hunter_oos_release_manifest_v416
-  order by release_id
+  from public.stock_hunter_oos_unlock_readiness_v416
   limit 1
 ), rows_union as (
   select
@@ -184,7 +181,6 @@ with p as (
     f.return_3d_pct,f.mfe_1d_pct,f.mae_1d_pct,f.mfe_3d_pct,f.mae_3d_pct,f.future_sessions_observed,
     f.positive_1d,f.hit_plus_1pct_1d,f.hit_minus_1pct_3d,f.date_rank,f.date_count,f.split,f.cluster_weight
   from public.stock_hunter_oos_release_dataset_v416 f
-  join rel r on r.release_id=f.release_id
   cross join ctrl c
   where c.oos_unlocked
 )
