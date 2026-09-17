@@ -6,6 +6,7 @@ on:
       - 'stock-hunter-v4/rollout-v417.html'
       - 'stock-hunter-v4/canary-admission-v417.js'
       - 'stock-hunter-v4/canary-expansion-v417.js'
+      - 'stock-hunter-v4/canary-hold-rollback-v417.js'
       - 'stock-hunter-v4/sw.js'
       - 'stock-hunter-v4/app-runtime-router-v417.js'
       - 'stock-hunter-v4/app-hunt-v416.js'
@@ -15,17 +16,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check admission and expansion JavaScript
+      - name: Check admission expansion and hold JavaScript
         run: |
           node --check stock-hunter-v4/canary-admission-v417.js
           node --check stock-hunter-v4/canary-expansion-v417.js
-      - name: Check admission and expansion semantics
+          node --check stock-hunter-v4/canary-hold-rollback-v417.js
+      - name: Check admission expansion and hold semantics
         run: |
           python - <<'PY'
           from pathlib import Path
           html=Path('stock-hunter-v4/rollout-v417.html').read_text(encoding='utf-8')
           admission=Path('stock-hunter-v4/canary-admission-v417.js').read_text(encoding='utf-8')
           expansion=Path('stock-hunter-v4/canary-expansion-v417.js').read_text(encoding='utf-8')
+          hold=Path('stock-hunter-v4/canary-hold-rollback-v417.js').read_text(encoding='utf-8')
           sw=Path('stock-hunter-v4/sw.js').read_text(encoding='utf-8')
           router=Path('stock-hunter-v4/app-runtime-router-v417.js').read_text(encoding='utf-8')
           hunt=Path('stock-hunter-v4/app-hunt-v416.js').read_text(encoding='utf-8')
@@ -52,7 +55,15 @@ jobs:
           assert '۵٪ → ۱۰٪ → ۲۵٪ → ۵۰٪' in expansion
           assert 'Auto-Expand خاموش است' in expansion
           assert 'OFF — MANUAL ONLY' in expansion
-          for js in (admission,expansion):
+          assert 'canary-hold-rollback-v417.js?v=4.1.7' in expansion
+          assert 'Canary Hold / Rollback Gate' in hold
+          assert 'stock_hunter_canary_hold_rollback_policy_v417' in hold
+          assert 'stock_hunter_canary_hold_rollback_gate_v417' in hold
+          assert 'ROLLBACK_RECOMMENDED' in hold
+          assert 'expansion_blocked' in hold and 'rollback_recommended' in hold
+          assert 'Auto-Rollback و Auto-Kill خاموش‌اند' in hold
+          assert 'OFF — MANUAL ONLY' in hold
+          for js in (admission,expansion,hold):
             lower=js.lower()
             assert '/rpc/' not in lower
             assert "method:'post'" not in lower and 'method:"post"' not in lower
@@ -61,6 +72,6 @@ jobs:
           assert "routingMode:'CHAMPION_ONLY'" in router
           assert "killSwitch:true" in router
           assert "HUNT_V416_VERSION='4.1.6-hunt-v2'" in hunt
-          assert './canary-admission-v417.js' in sw and './canary-expansion-v417.js' in sw
-          print('canary-admission-expansion-semantics: PASS')
+          assert './canary-admission-v417.js' in sw and './canary-expansion-v417.js' in sw and './canary-hold-rollback-v417.js' in sw
+          print('canary-admission-expansion-hold-rollback-semantics: PASS')
           PY
