@@ -1,0 +1,46 @@
+name: Stock Hunter 4.1.7 Canary Admission Check
+on:
+  push:
+    branches: [main, 'stock-hunter-v417-*']
+    paths:
+      - 'stock-hunter-v4/rollout-v417.html'
+      - 'stock-hunter-v4/canary-admission-v417.js'
+      - 'stock-hunter-v4/app-runtime-router-v417.js'
+      - 'stock-hunter-v4/app-hunt-v416.js'
+      - '.github/workflows/stock-hunter-canary-admission-check.yml'
+jobs:
+  validate-admission:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check admission JavaScript
+        run: node --check stock-hunter-v4/canary-admission-v417.js
+      - name: Check admission semantics
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          html=Path('stock-hunter-v4/rollout-v417.html').read_text(encoding='utf-8')
+          js=Path('stock-hunter-v4/canary-admission-v417.js').read_text(encoding='utf-8')
+          router=Path('stock-hunter-v4/app-runtime-router-v417.js').read_text(encoding='utf-8')
+          hunt=Path('stock-hunter-v4/app-hunt-v416.js').read_text(encoding='utf-8')
+          assert 'Canary Admission Gate' in html
+          assert 'APPROVE_CANARY' in html
+          assert 'Auto-Start خاموش است' in html
+          assert 'canary-admission-v417.js?v=4.1.7' in html
+          assert 'stock_hunter_canary_admission_policy_v417' in js
+          assert 'stock_hunter_canary_admission_readiness_v417' in js
+          assert 'min_pairs_observed' in js
+          assert 'min_symbols_observed' in js
+          assert 'min_buckets_observed' in js
+          assert 'pass_freshness' in js and 'pass_recommendation' in js
+          assert 'OFF — MANUAL ONLY' in js
+          lower=js.lower()
+          assert '/rpc/' not in lower
+          assert "method:'post'" not in lower and 'method:"post"' not in lower
+          assert "method:'patch'" not in lower and 'method:"patch"' not in lower
+          assert "method:'delete'" not in lower and 'method:"delete"' not in lower
+          assert "routingMode:'CHAMPION_ONLY'" in router
+          assert "killSwitch:true" in router
+          assert "HUNT_V416_VERSION='4.1.6-hunt-v2'" in hunt
+          print('canary-admission-semantics: PASS')
+          PY
