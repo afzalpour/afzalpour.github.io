@@ -1,0 +1,24 @@
+name: Stock Hunter 4.1.7 Control Plane Atomicity Contract
+
+on:
+  push:
+    paths:
+      - 'stock-hunter-v4/control-plane/**'
+      - '.github/workflows/stock-hunter-control-plane-atomicity-v417-check.yml'
+  pull_request:
+    paths:
+      - 'stock-hunter-v4/control-plane/**'
+      - '.github/workflows/stock-hunter-control-plane-atomicity-v417-check.yml'
+
+jobs:
+  atomicity-model:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run crash / partial-failure model drill
+        run: node stock-hunter-v4/control-plane/atomicity-model-v417.cjs
+      - name: Enforce live-proof status honesty
+        run: |
+          grep -q 'LIVE_DB_PROOF: PENDING' stock-hunter-v4/control-plane/CONTROL_PLANE_CRASH_DRILL_2026-09-17.md
+          grep -q 'PARTIAL — live proof pending' stock-hunter-v4/control-plane/CONTROL_PLANE_CRASH_DRILL_2026-09-17.md
+          echo 'control-plane-live-proof-status: PENDING (expected until correct Stock Hunter DB drill is executed)'
