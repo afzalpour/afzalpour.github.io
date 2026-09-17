@@ -4,10 +4,13 @@ do $$
 declare
   v_selected_def text;
   v_validation_def text;
-  v_unlock_def text;
   v_bad_selected integer;
   v_selected_modes integer;
   v_robust_modes integer;
+  v_expected_modes integer;
+  v_expected_robust integer;
+  v_unlock_modes integer;
+  v_unlock_robust integer;
   v_can_unlock boolean;
   v_require_both boolean;
   v_auto_unlock boolean;
@@ -19,8 +22,6 @@ begin
     into v_selected_def;
   select pg_get_viewdef('public.stock_hunter_candidate_validation_selection_v416'::regclass,true)
     into v_validation_def;
-  select pg_get_viewdef('public.stock_hunter_oos_unlock_readiness_v416'::regclass,true)
-    into v_unlock_def;
 
   if position('stock_hunter_candidate_validation_selection_v416' in v_selected_def)=0 then
     raise exception 'candidate_selected bypasses validation selection';
@@ -61,12 +62,23 @@ begin
     raise exception 'candidate auto promotion must remain false';
   end if;
 
-  if position('count(distinct hunt_mode)' in lower(v_unlock_def))=0 then
-    raise exception 'OOS readiness must count distinct hunt modes';
+  select
+    count(distinct hunt_mode) filter (where not is_baseline)::integer,
+    count(distinct hunt_mode) filter (where not is_baseline and robustness_ready)::integer
+    into v_expected_modes,v_expected_robust
+  from public.stock_hunter_candidate_robustness_v416;
+
+  select mode_count,robust_modes,can_unlock_oos
+    into v_unlock_modes,v_unlock_robust,v_can_unlock
+  from public.stock_hunter_oos_unlock_readiness_v416;
+
+  if v_unlock_modes <> v_expected_modes or v_unlock_robust <> v_expected_robust then
+    raise exception 'OOS readiness mode counts drifted: expected %/% got %/%',
+      v_expected_modes,v_expected_robust,v_unlock_modes,v_unlock_robust;
   end if;
 
-  select selected_modes,robust_modes,can_unlock_oos
-    into v_selected_modes,v_robust_modes,v_can_unlock
+  select selected_modes,robust_modes
+    into v_selected_modes,v_robust_modes
   from public.stock_hunter_maturity_status_v416;
 
   if v_selected_modes < 2 and v_can_unlock then
