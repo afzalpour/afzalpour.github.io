@@ -43,7 +43,7 @@ jobs:
           assert 'Activation Review Protocol' in html
           assert 'ثبت Review هیچ Activationی انجام نمی‌دهد' in html
           assert 'Production Activation & Rollback Control Plane' in html
-          assert 'Runtime Routing عمداً هنوز متصل نیست' in html
+          assert 'Versioned Runtime Router و Challenger Engine در Data Plane نصب شده‌اند' in html
           assert 'Kill Switch' in html
           assert 'هیچ Button/RPC عمومی' in html
           assert 'تعداد روزهای مشترک' in html
@@ -85,5 +85,5 @@ jobs:
           grep -q "HUNT_V416_VERSION='4.1.6-hunt-v2'" stock-hunter-v4/app-hunt-v416.js
           grep -q "routingMode:'CHAMPION_ONLY'" stock-hunter-v4/app-runtime-router-v417.js
           grep -q "killSwitch:true" stock-hunter-v4/app-runtime-router-v417.js
-          grep -q 'Control Plane ساخته شده ولی Data Plane هنوز به آن وصل نیست' stock-hunter-v4/rollout-v417.html
+          grep -q 'Router نسخه‌ای به Data Plane اضافه شده' stock-hunter-v4/rollout-v417.html
           grep -q 'Hunt 4.1.6 تنها موتور تولیدی است' stock-hunter-v4/rollout-v417.html
