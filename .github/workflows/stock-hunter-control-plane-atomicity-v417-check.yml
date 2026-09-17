@@ -11,12 +11,14 @@ on:
       - '.github/workflows/stock-hunter-control-plane-atomicity-v417-check.yml'
 
 jobs:
-  atomicity-model:
+  atomicity-and-concurrency-model:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Run crash / partial-failure model drill
         run: node stock-hunter-v4/control-plane/atomicity-model-v417.cjs
+      - name: Run advisory-lock / state-version contention drill
+        run: node stock-hunter-v4/control-plane/concurrency-lock-drill-v417.cjs
       - name: Enforce live-proof status honesty
         run: |
           grep -q 'LIVE_DB_PROOF: PENDING' stock-hunter-v4/control-plane/CONTROL_PLANE_CRASH_DRILL_2026-09-17.md
