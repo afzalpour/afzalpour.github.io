@@ -112,7 +112,7 @@ jobs:
           grep -q 'پنج مدل ۱۰روزه' stock-hunter-v4/methodology.html
           grep -q 'Engineering Heuristic' stock-hunter-v4/methodology.html
           grep -q 'RequiredVelocity_15sec' stock-hunter-v4/hunt-methodology-v416.html
-          grep -q "shikar-sahm-v4.1.6-r9" stock-hunter-v4/sw.js
+          grep -q "shikar-sahm-v4.1.6-r10" stock-hunter-v4/sw.js
           grep -q 'hunt-runtime-core-v417.js' stock-hunter-v4/sw.js
           grep -q 'app-runtime-router-v417.js' stock-hunter-v4/sw.js
           grep -q 'performance.html' stock-hunter-v4/sw.js
