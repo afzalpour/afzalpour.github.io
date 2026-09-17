@@ -49,6 +49,11 @@ async function loadCanaryHoldRollbackV417(){
     const detail=hold$('holdRollbackDetail');if(detail)detail.textContent=e?.message||'خطا در دریافت Hold/Rollback Gate';
   }
 }
+function loadCanaryRecoverySurfaceV417(){
+  if(document.querySelector('script[data-canary-recovery-v417]'))return;
+  const s=document.createElement('script');s.src='canary-recovery-v417.js?v=4.1.7';s.defer=true;s.dataset.canaryRecoveryV417='1';document.body.appendChild(s);
+}
 ensureCanaryHoldRollbackSurfaceV417();
 const holdRefresh=hold$('refreshRoll');if(holdRefresh)holdRefresh.addEventListener('click',loadCanaryHoldRollbackV417);
 loadCanaryHoldRollbackV417();
+loadCanaryRecoverySurfaceV417();
