@@ -41,5 +41,10 @@ async function loadCanaryAdmissionV417(){
     const reason=admission$('admissionReason');if(reason)reason.textContent=e?.message||'خطا در دریافت Admission Gate';
   }
 }
+function loadCanaryExpansionSurfaceV417(){
+  if(document.querySelector('script[data-canary-expansion-v417]'))return;
+  const s=document.createElement('script');s.src='canary-expansion-v417.js?v=4.1.7';s.defer=true;s.dataset.canaryExpansionV417='1';document.body.appendChild(s);
+}
 const admissionRefresh=admission$('refreshRoll');if(admissionRefresh)admissionRefresh.addEventListener('click',loadCanaryAdmissionV417);
 loadCanaryAdmissionV417();
+loadCanaryExpansionSurfaceV417();
