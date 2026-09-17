@@ -7,6 +7,7 @@ on:
       - 'stock-hunter-v4/app-hunt-v416.js'
       - 'stock-hunter-v4/hunt-parity-v416.js'
       - 'stock-hunter-v4/parity/**'
+      - 'stock-hunter-v4/capture-security/**'
       - '.github/workflows/stock-hunter-hunt-parity-check.yml'
 jobs:
   parity:
@@ -35,17 +36,49 @@ jobs:
           assert.deepStrictEqual(server,browser);
           console.log(`browser-server-parity: PASS (${browser.results.length} frozen fixtures)`);
           NODE
-      - name: Verify capture endpoint rejects public callers
+      - name: Verify capture endpoint rejects public and confused callers
         env:
           CAPTURE_URL: https://summnepwuziwulzvpcms.supabase.co/functions/v1/stock-hunter-capture-v416
         run: |
-          unauth_status=$(curl --silent --show-error --output /tmp/capture-unauth.json --write-out '%{http_code}' -X POST -H 'Content-Type: application/json' --data '{}' "$CAPTURE_URL")
-          test "$unauth_status" = "401"
-          grep -q '"unauthorized"' /tmp/capture-unauth.json
-          wrong_status=$(curl --silent --show-error --output /tmp/capture-wrong.json --write-out '%{http_code}' -X POST -H 'Content-Type: application/json' -H 'X-Stock-Hunter-Capture-Token: definitely-wrong-token' --data '{}' "$CAPTURE_URL")
-          test "$wrong_status" = "401"
-          grep -q '"unauthorized"' /tmp/capture-wrong.json
-          echo 'capture-auth-regression: PASS'
+          assert_json_status() {
+            expected="$1"; expected_error="$2"; outfile="$3"; shift 3
+            actual=$(curl --silent --show-error --output "$outfile" --write-out '%{http_code}' "$@")
+            test "$actual" = "$expected"
+            grep -q "\"$expected_error\"" "$outfile"
+          }
+
+          # No custom capture secret: never reaches claim/scan.
+          assert_json_status 401 unauthorized /tmp/capture-unauth.json \
+            -X POST -H 'Content-Type: application/json' --data '{}' "$CAPTURE_URL"
+
+          # A forged capture token must fail closed.
+          assert_json_status 401 unauthorized /tmp/capture-wrong.json \
+            -X POST -H 'Content-Type: application/json' \
+            -H 'X-Stock-Hunter-Capture-Token: definitely-wrong-token' \
+            --data '{}' "$CAPTURE_URL"
+
+          # Supabase/JWT-looking credentials do not substitute for the dedicated capture secret.
+          assert_json_status 401 unauthorized /tmp/capture-bearer-only.json \
+            -X POST -H 'Content-Type: application/json' \
+            -H 'Authorization: Bearer definitely-not-a-capture-token' \
+            --data '{}' "$CAPTURE_URL"
+
+          # Base endpoint is POST-only; a public GET cannot trigger capture.
+          assert_json_status 405 method-not-allowed /tmp/capture-get.json \
+            -X GET "$CAPTURE_URL"
+
+          # Parity is GET-only; POST + parity cannot bypass capture auth.
+          assert_json_status 405 method-not-allowed /tmp/capture-parity-post.json \
+            -X POST -H 'Content-Type: application/json' --data '{}' "$CAPTURE_URL?parity=1"
+
+          echo 'capture-auth-regression: PASS (secret + method boundary)'
+      - name: Verify capture security contract is versioned
+        run: |
+          grep -q 'CAPTURE_AUTH_CONTRACT: VAULT_SECRET_SERVICE_ROLE_ONLY' stock-hunter-v4/capture-security/CAPTURE_AUTH_V416.md
+          grep -q "vault.decrypted_secrets" stock-hunter-v4/capture-security/capture-auth-v416.sql
+          grep -q "REVOKE ALL ON FUNCTION public.stock_hunter_validate_capture_token_v416(text) FROM PUBLIC, anon, authenticated" stock-hunter-v4/capture-security/capture-auth-v416.sql
+          grep -q "GRANT EXECUTE ON FUNCTION public.stock_hunter_validate_capture_token_v416(text) TO service_role" stock-hunter-v4/capture-security/capture-auth-v416.sql
+          grep -q "search_path TO ''" stock-hunter-v4/capture-security/capture-auth-v416.sql
       - name: Verify production Hunt contract unchanged
         run: |
           grep -q "HUNT_V416_VERSION='4.1.6-hunt-v2'" stock-hunter-v4/app-hunt-v416.js
