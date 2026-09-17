@@ -26,7 +26,7 @@ begin
     raise exception 'candidate_selected bypasses validation selection';
   end if;
   if position('stock_hunter_candidate_train_shortlist_v416' in v_validation_def)=0
-     or position("split = 'validation'" in v_validation_def)=0 then
+     or position('split = ''validation''' in v_validation_def)=0 then
     raise exception 'validation selection does not enforce Train shortlist -> Validation ordering';
   end if;
 
@@ -61,8 +61,7 @@ begin
     raise exception 'candidate auto promotion must remain false';
   end if;
 
-  if position('count(DISTINCT hunt_mode)' in upper(v_unlock_def))=0
-     and position('count(distinct hunt_mode)' in v_unlock_def)=0 then
+  if position('count(distinct hunt_mode)' in lower(v_unlock_def))=0 then
     raise exception 'OOS readiness must count distinct hunt modes';
   end if;
 
