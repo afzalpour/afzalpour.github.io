@@ -1,7 +1,7 @@
 name: Stock Hunter UI Check
 on:
   push:
-    branches: [main, 'stock-hunter-v416-*']
+    branches: [main, 'stock-hunter-v416-*', 'stock-hunter-v417-*']
     paths:
       - 'stock-hunter-v4/app-core.js'
       - 'stock-hunter-v4/app-forecast.js'
@@ -16,6 +16,9 @@ on:
       - 'stock-hunter-v4/app-theme-v412.js'
       - 'stock-hunter-v4/app-session-v413.js'
       - 'stock-hunter-v4/app-hunt-v416.js'
+      - 'stock-hunter-v4/hunt-runtime-core-v417.js'
+      - 'stock-hunter-v4/app-runtime-router-v417.js'
+      - 'stock-hunter-v4/runtime-router-smoke-v417.js'
       - 'stock-hunter-v4/app-hunt-hierarchy-v416.js'
       - 'stock-hunter-v4/app-universal-search-v416.js'
       - 'stock-hunter-v4/app-eod-v416.js'
@@ -58,6 +61,9 @@ jobs:
           node --check stock-hunter-v4/app-theme-v412.js
           node --check stock-hunter-v4/app-session-v413.js
           node --check stock-hunter-v4/app-hunt-v416.js
+          node --check stock-hunter-v4/hunt-runtime-core-v417.js
+          node --check stock-hunter-v4/app-runtime-router-v417.js
+          node --check stock-hunter-v4/runtime-router-smoke-v417.js
           node --check stock-hunter-v4/app-hunt-hierarchy-v416.js
           node --check stock-hunter-v4/app-universal-search-v416.js
           node --check stock-hunter-v4/app-eod-v416.js
@@ -70,11 +76,13 @@ jobs:
           node --check stock-hunter-v4/sw.js
       - name: Hunt engine deterministic smoke
         run: node stock-hunter-v4/hunt-smoke-v416.js
+      - name: Runtime router deterministic smoke
+        run: node stock-hunter-v4/runtime-router-smoke-v417.js
       - name: Universal search and end-of-day deterministic smoke
         run: node stock-hunter-v4/search-eod-smoke-v416.js
       - name: Check manifest
         run: python -m json.tool stock-hunter-v4/manifest.webmanifest >/dev/null
-      - name: Check 4.1.6 goal-aligned hunt UI
+      - name: Check goal-aligned hunt UI and runtime assets
         run: |
           grep -q '۴.۱.۶' stock-hunter-v4/index.html
           grep -q 'طراح: دکتر نیما افضل پور' stock-hunter-v4/index.html
@@ -82,6 +90,8 @@ jobs:
           grep -q 'calibration.html' stock-hunter-v4/index.html
           grep -q 'app-session-v413.js?v=4.1.6' stock-hunter-v4/index.html
           grep -q 'app-hunt-v416.js?v=4.1.6' stock-hunter-v4/index.html
+          grep -q 'hunt-runtime-core-v417.js?v=4.1.7' stock-hunter-v4/index.html
+          grep -q 'app-runtime-router-v417.js?v=4.1.7' stock-hunter-v4/index.html
           grep -q 'app-hunt-hierarchy-v416.js?v=4.1.6' stock-hunter-v4/index.html
           grep -q 'app-universal-search-v416.js?v=4.1.6' stock-hunter-v4/index.html
           grep -q 'app-eod-v416.js?v=4.1.6' stock-hunter-v4/index.html
@@ -102,7 +112,9 @@ jobs:
           grep -q 'پنج مدل ۱۰روزه' stock-hunter-v4/methodology.html
           grep -q 'Engineering Heuristic' stock-hunter-v4/methodology.html
           grep -q 'RequiredVelocity_15sec' stock-hunter-v4/hunt-methodology-v416.html
-          grep -q "shikar-sahm-v4.1.6-r7" stock-hunter-v4/sw.js
+          grep -q "shikar-sahm-v4.1.6-r8" stock-hunter-v4/sw.js
+          grep -q 'hunt-runtime-core-v417.js' stock-hunter-v4/sw.js
+          grep -q 'app-runtime-router-v417.js' stock-hunter-v4/sw.js
           grep -q 'performance.html' stock-hunter-v4/sw.js
           grep -q 'performance-v416.js' stock-hunter-v4/sw.js
           grep -q 'calibration.html' stock-hunter-v4/sw.js
@@ -165,7 +177,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           html=Path('stock-hunter-v4/index.html').read_text(encoding='utf-8')
-          assert html.index('app-session-v413.js') < html.index('app-hunt-v416.js') < html.index('app-hunt-hierarchy-v416.js') < html.index('app-universal-search-v416.js') < html.index('app-eod-v416.js')
+          assert html.index('app-session-v413.js') < html.index('app-hunt-v416.js') < html.index('hunt-runtime-core-v417.js') < html.index('app-runtime-router-v417.js') < html.index('app-hunt-hierarchy-v416.js') < html.index('app-universal-search-v416.js') < html.index('app-eod-v416.js')
           assert 'مستعد تداوم</option>' not in html
           print('load-order: PASS')
           PY
