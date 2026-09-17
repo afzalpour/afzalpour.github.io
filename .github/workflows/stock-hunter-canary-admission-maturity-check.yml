@@ -1,0 +1,49 @@
+name: Stock Hunter Canary Admission Maturity Contract
+on:
+  push:
+    branches: [main, 'stock-hunter-v417-*']
+    paths:
+      - 'stock-hunter-v4/canary/**'
+      - 'stock-hunter-v4/canary-admission-v417.js'
+      - '.github/workflows/stock-hunter-canary-admission-maturity-check.yml'
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Canary admission contract sources
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          migration=Path('stock-hunter-v4/canary/canary-admission-maturity-hardening-v417.sql').read_text(encoding='utf-8')
+          verify=Path('stock-hunter-v4/canary/verify-canary-admission-maturity-v417.sql').read_text(encoding='utf-8')
+          audit=Path('stock-hunter-v4/canary/CANARY_ADMISSION_MATURITY_AUDIT_2026-09-17.md').read_text(encoding='utf-8')
+          ui=Path('stock-hunter-v4/canary-admission-v417.js').read_text(encoding='utf-8')
+
+          assert 'CANARY_ADMISSION_MATURITY_CONTRACT: REVIEW_BOUND_REAL_DATA_MANUAL_ONLY' in migration
+          assert 'stock_hunter_canary_telemetry_policy_immutable_v417' in migration
+          assert 'reject_stock_hunter_canary_telemetry_policy_mutation_v417' in migration
+          assert 'revoke all on table public.stock_hunter_canary_monitor_v417' in migration.lower()
+          assert 'grant select on table public.stock_hunter_canary_monitor_v417' in migration.lower()
+
+          for token in ('min_pairs_per_mode <> 100','min_symbols_per_mode <> 30','min_buckets_per_mode <> 3',"required_recommendation <> 'PASS'",'ap.auto_start'):
+              assert token in verify
+          assert 'stock_hunter_shadow_samples_v416' in verify
+          assert 's.observed_at >= v_reviewed_at' in verify
+          assert 'NO_ACTIVATION_REVIEW_BOUND' in verify
+          assert 'stock-hunter-canary-admission-maturity-v417: PASS' in verify
+
+          assert 'STATUS: PASS' in audit
+          assert 'LIVE_DDL_APPLIED: YES' in audit
+          assert '20260917194700 stock_hunter_canary_admission_maturity_hardening_20260917' in audit
+          assert 'No historical synthetic backfill' in audit
+
+          assert 'stock_hunter_canary_admission_policy_v417' in ui
+          assert 'stock_hunter_canary_admission_readiness_v417' in ui
+          assert 'pass_pairs' in ui and 'pass_symbols' in ui and 'pass_buckets' in ui
+          assert 'pass_freshness' in ui and 'pass_recommendation' in ui
+          assert 'OFF — MANUAL ONLY' in ui
+          lower=ui.lower()
+          assert "method:'post'" not in lower and 'method:"post"' not in lower and '/rpc/' not in lower
+          print('canary-admission-maturity-contract: PASS')
+          PY
