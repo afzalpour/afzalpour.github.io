@@ -1,5 +1,5 @@
-// Canary admission + expansion + hold/rollback dashboard assets are pinned to cache r11.
-const CACHE='shikar-sahm-v4.1.6-r11';
+// Canary admission + expansion + hold/rollback + parity-aligned session assets are pinned to cache r12.
+const CACHE='shikar-sahm-v4.1.6-r12';
 const STATIC=[
   './','./index.html','./styles.css','./extra.css','./forecast-v415.css',
   './app-core.js','./app-forecast.js','./app-runtime.js','./app-universe.js',
