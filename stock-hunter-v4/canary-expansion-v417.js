@@ -51,6 +51,11 @@ async function loadCanaryExpansionV417(){
     const reason=expansion$('expansionReason');if(reason)reason.textContent=e?.message||'خطا در دریافت Expansion Gate';
   }
 }
+function loadCanaryHoldRollbackSurfaceV417(){
+  if(document.querySelector('script[data-canary-hold-rollback-v417]'))return;
+  const s=document.createElement('script');s.src='canary-hold-rollback-v417.js?v=4.1.7';s.defer=true;s.dataset.canaryHoldRollbackV417='1';document.body.appendChild(s);
+}
 ensureCanaryExpansionSurfaceV417();
 const expansionRefresh=expansion$('refreshRoll');if(expansionRefresh)expansionRefresh.addEventListener('click',loadCanaryExpansionV417);
 loadCanaryExpansionV417();
+loadCanaryHoldRollbackSurfaceV417();
