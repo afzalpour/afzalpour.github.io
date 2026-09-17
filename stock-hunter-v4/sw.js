@@ -1,3 +1,4 @@
+// Canary telemetry dashboard assets are pinned to cache r9.
 const CACHE='shikar-sahm-v4.1.6-r9';
 const STATIC=[
   './','./index.html','./styles.css','./extra.css','./forecast-v415.css',
