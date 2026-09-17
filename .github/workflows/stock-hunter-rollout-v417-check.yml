@@ -3,6 +3,10 @@ on:
   push:
     branches: [main, 'stock-hunter-v417-*']
     paths:
+      - 'stock-hunter-v4/index.html'
+      - 'stock-hunter-v4/hunt-runtime-core-v417.js'
+      - 'stock-hunter-v4/app-runtime-router-v417.js'
+      - 'stock-hunter-v4/runtime-router-smoke-v417.js'
       - 'stock-hunter-v4/rollout-v417.html'
       - 'stock-hunter-v4/rollout-v417.js'
       - 'stock-hunter-v4/promotion-decision-v416.js'
@@ -15,9 +19,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check JavaScript
         run: |
+          node --check stock-hunter-v4/hunt-runtime-core-v417.js
+          node --check stock-hunter-v4/app-runtime-router-v417.js
+          node --check stock-hunter-v4/runtime-router-smoke-v417.js
           node --check stock-hunter-v4/rollout-v417.js
           node --check stock-hunter-v4/promotion-decision-v416.js
           node --check stock-hunter-v4/sw.js
+      - name: Run runtime router parity smoke
+        run: node stock-hunter-v4/runtime-router-smoke-v417.js
       - name: Check forward shadow and activation control semantics
         run: |
           python - <<'PY'
@@ -26,6 +35,9 @@ jobs:
           js=Path('stock-hunter-v4/rollout-v417.js').read_text(encoding='utf-8')
           promo=Path('stock-hunter-v4/promotion-decision-v416.js').read_text(encoding='utf-8')
           sw=Path('stock-hunter-v4/sw.js').read_text(encoding='utf-8')
+          index=Path('stock-hunter-v4/index.html').read_text(encoding='utf-8')
+          router=Path('stock-hunter-v4/app-runtime-router-v417.js').read_text(encoding='utf-8')
+          core=Path('stock-hunter-v4/hunt-runtime-core-v417.js').read_text(encoding='utf-8')
           assert 'Champion / Challenger Forward Shadow' in html
           assert 'Auto-Activate خاموش است' in html
           assert 'Activation Review Protocol' in html
@@ -52,12 +64,26 @@ jobs:
           assert "method:'post'" not in lower and 'method:"post"' not in lower
           assert '/rpc/' not in lower
           assert 'rollout-v417.html' in promo
-          assert "shikar-sahm-v4.1.6-r7" in sw
-          assert './rollout-v417.html' in sw and './rollout-v417.js' in sw
-          print('forward-shadow-activation-control-semantics: PASS')
+          assert "shikar-sahm-v4.1.6-r8" in sw
+          assert './hunt-runtime-core-v417.js' in sw and './app-runtime-router-v417.js' in sw
+          assert index.index('app-hunt-v416.js') < index.index('hunt-runtime-core-v417.js') < index.index('app-runtime-router-v417.js') < index.index('app-hunt-hierarchy-v416.js')
+          assert 'applyHuntV416=applyRuntimeHuntV417' in router
+          assert 'stock_hunter_activation_policy_v417' in router
+          assert 'stock_hunter_activation_status_v417' in router
+          assert 'stock_hunter_activation_reviews_v417' in router
+          assert 'stock_hunter_promotion_proposals_v416' in router
+          assert 'stock_hunter_candidate_weights_v416' in router
+          assert 'promotion_gate_pass' in router and 'candidate_is_baseline' in router
+          rlower=router.lower()
+          assert "method:'post'" not in rlower and 'method:"post"' not in rlower
+          assert '/rpc/' not in rlower
+          assert 'killSwitch' in core and 'runtimeRoutingEnabled' in core and 'challengerAvailable' in core
+          print('forward-shadow-runtime-router-semantics: PASS')
           PY
-      - name: Verify production engine remains 4.1.6
+      - name: Verify production engine remains 4.1.6 by default
         run: |
           grep -q "HUNT_V416_VERSION='4.1.6-hunt-v2'" stock-hunter-v4/app-hunt-v416.js
+          grep -q "routingMode:'CHAMPION_ONLY'" stock-hunter-v4/app-runtime-router-v417.js
+          grep -q "killSwitch:true" stock-hunter-v4/app-runtime-router-v417.js
           grep -q 'Control Plane ساخته شده ولی Data Plane هنوز به آن وصل نیست' stock-hunter-v4/rollout-v417.html
           grep -q 'Hunt 4.1.6 تنها موتور تولیدی است' stock-hunter-v4/rollout-v417.html
