@@ -7,6 +7,8 @@ declare
   ap public.stock_hunter_canary_admission_policy_v417%rowtype;
   ar public.stock_hunter_canary_admission_readiness_v417%rowtype;
   fn text;
+  fn_is_definer boolean;
+  fn_config text[];
   rls_qual text;
 begin
   select * into strict tp from public.stock_hunter_canary_telemetry_policy_v417 where policy_id='default';
@@ -39,14 +41,29 @@ begin
     raise exception 'telemetry policy immutability trigger missing';
   end if;
 
-  if has_table_privilege('anon','public.stock_hunter_canary_telemetry_policy_v417','INSERT,UPDATE,DELETE,TRUNCATE')
-     or has_table_privilege('authenticated','public.stock_hunter_canary_telemetry_policy_v417','INSERT,UPDATE,DELETE,TRUNCATE')
-     or has_table_privilege('service_role','public.stock_hunter_canary_telemetry_policy_v417','INSERT,UPDATE,DELETE,TRUNCATE') then
+  if has_table_privilege('anon','public.stock_hunter_canary_telemetry_policy_v417','INSERT')
+     or has_table_privilege('anon','public.stock_hunter_canary_telemetry_policy_v417','UPDATE')
+     or has_table_privilege('anon','public.stock_hunter_canary_telemetry_policy_v417','DELETE')
+     or has_table_privilege('anon','public.stock_hunter_canary_telemetry_policy_v417','TRUNCATE')
+     or has_table_privilege('authenticated','public.stock_hunter_canary_telemetry_policy_v417','INSERT')
+     or has_table_privilege('authenticated','public.stock_hunter_canary_telemetry_policy_v417','UPDATE')
+     or has_table_privilege('authenticated','public.stock_hunter_canary_telemetry_policy_v417','DELETE')
+     or has_table_privilege('authenticated','public.stock_hunter_canary_telemetry_policy_v417','TRUNCATE')
+     or has_table_privilege('service_role','public.stock_hunter_canary_telemetry_policy_v417','INSERT')
+     or has_table_privilege('service_role','public.stock_hunter_canary_telemetry_policy_v417','UPDATE')
+     or has_table_privilege('service_role','public.stock_hunter_canary_telemetry_policy_v417','DELETE')
+     or has_table_privilege('service_role','public.stock_hunter_canary_telemetry_policy_v417','TRUNCATE') then
     raise exception 'telemetry policy has unexpected write privilege';
   end if;
 
-  if has_table_privilege('anon','public.stock_hunter_canary_monitor_v417','INSERT,UPDATE,DELETE,TRUNCATE')
-     or has_table_privilege('authenticated','public.stock_hunter_canary_monitor_v417','INSERT,UPDATE,DELETE,TRUNCATE') then
+  if has_table_privilege('anon','public.stock_hunter_canary_monitor_v417','INSERT')
+     or has_table_privilege('anon','public.stock_hunter_canary_monitor_v417','UPDATE')
+     or has_table_privilege('anon','public.stock_hunter_canary_monitor_v417','DELETE')
+     or has_table_privilege('anon','public.stock_hunter_canary_monitor_v417','TRUNCATE')
+     or has_table_privilege('authenticated','public.stock_hunter_canary_monitor_v417','INSERT')
+     or has_table_privilege('authenticated','public.stock_hunter_canary_monitor_v417','UPDATE')
+     or has_table_privilege('authenticated','public.stock_hunter_canary_monitor_v417','DELETE')
+     or has_table_privilege('authenticated','public.stock_hunter_canary_monitor_v417','TRUNCATE') then
     raise exception 'canary monitor view is not read-only';
   end if;
 
@@ -61,9 +78,13 @@ begin
     raise exception 'canary capture function EXECUTE ACL mismatch';
   end if;
 
-  select pg_get_functiondef('public.capture_stock_hunter_canary_telemetry_v417()'::regprocedure) into fn;
-  if fn not like '%security invoker%'
-     or fn not like '%SET search_path TO ''''%'
+  select p.prosecdef,p.proconfig,pg_get_functiondef(p.oid)
+    into fn_is_definer,fn_config,fn
+  from pg_proc p
+  where p.oid='public.capture_stock_hunter_canary_telemetry_v417()'::regprocedure;
+
+  if fn_is_definer
+     or not ('search_path=""'=any(fn_config))
      or fn not like '%stock_hunter_shadow_samples_v416%'
      or fn not like '%s.observed_at >= v_reviewed_at%'
      or fn not like '%v_review_id is null%'
