@@ -14,6 +14,11 @@ norm = function(r){
 function faTextV413(v){
   return String(v||'').toLowerCase().replace(/ي|ى/g,'ی').replace(/ك/g,'ک').replace(/[\u200c\u200dـ]+/g,' ').replace(/\s+/g,' ').trim();
 }
+function sessionTsSecV413(v){
+  let t=Number(v||0);
+  if(t>1e12)t/=1000;
+  return Number.isFinite(t)?t:0;
+}
 
 function tehranClockV413(){
   const p=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Tehran',weekday:'short',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());
@@ -22,7 +27,7 @@ function tehranClockV413(){
 }
 
 function tehranYmdFromTsV413(ts){
-  const d=new Date(Number(ts)*1000);
+  const d=new Date(sessionTsSecV413(ts)*1000);
   if(!Number.isFinite(d.getTime()))return'';
   const p=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Tehran',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d),g=t=>p.find(z=>z.type===t)?.value||'';
   return `${g('year')}-${g('month')}-${g('day')}`;
@@ -58,9 +63,9 @@ function sessionPhaseV413(x){
 function todayTradeEvidenceV413(x){
   const today=tehranClockV413().ymd,c=Array.isArray(x.candles)?x.candles:[],sn=Array.isArray(x.snapshots)?x.snapshots:[];
   let lastTradeTs=0;
-  for(const z of c){const t=Number(z.t??z.time??0),v=Number(z.volume??0);if(t&&v>0&&tehranYmdFromTsV413(t)===today)lastTradeTs=Math.max(lastTradeTs,t);}
+  for(const z of c){const t=sessionTsSecV413(z.t??z.time??0),v=Number(z.volume??0);if(t&&v>0&&tehranYmdFromTsV413(t)===today)lastTradeTs=Math.max(lastTradeTs,t);}
   for(let i=1;i<sn.length;i++){
-    const a=sn[i-1]||{},b=sn[i]||{},t=Number(b.T??b.t??0),va=Number(a.Volume??a.volume??0),vb=Number(b.Volume??b.volume??0);
+    const a=sn[i-1]||{},b=sn[i]||{},t=sessionTsSecV413(b.T??b.t??0),va=Number(a.Volume??a.volume??0),vb=Number(b.Volume??b.volume??0);
     if(t&&vb>va&&tehranYmdFromTsV413(t)===today)lastTradeTs=Math.max(lastTradeTs,t);
   }
   return lastTradeTs;
@@ -68,7 +73,7 @@ function todayTradeEvidenceV413(x){
 
 function recentBookActivityV413(x,minutes=30){
   const sn=(Array.isArray(x.snapshots)?x.snapshots:[]).filter(Boolean),cut=Date.now()/1000-minutes*60;
-  const a=sn.filter(z=>Number(z.T??z.t??0)>=cut);
+  const a=sn.filter(z=>sessionTsSecV413(z.T??z.t??0)>=cut);
   if(a.length<2)return false;
   const keys=['Volume','Last','BuyDepth','SellDepth','BQ','SQ','Bid','Ask','BuyQueue','SellQueue'];
   for(let i=1;i<a.length;i++)for(const k of keys)if(Number(a[i]?.[k]??0)!==Number(a[i-1]?.[k]??0))return true;
