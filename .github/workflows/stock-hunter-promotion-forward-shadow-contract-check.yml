@@ -1,0 +1,64 @@
+name: Stock Hunter Promotion Forward Shadow Contract
+on:
+  push:
+    branches: [main, 'stock-hunter-v417-*']
+    paths:
+      - 'stock-hunter-v4/promotion/**'
+      - 'stock-hunter-v4/promotion-decision-v416.js'
+      - 'stock-hunter-v4/rollout-v417.js'
+      - 'stock-hunter-v4/rollout-v417.html'
+      - '.github/workflows/stock-hunter-promotion-forward-shadow-contract-check.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify promotion forward shadow contract markers
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          sql=Path('stock-hunter-v4/promotion/promotion-forward-shadow-gate-v417.sql').read_text(encoding='utf-8')
+          verify=Path('stock-hunter-v4/promotion/verify-promotion-forward-shadow-v417.sql').read_text(encoding='utf-8')
+          audit=Path('stock-hunter-v4/promotion/PROMOTION_FORWARD_SHADOW_AUDIT_2026-09-17.md').read_text(encoding='utf-8')
+          promo=Path('stock-hunter-v4/promotion-decision-v416.js').read_text(encoding='utf-8')
+          roll=Path('stock-hunter-v4/rollout-v417.js').read_text(encoding='utf-8')
+          html=Path('stock-hunter-v4/rollout-v417.html').read_text(encoding='utf-8')
+
+          assert 'PROMOTION_FORWARD_SHADOW_CONTRACT: OOS_FROZEN_MANUAL_ONLY_PROSPECTIVE_PAIRED' in sql
+          assert "integrity_state is distinct from 'FROZEN_PASS'" in sql
+          assert 'stock_hunter_promotion_release_target_once_v417' in sql
+          assert 'stock_hunter_forward_shadow_pair_key_v417' in sql
+          assert "v_observed<=v_proposal_created" in sql
+          assert "at time zone 'Asia/Tehran'" in sql
+          assert "interval '10 minutes'" in sql
+          assert 'stock_hunter_activation_review_once_per_proposal_v417' in sql
+          assert 'Activation Review cannot activate production' in sql
+          assert 'automatic Promotion/Activation is forbidden' in sql
+          assert 'stock_hunter_promotion_forward_shadow_gate_v417' in sql
+          assert 'BLOCKED_OOS_NOT_FROZEN' in sql
+          assert 'READY_FOR_MANUAL_PROPOSAL' in sql
+          assert 'COLLECTING_FORWARD_SHADOW' in sql
+          assert 'READY_FOR_MANUAL_ACTIVATION_REVIEW' in sql
+          assert 'REVIEW_RECORDED_NO_ACTIVATION' in sql
+          assert 'min_fresh_trade_dates' in sql and '10' in sql
+          assert 'min_selected_per_mode' in sql and '30' in sql
+
+          assert 'stock-hunter-promotion-forward-shadow-v417: PASS' in verify
+          assert 'has_function_privilege' in verify
+          assert 'duplicate Forward Shadow pair key detected' in verify
+          assert 'downstream artifacts exist before OOS freeze PASS' in verify
+          assert 'REPO_IMPLEMENTED_GATED_ON_OOS_LIVE_APPLY' in audit
+          assert 'No Promotion Proposal, Forward Shadow sample, Activation Review, traffic change, or production activation' in audit
+
+          # Browser surfaces remain read-only. This hardening must not introduce a public write path.
+          for surface in (promo,roll):
+            lower=surface.lower()
+            assert "method:'post'" not in lower and 'method:"post"' not in lower
+            assert '/rpc/' not in lower
+          assert 'stock_hunter_promotion_readiness_v416' in promo
+          assert 'stock_hunter_rollout_readiness_v417' in roll
+          assert 'stock_hunter_activation_review_readiness_v417' in roll
+          assert 'Auto-Activate خاموش است' in html
+          assert 'ثبت Review هیچ Activationی انجام نمی‌دهد' in html
+          print('promotion-forward-shadow-contract: PASS')
+          PY
