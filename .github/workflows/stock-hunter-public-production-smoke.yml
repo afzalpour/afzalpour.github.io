@@ -1,0 +1,97 @@
+name: Stock Hunter Public Production Smoke
+
+on:
+  push:
+    branches:
+      - main
+      - 'stock-hunter-v417-public-production-smoke-*'
+    paths:
+      - 'index.html'
+      - 'stock-hunter-v4/**'
+      - '.github/workflows/stock-hunter-public-production-smoke.yml'
+      - 'stock-hunter-v4/research/PUBLIC_PRODUCTION_SMOKE_AUDIT_2026-09-18.md'
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch published Pages artifacts
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/stock-hunter-public-smoke
+
+          fetch() {
+            local url="$1"
+            local out="$2"
+            local code
+            code="$(curl -L --silent --show-error --retry 3 --retry-delay 2 --connect-timeout 10 --max-time 30 -w '%{http_code}' -o "$out" "$url")"
+            test "$code" = "200"
+            test -s "$out"
+          }
+
+          fetch "https://afzalpour.github.io/" "/tmp/stock-hunter-public-smoke/root-index.html"
+          fetch "https://afzalpour.github.io/stock-hunter-v4/" "/tmp/stock-hunter-public-smoke/app-index.html"
+          fetch "https://afzalpour.github.io/stock-hunter-v4/sw.js" "/tmp/stock-hunter-public-smoke/sw.js"
+          fetch "https://afzalpour.github.io/stock-hunter-v4/hunt-runtime-core-v417.js" "/tmp/stock-hunter-public-smoke/hunt-runtime-core-v417.js"
+          fetch "https://afzalpour.github.io/stock-hunter-v4/app-runtime-router-v417.js" "/tmp/stock-hunter-public-smoke/app-runtime-router-v417.js"
+
+      - name: Verify deployed bytes equal repository bytes
+        run: |
+          set -euo pipefail
+          cmp index.html /tmp/stock-hunter-public-smoke/root-index.html
+          cmp stock-hunter-v4/index.html /tmp/stock-hunter-public-smoke/app-index.html
+          cmp stock-hunter-v4/sw.js /tmp/stock-hunter-public-smoke/sw.js
+          cmp stock-hunter-v4/hunt-runtime-core-v417.js /tmp/stock-hunter-public-smoke/hunt-runtime-core-v417.js
+          cmp stock-hunter-v4/app-runtime-router-v417.js /tmp/stock-hunter-public-smoke/app-runtime-router-v417.js
+
+          echo "root_index_sha256=$(sha256sum index.html | awk '{print $1}')"
+          echo "app_index_sha256=$(sha256sum stock-hunter-v4/index.html | awk '{print $1}')"
+          echo "sw_sha256=$(sha256sum stock-hunter-v4/sw.js | awk '{print $1}')"
+          echo "runtime_core_sha256=$(sha256sum stock-hunter-v4/hunt-runtime-core-v417.js | awk '{print $1}')"
+          echo "runtime_router_sha256=$(sha256sum stock-hunter-v4/app-runtime-router-v417.js | awk '{print $1}')"
+
+      - name: Verify published runtime markers
+        run: |
+          set -euo pipefail
+          APP=/tmp/stock-hunter-public-smoke/app-index.html
+          SW=/tmp/stock-hunter-public-smoke/sw.js
+          CORE=/tmp/stock-hunter-public-smoke/hunt-runtime-core-v417.js
+          ROUTER=/tmp/stock-hunter-public-smoke/app-runtime-router-v417.js
+
+          grep -q 'hunt-runtime-core-v417.js' "$APP"
+          grep -q 'app-runtime-router-v417.js' "$APP"
+          grep -q 'shikar-sahm-v4.1.6-r12' "$SW"
+          grep -q 'hunt-runtime-core-v417.js' "$SW"
+          grep -q 'app-runtime-router-v417.js' "$SW"
+          grep -q 'canary-recovery-v417.js' "$SW"
+          grep -q "HUNT_RUNTIME_CORE_V417_VERSION='4.1.7-runtime-core-v1'" "$CORE"
+          grep -q "routingMode:'CHAMPION_ONLY'" "$ROUTER"
+          grep -q 'trafficPercent:0' "$ROUTER"
+          grep -q 'killSwitch:true' "$ROUTER"
+
+      - name: Verify smoke remains read-only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          w=Path('.github/workflows/stock-hunter-public-production-smoke.yml').read_text(encoding='utf-8').lower()
+          forbidden=[
+              "method:'post'",
+              'method:"post"',
+              '/rpc/',
+              'net.http_post',
+              'supabase functions invoke',
+              'curl -x post',
+              'curl --request post',
+              'curl -xpost',
+          ]
+          for token in forbidden:
+              assert token not in w, token
+          print('stock-hunter-public-production-smoke-readonly: PASS')
+          PY
+
+      - name: Final smoke result
+        run: echo 'stock-hunter-public-production-smoke: PASS'
