@@ -1,0 +1,40 @@
+name: Stock Hunter Prospective Launch Preflight Contract
+on:
+  push:
+    branches: [main, 'stock-hunter-v417-*']
+    paths:
+      - 'stock-hunter-v4/prospective-data/verify-prospective-launch-preflight-v416.sql'
+      - 'stock-hunter-v4/prospective-data/PROSPECTIVE_LAUNCH_PREFLIGHT_AUDIT_2026-09-18.md'
+      - '.github/workflows/stock-hunter-prospective-launch-preflight-check.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify launch-preflight contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          v=Path('stock-hunter-v4/prospective-data/verify-prospective-launch-preflight-v416.sql').read_text(encoding='utf-8')
+          a=Path('stock-hunter-v4/prospective-data/PROSPECTIVE_LAUNCH_PREFLIGHT_AUDIT_2026-09-18.md').read_text(encoding='utf-8')
+
+          assert "2026-09-19 05:30:00+00" in v
+          assert "max_capture_lag_seconds<>600" in v
+          assert "4.1.6-hunt-v2" in v
+          assert "stock-hunter-capture-v416-open" in v
+          assert "stock-hunter-capture-v416-mid" in v
+          assert "stock-hunter-capture-v416-close" in v
+          assert "X-Stock-Hunter-Capture-Token" in v
+          assert "stock_hunter_capture_token_v416" in v
+          assert "stock_hunter_project_url_v416" in v
+          assert "CHAMPION_ONLY" in v
+          assert "challenger_traffic_percent<>0" in v
+          assert "interval '10 minutes'" in v
+          assert "first eligible capture did not run within launch grace window" in v
+          assert "stock-hunter-prospective-launch-preflight-v416: PASS" in v
+
+          assert "LIVE_PREFLIGHT_PASS / FIRST_REAL_MARKET_WINDOW_PENDING" in a
+          assert "Saturday 2026-09-19 at 09:00 Tehran" in a
+          assert "Request id: 746" in a
+          print('stock-hunter-prospective-launch-preflight-contract: PASS')
+          PY
