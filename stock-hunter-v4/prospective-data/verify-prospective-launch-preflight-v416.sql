@@ -10,6 +10,8 @@ declare
   a public.stock_hunter_activation_status_v417%rowtype;
   active_capture_jobs integer;
   valid_capture_jobs integer;
+  any_capture_http_jobs integer;
+  v417_capture_callers integer;
   outcome_jobs integer;
   now_utc timestamptz := now();
 begin
@@ -53,6 +55,28 @@ begin
 
   if active_capture_jobs<>3 or valid_capture_jobs<>3 then
     raise exception 'capture cron/Vault contract mismatch';
+  end if;
+
+  select
+    count(*) filter (
+      where active
+        and command ilike '%/functions/v1/stock-hunter-capture-%'
+    ),
+    count(*) filter (
+      where active
+        and command ilike '%/functions/v1/stock-hunter-capture-v417%'
+    )
+  into any_capture_http_jobs,v417_capture_callers
+  from cron.job;
+
+  if any_capture_http_jobs<>3 then
+    raise exception 'unexpected active Stock Hunter capture HTTP caller count: %',
+      any_capture_http_jobs;
+  end if;
+
+  if v417_capture_callers<>0 then
+    raise exception 'dark stock-hunter-capture-v417 unexpectedly has % active cron caller(s)',
+      v417_capture_callers;
   end if;
 
   if not exists (
