@@ -1,7 +1,7 @@
 # Stock Hunter 4.1.7 Final Release Live Closure
 
 AUDIT_DATE: 2026-09-18
-STATUS: LIVE_CONTRACT_PASS / REAL_FINAL_RELEASE_BLOCKED_ON_COMPONENT_DEPLOYMENT_AND_MATURITY
+STATUS: LIVE_CONTRACT_PASS / REAL_FINAL_RELEASE_BLOCKED_ON_MATURITY_AND_FRESH_ATTESTATION
 TARGET_PROJECT: summnepwuziwulzvpcms
 LIVE_MIGRATION: 20260918131512 stock_hunter_final_release_live_close_20260918
 CONTRACT: EXTERNALLY_ATTESTED_MANUAL_ONE_SHOT_FINAL_FREEZE_WITH_416_ROLLBACK_ARCHIVE
@@ -173,20 +173,31 @@ This also aligns with Supabase's move toward explicit Data API grants rather tha
 
 ## Current external deployment evidence
 
-Supabase Management API inventory for project summnepwuziwulzvpcms currently includes:
+Supabase Management API inventory for project summnepwuziwulzvpcms now includes the dark-deployed final capture component:
+
+- stock-hunter-capture-v417
+- function id = 21dc3f37-1f23-4ff9-b6da-68393b238989
+- status = ACTIVE
+- deployment version = 1
+- verify_jwt = false
+- ezbr_sha256 = bd350c80dfcaba5a530fd7153d13c7dd19249b8ab87a1a715458ac5ed3236d4c
+
+Its deployed index.ts is byte-for-byte identical to the repository source under:
+
+stock-hunter-v4/release/capture-v417/stock-hunter-capture-v417/index.ts
+
+The deployment is intentionally dark: no cron/job/client/runtime caller targets the v417 slug.
+
+verify_jwt remains false because the capture endpoint uses the existing custom x-stock-hunter-capture-token validator before any write path. This matches the hardened v416 security contract rather than relying on the platform JWT gateway.
+
+The previous rollback component remains live and unchanged:
 
 - stock-hunter-capture-v416
 - status = ACTIVE
 - deployment version = 5
 - ezbr_sha256 = 6eb0ba0ee5e9dae3b8d6bab5c79f7f48a98ae643fd35ebe968d8d41eb73fdc76
 
-There is currently no stock-hunter-capture-v417 Edge Function.
-
-The current repository tree also contains no stock-hunter-capture-v417 source path.
-
-Therefore no 4.1.7 component attestation was recorded.
-
-That is intentional.
+No 4.1.7 component attestation was recorded yet. Attestation is intentionally deferred until final release maturity so its 60-minute freshness window is meaningful.
 
 ## 4.1.6 rollback package remains preserved
 
@@ -253,11 +264,11 @@ Roadmap item #14 is structurally live-closed.
 
 The actual 4.1.7 final release is NOT prepared or frozen.
 
-Real final promotion remains blocked until all earlier natural maturity gates pass and, after a real stable 100% activation, the exact final components exist and are freshly verified through both GitHub API and Supabase Management API.
+Real final promotion remains blocked until all earlier natural maturity gates pass and, after a real stable 100% activation, the already dark-deployed final components are freshly re-verified through both GitHub API and Supabase Management API.
 
 At that point the required sequence is:
 
-external component verification
+fresh external component re-verification
 -> record immutable component attestation
 -> PREPARE manifest
 -> separate AUTHORIZE_FREEZE
