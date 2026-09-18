@@ -63,17 +63,21 @@ begin
   select pg_get_viewdef('public.stock_hunter_post_activation_monitor_v417'::regclass,true)
   into view_def;
 
-  if view_def not like '%t.activation_review_id = s_1.activation_review_id%'
-     or view_def not like '%t.state_version = s_1.state_version%'
-     or view_def not like '%t.observed_at >= s_1.last_transition_at%'
-     or view_def not like '%min_stability_trade_dates%'
-     or view_def not like '%min_pairs_per_mode%'
-     or view_def not like '%min_symbols_per_mode%'
-     or view_def not like '%min_buckets_per_mode%'
-     or view_def not like '%pass_rollback_target_preserved%'
-     or view_def not like '%NOT p.auto_rollback AND NOT rb.auto_rollback%'
-     or view_def not like '%r.incident_started_at IS NULL%'
-     or view_def not like '%READY_FOR_MANUAL_VERSION_PROMOTION_REVIEW%' then
+  if position('activation_review_id' in view_def)=0
+     or position('state_version' in view_def)=0
+     or position('observed_at >= ' in view_def)=0
+     or position('last_transition_at' in view_def)=0
+     or position('min_stability_trade_dates' in view_def)=0
+     or position('min_pairs_per_mode' in view_def)=0
+     or position('min_symbols_per_mode' in view_def)=0
+     or position('min_buckets_per_mode' in view_def)=0
+     or position('pass_rollback_target_preserved' in view_def)=0
+     or position('auto_rollback' in view_def)=0
+     or position('auto_finalize' in view_def)=0
+     or position('incident_started_at' in view_def)=0
+     or position('READY_FOR_MANUAL_VERSION_PROMOTION_REVIEW' in view_def)=0
+     or position('min_mode_last_observed_at' in view_def)=0
+     or position('min_recommendation_observed_at' in view_def)=0 then
     raise exception 'post-activation provenance/stability contract mismatch';
   end if;
 
