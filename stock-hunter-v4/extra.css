@@ -253,3 +253,45 @@ html body *:not(#iranFontLock#iranFontLock#iranFontLock)::before,
 html body *:not(#iranFontLock#iranFontLock#iranFontLock)::after {
   font-family:"IRAN",Tahoma,sans-serif !important;
 }
+
+
+/* === FINAL APPROVED SUBTEXT VISIBILITY === */
+html body .detail-grid small,
+html body .detail-grid .company,
+html body .detail-grid .metric-range,
+html body .detail-grid .forecast-box p,
+html body .detail-grid .forecast-note,
+html body .detail-grid .calibration-note,
+html body .integrated-banner small,
+html body .expert-grid small {
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+html body .detail-grid small,
+html body .integrated-banner small,
+html body .expert-grid small,
+html body .detail-grid .company,
+html body .detail-grid .metric-range {
+  color:var(--po-dim) !important;
+  font-size:10px !important;
+  line-height:1.75 !important;
+  margin-top:4px;
+}
+html body .detail-grid .forecast-box p,
+html body .detail-grid .forecast-note,
+html body .detail-grid .calibration-note {
+  color:#c2beb6 !important;
+  opacity:1 !important;
+}
+
+/* Approved brass value treatment */
+html:not([data-theme="light"]) .table-wrap td.num,
+html:not([data-theme="light"]) .metric b.mono,
+html:not([data-theme="light"]) .forecast-table td,
+html:not([data-theme="light"]) .expert-grid b.mono,
+html:not([data-theme="light"]) .integrated-banner b.mono,
+html:not([data-theme="light"]) .summary-row article:not(.top-pick):not(.feed-info) b,
+html:not([data-theme="light"]) .brand h1 span {
+  color:var(--po-brass) !important;
+}
