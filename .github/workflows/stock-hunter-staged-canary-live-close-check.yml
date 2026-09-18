@@ -1,0 +1,65 @@
+name: Stock Hunter Staged Canary Live Close
+on:
+  push:
+    branches: [main, 'stock-hunter-v417-*']
+    paths:
+      - 'stock-hunter-v4/canary/staged-canary-live-close-v417.sql'
+      - 'stock-hunter-v4/canary/verify-staged-canary-live-close-v417.sql'
+      - 'stock-hunter-v4/canary/staged-canary-route-parity-v417.cjs'
+      - 'stock-hunter-v4/canary/STAGED_CANARY_LIVE_CLOSE_AUDIT_2026-09-18.md'
+      - 'stock-hunter-v4/canary-expansion-v417.js'
+      - 'stock-hunter-v4/hunt-runtime-core-v417.js'
+      - 'stock-hunter-v4/app-runtime-router-v417.js'
+      - '.github/workflows/stock-hunter-staged-canary-live-close-check.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify deterministic route parity
+        run: node stock-hunter-v4/canary/staged-canary-route-parity-v417.cjs
+      - name: Verify staged Canary contract markers
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          m=Path('stock-hunter-v4/canary/staged-canary-live-close-v417.sql').read_text(encoding='utf-8')
+          v=Path('stock-hunter-v4/canary/verify-staged-canary-live-close-v417.sql').read_text(encoding='utf-8')
+          ui=Path('stock-hunter-v4/canary-expansion-v417.js').read_text(encoding='utf-8')
+          router=Path('stock-hunter-v4/app-runtime-router-v417.js').read_text(encoding='utf-8')
+          audit=Path('stock-hunter-v4/canary/STAGED_CANARY_LIVE_CLOSE_AUDIT_2026-09-18.md').read_text(encoding='utf-8')
+
+          for token in [
+            't.state_version=s.state_version',
+            'm.last_routed_observed_at is not null',
+            'ROUTED_EVIDENCE_STALE',
+            'stock_hunter_canary_expansion_stage_metrics_v417',
+            'stock_hunter_canary_hold_rollback_gate_v417',
+          ]:
+            assert token in m, token
+
+          for token in [
+            'array[5,10,25,50]',
+            'initial 5% Canary/start authorization contract mismatch',
+            'strict staged advance/one-shot authorization contract mismatch',
+            'Expansion freshness is not bound to fresh routed evidence',
+            'stock-hunter-staged-canary-live-close-v417: PASS',
+          ]:
+            assert token in v, token
+
+          assert 'ROUTED_EVIDENCE_STALE' in ui
+          assert 'Routed evidence این Stage تازه نیست' in ui
+
+          lower=router.lower()
+          assert "method:'post'" not in lower and 'method:"post"' not in lower
+          assert '/rpc/' not in lower
+          assert "routingMode:'CHAMPION_ONLY'" in router
+          assert 'trafficPercent:0' in router
+          assert 'killSwitch:true' in router
+
+          assert 'LIVE_CONTRACT_PASS / REAL_CANARY_NOT_STARTED' in audit
+          assert '20260918085347' in audit
+          assert 'Roadmap item #11 is live-closed structurally' in audit
+
+          print('stock-hunter-staged-canary-live-close-contract: PASS')
+          PY
