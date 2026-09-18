@@ -4,8 +4,11 @@ on:
     branches: [main, 'stock-hunter-v417-*']
     paths:
       - 'stock-hunter-v4/canary/post-activation-monitoring-hardening-v417.sql'
+      - 'stock-hunter-v4/canary/post-activation-live-close-v417.sql'
       - 'stock-hunter-v4/canary/verify-post-activation-monitoring-v417.sql'
+      - 'stock-hunter-v4/canary/verify-post-activation-live-close-v417.sql'
       - 'stock-hunter-v4/canary/POST_ACTIVATION_MONITORING_AUDIT_2026-09-18.md'
+      - 'stock-hunter-v4/canary/POST_ACTIVATION_LIVE_CLOSE_AUDIT_2026-09-18.md'
       - '.github/workflows/stock-hunter-post-activation-monitoring-check.yml'
 jobs:
   contract:
@@ -16,30 +19,56 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          m=Path('stock-hunter-v4/canary/post-activation-monitoring-hardening-v417.sql').read_text(encoding='utf-8')
-          v=Path('stock-hunter-v4/canary/verify-post-activation-monitoring-v417.sql').read_text(encoding='utf-8')
-          a=Path('stock-hunter-v4/canary/POST_ACTIVATION_MONITORING_AUDIT_2026-09-18.md').read_text(encoding='utf-8')
 
-          assert 'min_stability_trade_dates=5' in m
-          assert 'min_pairs_per_mode=500' in m
-          assert 'min_symbols_per_mode=75' in m
-          assert 'min_buckets_per_mode=8' in m
-          assert 'max_telemetry_age_minutes=15' in m
-          assert "required_recommendation='PASS'" in m
-          assert 'auto_rollback=false' in m and 'auto_finalize=false' in m
-          assert 'stock_hunter_post_activation_policy_immutable_v417' in m
-          assert 'grant select on public.stock_hunter_post_activation_monitor_v417' in m.lower()
+          base=Path('stock-hunter-v4/canary/post-activation-monitoring-hardening-v417.sql').read_text(encoding='utf-8')
+          live=Path('stock-hunter-v4/canary/post-activation-live-close-v417.sql').read_text(encoding='utf-8')
+          legacy=Path('stock-hunter-v4/canary/verify-post-activation-monitoring-v417.sql').read_text(encoding='utf-8')
+          verify=Path('stock-hunter-v4/canary/verify-post-activation-live-close-v417.sql').read_text(encoding='utf-8')
+          audit=Path('stock-hunter-v4/canary/POST_ACTIVATION_LIVE_CLOSE_AUDIT_2026-09-18.md').read_text(encoding='utf-8')
 
-          assert 't.activation_review_id = s_1.activation_review_id' in v
-          assert 't.state_version = s_1.state_version' in v
-          assert 't.observed_at >= s_1.last_transition_at' in v
-          assert '4.1.6-hunt-v2' in v
-          assert 'pass_automatic_rollback_off' in v
-          assert 'NOT_AT_FULL_ACTIVATION' in v
-          assert 'stock-hunter-post-activation-monitoring-v417: PASS' in v
+          for token in [
+            'min_stability_trade_dates=5',
+            'min_pairs_per_mode=500',
+            'min_symbols_per_mode=75',
+            'min_buckets_per_mode=8',
+            'max_telemetry_age_minutes=15',
+            "required_recommendation='PASS'",
+            'auto_rollback=false',
+            'auto_finalize=false',
+            'stock_hunter_post_activation_policy_immutable_v417',
+          ]:
+            assert token in base, token
 
-          assert 'LIVE_CONTRACT_PASS / REAL_POST_ACTIVATION_STABILITY_NOT_STARTED' in a
-          assert '20260918074636' in a
-          assert 'release-pin manifests = 0' in a
+          for token in [
+            "when q.recommendation='STABLE' then 'PASS'",
+            'min_mode_last_observed_at',
+            'min_recommendation_observed_at',
+            'POST_ACTIVATION_ROUTED_EVIDENCE_STALE',
+            'POST_ACTIVATION_RECOMMENDATION_EVIDENCE_STALE',
+            "s.champion_engine_version='4.1.6-hunt-v2'",
+            'READY_FOR_MANUAL_VERSION_PROMOTION_REVIEW',
+            'with (security_invoker=true)',
+          ]:
+            assert token in live, token
+
+          for token in [
+            'post-activation monitor output contract drifted',
+            'healthy STABLE telemetry is not normalized to post-activation PASS',
+            'post-activation two-mode evidence freshness contract is incomplete',
+            'manual post-activation rollback path does not restore Champion-only safe routing',
+            'release-pin consumer is not bound to post-activation stability',
+            'stock-hunter-post-activation-live-close-v417: PASS',
+          ]:
+            assert token in verify, token
+
+          assert 'stock-hunter-post-activation-monitoring-v417: PASS' in legacy
+          assert 'min_mode_last_observed_at' in legacy
+          assert 'min_recommendation_observed_at' in legacy
+
+          assert 'LIVE_CONTRACT_PASS / REAL_POST_ACTIVATION_STABILITY_NOT_STARTED' in audit
+          assert '20260918124656' in audit
+          assert 'STABLE -> PASS' in audit
+          assert 'Roadmap item #13 is live-closed structurally' in audit
+
           print('stock-hunter-post-activation-monitoring-contract: PASS')
           PY
