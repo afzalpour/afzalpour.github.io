@@ -94,4 +94,5 @@ jobs:
           PY
 
       - name: Final smoke result
-        run: echo 'stock-hunter-public-production-smoke: PASS'
+        run: |
+          echo 'stock-hunter-public-production-smoke: PASS'
