@@ -1,0 +1,39 @@
+name: Stock Hunter Pre-Market Freeze Seal
+on:
+  push:
+    branches: [main, 'stock-hunter-v417-*']
+    paths:
+      - 'stock-hunter-v4/prospective-data/verify-pre-market-freeze-seal-v417.sql'
+      - 'stock-hunter-v4/prospective-data/PRE_MARKET_FREEZE_SEAL_AUDIT_2026-09-18.md'
+      - '.github/workflows/stock-hunter-pre-market-freeze-seal-check.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify freeze-seal contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('stock-hunter-v4/prospective-data/verify-pre-market-freeze-seal-v417.sql').read_text(encoding='utf-8')
+          a=Path('stock-hunter-v4/prospective-data/PRE_MARKET_FREEZE_SEAL_AUDIT_2026-09-18.md').read_text(encoding='utf-8')
+          for t in [
+            "2026-09-19 05:30:00+00",
+            "ARMED_AWAITING_FIRST_MARKET_WINDOW",
+            "stock-hunter-capture-v416-open",
+            "stock-hunter-capture-v416-mid",
+            "stock-hunter-capture-v416-close",
+            "stock-hunter-capture-v417",
+            "stock_hunter_project_url_v416",
+            "stock_hunter_capture_token_v416",
+            "CHAMPION_ONLY",
+            "NO_MUTATION_UNTIL_FIRST_NATURAL_MARKET_WINDOW",
+          ]:
+            assert t in s, t
+          lower=s.lower()
+          for forbidden in ["insert into","update public.","delete from","cron.schedule(","cron.unschedule(","net.http_post("]:
+            assert forbidden not in lower, forbidden
+          assert 'LIVE_PASS / FREEZE_ACTIVE' in a
+          assert 'CANONICAL_MAIN_SHA: 4e2739fc5c90d22018a555cb148370cff375d1ae' in a
+          print('stock-hunter-pre-market-freeze-seal-contract: PASS')
+          PY
