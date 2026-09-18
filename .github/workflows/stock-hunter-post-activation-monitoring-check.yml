@@ -1,0 +1,45 @@
+name: Stock Hunter Post Activation Monitoring Contract
+on:
+  push:
+    branches: [main, 'stock-hunter-v417-*']
+    paths:
+      - 'stock-hunter-v4/canary/post-activation-monitoring-hardening-v417.sql'
+      - 'stock-hunter-v4/canary/verify-post-activation-monitoring-v417.sql'
+      - 'stock-hunter-v4/canary/POST_ACTIVATION_MONITORING_AUDIT_2026-09-18.md'
+      - '.github/workflows/stock-hunter-post-activation-monitoring-check.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify post-activation monitoring contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          m=Path('stock-hunter-v4/canary/post-activation-monitoring-hardening-v417.sql').read_text(encoding='utf-8')
+          v=Path('stock-hunter-v4/canary/verify-post-activation-monitoring-v417.sql').read_text(encoding='utf-8')
+          a=Path('stock-hunter-v4/canary/POST_ACTIVATION_MONITORING_AUDIT_2026-09-18.md').read_text(encoding='utf-8')
+
+          assert 'min_stability_trade_dates=5' in m
+          assert 'min_pairs_per_mode=500' in m
+          assert 'min_symbols_per_mode=75' in m
+          assert 'min_buckets_per_mode=8' in m
+          assert 'max_telemetry_age_minutes=15' in m
+          assert "required_recommendation='PASS'" in m
+          assert 'auto_rollback=false' in m and 'auto_finalize=false' in m
+          assert 'stock_hunter_post_activation_policy_immutable_v417' in m
+          assert 'grant select on public.stock_hunter_post_activation_monitor_v417' in m.lower()
+
+          assert 't.activation_review_id = s_1.activation_review_id' in v
+          assert 't.state_version = s_1.state_version' in v
+          assert 't.observed_at >= s_1.last_transition_at' in v
+          assert '4.1.6-hunt-v2' in v
+          assert 'pass_automatic_rollback_off' in v
+          assert 'NOT_AT_FULL_ACTIVATION' in v
+          assert 'stock-hunter-post-activation-monitoring-v417: PASS' in v
+
+          assert 'LIVE_CONTRACT_PASS / REAL_POST_ACTIVATION_STABILITY_NOT_STARTED' in a
+          assert '20260918074636' in a
+          assert 'release-pin manifests = 0' in a
+          print('stock-hunter-post-activation-monitoring-contract: PASS')
+          PY
