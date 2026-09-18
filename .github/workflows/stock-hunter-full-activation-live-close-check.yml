@@ -1,0 +1,60 @@
+name: Stock Hunter Full Activation Live Close
+on:
+  push:
+    branches: [main, 'stock-hunter-v417-*']
+    paths:
+      - 'stock-hunter-v4/canary/full-activation-live-close-v417.sql'
+      - 'stock-hunter-v4/canary/verify-full-activation-live-close-v417.sql'
+      - 'stock-hunter-v4/canary/full-activation-runtime-v417.cjs'
+      - 'stock-hunter-v4/canary/FULL_ACTIVATION_LIVE_CLOSE_AUDIT_2026-09-18.md'
+      - 'stock-hunter-v4/hunt-runtime-core-v417.js'
+      - 'stock-hunter-v4/app-runtime-router-v417.js'
+      - '.github/workflows/stock-hunter-full-activation-live-close-check.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify 100 percent runtime semantics
+        run: node stock-hunter-v4/canary/full-activation-runtime-v417.cjs
+      - name: Verify Full Activation contract markers
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          m=Path('stock-hunter-v4/canary/full-activation-live-close-v417.sql').read_text(encoding='utf-8')
+          v=Path('stock-hunter-v4/canary/verify-full-activation-live-close-v417.sql').read_text(encoding='utf-8')
+          router=Path('stock-hunter-v4/app-runtime-router-v417.js').read_text(encoding='utf-8')
+          audit=Path('stock-hunter-v4/canary/FULL_ACTIVATION_LIVE_CLOSE_AUDIT_2026-09-18.md').read_text(encoding='utf-8')
+
+          for token in [
+            "when r.recommendation='STABLE' then 'PASS'",
+            'min_recommendation_observed_at',
+            'ROUTED_EVIDENCE_STALE',
+            'RECOMMENDATION_EVIDENCE_STALE',
+            "s.challenger_traffic_percent=p.required_from_percent",
+            "with (security_invoker=true)",
+          ]:
+            assert token in m, token
+
+          for token in [
+            'STABLE telemetry is not normalized to the Full Activation PASS contract',
+            'Full Activation evidence freshness contract is incomplete',
+            '50->100 activation/recheck/one-shot contract mismatch',
+            'stock-hunter-full-activation-live-close-v417: PASS',
+          ]:
+            assert token in v, token
+
+          lower=router.lower()
+          assert '/rpc/' not in lower
+          assert "method:'post'" not in lower and 'method:"post"' not in lower
+          assert "routingMode:'CHAMPION_ONLY'" in router
+          assert 'trafficPercent:0' in router
+          assert 'killSwitch:true' in router
+
+          assert 'LIVE_CONTRACT_PASS / REAL_FULL_ACTIVATION_NOT_STARTED' in audit
+          assert '20260918090234' in audit
+          assert 'structurally unreachable' in audit
+          assert 'Roadmap item #12 is live-closed structurally' in audit
+
+          print('stock-hunter-full-activation-live-close-contract: PASS')
+          PY
