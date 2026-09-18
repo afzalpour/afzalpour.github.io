@@ -176,12 +176,9 @@ begin
       if exists (
         select 1
         from public.stock_hunter_shadow_samples_v416 s
+        join public.stock_hunter_shadow_outcomes_v416 o using(sample_id)
         where s.trade_date=v_first_trade_date
           and s.gate_reason=''
-      ) and exists (
-        select 1
-        from public.stock_hunter_shadow_outcomes_v416 o
-        where o.trade_date=v_first_trade_date
           and o.future_sessions_observed>=3
       ) then
         raise exception 'eligible completed first-cohort rows exist but expected mature count is zero';
