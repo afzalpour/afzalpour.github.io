@@ -1,0 +1,66 @@
+name: Stock Hunter Capture v417 Dark Deploy Contract
+on:
+  push:
+    branches: [main, 'stock-hunter-v417-*']
+    paths:
+      - 'stock-hunter-v4/release/capture-v417/stock-hunter-capture-v417/index.ts'
+      - 'stock-hunter-v4/release/rollback-v416/stock-hunter-capture-v416/index.ts'
+      - 'stock-hunter-v4/release/CAPTURE_V417_DARK_DEPLOY_AUDIT_2026-09-18.md'
+      - 'stock-hunter-v4/release/FINAL_RELEASE_LIVE_CLOSE_AUDIT_2026-09-18.md'
+      - '.github/workflows/stock-hunter-capture-v417-dark-deploy-check.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify identity-only v417 derivation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          base=Path('stock-hunter-v4/release/rollback-v416/stock-hunter-capture-v416/index.ts').read_text(encoding='utf-8')
+          actual=Path('stock-hunter-v4/release/capture-v417/stock-hunter-capture-v417/index.ts').read_text(encoding='utf-8')
+          audit=Path('stock-hunter-v4/release/CAPTURE_V417_DARK_DEPLOY_AUDIT_2026-09-18.md').read_text(encoding='utf-8')
+          final_audit=Path('stock-hunter-v4/release/FINAL_RELEASE_LIVE_CLOSE_AUDIT_2026-09-18.md').read_text(encoding='utf-8')
+
+          expected=base
+          expected=expected.replace("'4.1.6-shadow-v2-parity'","'4.1.7-shadow-capture-v1-parity'")
+          expected=expected.replace("'4.1.6-server-v4-parity'","'4.1.7-server-v1-parity'")
+          expected=expected.replace("'4.1.6-browser-server-parity-v1'","'4.1.7-capture-parity-v1'")
+          expected=expected.replace(
+              "return{protocol:'4.1.7-capture-parity-v1',fixedNow:PARITY_FIXED_ISO,results:",
+              "return{protocol:'4.1.7-capture-parity-v1',componentVersion:'4.1.7',storageProtocol:'v416-stable-schema',fixedNow:PARITY_FIXED_ISO,results:"
+          )
+          expected=expected.replace(
+              "return Response.json({ok:true,scanned:(data||[]).length,candidates:events.length,recorded,shadow_candidates:shadows.length,shadow_recorded:shadowRecorded,trade_date:now.ymd,source_version:'4.1.7-server-v1-parity'});",
+              "return Response.json({ok:true,component_version:'4.1.7',storage_protocol:'v416-stable-schema',scanned:(data||[]).length,candidates:events.length,recorded,shadow_candidates:shadows.length,shadow_recorded:shadowRecorded,trade_date:now.ymd,source_version:'4.1.7-server-v1-parity'});"
+          )
+
+          assert actual == expected, 'capture-v417 contains changes beyond approved identity/version delta'
+
+          for token in [
+              'npm:@supabase/supabase-js@2.116.0',
+              'x-stock-hunter-capture-token',
+              'stock_hunter_validate_capture_token_v416',
+              'claim_stock_hunter_capture_v416',
+              'record_stock_hunter_hunt_events_v416',
+              'record_stock_hunter_shadow_samples_v416',
+              'finish_stock_hunter_capture_v416',
+              "protocol:'4.1.7-capture-parity-v1'",
+              "componentVersion:'4.1.7'",
+              "storageProtocol:'v416-stable-schema'",
+              "source_version:'4.1.7-server-v1-parity'",
+          ]:
+              assert token in actual, token
+
+          assert 'SUPABASE_SERVICE_ROLE_KEY' in actual
+          assert 'captureToken' in actual
+          assert "return Response.json({ok:false,error:'unauthorized'},{status:401})" in actual
+
+          assert 'DARK_DEPLOYED / NO_TRAFFIC / NO_FINAL_ATTESTATION' in audit
+          assert '21dc3f37-1f23-4ff9-b6da-68393b238989' in audit
+          assert 'bd350c80dfcaba5a530fd7153d13c7dd19249b8ab87a1a715458ac5ed3236d4c' in audit
+          assert 'LIVE_CONTRACT_PASS / REAL_FINAL_RELEASE_BLOCKED_ON_MATURITY_AND_FRESH_ATTESTATION' in final_audit
+
+          print('stock-hunter-capture-v417-dark-deploy-contract: PASS')
+          PY

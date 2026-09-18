@@ -1,0 +1,52 @@
+name: Stock Hunter Full Activation Gate Contract
+on:
+  push:
+    branches: [main, 'stock-hunter-v417-*']
+    paths:
+      - 'stock-hunter-v4/canary/full-activation-gate-hardening-v417.sql'
+      - 'stock-hunter-v4/canary/verify-full-activation-gate-v417.sql'
+      - 'stock-hunter-v4/canary/FULL_ACTIVATION_GATE_AUDIT_2026-09-18.md'
+      - '.github/workflows/stock-hunter-full-activation-gate-check.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify independent full activation contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          migration=Path('stock-hunter-v4/canary/full-activation-gate-hardening-v417.sql').read_text(encoding='utf-8')
+          verify=Path('stock-hunter-v4/canary/verify-full-activation-gate-v417.sql').read_text(encoding='utf-8')
+          audit=Path('stock-hunter-v4/canary/FULL_ACTIVATION_GATE_AUDIT_2026-09-18.md').read_text(encoding='utf-8')
+
+          assert 'required_from_percent=50' in migration
+          assert 'min_stage_minutes=120' in migration
+          assert 'min_routed_pairs_per_mode=250' in migration
+          assert 'min_routed_symbols_per_mode=50' in migration
+          assert 'min_routed_buckets_per_mode=8' in migration
+          assert 'max_telemetry_age_minutes=15' in migration
+          assert 'stock_hunter_full_activation_policy_immutable_v417' in migration
+          assert 'stock_hunter_full_activation_authorization_immutable_v417' in migration
+          assert 'stock_hunter_full_activation_authorization_truncate_v417' in migration
+          assert 'full_activation_ready' in migration
+          assert 'current_percent is distinct from 50' in migration
+          assert "from_percent=50" in migration
+          assert 'consumed_at is null' in migration
+          assert 'full_authorization_consumed' in migration
+          assert "challenger_traffic_percent=100" in migration
+          assert 'revoke all on function private.authorize_stock_hunter_full_activation_v417' in migration.lower()
+          assert 'revoke all on function private.activate_stock_hunter_challenger_v417' in migration.lower()
+
+          assert 'stock-hunter-full-activation-gate-v417: PASS' in verify
+          assert 'full activation gate is not stricter than the final staged expansion gate' in verify
+          assert "security_invoker=true" in verify
+          assert 'one-open authorization index missing' in verify
+          assert 'manual functions exposed to API roles' in verify
+
+          assert 'LIVE_CONTRACT_PASS / REAL_FULL_ACTIVATION_NOT_STARTED' in audit
+          assert '20260917222508' in audit
+          assert '120 min' in audit and '250' in audit and '50' in audit and '8' in audit and '15 min' in audit
+          assert 'Actual Full Activation remains unreachable' in audit
+          print('stock-hunter-full-activation-gate-contract: PASS')
+          PY

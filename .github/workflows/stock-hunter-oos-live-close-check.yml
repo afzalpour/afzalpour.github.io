@@ -1,0 +1,47 @@
+name: Stock Hunter OOS Live Close Contract
+on:
+  push:
+    branches: [main, 'stock-hunter-v417-*']
+    paths:
+      - 'stock-hunter-v4/oos/oos-release-live-close-v416.sql'
+      - 'stock-hunter-v4/oos/verify-oos-live-close-v416.sql'
+      - 'stock-hunter-v4/oos/OOS_LIVE_CLOSE_AUDIT_2026-09-18.md'
+      - '.github/workflows/stock-hunter-oos-live-close-check.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify OOS live-close contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          m=Path('stock-hunter-v4/oos/oos-release-live-close-v416.sql').read_text(encoding='utf-8')
+          v=Path('stock-hunter-v4/oos/verify-oos-live-close-v416.sql').read_text(encoding='utf-8')
+          a=Path('stock-hunter-v4/oos/OOS_LIVE_CLOSE_AUDIT_2026-09-18.md').read_text(encoding='utf-8')
+
+          for token in [
+            'stock_hunter_oos_release_dataset_v416',
+            'stock_hunter_oos_release_integrity_v416',
+            'md5-jsonb-v2',
+            'both hunt modes must have selected non-baseline candidates',
+            'frozen OOS dataset fingerprint mismatch',
+            'stock_hunter_candidate_library_freeze_after_oos_v416',
+            'stock_hunter_candidate_weights_freeze_after_oos_v416',
+          ]:
+            assert token in m, token
+
+          for token in [
+            'Calibration view column contract drifted',
+            'OOS frozen/audit tables have unexpected API write privilege',
+            'LOCKED_AWAITING_MATURITY',
+            'FROZEN_PASS',
+            'stock-hunter-oos-live-close-v416: PASS',
+          ]:
+            assert token in v, token
+
+          assert 'LIVE_CONTRACT_PASS / REAL_OOS_RELEASE_MATURITY_PENDING' in a
+          assert '20260918084050' in a
+          assert 'Roadmap item #8 is now live-closed structurally' in a
+          print('stock-hunter-oos-live-close-contract: PASS')
+          PY

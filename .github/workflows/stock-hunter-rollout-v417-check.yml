@@ -12,6 +12,7 @@ on:
       - 'stock-hunter-v4/canary-admission-v417.js'
       - 'stock-hunter-v4/canary-expansion-v417.js'
       - 'stock-hunter-v4/canary-hold-rollback-v417.js'
+      - 'stock-hunter-v4/canary-recovery-v417.js'
       - 'stock-hunter-v4/promotion-decision-v416.js'
       - 'stock-hunter-v4/sw.js'
       - '.github/workflows/stock-hunter-rollout-v417-check.yml'
@@ -29,11 +30,12 @@ jobs:
           node --check stock-hunter-v4/canary-admission-v417.js
           node --check stock-hunter-v4/canary-expansion-v417.js
           node --check stock-hunter-v4/canary-hold-rollback-v417.js
+          node --check stock-hunter-v4/canary-recovery-v417.js
           node --check stock-hunter-v4/promotion-decision-v416.js
           node --check stock-hunter-v4/sw.js
       - name: Run runtime router parity smoke
         run: node stock-hunter-v4/runtime-router-smoke-v417.js
-      - name: Check forward shadow activation telemetry admission expansion and hold semantics
+      - name: Check forward shadow activation telemetry admission expansion hold and recovery semantics
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -42,6 +44,7 @@ jobs:
           admission=Path('stock-hunter-v4/canary-admission-v417.js').read_text(encoding='utf-8')
           expansion=Path('stock-hunter-v4/canary-expansion-v417.js').read_text(encoding='utf-8')
           hold=Path('stock-hunter-v4/canary-hold-rollback-v417.js').read_text(encoding='utf-8')
+          recovery=Path('stock-hunter-v4/canary-recovery-v417.js').read_text(encoding='utf-8')
           promo=Path('stock-hunter-v4/promotion-decision-v416.js').read_text(encoding='utf-8')
           sw=Path('stock-hunter-v4/sw.js').read_text(encoding='utf-8')
           index=Path('stock-hunter-v4/index.html').read_text(encoding='utf-8')
@@ -81,28 +84,39 @@ jobs:
           assert 'canary-expansion-v417.js?v=4.1.7' in admission
           assert 'stock_hunter_canary_expansion_policy_v417' in expansion
           assert 'stock_hunter_canary_expansion_readiness_v417' in expansion
+          assert 'stock_hunter_canary_recovery_gate_v417' in expansion
           assert 'pass_stage_duration' in expansion and 'pass_routed_pairs' in expansion
           assert 'pass_routed_symbols' in expansion and 'pass_routed_buckets' in expansion
+          assert 'Recovery Gate نیز باید PASS باشد' in expansion
           assert 'Auto-Expand خاموش است' in expansion
           assert 'canary-hold-rollback-v417.js?v=4.1.7' in expansion
           assert 'stock_hunter_canary_hold_rollback_policy_v417' in hold
           assert 'stock_hunter_canary_hold_rollback_gate_v417' in hold
           assert 'ROLLBACK_RECOMMENDED' in hold and 'expansion_blocked' in hold
           assert 'Auto-Rollback و Auto-Kill خاموش‌اند' in hold
+          assert 'canary-recovery-v417.js?v=4.1.7' in hold
+          assert 'Canary Recovery / Re-entry Gate' in recovery
+          assert 'stock_hunter_canary_recovery_policy_v417' in recovery
+          assert 'stock_hunter_canary_recovery_gate_v417' in recovery
+          assert 'required_consecutive_pass_captures' in recovery
+          assert 'cooldown_minutes' in recovery and 'max_healthy_capture_gap_minutes' in recovery
+          assert 'same_review_reentry_blocked' in recovery
+          assert 'ROLLBACK_REQUIRED' in recovery and 'REVIEW_RETIRED' in recovery
+          assert 'Auto-Recover خاموش است' in recovery
           assert 'runtime_routing_enabled' in js
           assert 'challenger_traffic_percent' in js
           assert 'kill_switch_engaged' in js
           assert 'production_activated' in js
           assert 'activation_review_ready' in js and 'auto_activate' in js
           assert 'automatic_action_taken' in js
-          for surface in (js,admission,expansion,hold):
+          for surface in (js,admission,expansion,hold,recovery):
             lower=surface.lower()
             assert "method:'post'" not in lower and 'method:"post"' not in lower
             assert '/rpc/' not in lower
           assert 'rollout-v417.html' in promo
-          assert "shikar-sahm-v4.1.6-r11" in sw
+          assert "shikar-sahm-v4.1.6-r12" in sw
           assert './hunt-runtime-core-v417.js' in sw and './app-runtime-router-v417.js' in sw
-          assert './canary-admission-v417.js' in sw and './canary-expansion-v417.js' in sw and './canary-hold-rollback-v417.js' in sw
+          assert './canary-admission-v417.js' in sw and './canary-expansion-v417.js' in sw and './canary-hold-rollback-v417.js' in sw and './canary-recovery-v417.js' in sw
           assert index.index('app-hunt-v416.js') < index.index('hunt-runtime-core-v417.js') < index.index('app-runtime-router-v417.js') < index.index('app-hunt-hierarchy-v416.js')
           assert 'applyHuntV416=applyRuntimeHuntV417' in router
           assert 'stock_hunter_activation_policy_v417' in router
@@ -115,7 +129,7 @@ jobs:
           assert "method:'post'" not in rlower and 'method:"post"' not in rlower
           assert '/rpc/' not in rlower
           assert 'killSwitch' in core and 'runtimeRoutingEnabled' in core and 'challengerAvailable' in core
-          print('forward-shadow-runtime-router-telemetry-admission-expansion-hold-semantics: PASS')
+          print('forward-shadow-runtime-router-telemetry-admission-expansion-hold-recovery-semantics: PASS')
           PY
       - name: Verify production engine remains 4.1.6 by default
         run: |

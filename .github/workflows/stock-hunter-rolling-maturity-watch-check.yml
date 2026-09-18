@@ -1,0 +1,39 @@
+name: Stock Hunter Rolling Maturity Watch Contract
+on:
+  push:
+    branches: [main, 'stock-hunter-v417-*']
+    paths:
+      - 'stock-hunter-v4/prospective-data/verify-rolling-maturity-watch-v416.sql'
+      - 'stock-hunter-v4/prospective-data/ROLLING_MATURITY_WATCH_AUDIT_2026-09-18.md'
+      - '.github/workflows/stock-hunter-rolling-maturity-watch-check.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify rolling maturity watch contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          v=Path('stock-hunter-v4/prospective-data/verify-rolling-maturity-watch-v416.sql').read_text(encoding='utf-8')
+          a=Path('stock-hunter-v4/prospective-data/ROLLING_MATURITY_WATCH_AUDIT_2026-09-18.md').read_text(encoding='utf-8')
+
+          for token in [
+            'min_total_samples<>120',
+            'min_mode_samples<>40',
+            'min_oos_samples<>30',
+            'min_trade_dates<>20',
+            'future_sessions_observed<3',
+            "source_version<>'4.1.6-shadow-v2-parity'",
+            "maturity_state<>'COLLECTING'",
+            'downstream lifecycle advanced before calibration maturity',
+            'production control plane advanced before calibration maturity',
+            'stock-hunter-rolling-maturity-watch-v416: PASS',
+          ]:
+            assert token in v, token
+
+          assert 'LIVE_STRUCTURAL_PASS / REAL_DATA_ACCUMULATION_PENDING' in a
+          assert 'mature total = 0 / 120' in a
+          assert 'No automatic downstream action is permitted' in a
+          print('stock-hunter-rolling-maturity-watch-contract: PASS')
+          PY

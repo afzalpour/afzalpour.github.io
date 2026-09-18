@@ -1,0 +1,59 @@
+name: Stock Hunter Staged Canary Contract
+on:
+  push:
+    branches: [main, 'stock-hunter-v417-*']
+    paths:
+      - 'stock-hunter-v4/canary/staged-canary-one-shot-v417.sql'
+      - 'stock-hunter-v4/canary/verify-staged-canary-v417.sql'
+      - 'stock-hunter-v4/canary/STAGED_CANARY_AUDIT_2026-09-18.md'
+      - 'stock-hunter-v4/canary-admission-v417.js'
+      - 'stock-hunter-v4/canary-expansion-v417.js'
+      - 'stock-hunter-v4/canary-hold-rollback-v417.js'
+      - 'stock-hunter-v4/canary-recovery-v417.js'
+      - '.github/workflows/stock-hunter-staged-canary-contract-check.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify staged Canary one-shot contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          migration=Path('stock-hunter-v4/canary/staged-canary-one-shot-v417.sql').read_text(encoding='utf-8')
+          verify=Path('stock-hunter-v4/canary/verify-staged-canary-v417.sql').read_text(encoding='utf-8')
+          audit=Path('stock-hunter-v4/canary/STAGED_CANARY_AUDIT_2026-09-18.md').read_text(encoding='utf-8')
+          admission=Path('stock-hunter-v4/canary-admission-v417.js').read_text(encoding='utf-8')
+          expansion=Path('stock-hunter-v4/canary-expansion-v417.js').read_text(encoding='utf-8')
+          hold=Path('stock-hunter-v4/canary-hold-rollback-v417.js').read_text(encoding='utf-8')
+          recovery=Path('stock-hunter-v4/canary-recovery-v417.js').read_text(encoding='utf-8')
+
+          assert 'stock_hunter_activation_authorization_consumptions_v417' in migration
+          assert 'array[5,10,25,50]' in migration
+          assert "p_percent <> v_policy.initial_canary_percent" in migration
+          assert 'v_authorized_state_version is distinct from v_status.state_version' in migration
+          assert 'v_authorized_admission_ready' in migration
+          assert 'canary admission gate recheck blocked start' in migration
+          assert 'authorization_consumed' in migration
+          assert 'revoke all on function private.start_stock_hunter_canary_v417' in migration.lower()
+          assert 'service_role' in migration
+
+          assert '5 and to_percent=10' in verify
+          assert '10 and to_percent=25' in verify
+          assert '25 and to_percent=50' in verify
+          assert 'min_stage_minutes=30' in verify
+          assert 'min_stage_minutes=45' in verify
+          assert 'min_stage_minutes=60' in verify
+          assert 'auto_rollback' in verify and 'auto_recover' in verify
+          assert 'stock-hunter-staged-canary-v417: PASS' in verify
+
+          assert 'LIVE_CONTRACT_PASS / REAL_CANARY_NOT_STARTED' in audit
+          assert '5% -> 10% -> 25% -> 50%' in audit
+          assert '20260917221339' in audit and '20260917221514' in audit
+          assert "p.auto_start?'ON':'OFF — MANUAL ONLY'" in admission
+          assert 'stock_hunter_canary_expansion_readiness_v417' in expansion
+          assert 'Auto-Expand خاموش است' in expansion
+          assert 'Auto-Rollback و Auto-Kill خاموش‌اند' in hold
+          assert 'Auto-Recover خاموش است' in recovery
+          print('stock-hunter-staged-canary-contract: PASS')
+          PY

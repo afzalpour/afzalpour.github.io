@@ -1,0 +1,36 @@
+name: Stock Hunter First Maturity Horizon Contract
+on:
+  push:
+    branches: [main, 'stock-hunter-v417-*']
+    paths:
+      - 'stock-hunter-v4/prospective-data/verify-first-maturity-horizon-v416.sql'
+      - 'stock-hunter-v4/prospective-data/FIRST_MATURITY_HORIZON_AUDIT_2026-09-18.md'
+      - '.github/workflows/stock-hunter-first-maturity-horizon-check.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify first maturity horizon contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          v=Path('stock-hunter-v4/prospective-data/verify-first-maturity-horizon-v416.sql').read_text(encoding='utf-8')
+          a=Path('stock-hunter-v4/prospective-data/FIRST_MATURITY_HORIZON_AUDIT_2026-09-18.md').read_text(encoding='utf-8')
+
+          assert "date '2026-09-19'" in v
+          assert "2026-09-20" in v and "2026-09-21" in v and "2026-09-22" in v
+          assert "future_sessions_observed>=3" in v
+          assert "calibration first-cohort count mismatch" in v
+          assert "return_3d_pct is null" in v
+          assert "later prospective cohort leaked into calibration" in v
+          assert "maturity horizon missing downstream cron coverage" in v
+          assert "v_downstream_coverage<>15" in v
+          assert "CHAMPION_ONLY" in v
+          assert "stock-hunter-first-maturity-horizon-v416: PASS" in v
+
+          assert "STRUCTURAL_PASS / FIRST_MATURITY_HORIZON_PENDING" in a
+          assert "HORIZON_DEADLINE_TEHRAN: 2026-09-22 18:25" in a
+          assert "No synthetic maturity rows are created" in a
+          print('stock-hunter-first-maturity-horizon-contract: PASS')
+          PY

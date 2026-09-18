@@ -1,0 +1,60 @@
+name: Stock Hunter Promotion Forward Shadow Live Close
+on:
+  push:
+    branches: [main, 'stock-hunter-v417-*']
+    paths:
+      - 'stock-hunter-v4/promotion/promotion-forward-shadow-live-close-v417.sql'
+      - 'stock-hunter-v4/promotion/verify-promotion-forward-shadow-live-close-v417.sql'
+      - 'stock-hunter-v4/promotion/PROMOTION_FORWARD_SHADOW_LIVE_CLOSE_AUDIT_2026-09-18.md'
+      - '.github/workflows/stock-hunter-promotion-forward-shadow-live-close-check.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify live promotion/forward-shadow contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          m=Path('stock-hunter-v4/promotion/promotion-forward-shadow-live-close-v417.sql').read_text(encoding='utf-8')
+          v=Path('stock-hunter-v4/promotion/verify-promotion-forward-shadow-live-close-v417.sql').read_text(encoding='utf-8')
+          a=Path('stock-hunter-v4/promotion/PROMOTION_FORWARD_SHADOW_LIVE_CLOSE_AUDIT_2026-09-18.md').read_text(encoding='utf-8')
+
+          for token in [
+            'guard_stock_hunter_promotion_proposal_live_v417',
+            'guard_stock_hunter_activation_review_live_v417',
+            'stock_hunter_shadow_outcomes_v416',
+            'stock_hunter_shadow_samples_v416',
+            "o.observed_at>p.created_at",
+            "s.source_version='4.1.6-shadow-v2-parity'",
+            'stock_hunter_oos_release_results_v416',
+            'stock_hunter_candidate_library_v416',
+            'stock_hunter_promotion_forward_shadow_gate_v417',
+            'BLOCKED_OOS_NOT_FROZEN',
+            'READY_FOR_MANUAL_PROPOSAL',
+            'COLLECTING_FORWARD_SHADOW',
+            'READY_FOR_MANUAL_ACTIVATION_REVIEW',
+          ]:
+            assert token in m, token
+
+          # Anti-deadlock: the live Forward Shadow view may not source frozen Calibration.
+          view_sql=m.split('create or replace view public.stock_hunter_challenger_shadow_samples_v417',1)[1].split('revoke all on public.stock_hunter_challenger_shadow_samples_v417',1)[0]
+          assert 'stock_hunter_calibration_dataset_v416' not in view_sql
+          assert 'stock_hunter_candidate_scores_v416' not in view_sql
+
+          for token in [
+            'Forward Shadow is deadlocked on frozen Calibration/Candidate Scores',
+            'Forward Shadow pairing mismatch',
+            'downstream artifacts exist before OOS FROZEN_PASS',
+            'stock-hunter-promotion-forward-shadow-live-close-v417: PASS',
+          ]:
+            assert token in v, token
+
+          assert 'LIVE_CONTRACT_PASS / REAL_OOS_RELEASE_AND_FORWARD_SHADOW_PENDING' in a
+          assert '20260918084704' in a
+          assert 'structurally deadlocked Forward Shadow' in a
+          assert 'Roadmap item #9 is now live-closed structurally' in a
+
+          print('stock-hunter-promotion-forward-shadow-live-close-contract: PASS')
+          PY

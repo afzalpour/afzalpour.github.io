@@ -1,0 +1,53 @@
+name: Stock Hunter First Capture Incident Readiness
+on:
+  push:
+    branches: [main, 'stock-hunter-v417-*']
+    paths:
+      - 'stock-hunter-v4/prospective-data/diagnose-first-capture-incident-v416.sql'
+      - 'stock-hunter-v4/prospective-data/FIRST_CAPTURE_INCIDENT_READINESS_AUDIT_2026-09-18.md'
+      - '.github/workflows/stock-hunter-first-capture-incident-readiness-check.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify first-capture diagnostic contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          v=Path('stock-hunter-v4/prospective-data/diagnose-first-capture-incident-v416.sql').read_text(encoding='utf-8')
+          a=Path('stock-hunter-v4/prospective-data/FIRST_CAPTURE_INCIDENT_READINESS_AUDIT_2026-09-18.md').read_text(encoding='utf-8')
+
+          for token in [
+            "2026-09-19 05:30:00+00",
+            "stock-hunter-capture-v416-open",
+            "stock-hunter-capture-v416-mid",
+            "stock-hunter-capture-v416-close",
+            "dark capture-v417 has",
+            "stock_hunter_project_url_v416",
+            "stock_hunter_capture_token_v416",
+            "CRON_SCHEDULER_DOWN",
+            "PG_NET_WORKER_DOWN",
+            "CAPTURE_CRON_NOT_RUN",
+            "CAPTURE_CRON_FAILED",
+            "CAPTURE_NOT_CLAIMED",
+            "CAPTURE_REPORTED_ERROR",
+            "CAPTURE_NO_SUCCESS",
+            "CAPTURE_SUCCESS_STALE",
+            "CAPTURE_SUCCESS_ZERO_SHADOW_OBSERVED",
+            "FIRST_CAPTURE_HEALTHY",
+            "No action. Preserve the prospective boundary.",
+          ]:
+            assert token in v, token
+
+          assert "net.http_post" not in v
+          assert "cron.schedule(" not in v
+          assert "cron.alter_job(" not in v
+          assert "insert into public.stock_hunter_shadow_samples_v416" not in v.lower()
+          assert "update public.stock_hunter_capture_state_v416" not in v.lower()
+
+          assert 'LIVE_DIAGNOSTIC_PASS / FIRST_REAL_CAPTURE_PENDING' in a
+          assert 'Automatic repair is prohibited.' in a
+          assert 'preserve the gap' in a
+          print('stock-hunter-first-capture-incident-readiness-contract: PASS')
+          PY
