@@ -1,7 +1,7 @@
 # Stock Hunter Public Production Smoke Gate
 
 AUDIT_DATE: 2026-09-18
-STATUS: PUBLIC_BYTES_VERIFIED / FINAL_SMOKE_PENDING
+STATUS: PUBLIC_PRODUCTION_SMOKE_PASS
 CANONICAL_MAIN_SHA: ebfa15dd37787c72626c245983244885a91a07e2
 PUBLIC_ROOT: https://afzalpour.github.io/
 PUBLIC_APP: https://afzalpour.github.io/stock-hunter-v4/
@@ -40,5 +40,14 @@ The first workflow attempt exposed two test-definition issues only:
 2. an incorrect assumed runtime-core constant name.
 
 Neither issue indicated deployed-byte drift.
+
+Final successful workflow run:
+
+- run_id = 35364099078
+- result = success
+- HTTP fetch = PASS
+- deployed byte equality = PASS
+- published runtime markers = PASS
+- read-only behavior self-check = PASS
 
 This smoke gate does not call Supabase and does not execute any capture or lifecycle operation.
