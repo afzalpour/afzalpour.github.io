@@ -109,7 +109,7 @@ net_errors as (
 ),
 diag as (
   select
-    now() as checked_at,
+    now() as live_checked_at,
     cfg.*,
     workers.*,
     runs.*,
@@ -158,7 +158,7 @@ select
     else 'PASS'
   end as severity,
   diagnostic_state,
-  checked_at,
+  live_checked_at as checked_at,
   prospective_start_at,
   collection_state,
   cron_scheduler_alive,
