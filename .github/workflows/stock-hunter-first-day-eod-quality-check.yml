@@ -1,0 +1,38 @@
+name: Stock Hunter First Day EOD Quality Contract
+on:
+  push:
+    branches: [main, 'stock-hunter-v417-*']
+    paths:
+      - 'stock-hunter-v4/prospective-data/verify-first-day-eod-quality-v416.sql'
+      - 'stock-hunter-v4/prospective-data/FIRST_DAY_EOD_QUALITY_AUDIT_2026-09-18.md'
+      - '.github/workflows/stock-hunter-first-day-eod-quality-check.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify first-day EOD quality contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          v=Path('stock-hunter-v4/prospective-data/verify-first-day-eod-quality-v416.sql').read_text(encoding='utf-8')
+          a=Path('stock-hunter-v4/prospective-data/FIRST_DAY_EOD_QUALITY_AUDIT_2026-09-18.md').read_text(encoding='utf-8')
+
+          assert "date '2026-09-19'" in v
+          assert "2026-09-19 05:30:00+00" in v
+          assert "2026-09-19 14:55:00+00" in v
+          assert "4.1.6-shadow-v2-parity" in v
+          assert "4.1.6-server-v4-parity" in v
+          assert "reference_yesterday_price" in v
+          assert "feature_vector_complete" in v
+          assert "stock_hunter_shadow_outcome_observations_v416" in v
+          assert "stock_hunter_hunt_outcome_observations_v416" in v
+          assert "stock-hunter-candidate-evaluator-v416" in v
+          assert "same-day prospective data leaked into maturity/OOS/promotion/release state" in v
+          assert "stock-hunter-prospective-eod-quality-v416: PASS" in v
+
+          assert "STRUCTURAL_PASS / FIRST_REAL_EOD_PENDING" in a
+          assert "EOD_VERIFICATION_DEADLINE_TEHRAN: 2026-09-19 18:25" in a
+          assert "No arbitrary outcome-coverage percentage threshold is invented" in a
+          print('stock-hunter-first-day-eod-quality-contract: PASS')
+          PY
