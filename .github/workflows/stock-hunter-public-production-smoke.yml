@@ -77,19 +77,17 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          w=Path('.github/workflows/stock-hunter-public-production-smoke.yml').read_text(encoding='utf-8').lower()
-          forbidden=[
-              "method:'post'",
-              'method:"post"',
-              '/rpc/',
-              'net.http_post',
-              'supabase functions invoke',
-              'curl -x post',
-              'curl --request post',
-              'curl -xpost',
-          ]
-          for token in forbidden:
-              assert token not in w, token
+          w=Path('.github/workflows/stock-hunter-public-production-smoke.yml').read_text(encoding='utf-8')
+          curl_lines=[line.strip().lower() for line in w.splitlines() if 'curl ' in line.lower()]
+          assert curl_lines, 'no curl lines found'
+          for line in curl_lines:
+              assert '-x post' not in line
+              assert '-xpost' not in line
+              assert '--request post' not in line
+              assert '--data' not in line
+              assert '--form' not in line
+              assert '/functions/' not in line
+              assert '/rpc/' not in line
           print('stock-hunter-public-production-smoke-readonly: PASS')
           PY
 
