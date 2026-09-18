@@ -40,7 +40,7 @@ jobs:
 
           for token in [
             'array[5,10,25,50]',
-            'initial 5% Canary/start authorization contract mismatch',
+            'initial 5%% Canary/start authorization contract mismatch',
             'strict staged advance/one-shot authorization contract mismatch',
             'Expansion freshness is not bound to fresh routed evidence',
             'stock-hunter-staged-canary-live-close-v417: PASS',
