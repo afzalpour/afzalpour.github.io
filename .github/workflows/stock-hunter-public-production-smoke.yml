@@ -68,7 +68,7 @@ jobs:
           grep -q 'hunt-runtime-core-v417.js' "$SW"
           grep -q 'app-runtime-router-v417.js' "$SW"
           grep -q 'canary-recovery-v417.js' "$SW"
-          grep -q "HUNT_RUNTIME_CORE_V417_VERSION='4.1.7-runtime-core-v1'" "$CORE"
+          grep -q "const VERSION='4.1.7-runtime-core-v1';" "$CORE"
           grep -q "routingMode:'CHAMPION_ONLY'" "$ROUTER"
           grep -q 'trafficPercent:0' "$ROUTER"
           grep -q 'killSwitch:true' "$ROUTER"
