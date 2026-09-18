@@ -1,0 +1,104 @@
+name: Stock Hunter Main Integration Gate
+on:
+  push:
+    branches: ['stock-hunter-v417-main-integration-*']
+    paths:
+      - 'stock-hunter-v4/**'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [main]
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify both integration lineages
+        run: |
+          git merge-base --is-ancestor 3da47720a7cedd4d1481e97e4e80614f80c4a364 HEAD
+          git merge-base --is-ancestor b7e7ccdf8797377ede7add85cd32bf53882485d5 HEAD
+          echo 'integration-lineage: PASS'
+
+      - name: Verify main-only preservation and modular conflict resolution
+        run: |
+          test -f stock-hunter-v4/release-readiness-v417.js
+          test -f stock-hunter-v4/research/release-hardening-20260917.md
+          test -f stock-hunter-v4/canary-recovery-v417.js
+          grep -q "loadCanaryRecoverySurfaceV417" stock-hunter-v4/canary-hold-rollback-v417.js
+          grep -q "canary-recovery-v417.js?v=4.1.7" stock-hunter-v4/canary-hold-rollback-v417.js
+          grep -q "Canary Recovery / Re-entry Gate" stock-hunter-v4/canary-recovery-v417.js
+          node --check stock-hunter-v4/release-readiness-v417.js
+          node --check stock-hunter-v4/canary-hold-rollback-v417.js
+          node --check stock-hunter-v4/canary-recovery-v417.js
+          echo 'integration-conflict-resolution: PASS'
+
+      - name: JavaScript syntax gate
+        run: |
+          for f in             stock-hunter-v4/app-core.js             stock-hunter-v4/app-runtime.js             stock-hunter-v4/app-session-v413.js             stock-hunter-v4/app-hunt-v416.js             stock-hunter-v4/hunt-runtime-core-v417.js             stock-hunter-v4/app-runtime-router-v417.js             stock-hunter-v4/runtime-router-smoke-v417.js             stock-hunter-v4/app-universal-search-v416.js             stock-hunter-v4/app-eod-v416.js             stock-hunter-v4/canary-admission-v417.js             stock-hunter-v4/canary-expansion-v417.js             stock-hunter-v4/canary-hold-rollback-v417.js             stock-hunter-v4/canary-recovery-v417.js             stock-hunter-v4/release-readiness-v417.js             stock-hunter-v4/sw.js; do
+            node --check "$f"
+          done
+
+      - name: Deterministic UI and runtime smokes
+        run: |
+          node stock-hunter-v4/hunt-smoke-v416.js
+          node stock-hunter-v4/runtime-router-smoke-v417.js
+          node stock-hunter-v4/search-eod-smoke-v416.js
+          node stock-hunter-v4/hunt-parity-v416.js
+          node stock-hunter-v4/canary/staged-canary-route-parity-v417.cjs
+          node stock-hunter-v4/canary/full-activation-runtime-v417.cjs
+
+      - name: Verify production defaults remain fail-closed
+        run: |
+          grep -q "HUNT_V416_VERSION='4.1.6-hunt-v2'" stock-hunter-v4/app-hunt-v416.js
+          grep -q "routingMode:'CHAMPION_ONLY'" stock-hunter-v4/app-runtime-router-v417.js
+          grep -q "trafficPercent:0" stock-hunter-v4/app-runtime-router-v417.js
+          grep -q "killSwitch:true" stock-hunter-v4/app-runtime-router-v417.js
+          grep -q "shikar-sahm-v4.1.6-r12" stock-hunter-v4/sw.js
+          grep -q "canary-recovery-v417.js" stock-hunter-v4/sw.js
+          grep -q "stock-hunter-capture-v417" stock-hunter-v4/release/CAPTURE_V417_DARK_DEPLOY_AUDIT_2026-09-18.md
+          echo 'production-defaults: PASS'
+
+      - name: Verify no public write paths in rollout surfaces
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          for name in [
+              'rollout-v417.js',
+              'canary-admission-v417.js',
+              'canary-expansion-v417.js',
+              'canary-hold-rollback-v417.js',
+              'canary-recovery-v417.js',
+              'app-runtime-router-v417.js',
+          ]:
+              s=Path('stock-hunter-v4',name).read_text(encoding='utf-8').lower()
+              assert "method:'post'" not in s and 'method:"post"' not in s, name
+              assert '/rpc/' not in s, name
+          print('public-write-paths: PASS')
+          PY
+
+      - name: Verify service worker and load order
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          html=Path('stock-hunter-v4/index.html').read_text(encoding='utf-8')
+          sw=Path('stock-hunter-v4/sw.js').read_text(encoding='utf-8')
+          assert html.index('app-session-v413.js') < html.index('app-hunt-v416.js') < html.index('hunt-runtime-core-v417.js') < html.index('app-runtime-router-v417.js')
+          for token in [
+              'hunt-runtime-core-v417.js',
+              'app-runtime-router-v417.js',
+              'canary-hold-rollback-v417.js',
+              'canary-recovery-v417.js',
+          ]:
+              assert token in sw, token
+          assert "shikar-sahm-v4.1.6-r12" in sw
+          print('service-worker-load-order: PASS')
+          PY
+
+      - name: Verify integration audit
+        run: |
+          grep -q 'INTEGRATION_BRANCH_READY_FOR_CI' stock-hunter-v4/research/MAIN_INTEGRATION_AUDIT_2026-09-18.md
+          grep -q 'behind main = 0' stock-hunter-v4/research/MAIN_INTEGRATION_AUDIT_2026-09-18.md
+          grep -q 'No main-only lineage was force-overwritten.' stock-hunter-v4/research/MAIN_INTEGRATION_AUDIT_2026-09-18.md
+          echo 'integration-audit: PASS'
