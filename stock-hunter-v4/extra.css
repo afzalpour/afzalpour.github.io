@@ -175,3 +175,45 @@ html:not([data-theme="light"]) .forecast-direction.down{color:var(--po-urgent)}
   }
 }
 
+
+
+/* === FORCE IRAN FONT ON ALL TEXTUAL UI === */
+html,
+body,
+body *,
+body *::before,
+body *::after,
+button,
+input,
+select,
+option,
+textarea,
+table,
+thead,
+tbody,
+tfoot,
+th,
+td,
+label,
+a,
+span,
+small,
+b,
+strong,
+em,
+i,
+p,
+h1,h2,h3,h4,h5,h6,
+div,
+section,
+article,
+aside,
+header,
+footer,
+nav,
+dialog {
+  font-family:"IRANSans","IranSans","Iran",Tahoma,sans-serif !important;
+  font-feature-settings:normal !important;
+  font-variant-numeric:normal !important;
+}
+
