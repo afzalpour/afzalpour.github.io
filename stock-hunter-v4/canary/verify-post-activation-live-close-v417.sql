@@ -99,9 +99,9 @@ begin
 
   if position('4.1.6-hunt-v2' in d)=0
      or position('pass_rollback_target_preserved' in d)=0
-     or position('NOT p.auto_rollback' in upper(d))=0
-     or position('NOT rb.auto_rollback' in upper(d))=0
-     or position('NOT p.auto_finalize' in upper(d))=0 then
+     or position('NOT P.AUTO_ROLLBACK' in upper(d))=0
+     or position('NOT RB.AUTO_ROLLBACK' in upper(d))=0
+     or position('NOT P.AUTO_FINALIZE' in upper(d))=0 then
     raise exception 'rollback-target/manual-only stability contract mismatch';
   end if;
 
