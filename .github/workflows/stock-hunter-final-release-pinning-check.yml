@@ -4,8 +4,11 @@ on:
     branches: [main, 'stock-hunter-v417-*']
     paths:
       - 'stock-hunter-v4/release/final-release-pinning-hardening-v417.sql'
+      - 'stock-hunter-v4/release/final-release-live-close-v417.sql'
       - 'stock-hunter-v4/release/verify-final-release-pinning-v417.sql'
+      - 'stock-hunter-v4/release/verify-final-release-live-close-v417.sql'
       - 'stock-hunter-v4/release/FINAL_RELEASE_PINNING_AUDIT_2026-09-18.md'
+      - 'stock-hunter-v4/release/FINAL_RELEASE_LIVE_CLOSE_AUDIT_2026-09-18.md'
       - 'stock-hunter-v4/release/rollback-v416/**'
       - 'stock-hunter-v4/app-hunt-v416.js'
       - 'stock-hunter-v4/index.html'
@@ -21,31 +24,63 @@ jobs:
           python - <<'PY'
           from pathlib import Path
 
-          m=Path('stock-hunter-v4/release/final-release-pinning-hardening-v417.sql').read_text(encoding='utf-8')
-          v=Path('stock-hunter-v4/release/verify-final-release-pinning-v417.sql').read_text(encoding='utf-8')
-          a=Path('stock-hunter-v4/release/FINAL_RELEASE_PINNING_AUDIT_2026-09-18.md').read_text(encoding='utf-8')
+          base=Path('stock-hunter-v4/release/final-release-pinning-hardening-v417.sql').read_text(encoding='utf-8')
+          live=Path('stock-hunter-v4/release/final-release-live-close-v417.sql').read_text(encoding='utf-8')
+          legacy=Path('stock-hunter-v4/release/verify-final-release-pinning-v417.sql').read_text(encoding='utf-8')
+          verify=Path('stock-hunter-v4/release/verify-final-release-live-close-v417.sql').read_text(encoding='utf-8')
+          audit=Path('stock-hunter-v4/release/FINAL_RELEASE_LIVE_CLOSE_AUDIT_2026-09-18.md').read_text(encoding='utf-8')
           rb=Path('stock-hunter-v4/release/rollback-v416/ROLLBACK_PACKAGE_V416_2026-09-18.md').read_text(encoding='utf-8')
           edge=Path('stock-hunter-v4/release/rollback-v416/stock-hunter-capture-v416/index.ts').read_text(encoding='utf-8')
           hunt=Path('stock-hunter-v4/app-hunt-v416.js').read_text(encoding='utf-8')
           index=Path('stock-hunter-v4/index.html').read_text(encoding='utf-8')
           sw=Path('stock-hunter-v4/sw.js').read_text(encoding='utf-8')
 
-          assert "target_release_version='4.1.7'" in m
-          assert "previous_stable_version='4.1.6'" in m
-          assert "required_capture_function_slug='stock-hunter-capture-v417'" in m
-          assert 'capture_deployment_sha256' in m
-          assert 'stock_hunter_release_pin_policy_immutable_v417' in m
-          assert 'stock_hunter_release_manifest_immutable_v417' in m
-          assert 'stock_hunter_release_freeze_authorization_immutable_v417' in m
-          assert 'stock_hunter_previous_stable_archive_immutable_v417' in m
-          assert 'authorize_stock_hunter_release_freeze_v417' in m
-          assert 'freeze_stock_hunter_release_v417' in m
-          assert 'release manifest fingerprint mismatch' in m
-          assert 'runtime_state_changed' in m
+          for token in [
+            "target_release_version='4.1.7'",
+            "previous_stable_version='4.1.6'",
+            "required_capture_function_slug='stock-hunter-capture-v417'",
+            'capture_deployment_sha256',
+            'stock_hunter_release_pin_policy_immutable_v417',
+            'stock_hunter_release_manifest_immutable_v417',
+            'stock_hunter_release_freeze_authorization_immutable_v417',
+            'stock_hunter_previous_stable_archive_immutable_v417',
+            'authorize_stock_hunter_release_freeze_v417',
+            'freeze_stock_hunter_release_v417',
+            'release manifest fingerprint mismatch',
+            'runtime_state_changed',
+          ]:
+            assert token in base, token
 
-          assert 'stock-hunter-final-release-pinning-v417: PASS' in v
-          assert 'LIVE_CONTRACT_PASS / REAL_FINAL_RELEASE_NOT_FROZEN' in a
-          assert '20260918075721' in a
+          for token in [
+            'max_component_attestation_age_minutes=60',
+            'stock_hunter_release_component_attestations_v417',
+            'GITHUB_API+SUPABASE_MANAGEMENT_API',
+            'record_stock_hunter_release_component_attestation_v417',
+            'fresh externally verified 4.1.7 component attestation is required',
+            'component_attestation_id',
+            'RELEASE_COMPONENT_ATTESTATION_MISSING',
+            'RELEASE_COMPONENT_ATTESTATION_MISMATCH',
+            'RELEASE_COMPONENT_ATTESTATION_STALE',
+            'pass_component_attestation',
+          ]:
+            assert token in live, token
+
+          assert 'stock-hunter-final-release-pinning-v417: PASS' in legacy
+
+          for token in [
+            'external component attestation evidence contract mismatch',
+            'release manifest is not bound to an immutable component attestation',
+            'release-pin readiness is not externally attestation-bound',
+            'release PREPARE is not bound to fresh external component evidence',
+            'final freeze attestation/rollback contract mismatch',
+            'stock-hunter-final-release-live-close-v417: PASS',
+          ]:
+            assert token in verify, token
+
+          assert 'LIVE_CONTRACT_PASS / REAL_FINAL_RELEASE_BLOCKED_ON_COMPONENT_DEPLOYMENT_AND_MATURITY' in audit
+          assert '20260918131512' in audit
+          assert 'There is currently no stock-hunter-capture-v417 Edge Function.' in audit
+          assert 'Roadmap item #14 is structurally live-closed.' in audit
 
           assert 'b550ac2dddf297d2436493f4e7384a166dbdf1dd' in rb
           assert 'shikar-sahm-v4.1.6-r12' in rb
@@ -55,8 +90,11 @@ jobs:
           assert "HUNT_V416_VERSION='4.1.6-hunt-v2'" in hunt
           assert '۴.۱.۶' in index
           assert "const CACHE='shikar-sahm-v4.1.6-r12'" in sw
-          assert "stock_hunter_validate_capture_token_v416" in edge
+          assert 'stock_hunter_validate_capture_token_v416' in edge
           assert "source_version:'4.1.6-server-v4-parity'" in edge
 
-          print('stock-hunter-final-release-pinning-contract: PASS')
+          # The rollback tree must not be silently replaced by a final-v417 capture source.
+          assert not Path('stock-hunter-v4/release/rollback-v416/stock-hunter-capture-v417').exists()
+
+          print('stock-hunter-final-release-live-close-contract: PASS')
           PY
