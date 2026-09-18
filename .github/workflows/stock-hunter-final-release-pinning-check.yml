@@ -1,0 +1,62 @@
+name: Stock Hunter Final Release Pinning Contract
+on:
+  push:
+    branches: [main, 'stock-hunter-v417-*']
+    paths:
+      - 'stock-hunter-v4/release/final-release-pinning-hardening-v417.sql'
+      - 'stock-hunter-v4/release/verify-final-release-pinning-v417.sql'
+      - 'stock-hunter-v4/release/FINAL_RELEASE_PINNING_AUDIT_2026-09-18.md'
+      - 'stock-hunter-v4/release/rollback-v416/**'
+      - 'stock-hunter-v4/app-hunt-v416.js'
+      - 'stock-hunter-v4/index.html'
+      - 'stock-hunter-v4/sw.js'
+      - '.github/workflows/stock-hunter-final-release-pinning-check.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify final release and rollback package contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          m=Path('stock-hunter-v4/release/final-release-pinning-hardening-v417.sql').read_text(encoding='utf-8')
+          v=Path('stock-hunter-v4/release/verify-final-release-pinning-v417.sql').read_text(encoding='utf-8')
+          a=Path('stock-hunter-v4/release/FINAL_RELEASE_PINNING_AUDIT_2026-09-18.md').read_text(encoding='utf-8')
+          rb=Path('stock-hunter-v4/release/rollback-v416/ROLLBACK_PACKAGE_V416_2026-09-18.md').read_text(encoding='utf-8')
+          edge=Path('stock-hunter-v4/release/rollback-v416/stock-hunter-capture-v416/index.ts').read_text(encoding='utf-8')
+          hunt=Path('stock-hunter-v4/app-hunt-v416.js').read_text(encoding='utf-8')
+          index=Path('stock-hunter-v4/index.html').read_text(encoding='utf-8')
+          sw=Path('stock-hunter-v4/sw.js').read_text(encoding='utf-8')
+
+          assert "target_release_version='4.1.7'" in m
+          assert "previous_stable_version='4.1.6'" in m
+          assert "required_capture_function_slug='stock-hunter-capture-v417'" in m
+          assert 'capture_deployment_sha256' in m
+          assert 'stock_hunter_release_pin_policy_immutable_v417' in m
+          assert 'stock_hunter_release_manifest_immutable_v417' in m
+          assert 'stock_hunter_release_freeze_authorization_immutable_v417' in m
+          assert 'stock_hunter_previous_stable_archive_immutable_v417' in m
+          assert 'authorize_stock_hunter_release_freeze_v417' in m
+          assert 'freeze_stock_hunter_release_v417' in m
+          assert 'release manifest fingerprint mismatch' in m
+          assert 'runtime_state_changed' in m
+
+          assert 'stock-hunter-final-release-pinning-v417: PASS' in v
+          assert 'LIVE_CONTRACT_PASS / REAL_FINAL_RELEASE_NOT_FROZEN' in a
+          assert '20260918075721' in a
+
+          assert 'b550ac2dddf297d2436493f4e7384a166dbdf1dd' in rb
+          assert 'shikar-sahm-v4.1.6-r12' in rb
+          assert 'stock-hunter-capture-v416' in rb
+          assert '6eb0ba0ee5e9dae3b8d6bab5c79f7f48a98ae643fd35ebe968d8d41eb73fdc76' in rb
+
+          assert "HUNT_V416_VERSION='4.1.6-hunt-v2'" in hunt
+          assert '۴.۱.۶' in index
+          assert "const CACHE='shikar-sahm-v4.1.6-r12'" in sw
+          assert "stock_hunter_validate_capture_token_v416" in edge
+          assert "source_version:'4.1.6-server-v4-parity'" in edge
+
+          print('stock-hunter-final-release-pinning-contract: PASS')
+          PY
