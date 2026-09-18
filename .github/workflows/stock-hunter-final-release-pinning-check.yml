@@ -77,9 +77,10 @@ jobs:
           ]:
             assert token in verify, token
 
-          assert 'LIVE_CONTRACT_PASS / REAL_FINAL_RELEASE_BLOCKED_ON_COMPONENT_DEPLOYMENT_AND_MATURITY' in audit
+          assert 'LIVE_CONTRACT_PASS / REAL_FINAL_RELEASE_BLOCKED_ON_MATURITY_AND_FRESH_ATTESTATION' in audit
           assert '20260918131512' in audit
-          assert 'There is currently no stock-hunter-capture-v417 Edge Function.' in audit
+          assert 'stock-hunter-capture-v417' in audit
+          assert 'bd350c80dfcaba5a530fd7153d13c7dd19249b8ab87a1a715458ac5ed3236d4c' in audit
           assert 'Roadmap item #14 is structurally live-closed.' in audit
 
           assert 'b550ac2dddf297d2436493f4e7384a166dbdf1dd' in rb
