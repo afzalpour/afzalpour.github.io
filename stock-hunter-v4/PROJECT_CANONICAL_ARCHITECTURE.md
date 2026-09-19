@@ -181,6 +181,7 @@ As of 2026-09-19:
 - 4.1.6 Browser ↔ deployed capture Hunt parity final revalidation: PASS on the frozen deterministic fixture protocol.
 - 4.1.7 control-plane crash/partial-failure proof: PASS on real START/ADVANCE/ROLLBACK transition functions using rollback-only live PostgreSQL failpoints.
 - 4.1.7 advisory-lock + state_version contention proof: PASS with real independent PostgreSQL connections.
+- 4.1.7 authenticated deployed Chromium smoke: PASS for login, personal Preferences persistence, Watchlists, normal-user Admin isolation and logout; temporary user cleanup PASS.
 These proofs do not authorize challenger activation; statistical maturity/OOS/promotion/activation gates remain independent.
 
 
