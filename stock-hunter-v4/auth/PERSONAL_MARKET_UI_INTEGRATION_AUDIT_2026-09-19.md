@@ -1,6 +1,6 @@
 # Personal 4.1.7 Market UI Integration Audit — 2026-09-19
 
-Status: IMPLEMENTED / awaiting post-deploy authenticated smoke.
+Status: IMPLEMENTED / CI + Pages PASS / authenticated browser smoke pending.
 
 Scope:
 - added authenticated staging surface `index-v417.html`;
@@ -27,9 +27,16 @@ Scope:
 - runtime router remains CHAMPION_ONLY / 0% / kill switch engaged at implementation snapshot.
 
 Remaining:
-- CI / Pages deployment;
-- authenticated browser smoke;
+- CI / Pages deployment: PASS;
+- authenticated browser smoke with a real human session: PENDING;
 - Auth redirect configuration;
 - Leaked Password Protection platform setting;
 - password recovery end-to-end;
 - statistical calibration/OOS/promotion gates.
+
+## Merge evidence
+- PR #207 merged.
+- main commit: `b0cce246fbcd5d4bbdfc9936908f0c0130cd999d`.
+- Pages deploy: PASS.
+- Public Production Smoke: PASS.
+- 4.1.6 `index.html` blob unchanged: `ea833fe20a75e11bb71bcf52abeaafeed46dec0a`.

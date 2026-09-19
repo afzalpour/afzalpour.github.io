@@ -23,3 +23,9 @@ Current checkpoint at creation:
 - temporary self-test users were deleted.
 - remaining Auth platform blockers include Supabase Site URL/redirect configuration and leaked-password protection, both requiring Auth Management configuration not exposed by the current connector.
 - personal Watchlist/Preferences integration into the staged 4.1.7 market UI is implemented; next is post-deploy authenticated smoke plus remaining Auth platform gates and statistical lifecycle maturity.
+
+
+Latest merged checkpoint:
+- personal 4.1.7 market UI integration merged at `b0cce246fbcd5d4bbdfc9936908f0c0130cd999d`;
+- Pages + Champion public smoke PASS;
+- next incomplete gate is authenticated browser smoke / Auth platform configuration, followed by continued statistical lifecycle maturity.
