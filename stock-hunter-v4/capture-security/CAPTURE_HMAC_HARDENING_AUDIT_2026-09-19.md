@@ -1,7 +1,7 @@
 # Stock Hunter 4.1.6 — Capture Backend HMAC Hardening Audit
 
 DATE: 2026-09-19
-STATUS: LIVE_HARDENING_APPLIED / CI_PENDING
+STATUS: LIVE_HARDENING_PASS
 
 ## Before
 
@@ -61,9 +61,27 @@ No change to:
 - integrated-market read scope;
 - Hunt/shadow record RPCs.
 
-## Pending before closure
+## Closure evidence
 
-- repository CI parity/security regression on the deployed v6 endpoint;
-- database privilege/cron verification snapshot;
-- Supabase Security Advisor recheck;
-- final canonical handoff update.
+- deployed endpoint parity/security workflow run `35467654427`: PASS;
+- Browser↔Backend frozen fixture parity after hardening: PASS;
+- missing signed headers: HTTP 401;
+- legacy static-token header: HTTP 401;
+- forged well-shaped HMAC: HTTP 401;
+- bearer-only credential: HTTP 401;
+- base GET and parity POST method boundaries: PASS;
+- production Hunt contract unchanged: PASS;
+- Main Integration run `35467690043`: PASS;
+- hardened active cron jobs: 3/3;
+- raw-secret cron command count: 0;
+- anon/authenticated HMAC-validator execute: false;
+- service_role HMAC-validator execute: true;
+- service_role/anon private-signer execute: false;
+- service_role/anon nonce-ledger direct DML: false;
+- Security Advisor: no Capture-related finding.
+
+The two remaining Security Advisor findings are unrelated to this Capture boundary: pre-existing private Canary RLS/no-policy INFO and Auth Leaked Password Protection WARN.
+
+## Exit status
+
+Capture Backend Security Hardening is **DONE / PASS** for the 4.1.6 active capture path. `verify_jwt=false` remains intentional and is paired with replay-resistant HMAC service authentication; it is not an unauthenticated write surface.
