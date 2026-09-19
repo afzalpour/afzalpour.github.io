@@ -1,7 +1,7 @@
 # Stock Hunter 4.1.7 — Authenticated Browser / DOM Smoke
 
 DATE: 2026-09-20
-STATUS: IMPLEMENTED / MAIN_DEPLOYED_RUN_PENDING
+STATUS: LIVE_DEPLOYED_BROWSER_PASS
 
 ## Purpose
 
@@ -55,3 +55,47 @@ Cleanup refuses to delete any account whose email is outside that test-only patt
 ## Exit criteria
 
 This audit becomes PASS only after the main-branch browser workflow succeeds against deployed Pages and cleanup succeeds.
+
+
+## Live closure — 2026-09-20
+
+Main run: `35469683809`
+Browser job: `105968270925`
+Merged main SHA under test: `d3ec56b8bbd37bca9575f69cd0e161731f509612`
+
+Published-byte gate:
+- full Auth/Personal/Admin Pages byte set matched repository bytes: PASS.
+
+Real Chromium result:
+- unauthenticated 4.1.7 redirect to login: PASS;
+- password sign-in with temporary real Auth user: PASS;
+- personal identity / role hydration: PASS;
+- normal-user Admin link hidden: PASS;
+- Preferences save + reload persistence: PASS;
+- Watchlist create: PASS;
+- add real integrated-market symbol: PASS;
+- Watchlist-only filter: PASS;
+- Watchlist item persistence after reload: PASS;
+- direct Admin URL denied to normal user: PASS;
+- saved-symbol removal: PASS;
+- logout/session removal: PASS.
+
+Machine result:
+`{"result":"stock-hunter-v417-authenticated-browser-smoke: PASS","preference_persistence":true,"watchlist_create_add_reload_remove":true,"admin_isolation":true,"logout":true}`
+
+Cleanup:
+- workflow `always()` cleanup: PASS;
+- post-run live DB count for `stock-hunter-browser-smoke-%@example.invalid`: 0.
+
+## Defects found and fixed by the smoke
+
+1. Missing personal controls in `index-v417.html` caused `app-personal-v417.js` startup failure risk.
+   - fixed in PR #216.
+2. `.admin-grid{display:grid}` overrode the HTML `hidden` attribute after a correct normal-user admin denial.
+   - fixed with `.admin-grid[hidden]{display:none}` in PR #217.
+
+The second defect was presentation-only: authorization was already denied before any admin data load.
+
+## Final exit status
+
+Authenticated Browser / DOM Smoke is **DONE / PASS** against the deployed public 4.1.7 staging surface.
