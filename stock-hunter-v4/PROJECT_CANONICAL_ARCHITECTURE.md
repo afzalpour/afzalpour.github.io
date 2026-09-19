@@ -167,3 +167,8 @@ In a new project chat, this phrase requires the agent to load `CURRENT_HANDOFF.m
 
 ### Auth verification status
 The database authenticated-role isolation drill and suspended-account RLS drill passed on 2026-09-19. Final release still requires two distinct real Auth sessions for end-to-end isolation and suspension/revocation testing.
+
+
+## 12. Continuity checkpoint
+Canonical continuation keyword: `SHIKAR-417-CONTINUE-CANONICAL`.
+Auth/RLS two-user real-session isolation self-test: PASS (2026-09-19). Admin boundary and console implemented. 4.1.6 remains Champion. On a new chat, bootstrap from repo + live state before mutation.
