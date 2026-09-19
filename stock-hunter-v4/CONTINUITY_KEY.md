@@ -22,4 +22,4 @@ Current checkpoint at creation:
 - two-user real-session RLS isolation self-test PASS.
 - temporary self-test users were deleted.
 - remaining Auth platform blockers include Supabase Site URL/redirect configuration and leaked-password protection, both requiring Auth Management configuration not exposed by the current connector.
-- next product step after persistence: wire personal Watchlist/Preferences into the main 4.1.7 UI while keeping 4.1.6 unchanged, then continue remaining Auth release gates.
+- personal Watchlist/Preferences integration into the staged 4.1.7 market UI is implemented; next is post-deploy authenticated smoke plus remaining Auth platform gates and statistical lifecycle maturity.
