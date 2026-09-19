@@ -1,0 +1,31 @@
+/* Stock Hunter 4.1.7 — personal staging layer only. 4.1.6 visual contract is untouched. */
+.v417-auth-pending .app-shell,
+.v417-auth-pending .personal-bar-v417{visibility:hidden}
+.v417-auth-gate{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:#0a0b0d;color:#efece5}
+.v417-auth-gate[hidden]{display:none}
+.v417-auth-gate>div{border:1px solid #25282e;background:#131519;padding:18px 22px;min-width:min(360px,calc(100vw - 40px));text-align:center}
+.v417-auth-gate b{display:block;color:#f0b25c;font-size:15px;margin-bottom:6px}
+.v417-auth-gate span{display:block;color:#8d9096;font-size:10px;line-height:1.8}
+.personal-bar-v417{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid #25282e;background:#0a0b0d;padding:8px 18px}
+.personal-identity-v417{display:grid;grid-template-columns:auto auto;gap:2px 8px;align-items:center}
+.personal-identity-v417 span,.personal-identity-v417 small{color:#8d9096;font-size:9px}
+.personal-identity-v417 b{color:#efece5;font-size:11px}
+.personal-watch-v417,.personal-actions-v417{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.personal-watch-v417 select,.personal-watch-v417 button,.personal-actions-v417 button,.personal-actions-v417 a{background:#131519;border:1px solid #25282e;color:#efece5;padding:7px 9px;text-decoration:none;font-size:9px}
+.personal-watch-v417 button,.personal-actions-v417 button{cursor:pointer}
+.personal-watch-v417 button[aria-pressed="true"]{border-color:#d99a3f;color:#f0b25c}
+.personal-watch-v417 button:disabled{opacity:.45;cursor:not-allowed}
+#watchlistCountV417,#personalSaveStateV417{color:#8d9096;font-size:9px}
+#personalSaveStateV417[data-state="ok"]{color:#4a9c8c}
+#personalSaveStateV417[data-state="bad"]{color:#cf5a50}
+#personalSaveStateV417[data-state="busy"]{color:#d99a3f}
+.personal-symbol-row-v417{display:flex;align-items:flex-start;gap:7px}
+.personal-star-v417{border:0;background:transparent;color:#64676d;cursor:pointer;font-size:15px;line-height:1;padding:1px}
+.personal-star-v417.saved{color:#d99a3f}
+.personal-star-v417:disabled{opacity:.45;cursor:wait}
+.mobile-foot>.personal-star-v417{margin-inline-end:auto}
+@media(max-width:760px){
+  .personal-bar-v417{align-items:stretch;padding:8px 12px}
+  .personal-identity-v417,.personal-watch-v417,.personal-actions-v417{width:100%}
+  .personal-watch-v417 select{flex:1;min-width:150px}
+}
