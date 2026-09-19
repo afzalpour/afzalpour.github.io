@@ -118,3 +118,15 @@ Unless the user gives a newer instruction:
 - 4.1.6 `index.html` blob remains `ea833fe20a75e11bb71bcf52abeaafeed46dec0a` (unchanged by this step).
 - `index-v417.html` is the authenticated personal staging surface.
 - Remaining validation for this step: authenticated browser smoke using a real human session; current tooling cannot reproduce the owner's password/session and must not fabricate one.
+
+
+## Authenticated personal data-flow smoke
+- PASS on 2026-09-19 with a temporary real Auth user and real session.
+- Preferences create/read/update path: PASS.
+- Protected preference timestamp client-write denial: PASS.
+- Watchlist create/add/read/delete path: PASS.
+- Profile last_seen update: PASS.
+- Cleanup: PASS; zero temporary users remain.
+- Self-test Edge Function resealed with verify_jwt=true.
+- Client bug fixed: browser no longer sends protected `updated_at` in Preferences writes.
+- Remaining browser-specific validation is a human authenticated DOM smoke on `index-v417.html`.
