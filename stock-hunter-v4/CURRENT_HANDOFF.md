@@ -92,22 +92,18 @@ Implemented on the 4.1.7 staging surface:
 5. A pre-existing private Canary RLS/no-policy INFO finding is outside the Auth scope; do not casually mutate canary lifecycle infrastructure to silence it.
 
 ## Feed snapshot
-At 2026-09-19 17:18 UTC:
+At 2026-09-19 19:24 UTC:
 - last feed heartbeat: 2026-09-19 16:26:36 UTC;
 - integrated max updated_at: 2026-09-19 16:26:34 UTC.
+The market/feed is no longer fresh at this late-evening snapshot; this is not an Auth failure.
 Treat these as a timestamped snapshot only; always re-check live state.
 
 ## NEXT ACTION
 Unless the user gives a newer instruction:
-1. Validate the staged 4.1.7 personal surface after merge/Pages deployment:
-   - authenticated redirect behavior;
-   - preference hydration/save;
-   - Watchlist create/add/remove/filter;
-   - owner Admin link;
-   - no regression in 4.1.6.
+1. Complete the remaining human authenticated DOM smoke on `index-v417.html`; authenticated backend/data-flow smoke is already PASS.
 2. Fix Supabase Auth Site URL / Redirect allow-list and Leaked Password Protection as soon as a Management API-capable path is available.
 3. Run password-recovery/public Auth smoke after redirect configuration is corrected.
-4. Continue statistical lifecycle collection; do not advance 4.1.7 routing until calibration/OOS/promotion/activation gates mature and pass.
+4. Continue prospective statistical lifecycle collection and run the next EOD/maturity verification when due; do not advance runtime routing until calibration/OOS/promotion/activation gates pass.
 
 
 ## Personal UI merge checkpoint
@@ -118,3 +114,15 @@ Unless the user gives a newer instruction:
 - 4.1.6 `index.html` blob remains `ea833fe20a75e11bb71bcf52abeaafeed46dec0a` (unchanged by this step).
 - `index-v417.html` is the authenticated personal staging surface.
 - Remaining validation for this step: authenticated browser smoke using a real human session; current tooling cannot reproduce the owner's password/session and must not fabricate one.
+
+
+## Authenticated personal data-flow smoke
+- PASS on 2026-09-19 with a temporary real Auth user and real session.
+- Preferences create/read/update path: PASS.
+- Protected preference timestamp client-write denial: PASS.
+- Watchlist create/add/read/delete path: PASS.
+- Profile last_seen update: PASS.
+- Cleanup: PASS; zero temporary users remain.
+- Self-test Edge Function resealed with verify_jwt=true.
+- Client bug fixed: browser no longer sends protected `updated_at` in Preferences writes.
+- Remaining browser-specific validation is a human authenticated DOM smoke on `index-v417.html`.

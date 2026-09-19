@@ -29,3 +29,5 @@ Latest merged checkpoint:
 - personal 4.1.7 market UI integration merged at `b0cce246fbcd5d4bbdfc9936908f0c0130cd999d`;
 - Pages + Champion public smoke PASS;
 - next incomplete gate is authenticated browser smoke / Auth platform configuration, followed by continued statistical lifecycle maturity.
+
+- authenticated personal data-flow smoke PASS; Preferences + Watchlist backend paths verified with a real Auth session; client protected-column bug corrected; self-test function resealed.

@@ -102,8 +102,7 @@
       visible_columns:[...visible],
       hunt_filter:byId('hunt').value||null,
       decision_filter:byId('decision').value||null,
-      notification_settings:{...(prefs.notification_settings||{}),sound:Boolean(sound)},
-      updated_at:new Date().toISOString()
+      notification_settings:{...(prefs.notification_settings||{}),sound:Boolean(sound)}
     };
     const {error}=await supabase.from('stock_hunter_user_preferences_v417').update(payload).eq('user_id',user.id);
     if(error){saveState('خطا در ذخیره تنظیمات','bad');return;}
