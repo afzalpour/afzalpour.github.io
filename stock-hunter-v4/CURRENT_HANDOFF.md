@@ -85,11 +85,10 @@ Implemented on the 4.1.7 staging surface:
 - 4.1.6 `index.html` remains unchanged and ungated.
 
 ## Known blockers / platform settings
-1. Supabase Auth Site URL / Redirect allow-list is still incorrect (localhost redirect can occur).
-2. Connected Supabase tooling does not expose Auth URL config mutation.
-3. GitHub fallback workflow was attempted but repository has no `SUPABASE_ACCESS_TOKEN`; do not assume this path works until such a management credential is legitimately available.
-4. Supabase Security Advisor reports Leaked Password Protection disabled. This is an Auth platform configuration item and remains pending.
-5. A pre-existing private Canary RLS/no-policy INFO finding is outside the Auth scope; do not casually mutate canary lifecycle infrastructure to silence it.
+1. Supabase Auth Site URL / Redirect allow-list remains a hosted-platform blocker; current connector does not expose Auth config mutation. The Management API workflow run `35455470843` failed because `SUPABASE_ACCESS_TOKEN` was unavailable.
+2. Supabase Leaked Password Protection remains disabled. Current Supabase docs state it requires Pro plan or above; this project previously returned a platform error that Branching is unavailable because the plan is below Pro.
+3. Password-recovery/public redirect smoke remains blocked until the hosted redirect configuration is corrected.
+4. A pre-existing private Canary RLS/no-policy INFO finding is outside the Auth scope; do not casually mutate canary lifecycle infrastructure to silence it.
 
 ## Feed snapshot
 At 2026-09-19 19:24 UTC:
@@ -100,9 +99,10 @@ Treat these as a timestamped snapshot only; always re-check live state.
 
 ## NEXT ACTION
 Unless the user gives a newer instruction:
-1. Fix Supabase Auth Site URL / Redirect allow-list and Leaked Password Protection as soon as a Management API-capable path is available.
-2. Run password-recovery/public Auth smoke after redirect configuration is corrected.
-3. Continue prospective statistical lifecycle collection. First-Day EOD is LIVE PASS; the next statistical gate is the first maturity horizon after sessions 2026-09-20/21/22. Do not advance runtime routing until calibration/OOS/promotion/activation gates pass.
+1. Continue genuine prospective collection toward the first maturity horizon after sessions 2026-09-20/21/22; do not advance routing before real maturity evidence.
+2. Keep Auth Site URL/redirect and Leaked Password Protection explicitly platform-blocked until a legitimate Management API/Dashboard + plan-capability path is available.
+3. After redirect configuration is corrected, run password-recovery/public Auth smoke.
+4. Historical robustness/backtests may be prepared or rerun only as supporting analysis; they must never substitute for prospective maturity/OOS evidence.
 
 
 ## Personal UI merge checkpoint
@@ -191,3 +191,26 @@ Unless the user gives a newer instruction:
 - Two UI defects discovered by the smoke were fixed in PR #216 and PR #217.
 - Production routing remained CHAMPION_ONLY / 0% / kill-switch ON / state_version=1.
 - Remaining Auth platform blockers: Site URL/redirect allow-list, Leaked Password Protection, then password-recovery/public Auth smoke.
+
+
+## Legacy market-scan source hardening
+- `stock-hunter-market-scan-v4` deployed version 2.
+- `verify_jwt=false` retained with the existing custom `x-scan-secret` caller contract.
+- raw 64-character caller secret removed from deployed source.
+- source now stores only SHA-256 digest and hashes the supplied header before comparison.
+- caller transport and accepted secret value were intentionally preserved because an external caller may exist.
+- repository search: no caller found.
+- pg_cron search: no caller found.
+- live negative auth: missing secret 401; wrong secret 401.
+- positive external caller activity was not independently observed.
+
+
+## Live lifecycle snapshot — 2026-09-20
+- prospective state: COLLECTING.
+- shadow samples: 12 total (5 reversal / 7 acceleration).
+- mature calibration samples: 0.
+- calibration_ready: false; reason: نمونه بالغ ۳ جلسه‌ای کافی نیست.
+- OOS can_unlock: false; OOS unlocked: false.
+- activation: CHAMPION_ONLY / 0% challenger / kill switch ON / state_version=1.
+- latest integrated market update observed: 2026-09-19 16:26:34 UTC.
+- Do not substitute historical backtests for the required prospective three-session maturity evidence.
