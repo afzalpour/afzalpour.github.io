@@ -158,3 +158,12 @@ See `AUTH_PROFILE_V417_ARCHITECTURE.md` for the implementation contract.
 
 ### Auth implementation status
 Admin boundary status (2026-09-19): `stock-hunter-admin-v417` is deployed with `verify_jwt=true`; the staged admin console is implemented; suspension combines Auth ban with restrictive account-status RLS. Two-user isolation/negative-session tests remain release gates.
+
+
+## 12. Deterministic continuation trigger
+Canonical phrase: `ادامه پروژه شکار سهم — SHIKAR-417-CANONICAL-CONTINUE`.
+In a new project chat, this phrase requires the agent to load `CURRENT_HANDOFF.md`, run the bootstrap protocol, verify current GitHub/Supabase state, and continue without asking the user to re-explain prior architecture. This is a repository-backed continuation protocol, not hidden permanent memory.
+
+
+### Auth verification status
+The database authenticated-role isolation drill and suspended-account RLS drill passed on 2026-09-19. Final release still requires two distinct real Auth sessions for end-to-end isolation and suspension/revocation testing.
