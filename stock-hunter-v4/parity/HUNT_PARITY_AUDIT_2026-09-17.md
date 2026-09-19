@@ -36,3 +36,34 @@ A prior independent deployment check on 2026-09-17 (GitHub Actions run 352264943
 ## Interpretation
 
 PASS means the production browser implementation and the deployed capture backend produce exactly the same serialized result for these nine deterministic fixtures. It does not claim mathematical equivalence over every possible market input. Any change to session filtering, Hunt scoring, fixture protocol or backend parity output must re-run this CI gate before calibration/telemetry results are trusted.
+
+
+## Final revalidation — 2026-09-19
+
+Status: FINAL_REVALIDATION_PASS
+
+Current browser/source evidence:
+- `app-hunt-v416.js` blob: `787c39ae2d84fb34784775b192d35cb22b31d450`
+- `app-session-v413.js` blob: `84eb8564aecd9681c014a0978f7bd0dbc8e39f01`
+- `hunt-parity-v416.js` blob: `400fb64e841de6261d0e5e744c475e032f9c9dfe`
+
+Current deployed backend evidence:
+- Edge Function: `stock-hunter-capture-v416`
+- deployed version: `5`
+- deployed ezbr sha256: `6eb0ba0ee5e9dae3b8d6bab5c79f7f48a98ae643fd35ebe968d8d41eb73fdc76`
+- parity protocol: `4.1.6-browser-server-parity-v1`
+- fixture count: 9
+
+The final revalidation executed the current browser fixture harness against the currently deployed capture parity endpoint and required exact deep equality.
+
+Evidence:
+- GitHub Actions workflow: `Stock Hunter 4.1.6 Browser Server Parity Check`
+- run id: `35466587854`
+- browser fixture JS syntax: PASS
+- browser fixture assertions: PASS
+- browser ↔ deployed backend deep equality: PASS
+- capture public/confused-caller rejection regression: PASS
+- capture security contract check: PASS
+- production Hunt contract unchanged check: PASS
+
+Interpretation: browser/server scoring parity is FINAL-PASS for the frozen 9-fixture protocol at the current browser blobs and deployed backend version 5. This remains deterministic-fixture proof, not a claim of exhaustive mathematical equivalence over all possible inputs.
