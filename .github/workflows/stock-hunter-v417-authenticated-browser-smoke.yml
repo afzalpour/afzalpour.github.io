@@ -9,6 +9,7 @@ on:
       - 'stock-hunter-v4/auth-v417.html'
       - 'stock-hunter-v4/app-auth-v417.js'
       - 'stock-hunter-v4/app-admin-v417.js'
+      - 'stock-hunter-v4/auth-v417.css'
       - 'stock-hunter-v4/auth/browser-smoke-v417.cjs'
       - 'stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts'
       - '.github/workflows/stock-hunter-v417-authenticated-browser-smoke.yml'
@@ -20,6 +21,7 @@ on:
       - 'stock-hunter-v4/auth-v417.html'
       - 'stock-hunter-v4/app-auth-v417.js'
       - 'stock-hunter-v4/app-admin-v417.js'
+      - 'stock-hunter-v4/auth-v417.css'
       - 'stock-hunter-v4/auth/browser-smoke-v417.cjs'
       - 'stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts'
       - '.github/workflows/stock-hunter-v417-authenticated-browser-smoke.yml'
@@ -51,6 +53,7 @@ jobs:
           grep -q 'EXPECTED_REF="refs/heads/main"' stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts
           grep -q 'EXPECTED_WORKFLOW_REF="afzalpour/afzalpour.github.io/.github/workflows/stock-hunter-v417-authenticated-browser-smoke.yml@refs/heads/main"' stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts
           grep -q 'EMAIL_RE=/^stock-hunter-browser-smoke-' stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts
+          grep -q '.admin-grid\[hidden\]{display:none}' stock-hunter-v4/auth-v417.css
           if grep -Ei 'SUPABASE_(SERVICE_ROLE|SECRET|DB_URL|ACCESS_TOKEN).*secrets\.' .github/workflows/stock-hunter-v417-authenticated-browser-smoke.yml; then
             echo "::error::Browser smoke must use GitHub OIDC, not repository-held Supabase admin credentials"
             exit 1
@@ -75,22 +78,40 @@ jobs:
       - name: Wait for published Pages bytes
         run: |
           set -euo pipefail
-          expected="$(sha256sum stock-hunter-v4/index-v417.html | awk '{print $1}')"
+          files=(
+            index-v417.html
+            app-personal-v417.js
+            auth-v417.html
+            app-auth-v417.js
+            admin-v417.html
+            app-admin-v417.js
+            auth-v417.css
+          )
           for n in $(seq 1 30); do
-            tmp="$(mktemp)"
-            if curl -L --fail --silent --show-error --connect-timeout 10 --max-time 30               "$BASE_URL/index-v417.html?sha=${GITHUB_SHA}" -o "$tmp"; then
+            all_ok=1
+            for f in "${files[@]}"; do
+              tmp="$(mktemp)"
+              if ! curl -L --fail --silent --show-error --connect-timeout 10 --max-time 30 \
+                "$BASE_URL/$f?sha=${GITHUB_SHA}" -o "$tmp"; then
+                rm -f "$tmp"
+                all_ok=0
+                break
+              fi
+              expected="$(sha256sum "stock-hunter-v4/$f" | awk '{print $1}')"
               actual="$(sha256sum "$tmp" | awk '{print $1}')"
               rm -f "$tmp"
-              if [ "$actual" = "$expected" ]; then
-                echo "published_personal_index_sha256=$actual"
-                exit 0
+              if [ "$actual" != "$expected" ]; then
+                all_ok=0
+                break
               fi
-            else
-              rm -f "$tmp"
+            done
+            if [ "$all_ok" = "1" ]; then
+              echo "published_authenticated_surface_bytes: MATCH"
+              exit 0
             fi
             sleep 8
           done
-          echo "::error::Published index-v417.html did not converge to merged repository bytes"
+          echo "::error::Published authenticated 4.1.7 surface did not converge to merged repository bytes"
           exit 1
 
       - name: Install pinned Playwright Chromium
