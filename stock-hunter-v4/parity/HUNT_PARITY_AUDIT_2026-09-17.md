@@ -40,7 +40,7 @@ PASS means the production browser implementation and the deployed capture backen
 
 ## Final revalidation — 2026-09-19
 
-Status: FINAL_REVERIFY_PENDING
+Status: FINAL_REVALIDATION_PASS
 
 Current browser/source evidence:
 - `app-hunt-v416.js` blob: `787c39ae2d84fb34784775b192d35cb22b31d450`
@@ -54,4 +54,16 @@ Current deployed backend evidence:
 - parity protocol: `4.1.6-browser-server-parity-v1`
 - fixture count: 9
 
-The final revalidation must execute the current browser fixture harness against the currently deployed capture parity endpoint and require exact deep equality. This section must not be marked PASS from historical evidence alone.
+The final revalidation executed the current browser fixture harness against the currently deployed capture parity endpoint and required exact deep equality.
+
+Evidence:
+- GitHub Actions workflow: `Stock Hunter 4.1.6 Browser Server Parity Check`
+- run id: `35466587854`
+- browser fixture JS syntax: PASS
+- browser fixture assertions: PASS
+- browser ↔ deployed backend deep equality: PASS
+- capture public/confused-caller rejection regression: PASS
+- capture security contract check: PASS
+- production Hunt contract unchanged check: PASS
+
+Interpretation: browser/server scoring parity is FINAL-PASS for the frozen 9-fixture protocol at the current browser blobs and deployed backend version 5. This remains deterministic-fixture proof, not a claim of exhaustive mathematical equivalence over all possible inputs.
