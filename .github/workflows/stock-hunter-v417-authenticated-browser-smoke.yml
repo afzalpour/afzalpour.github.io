@@ -34,6 +34,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Verify staged DOM and OIDC safety contract
         run: |
           set -euo pipefail
@@ -65,6 +68,9 @@ jobs:
       OIDC_AUDIENCE: stock-hunter-browser-smoke-v417
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
 
       - name: Wait for published Pages bytes
         run: |
