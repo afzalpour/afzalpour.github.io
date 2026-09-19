@@ -41,4 +41,5 @@ Latest merged checkpoint:
 - next fast-track engineering item: Capture Backend Security hardening.
 
 - Capture Backend Security Hardening PASS: active v416 capture uses Vault-backed timestamp+nonce HMAC, replay ledger, no static secret on wire, cron raw-secret commands 0, deployed security/parity run 35467654427 PASS.
-- next fast-track engineering item: authenticated browser/DOM smoke for the staged 4.1.7 personal surface, then remaining Auth platform blockers.
+- authenticated deployed browser/DOM smoke PASS (main run 35469683809): login, Preferences persistence, Watchlist create/add/filter/reload/remove, Admin isolation, logout, cleanup all PASS.
+- next fast-track engineering item: Auth platform configuration blockers (Site URL/redirect allow-list + Leaked Password Protection), then password-recovery/public Auth smoke.
