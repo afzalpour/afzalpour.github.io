@@ -103,7 +103,7 @@ Unless the user gives a newer instruction:
 1. Complete the remaining human authenticated DOM smoke on `index-v417.html`; authenticated backend/data-flow smoke is already PASS.
 2. Fix Supabase Auth Site URL / Redirect allow-list and Leaked Password Protection as soon as a Management API-capable path is available.
 3. Run password-recovery/public Auth smoke after redirect configuration is corrected.
-4. Continue prospective statistical lifecycle collection and run the next EOD/maturity verification when due; do not advance runtime routing until calibration/OOS/promotion/activation gates pass.
+4. Continue prospective statistical lifecycle collection. First-Day EOD is now LIVE PASS; the next statistical gate is the first maturity horizon after sessions 2026-09-20/21/22. Do not advance runtime routing until calibration/OOS/promotion/activation gates pass.
 
 
 ## Personal UI merge checkpoint
@@ -133,3 +133,12 @@ Unless the user gives a newer instruction:
 - It explicitly rejects a browser Preferences payload that writes protected `updated_at`.
 - Workflow remains read-only.
 - Live Supabase SQL EOD verification was attempted after market close, but the connected SQL tool was unavailable due connection timeout; do not interpret that as an EOD quality failure.
+
+
+## First real EOD live closure
+- Official `verify-first-day-eod-quality-v416.sql`: LIVE PASS after the 2026-09-19 EOD deadline.
+- Execution path: GitHub OIDC → `stock-hunter-ci-live-check-v417` → direct Postgres, READ ONLY.
+- Workflow run: `35465143770`.
+- No EOD invariant violation was found.
+- This PASS does not unlock Calibration/OOS/Promotion/Activation.
+- Next statistical gate: first maturity horizon after the three future sessions 2026-09-20, 2026-09-21, 2026-09-22; verifier deadline 2026-09-22 14:55 UTC.
