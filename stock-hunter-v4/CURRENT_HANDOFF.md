@@ -100,7 +100,7 @@ Treat these as a timestamped snapshot only; always re-check live state.
 
 ## NEXT ACTION
 Unless the user gives a newer instruction:
-1. Continue fast-track engineering with Capture Backend Security hardening; final Hunt parity and control-plane atomicity/concurrency are already PASS.
+1. Continue fast-track engineering with automated authenticated browser/DOM smoke for the 4.1.7 personal surface; Capture Backend Security Hardening is now PASS.
 2. Fix Supabase Auth Site URL / Redirect allow-list and Leaked Password Protection as soon as a Management API-capable path is available.
 3. Run password-recovery/public Auth smoke after redirect configuration is corrected.
 4. Continue prospective statistical lifecycle collection. First-Day EOD is now LIVE PASS; the next statistical gate is the first maturity horizon after sessions 2026-09-20/21/22. Do not advance runtime routing until calibration/OOS/promotion/activation gates pass.
@@ -156,3 +156,21 @@ Unless the user gives a newer instruction:
 - Race self-test Edge Function resealed with `verify_jwt=true`.
 - production_state_after_cleanup: CHAMPION_ONLY / 0% / kill-switch ON / state_version=1.
 - Next engineering hardening item: Capture Backend Security hardening without changing 4.1.6 Hunt formulas or prospective provenance.
+
+
+## Capture backend HMAC hardening
+- Status: DONE / PASS.
+- Active Edge Function `stock-hunter-capture-v416`: version 6.
+- Auth contract: `VAULT_HMAC_NONCE_V2`.
+- Static capture secret is no longer sent on the wire.
+- pg_cron signs each request with timestamp + UUID nonce + HMAC-SHA256 using the Vault key.
+- timestamp freshness window: ±180 seconds.
+- nonce ledger rejects replay atomically.
+- live signed invocation: HTTP 200 / outside-market-window.
+- replay validator drill: PASS.
+- cron jobs 15/16/17 preserve schedules and now invoke only `private.invoke_stock_hunter_capture_v416()`.
+- raw-secret cron commands: 0.
+- external deployed security/parity workflow run `35467654427`: PASS.
+- Main Integration run `35467690043`: PASS.
+- Security Advisor: no Capture finding.
+- `verify_jwt=false` remains intentional for this pg_net service-to-service endpoint; in-code HMAC authorization is mandatory before claim/scan/write.
