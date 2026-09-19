@@ -1,0 +1,9 @@
+# Stock Hunter agent instructions
+
+Before modifying anything under this directory:
+1. Read `PROJECT_CANONICAL_ARCHITECTURE.md`.
+2. Read `NEW_CHAT_BOOTSTRAP.md`.
+3. Verify current GitHub main and, for lifecycle/data work, live Supabase state.
+4. Preserve the frozen 4.1.6 champion and Action Now → Radar → Universe UX contract.
+5. Never change Hunt formulas, thresholds, lifecycle gates, capture provenance, activation state, or frozen visual identity unless the user explicitly authorizes that exact class of change.
+6. Update `PROJECT_CANONICAL_ARCHITECTURE.md` whenever an approved architecture change is implemented.

@@ -309,22 +309,56 @@ cell=function(k,x){
   return cellBeforeHuntV416(k,x);
 };
 
+const ACTION_FRESH_MS_V416=180000;
+function isActionFreshV416(x){
+  const t=Date.parse(String(x?.updated||''));
+  if(!Number.isFinite(t))return false;
+  return Math.max(0,Date.now()-t)<=ACTION_FRESH_MS_V416;
+}
+function isActionSessionV416(x){
+  return typeof isHuntableNowV413!=='function'||isHuntableNowV413(x);
+}
+function isActionNowV416(x){
+  if(!x||x.analyzed===false)return false;
+  applyHuntV416(x);
+  return isActionFreshV416(x)&&isActionSessionV416(x)&&x.dayChangeV416<1&&(x.hunt==='شکار ویژه'||x.hunt==='هشدار فوری');
+}
+function isRadarEarlyV416(x){
+  if(!x||x.analyzed===false)return false;
+  applyHuntV416(x);
+  return isActionFreshV416(x)&&isActionSessionV416(x)&&x.dayChangeV416<1&&x.hunt==='شکار زودهنگام';
+}
+function renderHuntRadarV416(){
+  const box=$('huntRadarV416'),list=$('huntRadarListV416'),count=$('huntRadarCountV416');
+  if(!box||!list||!count)return;
+  const early=rows.map(applyHuntV416).filter(isRadarEarlyV416).sort((a,b)=>b.huntScoreV416-a.huntScoreV416||b.todayOpportunityV416-a.todayOpportunityV416||b.fast-a.fast).slice(0,8);
+  count.textContent=early.length.toLocaleString('fa-IR');
+  box.hidden=early.length===0;
+  list.innerHTML=early.map(x=>`<button class="hunt-radar-item-v416" type="button" data-id="${esc(x.id)}"><span class="hunt-radar-symbol-v416">${esc(x.symbol)}</span><span>${esc(x.huntModeLabelV416||'شکار زودهنگام')}</span><b>${fa(x.huntScoreV416,1)}</b><small>${x.dayChangeV416>0?'+':''}${fa(x.dayChangeV416,2)}٪</small></button>`).join('');
+}
+
 const filteredBeforeHuntV416=filtered;
 filtered=function(){
   const q=$('search').value.trim();
   if(q)return filteredBeforeHuntV416(); // Universal search is intentionally outside Hunt constraints.
   const h=$('hunt').value,d=$('decision').value;
-  // Main table is a market browser first: when no Hunt filter is selected,
-  // show the full loaded market universe instead of an empty candidate-only view.
-  // Hunt remains available as an explicit filter/column and does not change formulas.
   return rows.map(applyHuntV416).filter(x=>{
-    if(h&&x.hunt!==h)return false;
+    if(h==='__all__'){
+      // Explicit universe view: preserve every loaded symbol, including non-Hunt instruments.
+    }else if(h){
+      if(x.hunt!==h)return false;
+      if(['شکار ویژه','هشدار فوری','شکار زودهنگام'].includes(h)&&(!isActionFreshV416(x)||!isActionSessionV416(x)))return false;
+    }else if(!isActionNowV416(x))return false;
     if(d&&x.decision!==d)return false;
     return true;
-  }).sort((a,b)=>{
-    const ah=isGoalCandidateV416(a)?1:0,bh=isGoalCandidateV416(b)?1:0;
-    return bh-ah||b.huntScoreV416-a.huntScoreV416||b.todayOpportunityV416-a.todayOpportunityV416||b.fast-a.fast||String(a.symbol||'').localeCompare(String(b.symbol||''),'fa');
-  });
+  }).sort((a,b)=>b.huntScoreV416-a.huntScoreV416||b.todayOpportunityV416-a.todayOpportunityV416||b.fast-a.fast||String(a.symbol||'').localeCompare(String(b.symbol||''),'fa'));
+};
+
+const renderBeforeActionQueueV416=render;
+render=function(...args){
+  const out=renderBeforeActionQueueV416(...args);
+  renderHuntRadarV416();
+  return out;
 };
 
 renderMobile=function(a){
@@ -337,7 +371,7 @@ renderMobile=function(a){
 };
 
 updateSummary=function(){
-  const active=rows.map(applyHuntV416).filter(x=>typeof isHuntableNowV413!=='function'||isHuntableNowV413(x));
+  const active=rows.map(applyHuntV416).filter(x=>isActionFreshV416(x)&&isActionSessionV416(x));
   const candidates=active.filter(x=>x.dayChangeV416<1);
   $('specialCount').textContent=candidates.filter(x=>x.hunt==='شکار ویژه').length.toLocaleString('fa-IR');
   $('urgentCount').textContent=candidates.filter(x=>x.hunt==='هشدار فوری').length.toLocaleString('fa-IR');

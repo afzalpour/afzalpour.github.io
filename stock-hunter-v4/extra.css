@@ -295,3 +295,19 @@ html:not([data-theme="light"]) .summary-row article:not(.top-pick):not(.feed-inf
 html:not([data-theme="light"]) .brand h1 span {
   color:var(--po-brass) !important;
 }
+
+/* === ACTION NOW → RADAR → UNIVERSE CONTRACT (4.1.6 + 4.1.7 shared UI) === */
+.hunt-radar-v416{border:1px solid var(--po-line);background:var(--po-raised);padding:10px 12px;margin:10px 0}
+.hunt-radar-v416[hidden]{display:none!important}
+.hunt-radar-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.hunt-radar-head b{font-size:12px;color:var(--po-ink)}
+.hunt-radar-head small{display:block;margin-top:2px;color:var(--po-dim);font-size:9px}
+#huntRadarCountV416{color:var(--po-brass);font-weight:700}
+.hunt-radar-list-v416{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.hunt-radar-item-v416{display:grid;grid-template-columns:1fr auto;gap:2px 8px;text-align:right;border:1px solid var(--po-line);background:var(--po-bg);color:var(--po-ink);padding:8px;cursor:pointer}
+.hunt-radar-item-v416:hover{border-color:var(--po-brass)}
+.hunt-radar-symbol-v416{font-weight:800}
+.hunt-radar-item-v416 b{color:var(--po-brass)}
+.hunt-radar-item-v416 small{color:var(--po-dim)}
+@media(max-width:900px){.hunt-radar-list-v416{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.hunt-radar-list-v416{grid-template-columns:1fr}}

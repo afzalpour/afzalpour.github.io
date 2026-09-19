@@ -30,12 +30,16 @@
     </section>
     <section class="toolbar">
       <input id="search" placeholder="جست‌وجو در تمام نمادهای بازار سرمایه…" autocomplete="off">
-      <select id="hunt"><option value="">همه نمادها</option><option>شکار ویژه</option><option>هشدار فوری</option><option>شکار زودهنگام</option><option>رصد</option><option>عادی</option></select>
+      <select id="hunt"><option value="">شکارهای فعال</option><option>شکار ویژه</option><option>هشدار فوری</option><option>شکار زودهنگام</option><option>رصد</option><option>عادی</option><option value="__all__">همه نمادها</option></select>
       <select id="decision"><option value="">همه تأییدهای تکمیلی</option><option>ورود قوی</option><option>ورود اولیه</option><option>صبر برای تأیید</option><option>تحت نظر</option><option>عدم ورود</option></select>
       <select id="pageSize" title="تعداد ردیف"><option value="15">۱۵ ردیف</option><option value="25" selected>۲۵ ردیف</option><option value="50">۵۰ ردیف</option><option value="100">۱۰۰ ردیف</option></select>
       <button id="columnsBtn">☷ ستون‌ها</button><button id="refreshBtn">↻ تازه‌سازی</button>
     </section>
     <section id="alertBox" class="alert-box" hidden></section>
+    <section id="huntRadarV416" class="hunt-radar-v416" hidden>
+      <div class="hunt-radar-head"><div><b>رادار نزدیک</b><small>برترین شکارهای زودهنگام تازه — هنوز وارد صف اقدام نشده‌اند</small></div><span id="huntRadarCountV416">۰</span></div>
+      <div id="huntRadarListV416" class="hunt-radar-list-v416"></div>
+    </section>
     <section class="table-panel"><div class="table-wrap"><table id="mainTable"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div><div class="pager"><button id="prevPage">صفحه قبل</button><span id="pageInfo">—</span><button id="nextPage">صفحه بعد</button></div></section>
     <section id="mobileList" class="mobile-list"></section>
   </main>
