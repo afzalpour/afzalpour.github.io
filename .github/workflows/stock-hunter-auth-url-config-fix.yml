@@ -38,26 +38,31 @@ jobs:
           verify="$(mktemp)"
           trap 'rm -f "$cfg" "$payload" "$verify"' EXIT
 
-          curl --fail-with-body --silent --show-error             -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"             "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth"             -o "$cfg"
+          curl --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
+            -o "$cfg"
 
           current="$(jq -r '.uri_allow_list // ""' "$cfg")"
-          python3 - "$current" "$AUTH_URL" "$WILDCARD_URL" > /tmp/stock_hunter_redirects.txt <<'PY'
-import sys
-parts=[]
-for chunk in sys.argv[1:]:
-    for item in chunk.split(","):
-        item=item.strip()
-        if item and item not in parts:
-            parts.append(item)
-print(",".join(parts))
-PY
-          allow_list="$(cat /tmp/stock_hunter_redirects.txt)"
+          allow_list="$(python3 -c 'import sys; out=[]; [out.append(x) for a in sys.argv[1:] for x in [y.strip() for y in a.split(",")] if x and x not in out]; print(",".join(out))' "$current" "$AUTH_URL" "$WILDCARD_URL")"
 
-          jq -n             --arg site "$SITE_URL"             --arg allow "$allow_list"             '{site_url:$site, uri_allow_list:$allow}' > "$payload"
+          jq -n \
+            --arg site "$SITE_URL" \
+            --arg allow "$allow_list" \
+            '{site_url:$site, uri_allow_list:$allow}' > "$payload"
 
-          curl --fail-with-body --silent --show-error             -X PATCH             -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"             -H "Content-Type: application/json"             --data-binary @"$payload"             "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth"             >/dev/null
+          curl --fail-with-body --silent --show-error \
+            -X PATCH \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data-binary @"$payload" \
+            "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
+            >/dev/null
 
-          curl --fail-with-body --silent --show-error             -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"             "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth"             -o "$verify"
+          curl --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
+            -o "$verify"
 
           test "$(jq -r '.site_url' "$verify")" = "$SITE_URL"
           jq -r '.uri_allow_list // ""' "$verify" | grep -F "$AUTH_URL" >/dev/null
