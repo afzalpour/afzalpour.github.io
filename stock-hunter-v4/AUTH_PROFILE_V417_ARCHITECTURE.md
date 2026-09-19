@@ -177,3 +177,7 @@ Status: implemented in staging for 4.1.7.
 - Market rows and mobile cards expose ☆/★ save/remove controls.
 - "Only Watchlist" is an optional personal filter layered after the canonical Action Now → Radar → Universe filtering.
 - 4.1.6 production `index.html` remains unchanged and ungated.
+
+
+## Authenticated personal data-flow smoke — 2026-09-19
+PASS with a temporary real Auth user/session. Profile/Role/Preferences provisioning, allowed preference updates, protected timestamp denial, Watchlist CRUD and last_seen update all passed. Test-user cleanup passed and the self-test function was resealed with `verify_jwt=true`. The remaining browser-specific gate is an interactive human-session DOM smoke on the deployed staging page.
