@@ -5,7 +5,10 @@ Purpose: deterministic continuation across new chats.
 This file is a rolling handoff, not the immutable architecture contract.
 
 ## Continuity trigger
-Use:
+Canonical:
+`SHIKAR-417-CONTINUE-CANONICAL`
+
+Legacy compatibility alias:
 `ادامه پروژه شکار سهم — SHIKAR-417-CANONICAL-CONTINUE`
 
 ## Production / champion
@@ -19,12 +22,12 @@ Use:
 - Do not change 4.1.6 formulas/thresholds/lifecycle gates except explicit user authorization.
 
 ## 4.1.7 lifecycle safety
-Live snapshot at 2026-09-19 16:54 UTC:
+Live snapshot at 2026-09-19 17:18 UTC:
 - prospective collection: COLLECTING;
 - shadow samples: 12 total (5 reversal, 7 acceleration);
-- calibration mature samples: 0;
 - calibration_ready: false;
-- OOS unlock: false;
+- OOS unlock eligible: false;
+- OOS unlocked: false;
 - routing: CHAMPION_ONLY;
 - challenger traffic: 0%;
 - kill switch: engaged;
@@ -57,20 +60,29 @@ Do NOT store the owner's email or other personal identifiers in this public repo
 
 ## Auth tests completed
 - Owner bootstrap: PASS.
-- RLS cross-identity drill using authenticated-role JWT-claim simulation: PASS.
-  - other identity could see 0 owner Profile rows;
-  - 0 owner Role rows;
-  - 0 owner Watchlist rows;
-  - UPDATE owner Watchlist: 0 rows;
-  - DELETE owner Watchlist: 0 rows.
-- Temporary Watchlist fixture cleanup: PASS, 0 remaining.
+- Database RLS cross-identity drill: PASS.
 - Suspended-account restrictive RLS drill: PASS.
-  - Profile visible: 0;
-  - Role visible: 0;
-  - Preferences visible: 0.
-  - test was transactional and rolled back.
+- Two-user real-session isolation self-test: PASS.
+  - two temporary real Auth users were created;
+  - two real sessions/JWTs were used;
+  - cross-user Profile read/update blocked;
+  - cross-user Watchlist read/insert blocked;
+  - self role escalation blocked;
+  - normal user Admin API access blocked;
+  - suspended existing-JWT access blocked;
+  - cleanup PASS; zero temporary test users remain.
 
-Important: these are database-level authenticated-role isolation drills. The release gate still requires at least two distinct real Auth sessions before final Auth release.
+## Personal application integration
+Implemented on the 4.1.7 staging surface:
+- authenticated `index-v417.html`;
+- Profile identity shown in the market UI;
+- Preferences hydrate/save page size, Hunt filter, decision filter, visible columns, theme and sound setting;
+- personal Watchlist selector;
+- create Watchlist from main UI;
+- ☆/★ save/remove directly on market rows and mobile cards;
+- optional "only Watchlist" market filter;
+- Admin link exposed only for owner_admin/admin;
+- 4.1.6 `index.html` remains unchanged and ungated.
 
 ## Known blockers / platform settings
 1. Supabase Auth Site URL / Redirect allow-list is still incorrect (localhost redirect can occur).
@@ -80,18 +92,19 @@ Important: these are database-level authenticated-role isolation drills. The rel
 5. A pre-existing private Canary RLS/no-policy INFO finding is outside the Auth scope; do not casually mutate canary lifecycle infrastructure to silence it.
 
 ## Feed snapshot
-At 2026-09-19 16:54 UTC:
+At 2026-09-19 17:18 UTC:
 - last feed heartbeat: 2026-09-19 16:26:36 UTC;
 - integrated max updated_at: 2026-09-19 16:26:34 UTC.
 Treat these as a timestamped snapshot only; always re-check live state.
 
 ## NEXT ACTION
 Unless the user gives a newer instruction:
-1. Continue 4.1.7 personal application integration:
-   - connect signed-in Profile/Preferences to the staged 4.1.7 application surface;
-   - connect personal Watchlists/saved symbols to market rows;
-   - keep 4.1.6 production ungated and unchanged.
-2. When a second and third real non-owner Auth account can be created/confirmed, run real-session two-user RLS negative tests.
-3. Test admin negative authorization and suspend/reactivate end-to-end with a non-owner account.
-4. Fix Auth redirect configuration and Leaked Password Protection as soon as a Management API-capable path is available.
-5. Only after Auth gates and statistical lifecycle gates pass may 4.1.7 proceed toward activation/canary.
+1. Validate the staged 4.1.7 personal surface after merge/Pages deployment:
+   - authenticated redirect behavior;
+   - preference hydration/save;
+   - Watchlist create/add/remove/filter;
+   - owner Admin link;
+   - no regression in 4.1.6.
+2. Fix Supabase Auth Site URL / Redirect allow-list and Leaked Password Protection as soon as a Management API-capable path is available.
+3. Run password-recovery/public Auth smoke after redirect configuration is corrected.
+4. Continue statistical lifecycle collection; do not advance 4.1.7 routing until calibration/OOS/promotion/activation gates mature and pass.

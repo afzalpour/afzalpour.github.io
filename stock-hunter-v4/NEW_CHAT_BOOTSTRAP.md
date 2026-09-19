@@ -5,8 +5,8 @@ If the user says `SHIKAR-417-CONTINUE-CANONICAL`, execute this bootstrap protoco
 
 Use this at the start of every new project chat before any mutation.
 
-Canonical continuity trigger: `ادامه پروژه شکار سهم — SHIKAR-417-CANONICAL-CONTINUE`
-If the trigger is supplied, do not ask the user to recap. Read `CURRENT_HANDOFF.md` immediately after the canonical architecture.
+Canonical continuity keyword: `SHIKAR-417-CONTINUE-CANONICAL`\nLegacy compatibility alias: `ادامه پروژه شکار سهم — SHIKAR-417-CANONICAL-CONTINUE`
+If either form is supplied, normalize to the canonical keyword, do not ask the user to recap, and read `CURRENT_HANDOFF.md` immediately after the canonical architecture.
 
 1. Read `stock-hunter-v4/PROJECT_CANONICAL_ARCHITECTURE.md`.
 2. Read `stock-hunter-v4/CURRENT_HANDOFF.md`.
