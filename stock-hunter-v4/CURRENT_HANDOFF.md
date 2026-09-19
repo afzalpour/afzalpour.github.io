@@ -100,7 +100,7 @@ Treat these as a timestamped snapshot only; always re-check live state.
 
 ## NEXT ACTION
 Unless the user gives a newer instruction:
-1. Complete the remaining human authenticated DOM smoke on `index-v417.html`; authenticated backend/data-flow smoke is already PASS.
+1. Continue fast-track engineering with Capture Backend Security hardening; final Hunt parity and control-plane atomicity/concurrency are already PASS.
 2. Fix Supabase Auth Site URL / Redirect allow-list and Leaked Password Protection as soon as a Management API-capable path is available.
 3. Run password-recovery/public Auth smoke after redirect configuration is corrected.
 4. Continue prospective statistical lifecycle collection. First-Day EOD is now LIVE PASS; the next statistical gate is the first maturity horizon after sessions 2026-09-20/21/22. Do not advance runtime routing until calibration/OOS/promotion/activation gates pass.
@@ -142,3 +142,17 @@ Unless the user gives a newer instruction:
 - No EOD invariant violation was found.
 - This PASS does not unlock Calibration/OOS/Promotion/Activation.
 - Next statistical gate: first maturity horizon after the three future sessions 2026-09-20, 2026-09-21, 2026-09-22; verifier deadline 2026-09-22 14:55 UTC.
+
+
+## Final Hunt parity / control-plane proof
+- Browser ↔ deployed `stock-hunter-capture-v416` final parity revalidation: PASS.
+- Parity workflow run: `35466587854`.
+- Current deployed capture backend version: 5.
+- Control-plane START atomicity on real transition function: PASS.
+- Control-plane ADVANCE atomicity on real transition function: PASS.
+- Control-plane ROLLBACK atomicity on real transition function: PASS.
+- Real two-connection advisory-lock/state-version contention races: PASS (5/5).
+- Isolated race schema and one-time Vault token deleted.
+- Race self-test Edge Function resealed with `verify_jwt=true`.
+- production_state_after_cleanup: CHAMPION_ONLY / 0% / kill-switch ON / state_version=1.
+- Next engineering hardening item: Capture Backend Security hardening without changing 4.1.6 Hunt formulas or prospective provenance.

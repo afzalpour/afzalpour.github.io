@@ -21,6 +21,10 @@ jobs:
         run: node stock-hunter-v4/control-plane/concurrency-lock-drill-v417.cjs
       - name: Enforce live-proof status honesty
         run: |
-          grep -q 'LIVE_DB_PROOF: PENDING' stock-hunter-v4/control-plane/CONTROL_PLANE_CRASH_DRILL_2026-09-17.md
-          grep -q 'PARTIAL — live proof pending' stock-hunter-v4/control-plane/CONTROL_PLANE_CRASH_DRILL_2026-09-17.md
-          echo 'control-plane-live-proof-status: PENDING (expected until correct Stock Hunter DB drill is executed)'
+          grep -q 'LIVE_DB_PROOF: PASS' stock-hunter-v4/control-plane/CONTROL_PLANE_CRASH_DRILL_2026-09-17.md
+          grep -q 'DONE — model + live PostgreSQL proof PASS' stock-hunter-v4/control-plane/CONTROL_PLANE_CRASH_DRILL_2026-09-17.md
+          grep -q 'START vs START: one winner' stock-hunter-v4/control-plane/CONTROL_PLANE_CRASH_DRILL_2026-09-17.md
+          grep -q 'ADVANCE vs ADVANCE: one winner' stock-hunter-v4/control-plane/CONTROL_PLANE_CRASH_DRILL_2026-09-17.md
+          grep -q 'ROLLBACK vs ROLLBACK: one winner' stock-hunter-v4/control-plane/CONTROL_PLANE_CRASH_DRILL_2026-09-17.md
+          grep -q 'production_state_after_cleanup: CHAMPION_ONLY / 0% / kill-switch ON / state_version=1' stock-hunter-v4/control-plane/LIVE_CONTROL_PLANE_PROOF_2026-09-19.md
+          echo 'control-plane-live-proof-status: PASS'

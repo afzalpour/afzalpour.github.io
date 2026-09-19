@@ -35,3 +35,7 @@ Latest merged checkpoint:
 - personal public Pages smoke now byte-compares the deployed 4.1.7 staging HTML/JS/CSS to repository bytes and guards the protected Preferences payload.
 
 - first real EOD verifier LIVE PASS via credentialless GitHub OIDC → Supabase READ ONLY bridge; next statistical gate is the 2026-09-22 first maturity horizon.
+
+- final Browser↔Backend Hunt parity PASS (workflow 35466587854).
+- control-plane live atomicity/concurrency proof PASS: real START/ADVANCE/ROLLBACK rollback-only failpoint drills plus five real two-connection advisory-lock races; production returned to CHAMPION_ONLY / 0% / kill-switch ON / state_version=1.
+- next fast-track engineering item: Capture Backend Security hardening.
