@@ -160,15 +160,17 @@ See `AUTH_PROFILE_V417_ARCHITECTURE.md` for the implementation contract.
 Admin boundary status (2026-09-19): `stock-hunter-admin-v417` is deployed with `verify_jwt=true`; the staged admin console is implemented; suspension combines Auth ban with restrictive account-status RLS. Two-user isolation/negative-session tests remain release gates.
 
 
-## 12. Deterministic continuation trigger
-Canonical phrase: `ادامه پروژه شکار سهم — SHIKAR-417-CANONICAL-CONTINUE`.
-In a new project chat, this phrase requires the agent to load `CURRENT_HANDOFF.md`, run the bootstrap protocol, verify current GitHub/Supabase state, and continue without asking the user to re-explain prior architecture. This is a repository-backed continuation protocol, not hidden permanent memory.
-
-
-### Auth verification status
-The database authenticated-role isolation drill and suspended-account RLS drill passed on 2026-09-19. Final release still requires two distinct real Auth sessions for end-to-end isolation and suspension/revocation testing.
-
-
-## 12. Continuity checkpoint
+## 12. Continuity and current Auth checkpoint
 Canonical continuation keyword: `SHIKAR-417-CONTINUE-CANONICAL`.
-Auth/RLS two-user real-session isolation self-test: PASS (2026-09-19). Admin boundary and console implemented. 4.1.6 remains Champion. On a new chat, bootstrap from repo + live state before mutation.
+
+The older phrase `ادامه پروژه شکار سهم — SHIKAR-417-CANONICAL-CONTINUE` is a compatibility alias only. New chats must normalize it to the canonical keyword above.
+
+When the canonical keyword appears:
+- read `CURRENT_HANDOFF.md`, `NEW_CHAT_BOOTSTRAP.md`, this architecture, Auth architecture, and latest audits;
+- verify current GitHub `main` and live Supabase state before mutation;
+- continue from the first incomplete gate without asking the user to reconstruct prior history.
+
+Auth/RLS two-user real-session isolation self-test: PASS (2026-09-19).
+Admin boundary and console: implemented.
+Authenticated 4.1.7 personal app surface: implemented as a staging surface; Profile/Preferences/Watchlists are connected to the market UI.
+4.1.6 remains production Champion and is not login-gated.
