@@ -157,7 +157,7 @@ See `AUTH_PROFILE_V417_ARCHITECTURE.md` for the implementation contract.
 
 
 ### Auth implementation status
-Admin boundary status (2026-09-19): `stock-hunter-admin-v417` is deployed with `verify_jwt=true`; the staged admin console is implemented; suspension combines Auth ban with restrictive account-status RLS. Two-user isolation/negative-session tests remain release gates.
+Admin boundary status (2026-09-19): `stock-hunter-admin-v417` is deployed with `verify_jwt=true`; the staged admin console is implemented; suspension combines Auth ban with restrictive account-status RLS. Two-user real-session isolation and admin-negative tests PASS.
 
 
 ## 12. Continuity and current Auth checkpoint
@@ -174,3 +174,11 @@ Auth/RLS two-user real-session isolation self-test: PASS (2026-09-19).
 Admin boundary and console: implemented.
 Authenticated 4.1.7 personal app surface: implemented as a staging surface; Profile/Preferences/Watchlists are connected to the market UI.
 4.1.6 remains production Champion and is not login-gated.
+
+
+### Engineering proof status
+As of 2026-09-19:
+- 4.1.6 Browser ↔ deployed capture Hunt parity final revalidation: PASS on the frozen deterministic fixture protocol.
+- 4.1.7 control-plane crash/partial-failure proof: PASS on real START/ADVANCE/ROLLBACK transition functions using rollback-only live PostgreSQL failpoints.
+- 4.1.7 advisory-lock + state_version contention proof: PASS with real independent PostgreSQL connections.
+These proofs do not authorize challenger activation; statistical maturity/OOS/promotion/activation gates remain independent.
