@@ -11,3 +11,5 @@ Before modifying anything under this directory:
 7. For any Auth, profile, role, user-management, RLS, or admin-console work, read `AUTH_PROFILE_V417_ARCHITECTURE.md` first and preserve its owner-admin and least-privilege rules.
 
 8. Continuity trigger: `ادامه پروژه شکار سهم — SHIKAR-417-CANONICAL-CONTINUE`. When present, read `CURRENT_HANDOFF.md` and follow its NEXT ACTION after verifying live state; never ask the user to reconstruct prior chats.
+
+8. Continuity keyword `SHIKAR-417-CONTINUE-CANONICAL` means: reload canonical architecture, latest audits, GitHub main, and live Supabase state before any mutation.

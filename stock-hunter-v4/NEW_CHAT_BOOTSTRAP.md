@@ -1,3 +1,6 @@
+# Continuity shortcut
+If the user says `SHIKAR-417-CONTINUE-CANONICAL`, execute this bootstrap protocol before doing anything else.
+
 # Stock Hunter — New Chat Bootstrap Protocol
 
 Use this at the start of every new project chat before any mutation.
