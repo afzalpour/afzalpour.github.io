@@ -1,6 +1,6 @@
 # Stock Hunter — Current Handoff
 
-Status date: 2026-09-19
+Status date: 2026-09-20
 Purpose: deterministic continuation across new chats.
 This file is a rolling handoff, not the immutable architecture contract.
 
@@ -100,10 +100,9 @@ Treat these as a timestamped snapshot only; always re-check live state.
 
 ## NEXT ACTION
 Unless the user gives a newer instruction:
-1. Continue fast-track engineering with automated authenticated browser/DOM smoke for the 4.1.7 personal surface; Capture Backend Security Hardening is now PASS.
-2. Fix Supabase Auth Site URL / Redirect allow-list and Leaked Password Protection as soon as a Management API-capable path is available.
-3. Run password-recovery/public Auth smoke after redirect configuration is corrected.
-4. Continue prospective statistical lifecycle collection. First-Day EOD is now LIVE PASS; the next statistical gate is the first maturity horizon after sessions 2026-09-20/21/22. Do not advance runtime routing until calibration/OOS/promotion/activation gates pass.
+1. Fix Supabase Auth Site URL / Redirect allow-list and Leaked Password Protection as soon as a Management API-capable path is available.
+2. Run password-recovery/public Auth smoke after redirect configuration is corrected.
+3. Continue prospective statistical lifecycle collection. First-Day EOD is LIVE PASS; the next statistical gate is the first maturity horizon after sessions 2026-09-20/21/22. Do not advance runtime routing until calibration/OOS/promotion/activation gates pass.
 
 
 ## Personal UI merge checkpoint
@@ -125,7 +124,7 @@ Unless the user gives a newer instruction:
 - Cleanup: PASS; zero temporary users remain.
 - Self-test Edge Function resealed with verify_jwt=true.
 - Client bug fixed: browser no longer sends protected `updated_at` in Preferences writes.
-- Remaining browser-specific validation is a human authenticated DOM smoke on `index-v417.html`.
+- Authenticated deployed browser/DOM smoke is now PASS.
 
 
 ## Personal public deployment smoke
@@ -147,7 +146,7 @@ Unless the user gives a newer instruction:
 ## Final Hunt parity / control-plane proof
 - Browser ↔ deployed `stock-hunter-capture-v416` final parity revalidation: PASS.
 - Parity workflow run: `35466587854`.
-- Current deployed capture backend version: 5.
+- Current deployed capture backend version: 6.
 - Control-plane START atomicity on real transition function: PASS.
 - Control-plane ADVANCE atomicity on real transition function: PASS.
 - Control-plane ROLLBACK atomicity on real transition function: PASS.
@@ -174,3 +173,21 @@ Unless the user gives a newer instruction:
 - Main Integration run `35467690043`: PASS.
 - Security Advisor: no Capture finding.
 - `verify_jwt=false` remains intentional for this pg_net service-to-service endpoint; in-code HMAC authorization is mandatory before claim/scan/write.
+
+
+## Authenticated deployed browser smoke
+- Status: DONE / PASS.
+- Main workflow run: `35469683809`.
+- Browser job: `105968270925`.
+- Public Pages bytes matched repository before test execution.
+- Real temporary Auth user + Chromium: login PASS.
+- Personal identity/role hydration: PASS.
+- Preferences save/reload persistence: PASS.
+- Watchlist create/add/filter/reload/remove: PASS.
+- Normal-user Admin link hidden: PASS.
+- Direct Admin URL denial: PASS.
+- Logout/session removal: PASS.
+- Cleanup: PASS; live temporary browser user count = 0.
+- Two UI defects discovered by the smoke were fixed in PR #216 and PR #217.
+- Production routing remained CHAMPION_ONLY / 0% / kill-switch ON / state_version=1.
+- Remaining Auth platform blockers: Site URL/redirect allow-list, Leaked Password Protection, then password-recovery/public Auth smoke.
