@@ -33,3 +33,5 @@ Latest merged checkpoint:
 - authenticated personal data-flow smoke PASS; Preferences + Watchlist backend paths verified with a real Auth session; client protected-column bug corrected; self-test function resealed.
 
 - personal public Pages smoke now byte-compares the deployed 4.1.7 staging HTML/JS/CSS to repository bytes and guards the protected Preferences payload.
+
+- first real EOD verifier LIVE PASS via credentialless GitHub OIDC → Supabase READ ONLY bridge; next statistical gate is the 2026-09-22 first maturity horizon.
