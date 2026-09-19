@@ -165,6 +165,7 @@ Admin boundary status (2026-09-19): `stock-hunter-admin-v417` is deployed with `
 - suspended-account restrictive RLS drill: PASS;
 - test fixture cleanup: PASS;
 - final two-distinct-real-session isolation test: PASS;
+- authenticated deployed browser/DOM smoke: PASS;
 - Auth redirect URL configuration: PENDING;
 - Leaked Password Protection platform setting: PENDING.
 
@@ -180,4 +181,4 @@ Status: implemented in staging for 4.1.7.
 
 
 ## Authenticated personal data-flow smoke — 2026-09-19
-PASS with a temporary real Auth user/session. Profile/Role/Preferences provisioning, allowed preference updates, protected timestamp denial, Watchlist CRUD and last_seen update all passed. Test-user cleanup passed and the self-test function was resealed with `verify_jwt=true`. The remaining browser-specific gate is an interactive human-session DOM smoke on the deployed staging page.
+PASS with a temporary real Auth user/session. Profile/Role/Preferences provisioning, allowed preference updates, protected timestamp denial, Watchlist CRUD and last_seen update all passed. Test-user cleanup passed and the self-test function was resealed with `verify_jwt=true`. The deployed automated real-session Chromium DOM smoke is PASS (2026-09-20, workflow 35469683809). Remaining Auth gates are platform redirect configuration, Leaked Password Protection and recovery/public-flow verification.
