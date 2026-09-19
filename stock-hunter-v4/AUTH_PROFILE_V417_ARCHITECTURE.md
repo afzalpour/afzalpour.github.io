@@ -158,3 +158,12 @@ See `AUTH_PROFILE_V417_ARCHITECTURE.md` for the implementation contract.
 
 ## Admin implementation status
 Admin boundary status (2026-09-19): `stock-hunter-admin-v417` is deployed with `verify_jwt=true`; the staged admin console is implemented; suspension combines Auth ban with restrictive account-status RLS. Two-user isolation/negative-session tests remain release gates.
+
+
+## Verification status — 2026-09-19
+- database authenticated-role cross-identity isolation drill: PASS;
+- suspended-account restrictive RLS drill: PASS;
+- test fixture cleanup: PASS;
+- final two-distinct-real-session isolation test: PENDING;
+- Auth redirect URL configuration: PENDING;
+- Leaked Password Protection platform setting: PENDING.
