@@ -47,3 +47,5 @@ Latest merged checkpoint:
 - Auth platform blockers verified: hosted Site URL/redirect mutation requires Dashboard/Management API access; previous workflow run 35455470843 lacked SUPABASE_ACCESS_TOKEN. Leaked Password Protection is Pro+ per current Supabase docs and remains unavailable/disabled on the current below-Pro project plan.
 - legacy `stock-hunter-market-scan-v4` source hardening: deployed v2 removes the raw embedded caller secret while preserving the existing x-scan-secret contract; missing/wrong callers 401. External positive caller activity is unknown.
 - live lifecycle remains COLLECTING with 12 shadow samples and 0 mature calibration samples; routing remains CHAMPION_ONLY / 0% / kill-switch ON / state_version=1.
+
+- live first-maturity OIDC gate deployed as bridge v2: original First-Day EOD regression PASS; missing/invalid OIDC 401; maturity purpose remains hard-blocked until 2026-09-22T14:55:00Z and then runs canonical SQL in READ ONLY transaction.

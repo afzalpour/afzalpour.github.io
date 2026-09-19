@@ -214,3 +214,13 @@ Unless the user gives a newer instruction:
 - activation: CHAMPION_ONLY / 0% challenger / kill switch ON / state_version=1.
 - latest integrated market update observed: 2026-09-19 16:26:34 UTC.
 - Do not substitute historical backtests for the required prospective three-session maturity evidence.
+
+
+## Live first maturity gate
+- OIDC read-only bridge upgraded to deployed version 2.
+- Original First-Day EOD path regression-tested on bridge v2: PASS (run `35465143770`, re-run job `105974476473`).
+- Missing/invalid OIDC requests are rejected with 401.
+- New purpose `first-maturity-horizon-v416` is bound to exact main workflow and hard-blocked before `2026-09-22 14:55 UTC`.
+- Scheduled operational attempt: 2026-09-22 15:05 UTC, with historical-date guard.
+- No lifecycle/routing mutation is performed by this bridge.
+- First maturity result remains PENDING until the actual horizon.
