@@ -126,3 +126,10 @@ Unless the user gives a newer instruction:
 - Self-test Edge Function resealed with verify_jwt=true.
 - Client bug fixed: browser no longer sends protected `updated_at` in Preferences writes.
 - Remaining browser-specific validation is a human authenticated DOM smoke on `index-v417.html`.
+
+
+## Personal public deployment smoke
+- Public smoke workflow extended to fetch and byte-compare `index-v417.html`, `app-personal-v417.js`, and `personal-v417.css` from GitHub Pages.
+- It explicitly rejects a browser Preferences payload that writes protected `updated_at`.
+- Workflow remains read-only.
+- Live Supabase SQL EOD verification was attempted after market close, but the connected SQL tool was unavailable due connection timeout; do not interpret that as an EOD quality failure.

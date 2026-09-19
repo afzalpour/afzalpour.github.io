@@ -38,6 +38,9 @@ jobs:
           fetch "https://afzalpour.github.io/stock-hunter-v4/sw.js" "/tmp/stock-hunter-public-smoke/sw.js"
           fetch "https://afzalpour.github.io/stock-hunter-v4/hunt-runtime-core-v417.js" "/tmp/stock-hunter-public-smoke/hunt-runtime-core-v417.js"
           fetch "https://afzalpour.github.io/stock-hunter-v4/app-runtime-router-v417.js" "/tmp/stock-hunter-public-smoke/app-runtime-router-v417.js"
+          fetch "https://afzalpour.github.io/stock-hunter-v4/index-v417.html" "/tmp/stock-hunter-public-smoke/index-v417.html"
+          fetch "https://afzalpour.github.io/stock-hunter-v4/app-personal-v417.js" "/tmp/stock-hunter-public-smoke/app-personal-v417.js"
+          fetch "https://afzalpour.github.io/stock-hunter-v4/personal-v417.css" "/tmp/stock-hunter-public-smoke/personal-v417.css"
 
       - name: Verify deployed bytes equal repository bytes
         run: |
@@ -47,12 +50,18 @@ jobs:
           cmp stock-hunter-v4/sw.js /tmp/stock-hunter-public-smoke/sw.js
           cmp stock-hunter-v4/hunt-runtime-core-v417.js /tmp/stock-hunter-public-smoke/hunt-runtime-core-v417.js
           cmp stock-hunter-v4/app-runtime-router-v417.js /tmp/stock-hunter-public-smoke/app-runtime-router-v417.js
+          cmp stock-hunter-v4/index-v417.html /tmp/stock-hunter-public-smoke/index-v417.html
+          cmp stock-hunter-v4/app-personal-v417.js /tmp/stock-hunter-public-smoke/app-personal-v417.js
+          cmp stock-hunter-v4/personal-v417.css /tmp/stock-hunter-public-smoke/personal-v417.css
 
           echo "root_index_sha256=$(sha256sum index.html | awk '{print $1}')"
           echo "app_index_sha256=$(sha256sum stock-hunter-v4/index.html | awk '{print $1}')"
           echo "sw_sha256=$(sha256sum stock-hunter-v4/sw.js | awk '{print $1}')"
           echo "runtime_core_sha256=$(sha256sum stock-hunter-v4/hunt-runtime-core-v417.js | awk '{print $1}')"
           echo "runtime_router_sha256=$(sha256sum stock-hunter-v4/app-runtime-router-v417.js | awk '{print $1}')"
+          echo "personal_index_sha256=$(sha256sum stock-hunter-v4/index-v417.html | awk '{print $1}')"
+          echo "personal_app_sha256=$(sha256sum stock-hunter-v4/app-personal-v417.js | awk '{print $1}')"
+          echo "personal_css_sha256=$(sha256sum stock-hunter-v4/personal-v417.css | awk '{print $1}')"
 
       - name: Verify published runtime markers
         run: |
@@ -61,6 +70,9 @@ jobs:
           SW=/tmp/stock-hunter-public-smoke/sw.js
           CORE=/tmp/stock-hunter-public-smoke/hunt-runtime-core-v417.js
           ROUTER=/tmp/stock-hunter-public-smoke/app-runtime-router-v417.js
+          P417=/tmp/stock-hunter-public-smoke/index-v417.html
+          PERSONAL=/tmp/stock-hunter-public-smoke/app-personal-v417.js
+          PERSONAL_CSS=/tmp/stock-hunter-public-smoke/personal-v417.css
 
           grep -q 'hunt-runtime-core-v417.js' "$APP"
           grep -q 'app-runtime-router-v417.js' "$APP"
@@ -72,6 +84,17 @@ jobs:
           grep -q "routingMode:'CHAMPION_ONLY'" "$ROUTER"
           grep -q 'trafficPercent:0' "$ROUTER"
           grep -q 'killSwitch:true' "$ROUTER"
+          grep -q 'app-personal-v417.js?v=1' "$P417"
+          grep -q 'personal-v417.css?v=1' "$P417"
+          grep -q "auth-v417.html?next=index-v417.html" "$PERSONAL"
+          grep -q "stock_hunter_user_preferences_v417" "$PERSONAL"
+          grep -q "stock_hunter_watchlists_v417" "$PERSONAL"
+          grep -q "notification_settings:{...(prefs.notification_settings||{}),sound:Boolean(sound)}" "$PERSONAL"
+          if grep -A8 'const payload={' "$PERSONAL" | grep -q 'updated_at'; then
+            echo "::error::personal preferences payload must not write protected updated_at"
+            exit 1
+          fi
+          grep -q '.personal-star-v417.saved' "$PERSONAL_CSS"
 
       - name: Verify smoke remains read-only
         run: |
