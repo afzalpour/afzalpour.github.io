@@ -1,0 +1,157 @@
+name: Stock Hunter 4.1.7 Authenticated Browser Smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'stock-hunter-v4/index-v417.html'
+      - 'stock-hunter-v4/app-personal-v417.js'
+      - 'stock-hunter-v4/auth-v417.html'
+      - 'stock-hunter-v4/app-auth-v417.js'
+      - 'stock-hunter-v4/app-admin-v417.js'
+      - 'stock-hunter-v4/auth/browser-smoke-v417.cjs'
+      - 'stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts'
+      - '.github/workflows/stock-hunter-v417-authenticated-browser-smoke.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'stock-hunter-v4/index-v417.html'
+      - 'stock-hunter-v4/app-personal-v417.js'
+      - 'stock-hunter-v4/auth-v417.html'
+      - 'stock-hunter-v4/app-auth-v417.js'
+      - 'stock-hunter-v4/app-admin-v417.js'
+      - 'stock-hunter-v4/auth/browser-smoke-v417.cjs'
+      - 'stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts'
+      - '.github/workflows/stock-hunter-v417-authenticated-browser-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify staged DOM and OIDC safety contract
+        run: |
+          set -euo pipefail
+          node --check stock-hunter-v4/auth/browser-smoke-v417.cjs
+          for id in personalNameV417 personalRoleV417 personalWatchlistV417 watchlistCountV417 createWatchlistV417 watchlistOnlyV417 personalSaveStateV417 personalAdminV417 personalSignOutV417; do
+            grep -q "id=\"$id\"" stock-hunter-v4/index-v417.html
+          done
+          grep -q "byId('personalNameV417')" stock-hunter-v4/app-personal-v417.js
+          grep -q "byId('personalWatchlistV417')" stock-hunter-v4/app-personal-v417.js
+          grep -q "location.replace('auth-v417.html?next=index-v417.html')" stock-hunter-v4/app-personal-v417.js
+          grep -q 'EXPECTED_REPO_ID="1350071624"' stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts
+          grep -q 'EXPECTED_REF="refs/heads/main"' stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts
+          grep -q 'EXPECTED_WORKFLOW_REF="afzalpour/afzalpour.github.io/.github/workflows/stock-hunter-v417-authenticated-browser-smoke.yml@refs/heads/main"' stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts
+          grep -q 'EMAIL_RE=/^stock-hunter-browser-smoke-' stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts
+          if grep -Ei 'SUPABASE_(SERVICE_ROLE|SECRET|DB_URL|ACCESS_TOKEN).*secrets\.' .github/workflows/stock-hunter-v417-authenticated-browser-smoke.yml; then
+            echo "::error::Browser smoke must use GitHub OIDC, not repository-held Supabase admin credentials"
+            exit 1
+          fi
+          echo "stock-hunter-v417-browser-smoke-contract: PASS"
+
+  authenticated-browser-smoke:
+    if: github.event_name != 'pull_request'
+    needs: contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      BASE_URL: https://afzalpour.github.io/stock-hunter-v4
+      SMOKE_ADMIN_URL: https://summnepwuziwulzvpcms.supabase.co/functions/v1/stock-hunter-browser-smoke-admin-v417
+      OIDC_AUDIENCE: stock-hunter-browser-smoke-v417
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Wait for published Pages bytes
+        run: |
+          set -euo pipefail
+          expected="$(sha256sum stock-hunter-v4/index-v417.html | awk '{print $1}')"
+          for n in $(seq 1 30); do
+            tmp="$(mktemp)"
+            if curl -L --fail --silent --show-error --connect-timeout 10 --max-time 30               "$BASE_URL/index-v417.html?sha=${GITHUB_SHA}" -o "$tmp"; then
+              actual="$(sha256sum "$tmp" | awk '{print $1}')"
+              rm -f "$tmp"
+              if [ "$actual" = "$expected" ]; then
+                echo "published_personal_index_sha256=$actual"
+                exit 0
+              fi
+            else
+              rm -f "$tmp"
+            fi
+            sleep 8
+          done
+          echo "::error::Published index-v417.html did not converge to merged repository bytes"
+          exit 1
+
+      - name: Install pinned Playwright Chromium
+        run: |
+          set -euo pipefail
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Request GitHub OIDC token and provision temporary Auth user
+        run: |
+          set -euo pipefail
+          response="$(curl --fail-with-body --silent --show-error             -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN"             "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$OIDC_AUDIENCE")"
+          token="$(printf '%s' "$response" | jq -r '.value')"
+          test -n "$token"
+          echo "::add-mask::$token"
+
+          email="stock-hunter-browser-smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}@example.invalid"
+          password="Smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-$(openssl rand -hex 18)"
+          echo "::add-mask::$password"
+
+          body="$(jq -nc --arg email "$email" --arg password "$password" '{action:"provision",email:$email,password:$password}')"
+          out="$RUNNER_TEMP/stock-hunter-browser-provision.json"
+          code="$(curl --silent --show-error -o "$out" -w '%{http_code}'             -X POST -H "Authorization: Bearer $token" -H 'Content-Type: application/json'             --data "$body" "$SMOKE_ADMIN_URL")"
+          cat "$out" | jq '{ok,user_id,symbol_id,symbol,error}'
+          test "$code" = "200"
+          jq -e '.ok == true and (.user_id|length)>0 and (.symbol_id|length)>0 and (.symbol|length)>0' "$out" >/dev/null
+
+          jq -nc             --arg email "$email"             --arg password "$password"             --arg user_id "$(jq -r '.user_id' "$out")"             --arg symbol_id "$(jq -r '.symbol_id' "$out")"             --arg symbol "$(jq -r '.symbol' "$out")"             '{email:$email,password:$password,user_id:$user_id,symbol_id:$symbol_id,symbol:$symbol}'             > "$RUNNER_TEMP/stock-hunter-browser-credentials.json"
+          chmod 600 "$RUNNER_TEMP/stock-hunter-browser-credentials.json"
+
+      - name: Run real authenticated Chromium smoke
+        run: |
+          set -euo pipefail
+          c="$RUNNER_TEMP/stock-hunter-browser-credentials.json"
+          export SMOKE_EMAIL="$(jq -r '.email' "$c")"
+          export SMOKE_PASSWORD="$(jq -r '.password' "$c")"
+          export SMOKE_SYMBOL_ID="$(jq -r '.symbol_id' "$c")"
+          export SMOKE_SYMBOL="$(jq -r '.symbol' "$c")"
+          node stock-hunter-v4/auth/browser-smoke-v417.cjs
+
+      - name: Cleanup temporary Auth user
+        if: always()
+        run: |
+          set -euo pipefail
+          c="$RUNNER_TEMP/stock-hunter-browser-credentials.json"
+          if [ ! -s "$c" ]; then
+            echo "No temporary user id was recorded; cleanup has nothing to do."
+            exit 0
+          fi
+
+          response="$(curl --fail-with-body --silent --show-error             -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN"             "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$OIDC_AUDIENCE")"
+          token="$(printf '%s' "$response" | jq -r '.value')"
+          test -n "$token"
+          echo "::add-mask::$token"
+
+          user_id="$(jq -r '.user_id' "$c")"
+          body="$(jq -nc --arg user_id "$user_id" '{action:"cleanup",user_id:$user_id}')"
+          out="$RUNNER_TEMP/stock-hunter-browser-cleanup.json"
+          code="$(curl --silent --show-error -o "$out" -w '%{http_code}'             -X POST -H "Authorization: Bearer $token" -H 'Content-Type: application/json'             --data "$body" "$SMOKE_ADMIN_URL")"
+          cat "$out" | jq .
+          test "$code" = "200"
+          jq -e '.ok == true and ((.deleted == true) or (.already_absent == true))' "$out" >/dev/null
+          rm -f "$c"
+          echo "stock-hunter-v417-browser-smoke-cleanup: PASS"
