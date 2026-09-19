@@ -1,0 +1,68 @@
+name: Stock Hunter Live First-Day EOD Check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/stock-hunter-live-first-day-eod.yml'
+      - 'stock-hunter-v4/ci-live-check/stock-hunter-ci-live-check-v417/index.ts'
+      - 'stock-hunter-v4/prospective-data/verify-first-day-eod-quality-v416.sql'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  live-eod:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Request GitHub OIDC token
+        id: oidc
+        env:
+          AUDIENCE: stock-hunter-live-gate-v417
+        run: |
+          set -euo pipefail
+          test -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}"
+          test -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}"
+          response="$(curl --fail-with-body --silent --show-error \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$AUDIENCE")"
+          token="$(printf '%s' "$response" | jq -r '.value')"
+          test -n "$token"
+          echo "::add-mask::$token"
+          printf '%s' "$token" > "$RUNNER_TEMP/stock-hunter-oidc-token"
+
+      - name: Execute canonical first-day EOD verifier through read-only bridge
+        run: |
+          set -euo pipefail
+          token="$(cat "$RUNNER_TEMP/stock-hunter-oidc-token")"
+          body="$(mktemp)"
+          code="$(curl --silent --show-error \
+            -o "$body" -w '%{http_code}' \
+            -X POST \
+            -H "Authorization: Bearer $token" \
+            -H "Content-Type: application/json" \
+            --data '{"purpose":"first-day-eod-v416"}' \
+            "https://summnepwuziwulzvpcms.supabase.co/functions/v1/stock-hunter-ci-live-check-v417")"
+          cat "$body"
+          echo
+          test "$code" = "200"
+          jq -e '.result == "stock-hunter-prospective-eod-quality-v416: PASS"' "$body" >/dev/null
+          echo "stock-hunter-live-first-day-eod: PASS"
+
+      - name: Verify bridge/workflow safety contract
+        run: |
+          set -euo pipefail
+          grep -q 'SET TRANSACTION READ ONLY' stock-hunter-v4/ci-live-check/stock-hunter-ci-live-check-v417/index.ts
+          grep -q 'EXPECTED_REPO_ID="1350071624"' stock-hunter-v4/ci-live-check/stock-hunter-ci-live-check-v417/index.ts
+          grep -q 'EXPECTED_REF="refs/heads/main"' stock-hunter-v4/ci-live-check/stock-hunter-ci-live-check-v417/index.ts
+          grep -q 'EXPECTED_WORKFLOW_REF="afzalpour/afzalpour.github.io/.github/workflows/stock-hunter-live-first-day-eod.yml@refs/heads/main"' stock-hunter-v4/ci-live-check/stock-hunter-ci-live-check-v417/index.ts
+          if grep -Ei 'SUPABASE_(DB_URL|SECRET|SERVICE_ROLE).*\$\{\{ *secrets\.' .github/workflows/stock-hunter-live-first-day-eod.yml; then
+            echo "::error::GitHub must not carry Supabase database/admin credentials for this live check"
+            exit 1
+          fi
+          echo "stock-hunter-live-first-day-eod-oidc-contract: PASS"
