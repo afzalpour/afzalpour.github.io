@@ -182,3 +182,16 @@ As of 2026-09-19:
 - 4.1.7 control-plane crash/partial-failure proof: PASS on real START/ADVANCE/ROLLBACK transition functions using rollback-only live PostgreSQL failpoints.
 - 4.1.7 advisory-lock + state_version contention proof: PASS with real independent PostgreSQL connections.
 These proofs do not authorize challenger activation; statistical maturity/OOS/promotion/activation gates remain independent.
+
+
+### Capture service authentication
+As of 2026-09-19 the active 4.1.6 prospective capture boundary is `VAULT_HMAC_NONCE_V2`.
+- `verify_jwt=false` is intentional for the database-cron/service-to-service endpoint; it is not browser-authenticated.
+- the Vault capture secret is an HMAC key and must never be transmitted on the request;
+- every production capture request requires a fresh timestamp, UUID nonce and HMAC-SHA256 signature;
+- timestamp window is ±180 seconds;
+- nonce reuse is denied atomically by a private ledger;
+- the legacy static capture-token header is rejected by the active Edge source;
+- only the private postgres cron signer may construct valid capture requests;
+- Hunt formulas, capture provenance and prospective semantics are unchanged.
+Capture security hardening live + deployed regression status: PASS.
