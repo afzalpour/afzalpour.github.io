@@ -108,3 +108,13 @@ Unless the user gives a newer instruction:
 2. Fix Supabase Auth Site URL / Redirect allow-list and Leaked Password Protection as soon as a Management API-capable path is available.
 3. Run password-recovery/public Auth smoke after redirect configuration is corrected.
 4. Continue statistical lifecycle collection; do not advance 4.1.7 routing until calibration/OOS/promotion/activation gates mature and pass.
+
+
+## Personal UI merge checkpoint
+- PR #207 merged to main.
+- main commit: `b0cce246fbcd5d4bbdfc9936908f0c0130cd999d`.
+- GitHub Pages build/deploy: PASS.
+- Public Production Smoke for 4.1.6 Champion: PASS.
+- 4.1.6 `index.html` blob remains `ea833fe20a75e11bb71bcf52abeaafeed46dec0a` (unchanged by this step).
+- `index-v417.html` is the authenticated personal staging surface.
+- Remaining validation for this step: authenticated browser smoke using a real human session; current tooling cannot reproduce the owner's password/session and must not fabricate one.
