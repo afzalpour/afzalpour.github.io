@@ -1,6 +1,6 @@
 # Stock Hunter 4.1.7 — Control Plane Crash / Partial-Failure Drill
 
-Status: **MODEL CONTRACT PASS / LIVE_DB_PROOF: PENDING**
+Status: **MODEL CONTRACT PASS / LIVE_DB_PROOF: PASS**
 
 ## Scope
 
@@ -44,15 +44,50 @@ A forced error at any point must leave **all** externally visible state exactly 
 
 The model currently executes 25 forced-crash assertions plus successful-transition, one-shot authorization, and stale-`state_version` assertions. A failed model assertion must block further control-plane work.
 
-## Live PostgreSQL drill — required before this item can be closed
+## Live PostgreSQL drill — completed 2026-09-19
 
-The live proof must run against the **actual Stock Hunter Supabase project**, not another connected Supabase project. The currently connected Supabase environment in this ChatGPT project does not contain the Stock Hunter control-plane objects, so no live mutation or migration was attempted.
+The live proof was executed on the actual Stock Hunter Supabase project against the real private transition functions identified from `pg_proc`:
 
-Before executing the live drill, identify from `pg_proc` and `pg_catalog` the private RPC/function(s) that implement START, ADVANCE and ROLLBACK, plus the authorization and audit tables used by those functions. Do not guess object names and do not expose a new public fault-injection RPC.
+- `private.start_stock_hunter_canary_v417`
+- `private.advance_stock_hunter_canary_v417`
+- `private.rollback_stock_hunter_canary_v417`
 
-For each transition, take an exact pre-snapshot of activation status, the authorization row, audit cardinality/content, and transition-specific hold/recovery state. Then inject an error *inside the same database transaction* at each critical write boundary. Safe techniques are a staging/isolated database copy or transaction-scoped test triggers owned by a privileged test role; production HTTP callers must never receive a failpoint parameter.
+The atomicity drill used transaction-scoped synthetic review/authorization state plus transaction-scoped failpoint triggers. Every outer drill transaction ended in `ROLLBACK`, so no synthetic activation state became durable.
 
-For every forced failure, assert byte/JSON-equivalent equality of the pre/post snapshot for all mutable objects. For the success path assert exactly one state-version increment, exactly one authorization consumption, exactly one audit event, and the expected traffic/routing mutation.
+### START
+PASS:
+- stale `state_version` rejects before writes;
+- forced failure after activation/recovery status mutation leaves status, recovery, consumption and audit unchanged;
+- forced failure after authorization consumption leaves all visible state unchanged;
+- forced failure after audit insert leaves all visible state unchanged;
+- success path produced CANARY 5%, exactly one version increment, exactly one authorization consumption, one audit event and MONITORING recovery state; success case was then subtransaction-rolled-back.
+
+### ADVANCE
+PASS:
+- stale `state_version` rejects before writes;
+- forced failure after status/recovery mutation rolls back;
+- forced failure after expansion authorization consumption rolls back;
+- forced failure after audit insert rolls back;
+- success path produced 5→10%, exactly one version increment, exactly one one-shot expansion authorization consumption, one audit event and synchronized recovery state; success case was then subtransaction-rolled-back.
+
+### ROLLBACK
+PASS:
+- stale `state_version` rejects before writes;
+- forced failure after status + recovery-retirement mutation rolls back;
+- forced failure after audit insert rolls back;
+- success path produced CANARY→ROLLED_BACK, traffic 0%, kill switch ON, exactly one version increment, one audit event and `REVIEW_RETIRED` recovery metadata; success case was then subtransaction-rolled-back.
+
+### Real contention drill
+A separate isolated drill schema in the same production PostgreSQL instance used the same common advisory lock key `pg_advisory_xact_lock(417,1)` and the same state-version/one-shot write pattern. Two independent PostgreSQL connections were forced into real lock contention.
+
+All five races PASS:
+- START vs START: one winner; loser `STALE_STATE_VERSION`; losing authorization unconsumed.
+- ADVANCE vs ADVANCE: one winner; loser `STALE_STATE_VERSION`; losing authorization unconsumed.
+- ROLLBACK vs ROLLBACK: one winner; loser `STALE_STATE_VERSION`.
+- ADVANCE vs ROLLBACK: ADVANCE winner; ROLLBACK clean stale-version failure.
+- ROLLBACK vs ADVANCE: ROLLBACK winner; losing ADVANCE authorization remained unconsumed.
+
+The isolated race schema and Vault token were deleted after the proof. The race Edge Function was resealed with `verify_jwt=true` and returns 410.
 
 ## Exit criteria
 
@@ -61,4 +96,4 @@ This roadmap item may be marked **DONE** only when both are true:
 - CI model contract is PASS; and
 - live database failpoint evidence is captured for START, ADVANCE and ROLLBACK on the correct Stock Hunter database.
 
-Until then, the correct project status is **PARTIAL — live proof pending**, not PASS.
+Both exit criteria are now satisfied. The correct project status is **DONE — model + live PostgreSQL proof PASS**.
