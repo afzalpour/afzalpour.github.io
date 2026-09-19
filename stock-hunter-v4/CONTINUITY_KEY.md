@@ -39,3 +39,6 @@ Latest merged checkpoint:
 - final Browser↔Backend Hunt parity PASS (workflow 35466587854).
 - control-plane live atomicity/concurrency proof PASS: real START/ADVANCE/ROLLBACK rollback-only failpoint drills plus five real two-connection advisory-lock races; production returned to CHAMPION_ONLY / 0% / kill-switch ON / state_version=1.
 - next fast-track engineering item: Capture Backend Security hardening.
+
+- Capture Backend Security Hardening PASS: active v416 capture uses Vault-backed timestamp+nonce HMAC, replay ledger, no static secret on wire, cron raw-secret commands 0, deployed security/parity run 35467654427 PASS.
+- next fast-track engineering item: authenticated browser/DOM smoke for the staged 4.1.7 personal surface, then remaining Auth platform blockers.

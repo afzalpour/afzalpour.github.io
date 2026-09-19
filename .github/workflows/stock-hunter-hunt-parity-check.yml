@@ -51,13 +51,22 @@ jobs:
           assert_json_status 401 unauthorized /tmp/capture-unauth.json \
             -X POST -H 'Content-Type: application/json' --data '{}' "$CAPTURE_URL"
 
-          # A forged capture token must fail closed.
-          assert_json_status 401 unauthorized /tmp/capture-wrong.json \
+          # Legacy static-token transport is no longer accepted, even if shaped like the old boundary.
+          assert_json_status 401 unauthorized /tmp/capture-legacy-token.json \
             -X POST -H 'Content-Type: application/json' \
-            -H 'X-Stock-Hunter-Capture-Token: definitely-wrong-token' \
+            -H 'X-Stock-Hunter-Capture-Token: 0123456789abcdef0123456789abcdef' \
             --data '{}' "$CAPTURE_URL"
 
-          # Supabase/JWT-looking credentials do not substitute for the dedicated capture secret.
+          # A well-shaped but forged HMAC request must fail closed.
+          assert_json_status 401 unauthorized /tmp/capture-forged-hmac.json \
+            -X POST -H 'Content-Type: application/json' \
+            -H 'X-Stock-Hunter-Capture-Auth: hmac-sha256-v2' \
+            -H "X-Stock-Hunter-Capture-Timestamp: $(date +%s)" \
+            -H 'X-Stock-Hunter-Capture-Nonce: 11111111-1111-4111-8111-111111111111' \
+            -H 'X-Stock-Hunter-Capture-Signature: 0000000000000000000000000000000000000000000000000000000000000000' \
+            --data '{}' "$CAPTURE_URL"
+
+          # Supabase/JWT-looking credentials do not substitute for the signed capture boundary.
           assert_json_status 401 unauthorized /tmp/capture-bearer-only.json \
             -X POST -H 'Content-Type: application/json' \
             -H 'Authorization: Bearer definitely-not-a-capture-token' \
@@ -71,14 +80,23 @@ jobs:
           assert_json_status 405 method-not-allowed /tmp/capture-parity-post.json \
             -X POST -H 'Content-Type: application/json' --data '{}' "$CAPTURE_URL?parity=1"
 
-          echo 'capture-auth-regression: PASS (secret + method boundary)'
+          echo 'capture-auth-regression: PASS (HMAC + replay-resistant method boundary)'
       - name: Verify capture security contract is versioned
         run: |
-          grep -q 'CAPTURE_AUTH_CONTRACT: VAULT_SECRET_SERVICE_ROLE_ONLY' stock-hunter-v4/capture-security/CAPTURE_AUTH_V416.md
-          grep -q "vault.decrypted_secrets" stock-hunter-v4/capture-security/capture-auth-v416.sql
-          grep -q "REVOKE ALL ON FUNCTION public.stock_hunter_validate_capture_token_v416(text) FROM PUBLIC, anon, authenticated" stock-hunter-v4/capture-security/capture-auth-v416.sql
-          grep -q "GRANT EXECUTE ON FUNCTION public.stock_hunter_validate_capture_token_v416(text) TO service_role" stock-hunter-v4/capture-security/capture-auth-v416.sql
-          grep -q "search_path TO ''" stock-hunter-v4/capture-security/capture-auth-v416.sql
+          grep -q 'CAPTURE_AUTH_CONTRACT: VAULT_HMAC_NONCE_V2' stock-hunter-v4/capture-security/CAPTURE_AUTH_V416.md
+          grep -q "stock_hunter_validate_capture_request_v416" stock-hunter-v4/capture-security/capture-auth-v416.sql
+          grep -q "extensions.hmac" stock-hunter-v4/capture-security/capture-auth-v416.sql
+          grep -q "stock_hunter_capture_request_nonces_v416" stock-hunter-v4/capture-security/capture-auth-v416.sql
+          grep -q "pg_catalog.abs(v_now-p_timestamp)>180" stock-hunter-v4/capture-security/capture-auth-v416.sql
+          grep -q "private.invoke_stock_hunter_capture_v416" stock-hunter-v4/capture-security/capture-auth-v416.sql
+          grep -q "X-Stock-Hunter-Capture-Auth','hmac-sha256-v2" stock-hunter-v4/capture-security/capture-auth-v416.sql
+          grep -q "revoke all on function private.invoke_stock_hunter_capture_v416()" stock-hunter-v4/capture-security/capture-auth-v416.sql
+          grep -q "verify_jwt = false" stock-hunter-v4/capture-security/CAPTURE_AUTH_V416.md
+          grep -q "stock_hunter_validate_capture_request_v416" stock-hunter-v4/capture-security/stock-hunter-capture-v416/index.ts
+          if grep -q "stock_hunter_validate_capture_token_v416" stock-hunter-v4/capture-security/stock-hunter-capture-v416/index.ts; then
+            echo "::error::active capture source must not use legacy static-token validator"
+            exit 1
+          fi
       - name: Verify production Hunt contract unchanged
         run: |
           grep -q "HUNT_V416_VERSION='4.1.6-hunt-v2'" stock-hunter-v4/app-hunt-v416.js
