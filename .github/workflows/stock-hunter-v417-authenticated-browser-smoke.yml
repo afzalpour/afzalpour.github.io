@@ -12,6 +12,17 @@ on:
       - 'stock-hunter-v4/auth/browser-smoke-v417.cjs'
       - 'stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts'
       - '.github/workflows/stock-hunter-v417-authenticated-browser-smoke.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'stock-hunter-v4/index-v417.html'
+      - 'stock-hunter-v4/app-personal-v417.js'
+      - 'stock-hunter-v4/auth-v417.html'
+      - 'stock-hunter-v4/app-auth-v417.js'
+      - 'stock-hunter-v4/app-admin-v417.js'
+      - 'stock-hunter-v4/auth/browser-smoke-v417.cjs'
+      - 'stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts'
+      - '.github/workflows/stock-hunter-v417-authenticated-browser-smoke.yml'
   workflow_dispatch:
 
 permissions:
@@ -19,7 +30,33 @@ permissions:
   id-token: write
 
 jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify staged DOM and OIDC safety contract
+        run: |
+          set -euo pipefail
+          node --check stock-hunter-v4/auth/browser-smoke-v417.cjs
+          for id in personalNameV417 personalRoleV417 personalWatchlistV417 watchlistCountV417 createWatchlistV417 watchlistOnlyV417 personalSaveStateV417 personalAdminV417 personalSignOutV417; do
+            grep -q "id=\"$id\"" stock-hunter-v4/index-v417.html
+          done
+          grep -q "byId('personalNameV417')" stock-hunter-v4/app-personal-v417.js
+          grep -q "byId('personalWatchlistV417')" stock-hunter-v4/app-personal-v417.js
+          grep -q "location.replace('auth-v417.html?next=index-v417.html')" stock-hunter-v4/app-personal-v417.js
+          grep -q 'EXPECTED_REPO_ID="1350071624"' stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts
+          grep -q 'EXPECTED_REF="refs/heads/main"' stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts
+          grep -q 'EXPECTED_WORKFLOW_REF="afzalpour/afzalpour.github.io/.github/workflows/stock-hunter-v417-authenticated-browser-smoke.yml@refs/heads/main"' stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts
+          grep -q 'EMAIL_RE=/^stock-hunter-browser-smoke-' stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts
+          if grep -Ei 'SUPABASE_(SERVICE_ROLE|SECRET|DB_URL|ACCESS_TOKEN).*secrets\.' .github/workflows/stock-hunter-v417-authenticated-browser-smoke.yml; then
+            echo "::error::Browser smoke must use GitHub OIDC, not repository-held Supabase admin credentials"
+            exit 1
+          fi
+          echo "stock-hunter-v417-browser-smoke-contract: PASS"
+
   authenticated-browser-smoke:
+    if: github.event_name != 'pull_request'
+    needs: contract
     runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
@@ -28,16 +65,6 @@ jobs:
       OIDC_AUDIENCE: stock-hunter-browser-smoke-v417
     steps:
       - uses: actions/checkout@v4
-
-      - name: Verify staged DOM contract before deploy
-        run: |
-          set -euo pipefail
-          for id in personalNameV417 personalRoleV417 personalWatchlistV417 watchlistCountV417 createWatchlistV417 watchlistOnlyV417 personalSaveStateV417 personalAdminV417 personalSignOutV417; do
-            grep -q "id=\"$id\"" stock-hunter-v4/index-v417.html
-          done
-          grep -q "byId('personalNameV417')" stock-hunter-v4/app-personal-v417.js
-          grep -q "byId('personalWatchlistV417')" stock-hunter-v4/app-personal-v417.js
-          grep -q "location.replace('auth-v417.html?next=index-v417.html')" stock-hunter-v4/app-personal-v417.js
 
       - name: Wait for published Pages bytes
         run: |
@@ -122,14 +149,3 @@ jobs:
           jq -e '.ok == true and ((.deleted == true) or (.already_absent == true))' "$out" >/dev/null
           rm -f "$c"
           echo "stock-hunter-v417-browser-smoke-cleanup: PASS"
-
-      - name: Verify workflow carries no Supabase admin credential
-        if: always()
-        run: |
-          set -euo pipefail
-          if grep -Ei 'SUPABASE_(SERVICE_ROLE|SECRET|DB_URL|ACCESS_TOKEN).*secrets\.' .github/workflows/stock-hunter-v417-authenticated-browser-smoke.yml; then
-            echo "::error::Browser smoke must use GitHub OIDC, not repository-held Supabase admin credentials"
-            exit 1
-          fi
-          grep -q 'EXPECTED_WORKFLOW_REF="afzalpour/afzalpour.github.io/.github/workflows/stock-hunter-v417-authenticated-browser-smoke.yml@refs/heads/main"' stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts
-          echo "stock-hunter-v417-browser-smoke-oidc-contract: PASS"
