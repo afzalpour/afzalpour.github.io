@@ -157,13 +157,23 @@ See `AUTH_PROFILE_V417_ARCHITECTURE.md` for the implementation contract.
 
 
 ## Admin implementation status
-Admin boundary status (2026-09-19): `stock-hunter-admin-v417` is deployed with `verify_jwt=true`; the staged admin console is implemented; suspension combines Auth ban with restrictive account-status RLS. Two-user isolation/negative-session tests remain release gates.
+Admin boundary status (2026-09-19): `stock-hunter-admin-v417` is deployed with `verify_jwt=true`; the staged admin console is implemented; suspension combines Auth ban with restrictive account-status RLS. Two-user real-session RLS/admin-negative self-test has passed.
 
 
 ## Verification status — 2026-09-19
 - database authenticated-role cross-identity isolation drill: PASS;
 - suspended-account restrictive RLS drill: PASS;
 - test fixture cleanup: PASS;
-- final two-distinct-real-session isolation test: PENDING;
+- final two-distinct-real-session isolation test: PASS;
 - Auth redirect URL configuration: PENDING;
 - Leaked Password Protection platform setting: PENDING.
+
+
+## Personal market-surface integration
+Status: implemented in staging for 4.1.7.
+- `index-v417.html` requires a valid Auth session and active profile.
+- Preferences hydrate/save page size, Hunt/decision filters, visible columns, theme and sound preference.
+- Personal Watchlists are selectable and can be created from the market surface.
+- Market rows and mobile cards expose ☆/★ save/remove controls.
+- "Only Watchlist" is an optional personal filter layered after the canonical Action Now → Radar → Universe filtering.
+- 4.1.6 production `index.html` remains unchanged and ungated.
