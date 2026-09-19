@@ -1,0 +1,58 @@
+name: Stock Hunter Legacy Market Scan Security Check
+
+on:
+  push:
+    branches: [main, 'stock-hunter-v4-legacy-market-scan-*']
+    paths:
+      - 'stock-hunter-v4/legacy-security/**'
+      - '.github/workflows/stock-hunter-market-scan-security-check.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'stock-hunter-v4/legacy-security/**'
+      - '.github/workflows/stock-hunter-market-scan-security-check.yml'
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify source contains digest only
+        run: |
+          set -euo pipefail
+          src=stock-hunter-v4/legacy-security/stock-hunter-market-scan-v4/index.ts
+          grep -Eq "SECRET_SHA256='[0-9a-f]{64}'" "$src"
+          grep -q "x-scan-secret" "$src"
+          grep -q "crypto.subtle.digest('SHA-256'" "$src"
+          if grep -Eq "\bSECRET='[^']+'" "$src"; then
+            echo "::error::Raw legacy market-scan secret is present in repository source"
+            exit 1
+          fi
+          echo "market-scan-source-secret-elimination: PASS"
+
+      - name: Verify deployed endpoint rejects public callers
+        env:
+          URL: https://summnepwuziwulzvpcms.supabase.co/functions/v1/stock-hunter-market-scan-v4
+        run: |
+          set -euo pipefail
+
+          assert_401() {
+            out="$1"; shift
+            code="$(curl --silent --show-error --output "$out" --write-out '%{http_code}' "$@")"
+            test "$code" = "401"
+            grep -q '"unauthorized"' "$out"
+          }
+
+          assert_401 /tmp/missing.json -X POST -H 'Content-Type: application/json' --data '{}' "$URL"
+          assert_401 /tmp/wrong.json -X POST -H 'Content-Type: application/json'             -H 'x-scan-secret: definitely-wrong-secret' --data '{}' "$URL"
+
+          echo "market-scan-public-negative-auth: PASS"
+
+      - name: Verify audit scope honesty
+        run: |
+          set -euo pipefail
+          audit=stock-hunter-v4/legacy-security/MARKET_SCAN_V4_AUTH_HARDENING_2026-09-20.md
+          grep -q 'STATUS: DEPLOYED_V2 / CI_PENDING\|STATUS: DONE / PASS' "$audit"
+          grep -q 'positive invocation from the unknown external caller was not independently observed' "$audit"
+          grep -q 'request header name and accepted secret value were not changed' "$audit"

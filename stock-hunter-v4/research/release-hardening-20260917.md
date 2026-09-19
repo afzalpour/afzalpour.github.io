@@ -15,7 +15,7 @@ This file is the operational handoff for the 4.1.6 → 4.1.7 promotion path. It 
 
 ### Browser ↔ Backend parity / Capture auth
 
-The parity workflow compares browser fixtures to the deployed capture backend and asserts deep equality. Capture POST requires the custom capture token; missing/wrong token returns 401 before scan/claim work begins. `verify_jwt=false` is retained only because custom caller authentication is performed in the function.
+The parity workflow compares browser fixtures to the deployed capture backend and asserts deep equality. The active prospective capture POST uses `VAULT_HMAC_NONCE_V2`: a DB-cron signer sends timestamp + UUID nonce + HMAC-SHA256, while the Vault signing key is never transmitted. Missing/legacy/forged credentials return 401 before scan/claim work begins. `verify_jwt=false` is retained only because replay-resistant custom service authentication is performed in the function.
 
 ### Security Advisor cleanup
 
@@ -151,9 +151,19 @@ Therefore the following sequence must remain blocked and abstaining until genuin
 
 `Prospective Hunt Ledger → Calibration/Validation/Robustness → one-shot OOS → Promotion Proposal → Forward Shadow → Activation Review → Canary Admission → 5% → 10% → 25% → 50% → Full Activation Authorization → 100% → Post-Activation Stabilization → coordinated 4.1.7 release pin/freeze`.
 
-## Legacy security follow-up (newly discovered)
+## Legacy market-scan security follow-up
 
-The active legacy Edge Function `stock-hunter-market-scan-v4` still uses a legacy embedded caller credential. No repository or pg_cron consumer was found during this review, but an external caller may exist. Do **not** disable or rotate it blindly. Migrate the credential to Vault/custom validation (or retire the function only after caller verification). Never copy the credential into this repository or documentation.
+The legacy Edge Function `stock-hunter-market-scan-v4` was hardened on 2026-09-20 without changing the external `x-scan-secret` caller contract.
+
+- deployed version 2;
+- raw 64-character caller secret removed from source;
+- only SHA-256 digest remains in source;
+- request header is hashed with Web Crypto before comparison;
+- missing/wrong callers return 401;
+- no repository or pg_cron caller was found;
+- an unknown external caller may still exist, so transport/accepted secret were intentionally not rotated.
+
+A positive invocation from an external caller was not independently observed; do not infer that the caller is active. See `legacy-security/MARKET_SCAN_V4_AUTH_HARDENING_2026-09-20.md`.
 
 ## Dashboard follow-up
 
