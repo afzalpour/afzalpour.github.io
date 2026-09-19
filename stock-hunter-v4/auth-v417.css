@@ -29,3 +29,25 @@ html,body{min-height:100%;margin:0;background:#0a0b0d;color:#efece5}
 .profile-list-row{display:flex;justify-content:space-between;gap:10px;border-top:1px solid #1a1c21;padding:8px 0}.profile-list-row small,.profile-empty{color:#8d9096;font-size:9px}
 .admin-hint{margin-top:12px;border:1px solid #d99a3f;padding:9px;font-size:10px;color:#f0b25c}
 @media(max-width:720px){.profile-grid{grid-template-columns:1fr}.profile-head{align-items:flex-start;flex-direction:column}.profile-kv{grid-template-columns:1fr}}
+
+.admin-shell{max-width:1320px}
+.admin-actor{border:1px solid #25282e;background:#0a0b0d;padding:10px 12px;margin-bottom:12px;color:#8d9096;font-size:10px}
+.admin-actor b{color:#f0b25c}
+.admin-grid{display:grid;gap:12px}
+.admin-wide{grid-column:1/-1}
+.admin-table-wrap{overflow:auto}
+.admin-table{width:100%;border-collapse:collapse;min-width:900px;font-size:10px}
+.admin-table th,.admin-table td{border-bottom:1px solid #25282e;padding:9px 8px;text-align:right;vertical-align:middle}
+.admin-table th{color:#8d9096;font-weight:600}
+.admin-table td small{display:block;color:#8d9096;margin-top:3px}
+.admin-table code{font-size:9px;color:#8d9096}
+.admin-actions-cell{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.admin-actions-cell button,.admin-actions-cell select{background:#191c21;border:1px solid #25282e;color:#efece5;padding:6px 8px}
+.admin-actions-cell button{cursor:pointer}
+.admin-actions-cell .danger{border-color:#cf5a50;color:#edb2ad}
+.admin-role,.admin-status,.admin-protected{display:inline-block;border:1px solid #25282e;padding:4px 6px}
+.admin-role-owner_admin{border-color:#d99a3f;color:#f0b25c}
+.admin-role-admin{color:#b7dcd4}
+.admin-status-suspended{border-color:#cf5a50;color:#edb2ad}
+.admin-status-active{color:#b7dcd4}
+.admin-protected{color:#8d9096}

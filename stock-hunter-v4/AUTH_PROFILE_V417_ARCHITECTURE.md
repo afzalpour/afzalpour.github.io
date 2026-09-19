@@ -154,3 +154,7 @@ The admin console must not silently expose a user's private personal data beyond
 - public-production auth smoke.
 
 See `AUTH_PROFILE_V417_ARCHITECTURE.md` for the implementation contract.
+
+
+## Admin implementation status
+Admin boundary status (2026-09-19): `stock-hunter-admin-v417` is deployed with `verify_jwt=true`; the staged admin console is implemented; suspension combines Auth ban with restrictive account-status RLS. Two-user isolation/negative-session tests remain release gates.

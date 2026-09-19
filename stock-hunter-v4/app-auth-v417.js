@@ -142,7 +142,7 @@ async function initProfilePage(){
     $('prefTheme').value=data.preferences?.theme||'dark';
     $('prefPageSize').value=String(data.preferences?.page_size||25);
     renderWatchlists(data.watchlists);
-    if(['owner_admin','admin'].includes(data.role?.role||''))$('adminHint').hidden=false;
+    if(['owner_admin','admin'].includes(data.role?.role||'')){ $('adminHint').hidden=false; $('adminConsoleLink').hidden=false; }
   }catch(err){
     message(err?.message||'خواندن پروفایل ناموفق بود.','bad');
   }
