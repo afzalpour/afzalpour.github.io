@@ -43,3 +43,7 @@ Latest merged checkpoint:
 - Capture Backend Security Hardening PASS: active v416 capture uses Vault-backed timestamp+nonce HMAC, replay ledger, no static secret on wire, cron raw-secret commands 0, deployed security/parity run 35467654427 PASS.
 - authenticated deployed browser/DOM smoke PASS (main run 35469683809): login, Preferences persistence, Watchlist create/add/filter/reload/remove, Admin isolation, logout, cleanup all PASS.
 - next fast-track engineering item: Auth platform configuration blockers (Site URL/redirect allow-list + Leaked Password Protection), then password-recovery/public Auth smoke.
+
+- Auth platform blockers verified: hosted Site URL/redirect mutation requires Dashboard/Management API access; previous workflow run 35455470843 lacked SUPABASE_ACCESS_TOKEN. Leaked Password Protection is Pro+ per current Supabase docs and remains unavailable/disabled on the current below-Pro project plan.
+- legacy `stock-hunter-market-scan-v4` source hardening: deployed v2 removes the raw embedded caller secret while preserving the existing x-scan-secret contract; missing/wrong callers 401. External positive caller activity is unknown.
+- live lifecycle remains COLLECTING with 12 shadow samples and 0 mature calibration samples; routing remains CHAMPION_ONLY / 0% / kill-switch ON / state_version=1.
