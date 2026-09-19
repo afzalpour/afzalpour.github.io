@@ -9,3 +9,5 @@ Before modifying anything under this directory:
 6. Update `PROJECT_CANONICAL_ARCHITECTURE.md` whenever an approved architecture change is implemented.
 
 7. For any Auth, profile, role, user-management, RLS, or admin-console work, read `AUTH_PROFILE_V417_ARCHITECTURE.md` first and preserve its owner-admin and least-privilege rules.
+
+8. Continuity trigger: `ادامه پروژه شکار سهم — SHIKAR-417-CANONICAL-CONTINUE`. When present, read `CURRENT_HANDOFF.md` and follow its NEXT ACTION after verifying live state; never ask the user to reconstruct prior chats.
