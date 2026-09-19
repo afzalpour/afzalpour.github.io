@@ -1,7 +1,7 @@
 # Stock Hunter — Live First Maturity Horizon Gate
 
 DATE: 2026-09-20
-STATUS: STAGED / HORIZON_NOT_REACHED
+STATUS: DEPLOYED_V2 / BACKWARD_COMPAT_PASS / HORIZON_NOT_REACHED
 
 Purpose:
 Prepare the first real three-future-session maturity verifier before the 2026-09-22 horizon without creating any synthetic maturity data or advancing lifecycle state.
@@ -52,3 +52,25 @@ A successful run proves the first-cohort Calibration row count matches independe
 It does not authorize OOS, Promotion, Canary, or routing changes.
 
 Current status remains pending until the real deadline and run.
+
+
+## Deployment / regression closure — 2026-09-20
+
+Edge Function:
+- `stock-hunter-ci-live-check-v417`
+- deployed version: 2
+- verify_jwt: false by design; in-function GitHub OIDC verification remains mandatory
+- deployment hash: `6716d469eb2d0ede5754bdfff06ba55f0116d251a7974aeb00848f66522d9044`
+
+Backward compatibility:
+- original First-Day EOD workflow run `35465143770` was re-run against bridge v2;
+- re-run job `105974476473`: PASS;
+- GitHub OIDC acquisition: PASS;
+- canonical first-day EOD verifier through READ ONLY bridge: PASS;
+- safety-contract verification: PASS.
+
+Negative authorization:
+- missing OIDC token -> HTTP 401 / `missing_oidc_token`;
+- invalid OIDC token -> HTTP 401 / `oidc_verification_failed`.
+
+The maturity purpose is still time-ineligible. No claim of first maturity PASS is made before `2026-09-22T14:55:00Z`.
