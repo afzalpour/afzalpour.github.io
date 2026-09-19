@@ -196,3 +196,15 @@ As of 2026-09-19 the active 4.1.6 prospective capture boundary is `VAULT_HMAC_NO
 - only the private postgres cron signer may construct valid capture requests;
 - Hunt formulas, capture provenance and prospective semantics are unchanged.
 Capture security hardening live + deployed regression status: PASS.
+
+
+### Legacy market-scan compatibility hardening
+The non-canonical legacy `stock-hunter-market-scan-v4` endpoint must not be confused with the 4.1.6 prospective capture service.
+As of 2026-09-20 its raw embedded caller credential has been removed from source and replaced by digest-only validation while preserving the existing `x-scan-secret` caller contract. No repo/pg_cron caller was found, but an external caller may exist, so caller transport/secret rotation requires separate evidence.
+
+### Hosted Auth platform blockers
+The deployed 4.1.7 browser/login/personal/Admin-isolation smoke is PASS, but final Auth/Profile release gating still requires:
+- correcting hosted Site URL / redirect allow-list through a legitimate Dashboard or Management API path;
+- Leaked Password Protection when the project plan supports the Pro-only feature;
+- password-recovery/public redirect smoke after URL configuration is corrected.
+These platform blockers must not be bypassed with browser-side redirect weakening or fake HIBP logic.
