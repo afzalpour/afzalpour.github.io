@@ -2,6 +2,13 @@ name: Stock Hunter Live First Maturity Horizon Check
 
 on:
   push:
+    branches: [main, 'stock-hunter-v417-*']
+    paths:
+      - '.github/workflows/stock-hunter-live-first-maturity-horizon.yml'
+      - 'stock-hunter-v4/ci-live-check/stock-hunter-ci-live-check-v417/index.ts'
+      - 'stock-hunter-v4/prospective-data/verify-first-maturity-horizon-v416.sql'
+      - 'stock-hunter-v4/prospective-data/LIVE_FIRST_MATURITY_GATE_AUDIT_2026-09-20.md'
+  pull_request:
     branches: [main]
     paths:
       - '.github/workflows/stock-hunter-live-first-maturity-horizon.yml'
@@ -40,7 +47,7 @@ jobs:
           echo "stock-hunter-live-first-maturity-contract: PASS"
 
   live-maturity:
-    if: github.event_name != 'push'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
     needs: contract
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -58,7 +65,7 @@ jobs:
             echo "stock-hunter-first-maturity-horizon: NOT_ELIGIBLE_BEFORE_2026-09-22T14:55:00Z"
             exit 0
           fi
-          if [ "\$\{\{ github.event_name \}\}" = "schedule" ] && [ "$(date -u +%Y-%m-%d)" != "2026-09-22" ]; then
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$(date -u +%Y-%m-%d)" != "2026-09-22" ]; then
             echo "eligible=false" >> "$GITHUB_OUTPUT"
             echo "stock-hunter-first-maturity-horizon: HISTORICAL_SCHEDULE_SKIPPED"
             exit 0
