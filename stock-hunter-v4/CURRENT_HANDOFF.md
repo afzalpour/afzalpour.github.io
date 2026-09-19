@@ -92,22 +92,18 @@ Implemented on the 4.1.7 staging surface:
 5. A pre-existing private Canary RLS/no-policy INFO finding is outside the Auth scope; do not casually mutate canary lifecycle infrastructure to silence it.
 
 ## Feed snapshot
-At 2026-09-19 17:18 UTC:
+At 2026-09-19 19:24 UTC:
 - last feed heartbeat: 2026-09-19 16:26:36 UTC;
 - integrated max updated_at: 2026-09-19 16:26:34 UTC.
+The market/feed is no longer fresh at this late-evening snapshot; this is not an Auth failure.
 Treat these as a timestamped snapshot only; always re-check live state.
 
 ## NEXT ACTION
 Unless the user gives a newer instruction:
-1. Validate the staged 4.1.7 personal surface after merge/Pages deployment:
-   - authenticated redirect behavior;
-   - preference hydration/save;
-   - Watchlist create/add/remove/filter;
-   - owner Admin link;
-   - no regression in 4.1.6.
+1. Complete the remaining human authenticated DOM smoke on `index-v417.html`; authenticated backend/data-flow smoke is already PASS.
 2. Fix Supabase Auth Site URL / Redirect allow-list and Leaked Password Protection as soon as a Management API-capable path is available.
 3. Run password-recovery/public Auth smoke after redirect configuration is corrected.
-4. Continue statistical lifecycle collection; do not advance 4.1.7 routing until calibration/OOS/promotion/activation gates mature and pass.
+4. Continue prospective statistical lifecycle collection and run the next EOD/maturity verification when due; do not advance runtime routing until calibration/OOS/promotion/activation gates pass.
 
 
 ## Personal UI merge checkpoint
