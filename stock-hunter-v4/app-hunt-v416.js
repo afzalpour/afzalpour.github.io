@@ -314,14 +314,17 @@ filtered=function(){
   const q=$('search').value.trim();
   if(q)return filteredBeforeHuntV416(); // Universal search is intentionally outside Hunt constraints.
   const h=$('hunt').value,d=$('decision').value;
-  const defaultStates=new Set(['شکار ویژه','هشدار فوری','شکار زودهنگام']);
+  // Main table is a market browser first: when no Hunt filter is selected,
+  // show the full loaded market universe instead of an empty candidate-only view.
+  // Hunt remains available as an explicit filter/column and does not change formulas.
   return rows.map(applyHuntV416).filter(x=>{
-    if(typeof isHuntableNowV413==='function'&&!isHuntableNowV413(x))return false;
-    if(x.dayChangeV416>=1)return false;
-    if(h?x.hunt!==h:!defaultStates.has(x.hunt))return false;
+    if(h&&x.hunt!==h)return false;
     if(d&&x.decision!==d)return false;
     return true;
-  }).sort((a,b)=>b.huntScoreV416-a.huntScoreV416||b.todayOpportunityV416-a.todayOpportunityV416||b.fast-a.fast);
+  }).sort((a,b)=>{
+    const ah=isGoalCandidateV416(a)?1:0,bh=isGoalCandidateV416(b)?1:0;
+    return bh-ah||b.huntScoreV416-a.huntScoreV416||b.todayOpportunityV416-a.todayOpportunityV416||b.fast-a.fast||String(a.symbol||'').localeCompare(String(b.symbol||''),'fa');
+  });
 };
 
 renderMobile=function(a){
