@@ -1,7 +1,7 @@
 # Stock Hunter First Prospective Day EOD Quality Audit
 
 AUDIT_DATE: 2026-09-18
-STATUS: STRUCTURAL_PASS / FIRST_REAL_EOD_PENDING
+STATUS: LIVE_EOD_PASS
 TRADE_DATE: 2026-09-19
 EOD_VERIFICATION_DEADLINE_UTC: 2026-09-19T14:55:00Z
 EOD_VERIFICATION_DEADLINE_TEHRAN: 2026-09-19 18:25
@@ -107,7 +107,7 @@ Before the first prospective market window, the state-aware verifier returned:
 
 stock-hunter-prospective-eod-quality-v416: PASS
 
-This is a structural/pre-EOD pass only. It does not claim the first real EOD batch has completed.
+The first real EOD verifier was executed after the deadline through the GitHub OIDC → Supabase read-only live gate and returned PASS. This is a live database pass, not a structural/pre-EOD-only result.
 
 Repository verifier:
 
@@ -127,3 +127,24 @@ At 18:25 Tehran on 2026-09-19, rerun the same verifier and report:
 - current maturity state.
 
 No production mutation is authorized by this audit.
+
+
+## Live EOD closure — 2026-09-19
+
+Canonical live verifier result:
+
+`stock-hunter-prospective-eod-quality-v416: PASS`
+
+Execution evidence:
+- GitHub workflow: `Stock Hunter Live First-Day EOD Check`;
+- run id: `35465143770`;
+- main commit: `5843b478ae9af3d583d5529a07cf966d89cfc348`;
+- GitHub OIDC token issuance: PASS;
+- exact repository/ref/workflow trust checks: PASS;
+- verifier execution through Supabase Edge direct database connection: PASS;
+- transaction mode: READ ONLY;
+- bridge/workflow safety contract: PASS.
+
+Therefore the official EOD verifier found no violation of its frozen invariants, including first-day provenance/outcome/cron/leakage/control-plane conditions.
+
+No lifecycle mutation is authorized by this PASS. Calibration/OOS remains governed by the three-future-session maturity contract.

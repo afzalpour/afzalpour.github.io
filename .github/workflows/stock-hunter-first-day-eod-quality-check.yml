@@ -31,8 +31,12 @@ jobs:
           assert "same-day prospective data leaked into maturity/OOS/promotion/release state" in v
           assert "stock-hunter-prospective-eod-quality-v416: PASS" in v
 
-          assert "STRUCTURAL_PASS / FIRST_REAL_EOD_PENDING" in a
+          assert "STATUS: LIVE_EOD_PASS" in a
           assert "EOD_VERIFICATION_DEADLINE_TEHRAN: 2026-09-19 18:25" in a
           assert "No arbitrary outcome-coverage percentage threshold is invented" in a
+          assert "## Live EOD closure — 2026-09-19" in a
+          assert "stock-hunter-prospective-eod-quality-v416: PASS" in a
+          assert "35465143770" in a
+          assert "transaction mode: READ ONLY" in a
           print('stock-hunter-first-day-eod-quality-contract: PASS')
           PY
