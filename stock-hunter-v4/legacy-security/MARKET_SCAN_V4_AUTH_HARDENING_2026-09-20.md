@@ -1,7 +1,7 @@
 # Stock Hunter — Legacy Market Scan Authentication Hardening
 
 DATE: 2026-09-20
-STATUS: DEPLOYED_V2 / CI_PENDING
+STATUS: DONE / PASS
 
 ## Scope
 
@@ -65,3 +65,21 @@ A positive invocation from the unknown external caller was not independently obs
 If the external caller is later identified and can be coordinated, migrate this legacy endpoint from a reusable shared secret to a replay-resistant service request scheme or retire the endpoint if unused.
 
 Do not copy any historical raw credential into this repository.
+
+
+## CI closure
+
+Workflow:
+`Stock Hunter Legacy Market Scan Security Check`
+
+Run:
+`35470302670`
+
+Result:
+- repository source contains digest only: PASS;
+- no raw `SECRET='...'` assignment: PASS;
+- deployed missing-secret caller: HTTP 401;
+- deployed wrong-secret caller: HTTP 401;
+- scope-honesty assertions: PASS.
+
+Final status: **DONE / PASS** for removal of the raw embedded credential while preserving the legacy caller contract.
