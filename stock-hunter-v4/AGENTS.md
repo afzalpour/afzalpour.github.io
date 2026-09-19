@@ -7,3 +7,5 @@ Before modifying anything under this directory:
 4. Preserve the frozen 4.1.6 champion and Action Now → Radar → Universe UX contract.
 5. Never change Hunt formulas, thresholds, lifecycle gates, capture provenance, activation state, or frozen visual identity unless the user explicitly authorizes that exact class of change.
 6. Update `PROJECT_CANONICAL_ARCHITECTURE.md` whenever an approved architecture change is implemented.
+
+7. For any Auth, profile, role, user-management, RLS, or admin-console work, read `AUTH_PROFILE_V417_ARCHITECTURE.md` first and preserve its owner-admin and least-privilege rules.

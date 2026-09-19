@@ -87,3 +87,70 @@ Never reconstruct architecture only from conversational memory.
 ## 10. Change-control rule
 Every explicitly approved architecture change must update this canonical file in the SAME PR/commit series.
 If code and this document disagree, stop and reconcile before release.
+
+
+## 11. 4.1.7 Auth / Profile contract
+Authentication and personal profiles are mandatory release scope for 4.1.7.
+
+### Identity
+- Supabase Auth is the identity provider.
+- The market application requires an authenticated session; only the login/recovery surface may be public.
+- Initial sign-in scope: email + password, with email verification/recovery. Additional providers may be added later without changing the core authorization model.
+- Authentication must remain logically separate from Hunt scoring, capture, calibration, OOS, promotion, and runtime routing.
+
+### Roles
+Canonical roles:
+- `owner_admin` — exactly the project owner / primary administrator.
+- `admin` — optional delegated administrator.
+- `user` — normal application user.
+
+The first `owner_admin` assignment is a one-time privileged bootstrap after the owner's Auth account exists. It must NEVER be claimable from browser UI, signup metadata, `user_metadata`, email text matching, or "first registered user" logic.
+
+Authorization data must not be trusted from user-editable metadata. Sensitive administrative operations must use protected role state and/or trusted `app_metadata`, with server-side enforcement and RLS.
+
+### Personal profile
+Each authenticated user receives an own-only profile containing at minimum:
+- display name;
+- avatar reference;
+- account status;
+- created / updated / last-seen timestamps;
+- UI preferences;
+- saved columns / filters;
+- alert preferences.
+
+Personal features are part of 4.1.7:
+- personal watchlists;
+- saved symbols;
+- personal alert settings;
+- saved display/filter preferences.
+
+### Privacy and RLS
+- Every user-owned table exposed through the Data API must have RLS enabled.
+- Users can read/update only their own profile and personal objects.
+- Admin access is explicit and least-privilege; no broad browser service key exists.
+- `service_role` / secret keys must never be exposed to the browser.
+- Administrative mutations run through a protected server-side/Edge Function boundary and must be audited.
+- User deletion/suspension must account for active sessions/token lifetime; access revocation is not implemented as a UI-only flag.
+
+### Admin console
+The owner admin receives an admin-only surface for:
+- user list and account status;
+- role management except transfer/removal of the sole owner without a controlled owner-transfer procedure;
+- suspend/reactivate;
+- audit trail;
+- aggregate usage/health information.
+
+The admin console must not silently expose a user's private personal data beyond what is required for administration.
+
+### Release gating
+4.1.7 cannot be declared final until Auth/Profile passes:
+- signup/login/logout/recovery verification;
+- owner bootstrap verification;
+- RLS isolation tests with at least two distinct test users;
+- admin authorization negative tests;
+- session expiry/revocation tests;
+- no-secret-in-browser verification;
+- security advisor review;
+- public-production auth smoke.
+
+See `AUTH_PROFILE_V417_ARCHITECTURE.md` for the implementation contract.
