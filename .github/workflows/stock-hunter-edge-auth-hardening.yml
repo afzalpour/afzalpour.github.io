@@ -1,0 +1,99 @@
+name: Stock Hunter Edge Auth Hardening
+
+on:
+  push:
+    branches: [main, 'stock-hunter-v417-*']
+    paths:
+      - '.github/workflows/stock-hunter-edge-auth-hardening.yml'
+      - 'stock-hunter-v4/feed-security/**'
+      - 'stock-hunter-v4/release/capture-v417/stock-hunter-capture-v417/index.ts'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/stock-hunter-edge-auth-hardening.yml'
+      - 'stock-hunter-v4/feed-security/**'
+      - 'stock-hunter-v4/release/capture-v417/stock-hunter-capture-v417/index.ts'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check hardened Edge sources
+        run: |
+          set -euo pipefail
+          deno check stock-hunter-v4/feed-security/stock-hunter-local-ingest-v4/index.ts
+          deno check stock-hunter-v4/release/capture-v417/stock-hunter-capture-v417/index.ts
+      - name: Verify local ingest secret-source contract
+        run: |
+          set -euo pipefail
+          src=stock-hunter-v4/feed-security/stock-hunter-local-ingest-v4/index.ts
+          grep -q "FEED_KEY_SHA256" "$src"
+          grep -q "crypto.subtle.digest('SHA-256'" "$src"
+          grep -q "x-feed-key" "$src"
+          if grep -Eq "const FEED_KEY=['\"]" "$src"; then
+            echo "::error::Raw feed key constant must not exist in source"
+            exit 1
+          fi
+          echo "stock-hunter-local-ingest-source-hardening: PASS"
+      - name: Verify dark v417 capture HMAC contract
+        run: |
+          set -euo pipefail
+          src=stock-hunter-v4/release/capture-v417/stock-hunter-capture-v417/index.ts
+          grep -q "stock_hunter_validate_capture_request_v416" "$src"
+          grep -q "hmac-sha256-v2" "$src"
+          grep -q "x-stock-hunter-capture-nonce" "$src"
+          grep -q "x-stock-hunter-capture-signature" "$src"
+          grep -q "req.headers.has('x-stock-hunter-capture-token')" "$src"
+          if grep -q "stock_hunter_validate_capture_token_v416" "$src"; then
+            echo "::error::Legacy static capture-token validator must not remain"
+            exit 1
+          fi
+          echo "stock-hunter-v417-hmac-contract: PASS"
+
+  live-negative:
+    needs: contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify deployed dark capture parity and fail-closed callers
+        run: |
+          set -euo pipefail
+          base="https://summnepwuziwulzvpcms.supabase.co/functions/v1/stock-hunter-capture-v417"
+          body="$(mktemp)"
+          code="$(curl --silent --show-error -o "$body" -w '%{http_code}' "$base?parity=1")"
+          cat "$body"; echo
+          test "$code" = "200"
+          jq -e '.protocol == "4.1.7-capture-parity-v1" and (.results|length) == 9' "$body" >/dev/null
+
+          code="$(curl --silent --show-error -o "$body" -w '%{http_code}' -X POST "$base")"
+          test "$code" = "401"
+
+          code="$(curl --silent --show-error -o "$body" -w '%{http_code}' -X POST -H 'x-stock-hunter-capture-token: legacy-negative-probe' "$base")"
+          test "$code" = "401"
+
+          code="$(curl --silent --show-error -o "$body" -w '%{http_code}' -X POST \
+            -H 'x-stock-hunter-capture-auth: hmac-sha256-v2' \
+            -H 'x-stock-hunter-capture-timestamp: 1770000000' \
+            -H 'x-stock-hunter-capture-nonce: 00000000-0000-4000-8000-000000000000' \
+            -H 'x-stock-hunter-capture-signature: 0000000000000000000000000000000000000000000000000000000000000000' \
+            "$base")"
+          test "$code" = "401"
+          echo "stock-hunter-v417-live-negative-auth: PASS"
+
+      - name: Verify deployed local ingest fails closed without valid feed key
+        run: |
+          set -euo pipefail
+          base="https://summnepwuziwulzvpcms.supabase.co/functions/v1/stock-hunter-local-ingest-v4"
+          body="$(mktemp)"
+          code="$(curl --silent --show-error -o "$body" -w '%{http_code}' -X POST -H 'Content-Type: application/json' --data '{"rows":[]}' "$base")"
+          test "$code" = "401"
+          code="$(curl --silent --show-error -o "$body" -w '%{http_code}' -X POST -H 'Content-Type: application/json' -H 'x-feed-key: wrong-negative-probe' --data '{"rows":[]}' "$base")"
+          test "$code" = "401"
+          echo "stock-hunter-local-ingest-live-negative-auth: PASS"

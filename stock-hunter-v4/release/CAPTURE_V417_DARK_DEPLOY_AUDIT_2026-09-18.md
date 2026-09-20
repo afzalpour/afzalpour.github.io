@@ -1,169 +1,138 @@
 # Stock Hunter 4.1.7 Capture Dark Deployment Audit
 
 AUDIT_DATE: 2026-09-18
-STATUS: DARK_DEPLOYED / NO_TRAFFIC / NO_FINAL_ATTESTATION
+LAST_HARDENING_UPDATE: 2026-09-20
+STATUS: DARK_DEPLOYED / NO_TRAFFIC / NO_FINAL_ATTESTATION / HMAC_HARDENED
 TARGET_PROJECT: summnepwuziwulzvpcms
 FUNCTION_SLUG: stock-hunter-capture-v417
 FUNCTION_ID: 21dc3f37-1f23-4ff9-b6da-68393b238989
-DEPLOYMENT_VERSION: 1
-DEPLOYMENT_SHA256: bd350c80dfcaba5a530fd7153d13c7dd19249b8ab87a1a715458ac5ed3236d4c
+DEPLOYMENT_VERSION: 2
+DEPLOYMENT_SHA256: 066cc265d990a9673aff0d755acebe142a89170e0479616ea2fc76fe4974a543
 
 ## Purpose
 
-This step clears the operational component-deployment blocker discovered during final release live closure.
+The 4.1.7 capture component is deployed in advance of any real challenger traffic so final-release component readiness can be hardened and verified without changing the production Champion.
 
-It does not activate 4.1.7 traffic and does not create a final release attestation or manifest.
+This deployment does not activate 4.1.7 traffic and does not create a final release attestation or manifest.
 
-## Exact source provenance
+## Source provenance and scorer freeze
 
 The deployed source is committed at:
 
-stock-hunter-v4/release/capture-v417/stock-hunter-capture-v417/index.ts
+`stock-hunter-v4/release/capture-v417/stock-hunter-capture-v417/index.ts`
 
-Supabase Management API retrieval confirms that deployed index.ts is byte-for-byte identical to that repository source.
+Supabase Management retrieval after the 2026-09-20 hardening confirms that deployed `index.ts` is byte-for-byte identical to the reviewed repository source.
 
-The source is derived from the archived/live stock-hunter-capture-v416 implementation with identity-only changes:
-
-- shadow source version:
-  4.1.6-shadow-v2-parity
-  ->
-  4.1.7-shadow-capture-v1-parity
-
-- event/source version:
-  4.1.6-server-v4-parity
-  ->
-  4.1.7-server-v1-parity
-
-- parity protocol:
-  4.1.6-browser-server-parity-v1
-  ->
-  4.1.7-capture-parity-v1
-
-- componentVersion/component_version = 4.1.7
-- storageProtocol/storage_protocol = v416-stable-schema
+The scorer remains derived from the archived 4.1.6 capture implementation with only:
+- 4.1.7 source/protocol identity fields;
+- 4.1.7 component/storage identity fields;
+- the approved request-authentication hardening described below.
 
 No scoring, eligibility, activity, risk, timing, evidence, or candidate-state formula changed.
 
+Frozen identity deltas:
+- `4.1.6-shadow-v2-parity` → `4.1.7-shadow-capture-v1-parity`;
+- `4.1.6-server-v4-parity` → `4.1.7-server-v1-parity`;
+- `4.1.6-browser-server-parity-v1` → `4.1.7-capture-parity-v1`;
+- `componentVersion/component_version = 4.1.7`;
+- `storageProtocol/storage_protocol = v416-stable-schema`.
+
 ## Stable database protocol
 
-The v417 capture component intentionally continues to use the frozen v416 storage/control RPC contract:
+The v417 component intentionally continues to use the frozen v416 storage/control RPC contract:
+- `claim_stock_hunter_capture_v416`;
+- `record_stock_hunter_hunt_events_v416`;
+- `record_stock_hunter_shadow_samples_v416`;
+- `finish_stock_hunter_capture_v416`.
 
-- stock_hunter_validate_capture_token_v416
-- claim_stock_hunter_capture_v416
-- record_stock_hunter_hunt_events_v416
-- record_stock_hunter_shadow_samples_v416
-- finish_stock_hunter_capture_v416
+Request authorization now uses the hardened shared validator:
+- `stock_hunter_validate_capture_request_v416`.
 
 This is a stable database protocol dependency, not a request to activate the 4.1.6 runtime engine.
 
-No database schema migration was needed for this dark deployment.
+## Authentication hardening — 2026-09-20
 
-## Authentication
+The original dark deployment used the legacy static-token validator. Before any 4.1.7 traffic existed, that surface was upgraded to the same replay-resistant request contract already proven on live 4.1.6 capture.
 
-Supabase deployment metadata:
+Supabase metadata remains:
+- status = ACTIVE;
+- `verify_jwt = false` by design because this service-to-service endpoint performs custom authorization in function code;
+- import map = false.
 
-- status = ACTIVE
-- verify_jwt = false
-- import_map = false
+For POST, the function:
+1. explicitly rejects the legacy `x-stock-hunter-capture-token` header;
+2. requires `x-stock-hunter-capture-auth: hmac-sha256-v2`;
+3. requires timestamp, nonce and 64-hex signature headers;
+4. calls `stock_hunter_validate_capture_request_v416`;
+5. reaches claim/scan/write paths only after that validator returns true.
 
-verify_jwt=false is intentional and matches the already-hardened v416 capture security model.
+The shared validator is Vault-backed, enforces timestamp freshness and atomically rejects nonce replay.
 
-Before any write path, POST requires:
-
-x-stock-hunter-capture-token
-
-and validates it through:
-
-stock_hunter_validate_capture_token_v416
-
-The token is not embedded in repository source.
-
-The endpoint does not accept unauthenticated POST capture operations.
-
-Public GET parity remains read-only, matching the existing v416 parity model.
+Public `GET ?parity=1` remains read-only.
 
 ## Dependency pinning
 
-The Edge source still pins:
+The Edge source pins:
 
-npm:@supabase/supabase-js@2.116.0
+`npm:@supabase/supabase-js@2.116.0`
 
 No unpinned npm dependency was introduced.
 
 ## Dark deployment isolation
 
-Live pg_cron inspection after deployment found zero active commands referencing:
+No routing change was performed by either the initial deployment or the HMAC hardening.
 
-stock-hunter-capture-v417
+The canonical control plane remains fail-closed until the real lifecycle permits a transition:
+- production Champion = 4.1.6;
+- 4.1.7 challenger traffic = 0%;
+- kill switch remains engaged.
 
-Existing capture jobs continue to target only:
+The HMAC hardening does not authorize a caller, enable a cron target, create an Activation Review, or advance the lifecycle.
 
-stock-hunter-capture-v416
+## Current Management API identity
 
-No browser/runtime file was switched to the v417 slug.
+After the 2026-09-20 hardening:
+- id: `21dc3f37-1f23-4ff9-b6da-68393b238989`;
+- slug: `stock-hunter-capture-v417`;
+- status: ACTIVE;
+- version: 2;
+- verify_jwt: false;
+- `ezbr_sha256: 066cc265d990a9673aff0d755acebe142a89170e0479616ea2fc76fe4974a543`.
 
-Therefore deployment does not change capture traffic.
+Historical initial dark deployment:
+- version: 1;
+- `ezbr_sha256: bd350c80dfcaba5a530fd7153d13c7dd19249b8ab87a1a715458ac5ed3236d4c`.
 
-## Management API identity
+The live 4.1.6 capture remains the production capture endpoint; its scorer/formulas were not modified by this v417 hardening.
 
-Supabase Management API reports:
+## Verification
 
-- id: 21dc3f37-1f23-4ff9-b6da-68393b238989
-- slug: stock-hunter-capture-v417
-- status: ACTIVE
-- version: 1
-- verify_jwt: false
-- ezbr_sha256: bd350c80dfcaba5a530fd7153d13c7dd19249b8ab87a1a715458ac5ed3236d4c
+Post-deploy GitHub Actions:
+- Edge Auth Hardening run `35492777241`;
+- contract job `106030648342`: PASS;
+- post-deploy live-negative job `106030634765`: PASS;
+- v417 parity protocol: `4.1.7-capture-parity-v1`;
+- parity fixtures: 9/9 returned;
+- missing auth: 401;
+- legacy static-token probe: 401;
+- forged HMAC probe: 401.
 
-The v416 rollback capture remains unchanged:
-
-- slug: stock-hunter-capture-v416
-- version: 5
-- status: ACTIVE
-- ezbr_sha256: 6eb0ba0ee5e9dae3b8d6bab5c79f7f48a98ae643fd35ebe968d8d41eb73fdc76
+The dedicated Dark Deploy Contract workflow was updated to model the approved identity/version + HMAC-security delta while still requiring exact scorer derivation from the archived 4.1.6 source.
 
 ## Final release attestation
 
-No row was added to:
+No row was added to `private.stock_hunter_release_component_attestations_v417`.
 
-private.stock_hunter_release_component_attestations_v417
+That remains deliberate: final release requires fresh external component evidence within the frozen attestation window. A current attestation would expire long before natural post-activation maturity.
 
-That is deliberate.
-
-The final-release gate accepts only a fresh external attestation, with a frozen maximum age of 60 minutes.
-
-Recording an attestation now would make it stale long before natural Post-Activation maturity.
-
-At final release time, GitHub API and Supabase Management API must be queried again and a new immutable attestation recorded from that fresh evidence.
-
-## HTTP smoke limitation
-
-The current assistant execution environment could not directly invoke the public function URL:
-
-- the general web fetcher does not permit this project function URL;
-- the local container has no outbound DNS.
-
-Therefore no synthetic HTTP POST was attempted.
-
-Verification instead uses:
-
-- exact Management API deployment metadata;
-- exact deployed-source retrieval;
-- byte-for-byte source equality with repository;
-- static custom-auth contract checks;
-- zero live v417 cron callers;
-- CI source-derivation parity.
-
-No production capture was triggered for testing.
+At final release time, GitHub API and Supabase Management API must be queried again and a new immutable attestation recorded from fresh evidence.
 
 ## Completion semantics
 
-The component deployment blocker for Final Release #14 is cleared.
+The v417 capture component is available but dark and HMAC-hardened.
 
-The current final-release status is now:
+Current release status remains:
 
-LIVE_CONTRACT_PASS / REAL_FINAL_RELEASE_BLOCKED_ON_MATURITY_AND_FRESH_ATTESTATION
+`LIVE_CONTRACT_PASS / REAL_FINAL_RELEASE_BLOCKED_ON_MATURITY_AND_FRESH_ATTESTATION`
 
-The v417 capture component is available but dark.
-
-Do not point cron/client traffic at stock-hunter-capture-v417 until the real lifecycle reaches the appropriate release transition.
+Do not point production traffic at `stock-hunter-capture-v417` until the canonical lifecycle reaches the appropriate manually authorized transition.

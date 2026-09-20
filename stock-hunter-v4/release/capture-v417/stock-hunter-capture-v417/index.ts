@@ -50,6 +50,16 @@ function parityFixtures(now:any){const n=Math.floor(now.epochSec);return[
 function parityResult(r:any,now:any){const z=evaluate(r,now);if(!z)return{id:String(r.id),captured:false};const s=z.shadow;return{id:String(r.id),captured:true,mode:s.hunt_mode,today:round10(s.today_opportunity),score:round10(s.hunt_score),state:s.baseline_state,gate:s.gate_reason,evidence:s.evidence_count,dynamicEvidence:s.dynamic_evidence_count,orderPressure:round10(s.order_pressure),impulse:round10(s.impulse),feasibility:round10(s.feasibility),flowVolume:round10(s.flow_volume),marketContext:round10(s.market_context),continuation:round10(s.continuation12)}}
 function runParity(){const now=tparts(new Date(PARITY_FIXED_ISO));return{protocol:'4.1.7-capture-parity-v1',componentVersion:'4.1.7',storageProtocol:'v416-stable-schema',fixedNow:PARITY_FIXED_ISO,results:parityFixtures(now).map((r:any)=>parityResult(r,now))}}
 
+function captureAdminKey(){
+  const legacy=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if(legacy)return legacy;
+  const raw=Deno.env.get('SUPABASE_SECRET_KEYS');
+  if(!raw)throw new Error('capture admin key unavailable');
+  const parsed=JSON.parse(raw);
+  if(!parsed?.default)throw new Error('default capture admin key unavailable');
+  return parsed.default;
+}
+
 Deno.serve(async(req)=>{
   const u=new URL(req.url);
   if(u.searchParams.get('parity')==='1'){
@@ -57,12 +67,28 @@ Deno.serve(async(req)=>{
     return Response.json(runParity());
   }
   if(req.method!=='POST')return Response.json({ok:false,error:'method-not-allowed'},{status:405,headers:{Allow:'POST'}});
-  const url=Deno.env.get('SUPABASE_URL')!,key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const url=Deno.env.get('SUPABASE_URL')!,key=captureAdminKey();
   const sb=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
-  const captureToken=req.headers.get('x-stock-hunter-capture-token')||'';
-  if(!captureToken)return Response.json({ok:false,error:'unauthorized'},{status:401});
-  const{data:authorized,error:authErr}=await sb.rpc('stock_hunter_validate_capture_token_v416',{p_token:captureToken});
-  if(authErr||authorized!==true)return Response.json({ok:false,error:'unauthorized'},{status:401});
+  if(req.headers.has('x-stock-hunter-capture-token')){
+    return Response.json({ok:false,error:'unauthorized'},{status:401,headers:{'Cache-Control':'no-store'}});
+  }
+  const authMode=req.headers.get('x-stock-hunter-capture-auth')||'';
+  const timestampRaw=req.headers.get('x-stock-hunter-capture-timestamp')||'';
+  const nonce=req.headers.get('x-stock-hunter-capture-nonce')||'';
+  const signature=req.headers.get('x-stock-hunter-capture-signature')||'';
+  if(authMode!=='hmac-sha256-v2'||!/^[0-9]{10,12}$/.test(timestampRaw)||nonce.length>64||!/^[0-9a-f]{64}$/.test(signature)){
+    return Response.json({ok:false,error:'unauthorized'},{status:401,headers:{'Cache-Control':'no-store'}});
+  }
+  const timestamp=Number(timestampRaw);
+  if(!Number.isSafeInteger(timestamp)){
+    return Response.json({ok:false,error:'unauthorized'},{status:401,headers:{'Cache-Control':'no-store'}});
+  }
+  const{data:authorized,error:authErr}=await sb.rpc('stock_hunter_validate_capture_request_v416',{
+    p_timestamp:timestamp,p_nonce:nonce,p_signature:signature
+  });
+  if(authErr||authorized!==true){
+    return Response.json({ok:false,error:'unauthorized'},{status:401,headers:{'Cache-Control':'no-store'}});
+  }
   const now=tparts();
   if(!['Sat','Sun','Mon','Tue','Wed'].includes(now.wd)||now.hm<540||now.hm>1020)return Response.json({ok:true,skipped:'outside-market-window'});
   const{data:claimed,error:claimErr}=await sb.rpc('claim_stock_hunter_capture_v416');
