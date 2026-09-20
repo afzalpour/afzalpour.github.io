@@ -144,7 +144,9 @@ begin
      or freeze_def not like '%4.1.6-hunt-v2%'
      or freeze_def not like '%shikar-sahm-v4.1.6-r12%'
      or freeze_def not like '%stock-hunter-capture-v416%'
-     or freeze_def not like '%6eb0ba0ee5e9dae3b8d6bab5c79f7f48a98ae643fd35ebe968d8d41eb73fdc76%'
+     or freeze_def not like '%''capture_deployment_version'',6%'
+     or freeze_def not like '%b483eb96911ebb938e87564fd75e8a6cbcbad7d5a4fb087b9eab5120dd7a75af%'
+     or freeze_def not like '%VAULT_HMAC_NONCE_V2%'
      or freeze_def not like '%runtime_state_changed%' then
     raise exception 'final freeze / rollback archive contract mismatch';
   end if;
@@ -189,7 +191,9 @@ begin
          or a.previous_engine_version<>'4.1.6-hunt-v2'
          or a.rollback_package_snapshot->>'service_worker_cache_version'<>'shikar-sahm-v4.1.6-r12'
          or a.rollback_package_snapshot->>'capture_function_slug'<>'stock-hunter-capture-v416'
-         or a.rollback_package_snapshot->>'capture_deployment_sha256'<>'6eb0ba0ee5e9dae3b8d6bab5c79f7f48a98ae643fd35ebe968d8d41eb73fdc76'
+         or nullif(a.rollback_package_snapshot->>'capture_deployment_version','')::integer<>6
+         or a.rollback_package_snapshot->>'capture_deployment_sha256'<>'b483eb96911ebb938e87564fd75e8a6cbcbad7d5a4fb087b9eab5120dd7a75af'
+         or a.rollback_package_snapshot->>'capture_auth_contract'<>'VAULT_HMAC_NONCE_V2'
          or nullif(a.archive_fingerprint,'') is null then
         raise exception 'frozen release rollback archive mismatch';
       end if;

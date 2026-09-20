@@ -80,18 +80,20 @@ jobs:
           assert 'LIVE_CONTRACT_PASS / REAL_FINAL_RELEASE_BLOCKED_ON_MATURITY_AND_FRESH_ATTESTATION' in audit
           assert '20260918131512' in audit
           assert 'stock-hunter-capture-v417' in audit
-          assert 'bd350c80dfcaba5a530fd7153d13c7dd19249b8ab87a1a715458ac5ed3236d4c' in audit
+          assert '066cc265d990a9673aff0d755acebe142a89170e0479616ea2fc76fe4974a543' in audit
           assert 'Roadmap item #14 is structurally live-closed.' in audit
 
           assert 'b550ac2dddf297d2436493f4e7384a166dbdf1dd' in rb
           assert 'shikar-sahm-v4.1.6-r12' in rb
           assert 'stock-hunter-capture-v416' in rb
-          assert '6eb0ba0ee5e9dae3b8d6bab5c79f7f48a98ae643fd35ebe968d8d41eb73fdc76' in rb
+          assert 'b483eb96911ebb938e87564fd75e8a6cbcbad7d5a4fb087b9eab5120dd7a75af' in rb
 
           assert "HUNT_V416_VERSION='4.1.6-hunt-v2'" in hunt
           assert '۴.۱.۶' in index
           assert "const CACHE='shikar-sahm-v4.1.6-r12'" in sw
-          assert 'stock_hunter_validate_capture_token_v416' in edge
+          assert 'stock_hunter_validate_capture_request_v416' in edge
+          assert "authMode!=='hmac-sha256-v2'" in edge
+          assert 'stock_hunter_validate_capture_token_v416' not in edge
           assert "source_version:'4.1.6-server-v4-parity'" in edge
 
           # The rollback tree must not be silently replaced by a final-v417 capture source.

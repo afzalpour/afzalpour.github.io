@@ -608,10 +608,10 @@ begin
     'dashboard_version','4.1.6',
     'service_worker_cache_version','shikar-sahm-v4.1.6-r12',
     'capture_function_slug','stock-hunter-capture-v416',
-    'capture_deployment_version',5,
-    'capture_deployment_sha256','6eb0ba0ee5e9dae3b8d6bab5c79f7f48a98ae643fd35ebe968d8d41eb73fdc76',
+    'capture_deployment_version',6,
+    'capture_deployment_sha256','b483eb96911ebb938e87564fd75e8a6cbcbad7d5a4fb087b9eab5120dd7a75af',
     'capture_verify_jwt',false,
-    'capture_auth_contract','VAULT_SECRET_SERVICE_ROLE_ONLY',
+    'capture_auth_contract','VAULT_HMAC_NONCE_V2',
     'preservation_mode','ARCHIVED_ROLLBACK_PACKAGE'
   );
 

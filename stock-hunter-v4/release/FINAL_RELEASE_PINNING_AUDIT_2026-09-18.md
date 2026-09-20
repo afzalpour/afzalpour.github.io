@@ -92,8 +92,8 @@ The verified rollback package is pinned to:
 - sw.js blob: 59b79a3385a756fdd6d5aae1f2b3d8f88a4fd52c
 - service worker cache: shikar-sahm-v4.1.6-r12
 - capture slug: stock-hunter-capture-v416
-- capture deployment version: 5
-- capture deployment SHA-256: 6eb0ba0ee5e9dae3b8d6bab5c79f7f48a98ae643fd35ebe968d8d41eb73fdc76
+- capture deployment version: 6
+- capture deployment SHA-256: b483eb96911ebb938e87564fd75e8a6cbcbad7d5a4fb087b9eab5120dd7a75af
 
 The exact live capture-v416 index.ts is archived under:
 
@@ -143,3 +143,15 @@ The actual 4.1.7 final release is NOT frozen. That remains correctly blocked unt
 prospective maturity -> Calibration/Validation/Robustness -> one-time OOS -> Promotion -> Forward Shadow -> Activation Review -> Admission -> 5/10/25/50 Canary -> independent 100% gate -> Post-Activation stabilization -> deploy/pin exact 4.1.7 components -> manual freeze.
 
 Only after that sequence may 4.1.7 become FROZEN in the release manifest. The 4.1.6 rollback package remains preserved rather than deleted.
+
+
+## Rollback package security refresh — 2026-09-20
+
+The 4.1.6 Champion capture backend was hardened in place after this audit without changing Hunt formulas, thresholds, provenance or routing. The preserved rollback identity was therefore refreshed to the exact live Champion capture component:
+
+- capture deployment version: 6
+- capture deployment SHA-256: b483eb96911ebb938e87564fd75e8a6cbcbad7d5a4fb087b9eab5120dd7a75af
+- capture authentication contract: VAULT_HMAC_NONCE_V2
+- legacy static capture-token validation: rejected / not part of the rollback source
+
+The archived rollback Edge source is byte-identical to the reviewed/live v6 capture source. This refresh changes recovery identity only; it does not activate 4.1.7 or alter current traffic.
