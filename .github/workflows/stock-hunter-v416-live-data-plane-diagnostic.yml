@@ -1,0 +1,52 @@
+name: Stock Hunter 4.1.6 Live Data Plane Diagnostic
+
+on:
+  push:
+    branches:
+      - stock-hunter-v416-live-data-plane-diagnostic-20260920
+    paths:
+      - '.github/workflows/stock-hunter-v416-live-data-plane-diagnostic.yml'
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Probe exact 4.1.6 public REST reads
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY' > /tmp/env.sh
+          import re
+          s=open('stock-hunter-v4/config.js',encoding='utf-8').read()
+          url=re.search(r"SUPABASE_URL:\s*'([^']+)'",s).group(1)
+          key=re.search(r"SUPABASE_PUBLISHABLE_KEY:\s*'([^']+)'",s).group(1)
+          table=re.search(r"TABLE:\s*'([^']+)'",s).group(1)
+          print("BASE="+repr(url))
+          print("KEY="+repr(key))
+          print("TABLE="+repr(table))
+          PY
+          source /tmp/env.sh
+
+          probe() {
+            local name="$1"
+            local url="$2"
+            local body="/tmp/${name}.body"
+            local headers="/tmp/${name}.headers"
+            local code
+            code="$(curl -sS -D "$headers" -o "$body" -w '%{http_code}' \
+              --connect-timeout 10 --max-time 30 \
+              -H "apikey: $KEY" -H 'Accept: application/json' "$url" || true)"
+            echo "PROBE_NAME=$name"
+            echo "HTTP_CODE=$code"
+            sed -n '1,20p' "$headers" || true
+            echo "BODY_BEGIN"
+            head -c 4000 "$body" || true
+            echo
+            echo "BODY_END"
+          }
+
+          probe integrated "$BASE/rest/v1/$TABLE?select=id,symbol,updated_at&order=updated_at.desc&limit=2"
+          probe health "$BASE/rest/v1/stock_hunter_feed_health_v4?select=id,status,symbols,last_feed_at,agent_version,message&id=eq.local-agent&limit=1"
