@@ -55,12 +55,21 @@ select jsonb_build_object(
   'cron_health', (
     select coalesce(jsonb_agg(to_jsonb(q) order by q.jobname),'[]'::jsonb)
     from (
-      select j.jobname,d.status as latest_status,d.start_time as latest_start
+      select j.jobname,
+             d.status as latest_completed_status,
+             d.start_time as latest_completed_start,
+             (
+               select count(*)
+               from cron.job_run_details r
+               where r.jobid=j.jobid
+                 and r.end_time is null
+             )::integer as inflight_runs
       from cron.job j
       left join lateral (
         select status,start_time
         from cron.job_run_details
         where jobid=j.jobid
+          and end_time is not null
         order by start_time desc
         limit 1
       ) d on true
