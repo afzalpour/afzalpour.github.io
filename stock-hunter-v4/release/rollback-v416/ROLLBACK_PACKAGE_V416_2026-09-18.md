@@ -1,6 +1,7 @@
 # Stock Hunter 4.1.6 Rollback Package
 
 ARCHIVE_DATE: 2026-09-18
+SECURITY_REFRESH_DATE: 2026-09-20
 STATUS: PRESERVED / DO_NOT_RETIRE_BEFORE_FINAL_417_FREEZE
 PURPOSE: operational rollback target for the 4.1.7 release train
 
@@ -18,13 +19,13 @@ PURPOSE: operational rollback target for the 4.1.7 release train
 ## Capture backend
 
 - slug: stock-hunter-capture-v416
-- live deployment version at archive time: 5
-- deployment bundle sha256: 6eb0ba0ee5e9dae3b8d6bab5c79f7f48a98ae643fd35ebe968d8d41eb73fdc76
+- live deployment version after security refresh: 6
+- deployment bundle sha256: b483eb96911ebb938e87564fd75e8a6cbcbad7d5a4fb087b9eab5120dd7a75af
 - verify_jwt: false
-- authentication contract: VAULT_SECRET_SERVICE_ROLE_ONLY
+- authentication contract: VAULT_HMAC_NONCE_V2
 - archived source: stock-hunter-v4/release/rollback-v416/stock-hunter-capture-v416/index.ts
 
-The function source contains environment/Vault references only; no capture-token value is archived.
+The archived function source is the exact hardened v6 source. It rejects the legacy static capture-token header and requires timestamp + nonce + HMAC-SHA256 validation through the private replay-resistant validator. No HMAC key or privileged credential is archived.
 
 ## Rollback semantics
 
