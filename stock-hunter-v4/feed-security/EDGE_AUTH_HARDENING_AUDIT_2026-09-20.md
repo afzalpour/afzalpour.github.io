@@ -1,7 +1,7 @@
 # Stock Hunter — Edge Auth Hardening Audit
 
 DATE: 2026-09-20
-STATUS: PREPARED / LIVE_DEPLOY_PENDING
+STATUS: LIVE_HARDENING_PASS
 
 ## Scope
 This security repair is limited to two already-deployed Edge Functions:
@@ -48,4 +48,35 @@ It requires:
 - missing/wrong local Feed callers return 401.
 
 ## Live closure
-Pending. This section must be updated with deployed versions/hashes and CI run evidence before merge.
+Deployment completed from the exact reviewed branch sources.
+
+Live deployments:
+- `stock-hunter-local-ingest-v4`: version 3, `verify_jwt=false`, deployed SHA-256 `ec28a00699ebd33546b7f91b74950ad95716df0e5d205c6eb3cfc46f11068974`;
+- `stock-hunter-capture-v417`: version 2, `verify_jwt=false`, deployed SHA-256 `066cc265d990a9673aff0d755acebe142a89170e0479616ea2fc76fe4974a543`.
+
+Post-deploy source verification:
+- deployed local-ingest source is byte-identical to the reviewed repository source;
+- no raw Feed-key constant is present in the deployed local-ingest source;
+- the SHA-256 Feed-key digest contract is present;
+- deployed v417 capture source is byte-identical to the reviewed repository source;
+- the legacy static capture-token validator is absent;
+- the HMAC timestamp/nonce validator is present.
+
+GitHub Actions evidence:
+- workflow: `Stock Hunter Edge Auth Hardening`;
+- run: `35492777241`;
+- post-deploy contract job: `106030648342` — PASS;
+- post-deploy live-negative job: `106030634765` — PASS;
+- v417 parity GET: PASS, protocol `4.1.7-capture-parity-v1`, 9 fixtures;
+- missing/legacy/forged v417 capture callers: 401 PASS;
+- missing/wrong local Feed callers: 401 PASS;
+- Main Integration run `35492777243`: PASS.
+
+## Safety result
+No 4.1.6 scorer, threshold, model, prospective-data rule, Calibration/OOS state, routing state, challenger traffic, or kill-switch setting was modified by this repair.
+
+The 4.1.7 capture endpoint remains dark/no-traffic. This hardening does not authorize lifecycle advancement.
+
+The local Feed caller contract remains `x-feed-key` with the same accepted caller credential, so no Feed Agent credential rotation was required by this source-hardening step.
+
+Future optional improvement: move the Feed caller credential into a Supabase Edge Function project secret when an authorized secrets-management path is available. Until then, the deployed source no longer contains the plaintext credential.
