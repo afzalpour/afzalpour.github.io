@@ -49,55 +49,16 @@ jobs:
               "return Response.json({ok:true,component_version:'4.1.7',storage_protocol:'v416-stable-schema',scanned:(data||[]).length,candidates:events.length,recorded,shadow_candidates:shadows.length,shadow_recorded:shadowRecorded,trade_date:now.ymd,source_version:'4.1.7-server-v1-parity'});"
           )
 
-          helper="""function captureAdminKey(){
-            const legacy=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-            if(legacy)return legacy;
-            const raw=Deno.env.get('SUPABASE_SECRET_KEYS');
-            if(!raw)throw new Error('capture admin key unavailable');
-            const parsed=JSON.parse(raw);
-            if(!parsed?.default)throw new Error('default capture admin key unavailable');
-            return parsed.default;
-          }
+          # The preserved v416 rollback source is now the exact hardened v6/HMAC baseline.
+          # v417 may differ only by the approved component/source-version identity markers above.
+          for token in [
+              'captureAdminKey',
+              "authMode!=='hmac-sha256-v2'",
+              'stock_hunter_validate_capture_request_v416',
+          ]:
+              assert token in expected, f'hardened v416 baseline missing {token}'
 
-          """
-          serve="Deno.serve(async(req)=>{"
-          assert serve in expected
-          expected=expected.replace(serve,helper+serve,1)
-
-          old_auth="""  const url=Deno.env.get('SUPABASE_URL')!,key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-            const sb=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
-            const captureToken=req.headers.get('x-stock-hunter-capture-token')||'';
-            if(!captureToken)return Response.json({ok:false,error:'unauthorized'},{status:401});
-            const{data:authorized,error:authErr}=await sb.rpc('stock_hunter_validate_capture_token_v416',{p_token:captureToken});
-            if(authErr||authorized!==true)return Response.json({ok:false,error:'unauthorized'},{status:401});
-          """
-          new_auth="""  const url=Deno.env.get('SUPABASE_URL')!,key=captureAdminKey();
-            const sb=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
-            if(req.headers.has('x-stock-hunter-capture-token')){
-              return Response.json({ok:false,error:'unauthorized'},{status:401,headers:{'Cache-Control':'no-store'}});
-            }
-            const authMode=req.headers.get('x-stock-hunter-capture-auth')||'';
-            const timestampRaw=req.headers.get('x-stock-hunter-capture-timestamp')||'';
-            const nonce=req.headers.get('x-stock-hunter-capture-nonce')||'';
-            const signature=req.headers.get('x-stock-hunter-capture-signature')||'';
-            if(authMode!=='hmac-sha256-v2'||!/^[0-9]{10,12}$/.test(timestampRaw)||nonce.length>64||!/^[0-9a-f]{64}$/.test(signature)){
-              return Response.json({ok:false,error:'unauthorized'},{status:401,headers:{'Cache-Control':'no-store'}});
-            }
-            const timestamp=Number(timestampRaw);
-            if(!Number.isSafeInteger(timestamp)){
-              return Response.json({ok:false,error:'unauthorized'},{status:401,headers:{'Cache-Control':'no-store'}});
-            }
-            const{data:authorized,error:authErr}=await sb.rpc('stock_hunter_validate_capture_request_v416',{
-              p_timestamp:timestamp,p_nonce:nonce,p_signature:signature
-            });
-            if(authErr||authorized!==true){
-              return Response.json({ok:false,error:'unauthorized'},{status:401,headers:{'Cache-Control':'no-store'}});
-            }
-          """
-          assert old_auth in expected, 'archived v416 auth block changed unexpectedly'
-          expected=expected.replace(old_auth,new_auth,1)
-
-          assert actual == expected, 'capture-v417 contains changes beyond approved identity/version + HMAC-security delta'
+          assert actual == expected, 'capture-v417 contains changes beyond approved identity/version delta from hardened v416 baseline'
 
           for token in [
               'npm:@supabase/supabase-js@2.116.0',
