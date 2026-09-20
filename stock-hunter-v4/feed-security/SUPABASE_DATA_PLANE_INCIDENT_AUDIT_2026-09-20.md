@@ -1,7 +1,7 @@
 # Stock Hunter — Supabase Data-Plane Incident Audit
 
 DATE: 2026-09-20
-STATUS: REST_RECOVERED / LOCAL_FEED_FRESHNESS_PENDING
+STATUS: DATA_PLANE_RECOVERED / LOCAL_FEED_FRESHNESS_PENDING
 PROJECT: `summnepwuziwulzvpcms`
 
 ## User-visible symptom
@@ -78,3 +78,22 @@ Current classification:
 `INTERMITTENT_SUPABASE_DATA_PLANE_OUTAGE / PROJECT_RESTART_OR_PLATFORM_RECOVERY_REQUIRED`.
 
 The local Feed Agent remains unproven after the outage. A new heartbeat must only be interpreted after the project data plane is responsive again.
+
+
+## Recovery closure — 2026-09-20 20:42–20:50 UTC
+
+The second outage window recovered.
+
+Recovery actions:
+- PostgreSQL management connection succeeded again;
+- PostgREST schema and config reload notifications were issued successfully;
+- exact public browser REST diagnostic `35495501455`, attempt 4 returned HTTP 200 for both integrated rows and feed-health;
+- no pause/restore cycle was used;
+- no full restart was required after connectivity recovered.
+
+The connected Supabase management capability does not expose a true Restart Project operation. Because pause/restore has different operational semantics, it was not used as a substitute.
+
+Subsequent read-only bridge regression and post-merge production checks all passed. The incident is therefore closed as an intermittent data-plane/platform availability event.
+
+Separate unresolved condition:
+the local Feed Agent heartbeat remains at 2026-09-19 16:26:36 UTC. That stale heartbeat should be investigated as a local Agent reconnection/send issue only while REST/Postgres remain healthy.
