@@ -392,3 +392,38 @@ Production safety remains:
 - challenger traffic 0%;
 - kill switch ON;
 - no OOS manifest, promotion, activation review or release pin created.
+
+
+## Local Feed Agent UI repair — v4.0.6 prepared / client smoke pending — 2026-09-21
+
+User-reported symptom:
+- `Stock_Hunter_Feed_Agent_v4.0.5.exe` repeatedly enters Windows `Not Responding` after launch/click interaction, including after PC reboot.
+
+Binary diagnosis:
+- canonical v4.0.5 artifact recovered from project Library;
+- PE32+ Windows GUI x86-64, Go 1.23.2, module `stockhunteragent`;
+- native Win32 message loop exists but `main.main` did not call `runtime.LockOSThread`;
+- network client already uses a 25-second timeout and scan work runs from a background goroutine;
+- current local-ingest endpoint/header/credential contract in the binary still matches the hardened server contract.
+
+Repair:
+- prepared `Stock_Hunter_Feed_Agent_v4.0.6.exe`;
+- input v4.0.5 SHA-256: `09ef9015c6370192b684d81a018eaac50ce49c4c16fd2ccb2a318777e8909211`;
+- output v4.0.6 SHA-256: `a43ccddce0f71df02ddeea1f1d0efcd77a79727dcec0506ec8dcf30454d1c458`;
+- exactly one existing no-arg/no-return startup callsite was retargeted from the initial cosmetic `main.refreshAutoButton` call to `runtime.LockOSThread`;
+- embedded version marker changed from 4.0.5 to 4.0.6;
+- total binary byte differences: 4;
+- endpoint, X-Feed-Key contract, accepted credential bytes, market/scoring/feed serialization logic remain unchanged;
+- reproducible patch script and audit live under `feed-agent-repair/`.
+
+Distribution:
+- v4.0.6 EXE and ZIP published to the project Library under `/نرم افزار شکار سهم/`.
+- do not overwrite/delete v4.0.5 yet; retain it as rollback evidence.
+
+Required next evidence:
+- fully terminate v4.0.5 in Windows Task Manager;
+- launch v4.0.6;
+- verify UI remains responsive;
+- verify live Supabase heartbeat advances and reports `agent_version=4.0.6`.
+
+Until that client smoke passes, this repair remains PREPARED / CLIENT_SMOKE_PENDING. No 4.1.6 scoring/routing/lifecycle state changed.
