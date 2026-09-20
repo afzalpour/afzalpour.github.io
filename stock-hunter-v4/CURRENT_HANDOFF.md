@@ -343,3 +343,52 @@ Operational conclusion:
 - the current hard blocker is Supabase data-plane availability;
 - the stale Feed Agent heartbeat cannot be interpreted until the ingest/data-plane path is stable;
 - do not synthesize missing prospective data or advance maturity/lifecycle gates because of this outage.
+
+
+## Data-plane recovery closure — 2026-09-20 20:42–20:50 UTC
+
+The recurring Supabase data-plane incident recovered without using project pause/restore.
+
+Actions executed through the connected Supabase management/database tooling:
+- direct PostgreSQL connectivity revalidated successfully;
+- official PostgREST reload signals executed:
+  - `NOTIFY pgrst, 'reload schema'`;
+  - `NOTIFY pgrst, 'reload config'`;
+- independent public REST diagnostic run `35495501455`, attempt 4:
+  - `stock_hunter_integrated_v1`: HTTP 200;
+  - `stock_hunter_feed_health_v4`: HTTP 200.
+- full project restart was not executed because the connected management tool exposes pause/restore but no true restart operation, and the data plane had already recovered. Pause/restore was intentionally not used as a restart substitute.
+
+### Canonical read-only snapshot bridge
+PR #223 was reworked to avoid heavyweight lifecycle-computation views and now reports sanitized operational base state/counts only.
+Final live regression:
+- Edge deployment version 14;
+- SHA-256 `5b90c51a783f6d733ef361e4fdf035b4da235bd791e48d69ff08f1c4900e43d6`;
+- workflow run `35465143770`, attempt 12, job `106146921421`;
+- mandatory First-Day EOD verifier: PASS;
+- OIDC safety contract: PASS;
+- snapshot transaction: READ ONLY;
+- snapshot_error: null.
+PR #223 merged; merge SHA `1e15b7e754869d9407fd8d15a5b7fb32a87b8ecb`.
+Live `stock-hunter-ci-live-check-v417` source is byte-identical to current `main`.
+
+Post-merge on SHA `1e15b7e754869d9407fd8d15a5b7fb32a87b8ecb`:
+- Public Production Smoke `35536790405`: PASS;
+- First-Day EOD `35536790367`: PASS;
+- First-Maturity contract `35536790363`: PASS;
+- GitHub Pages `35536789463`: PASS.
+
+### Current remaining feed condition
+The Supabase data plane is responsive again, but local Feed Agent freshness is still not restored:
+- last local-agent heartbeat: `2026-09-19 16:26:36.56+00`;
+- latest signal update: `2026-09-19 16:26:34.718+00`;
+- fresh 180-second signal rows at final snapshot: 0.
+
+This is now a separate local-device/agent reconnection issue rather than an active Supabase REST outage. Do not rotate the Feed key and do not alter 4.1.6 provenance/scoring to compensate.
+
+Production safety remains:
+- 4.1.6 frozen Champion;
+- CHAMPION_ONLY;
+- challenger traffic 0%;
+- kill switch ON;
+- no OOS manifest, promotion, activation review or release pin created.
