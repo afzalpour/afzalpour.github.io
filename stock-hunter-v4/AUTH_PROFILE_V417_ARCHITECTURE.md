@@ -1,184 +1,179 @@
-# Stock Hunter — Canonical Architecture Freeze
+# Stock Hunter 4.1.7 — Auth & Personal Profile Architecture
 
-Status: canonical
-Date: 2026-09-19
-Scope: Stock Hunter 4.1.6 champion + 4.1.7 challenger lifecycle
+Status: canonical implementation contract
+Date: 2026-09-20
 
-## 1. Product objective
-The main screen is an operational hunting surface, not a market directory.
+## Objective
+Add secure multi-user access to Stock Hunter without changing the frozen Hunt analytics lifecycle.
 
-Canonical information architecture:
-1. **Action Now** — default main table.
-2. **Radar** — compact near-action queue.
-3. **Universe** — full market access through search and explicit filters.
+The user experience becomes:
+1. login / account recovery;
+2. authenticated Stock Hunter application;
+3. personal profile and preferences;
+4. personal watchlists and alerts;
+5. owner-admin console for account administration.
 
-This contract applies to 4.1.6 and all later versions unless the user explicitly approves a replacement.
+## Historical baseline at architecture approval
+At architecture approval time the live Supabase project had:
+- 0 Auth users;
+- no profile table;
+- no user-role table;
+- no profile/role RLS policies;
+- no Auth provisioning trigger.
 
-## 2. Action Now contract
-Default main table shows only:
-- `شکار ویژه`
-- `هشدار فوری`
+Therefore Auth/Profile was introduced as a clean 4.1.7 addition rather than a migration of an existing user system.
 
-Additional mandatory gates:
-- row data must be fresh (maximum age: 180 seconds);
-- the instrument must be inside its valid hunt/session window;
-- the setup must remain inside the 4.1.6 goal domain (`dayChange < +1%`).
+## Data model
+Naming is versioned to avoid accidental collision with future generations.
 
-Stale rows must NEVER appear as active Action Now alerts.
+### public.stock_hunter_profiles_v417
+- user_id uuid primary key references auth.users(id) on delete cascade
+- display_name text
+- avatar_url text
+- account_status text
+- created_at timestamptz
+- updated_at timestamptz
+- last_seen_at timestamptz
 
-## 3. Radar contract
-A compact **رادار نزدیک** section shows up to 8 best fresh `شکار زودهنگام` rows.
-Sort priority:
-1. Hunt Score
-2. Today Opportunity
-3. fast score
+RLS: own row only for ordinary users.
 
-Radar is observational/pre-action. It does not change scoring or thresholds.
+### public.stock_hunter_user_preferences_v417
+- user_id uuid primary key
+- theme
+- page_size
+- visible_columns jsonb
+- hunt_filter
+- decision_filter
+- notification_settings jsonb
+- updated_at
 
-## 4. Universe contract
-All search/filter capabilities remain.
-- Universal search searches the complete `stock_hunter_universe_v4` catalog, independent of Hunt/session filters.
-- Hunt dropdown preserves: active default, special, urgent, early, watch, normal, and explicit **همه نمادها**.
-- Selecting **همه نمادها** shows the loaded market universe, including instruments not eligible for fast Hunt.
-- Funds and other instruments must not disappear from Search/Universe just because they are not current Hunt candidates.
+RLS: own row only.
 
-## 5. Eligibility vs visibility
-Hunt eligibility and Universe visibility are separate.
-Options, debt/fixed-income and other excluded instrument classes may be visible/searchable while remaining ineligible for the fast Hunt engine.
-Never solve clutter by deleting instruments from the Universe.
+### public.stock_hunter_watchlists_v417
+- watchlist_id uuid
+- user_id uuid
+- name
+- created_at / updated_at
 
-## 6. 4.1.6 champion freeze
-4.1.6 remains the production champion.
-Frozen scoring engine: `4.1.6-hunt-v2`.
-Do not change formulas, thresholds, model list, capture provenance, prospective boundaries, calibration criteria, or lifecycle gates without explicit user authorization.
-UI bug fixes may be made only when they preserve this architecture and approved visual identity.
+### public.stock_hunter_watchlist_items_v417
+- watchlist_id uuid
+- user_id uuid
+- symbol_id/text reference
+- created_at
 
-Approved visual identity remains frozen:
-- IRAN font across all site text;
-- Precision Optics dark palette;
-- approved recolor of the original logo geometry;
-- brass/orange numeric treatment;
-- full explanatory text under Detail metrics;
-- existing 5 forecast models and 10-day comparison.
+Unique per watchlist + symbol.
 
-## 7. 4.1.7 challenger contract
-4.1.7 inherits the same Action Now → Radar → Universe UI contract.
-Its runtime scorer may only affect rows routed to challenger after approved activation gates.
-UI visibility rules are version-neutral and shared.
-Current safety baseline until lifecycle advancement:
-- champion only;
-- challenger traffic 0%;
-- kill switch engaged;
-- capture-v417 dark/no active callers.
+RLS for watchlists/items: own rows only.
 
-Do not activate 4.1.7 merely because implementation is complete. Continue prospective collection → maturity → calibration → robustness → candidate evaluation → OOS → promotion proposal → forward shadow → activation review → canary.
+### Privileged role state
+Canonical authorization role is privileged state, not user-editable profile metadata.
 
-## 8. Feed/freshness contract
-Current market feed provenance depends on `Stock_Hunter_Feed_Agent_v4.0.5` populating `stock_hunter_integrated_v1` and `stock_hunter_feed_health_v4`.
-Browser refresh interval: 15 seconds.
-A stale feed can remain searchable but cannot create active Action Now/Radar alerts.
+Roles:
+- owner_admin
+- admin
+- user
 
-## 9. New-chat continuity rule
-This file is the architectural source of truth.
-Any new project chat/agent must read this file BEFORE proposing or applying changes.
-Then read `NEW_CHAT_BOOTSTRAP.md`, inspect current GitHub `main`, and verify live Supabase state.
-Never reconstruct architecture only from conversational memory.
+The browser may receive a minimal role claim in trusted app_metadata for UI rendering, but server/RLS remains authoritative. Role changes require token/session refresh before elevated UI is considered active.
 
-## 10. Change-control rule
-Every explicitly approved architecture change must update this canonical file in the SAME PR/commit series.
-If code and this document disagree, stop and reconcile before release.
+### public.stock_hunter_admin_audit_v417
+Append-only administrative audit:
+- actor_user_id
+- action
+- target_user_id
+- structured details
+- created_at
 
+No client-side insert path for ordinary users.
 
-## 11. 4.1.7 Auth / Profile contract
-Authentication and personal profiles are mandatory release scope for 4.1.7.
+## Account provisioning
+A new Auth user receives:
+- default role = user;
+- profile row;
+- preferences row.
 
-### Identity
-- Supabase Auth is the identity provider.
-- The market application requires an authenticated session; only the login/recovery surface may be public.
-- Initial sign-in scope: email + password, with email verification/recovery. Additional providers may be added later without changing the core authorization model.
-- Authentication must remain logically separate from Hunt scoring, capture, calibration, OOS, promotion, and runtime routing.
+Provisioning must be atomic/retry-safe. Failure must not create an elevated role.
 
-### Roles
-Canonical roles:
-- `owner_admin` — exactly the project owner / primary administrator.
-- `admin` — optional delegated administrator.
-- `user` — normal application user.
+## Owner bootstrap
+There is no "first user becomes admin" behavior.
 
-The first `owner_admin` assignment is a one-time privileged bootstrap after the owner's Auth account exists. It must NEVER be claimable from browser UI, signup metadata, `user_metadata`, email text matching, or "first registered user" logic.
+After the project owner creates and verifies their account, the account UUID is explicitly promoted once through a privileged deployment/admin procedure to `owner_admin`.
 
-Authorization data must not be trusted from user-editable metadata. Sensitive administrative operations must use protected role state and/or trusted `app_metadata`, with server-side enforcement and RLS.
+Transfer of ownership requires a separate controlled operation with audit evidence.
 
-### Personal profile
-Each authenticated user receives an own-only profile containing at minimum:
-- display name;
-- avatar reference;
-- account status;
-- created / updated / last-seen timestamps;
-- UI preferences;
-- saved columns / filters;
-- alert preferences.
+## Auth flows
+Initial release:
+- signup with email/password;
+- email verification where configured;
+- sign in;
+- sign out;
+- forgot/reset password;
+- session restore/refresh;
+- protected-route redirect.
 
-Personal features are part of 4.1.7:
-- personal watchlists;
-- saved symbols;
-- personal alert settings;
-- saved display/filter preferences.
+Optional later:
+- passkeys/social login/OIDC only after base flows are stable.
 
-### Privacy and RLS
-- Every user-owned table exposed through the Data API must have RLS enabled.
-- Users can read/update only their own profile and personal objects.
-- Admin access is explicit and least-privilege; no broad browser service key exists.
-- `service_role` / secret keys must never be exposed to the browser.
-- Administrative mutations run through a protected server-side/Edge Function boundary and must be audited.
-- User deletion/suspension must account for active sessions/token lifetime; access revocation is not implemented as a UI-only flag.
+## Security contract
+- Publishable browser key only.
+- Never expose service_role/secret keys.
+- RLS on every public user-owned table.
+- Explicit SELECT policy required for UPDATE behavior.
+- UPDATE policies use both USING and WITH CHECK.
+- Authorization is never based on raw_user_meta_data/user_metadata.
+- No broad `TO authenticated USING(true)` access to private user data.
+- Admin mutations use a protected server-side function/Edge Function boundary.
+- Security advisors run after schema/policy changes.
+- Suspension/revocation must be enforced server-side and must account for already-issued sessions/tokens.
 
-### Admin console
-The owner admin receives an admin-only surface for:
-- user list and account status;
-- role management except transfer/removal of the sole owner without a controlled owner-transfer procedure;
-- suspend/reactivate;
-- audit trail;
-- aggregate usage/health information.
+## Separation from market engine
+Auth state may control whether a human can view or persist personal UI state.
 
-The admin console must not silently expose a user's private personal data beyond what is required for administration.
+It must not modify:
+- 4.1.6 Hunt formulas/thresholds;
+- prospective capture;
+- calibration samples;
+- OOS datasets;
+- promotion decisions;
+- 4.1.7 routing/canary state.
 
-### Release gating
-4.1.7 cannot be declared final until Auth/Profile passes:
-- signup/login/logout/recovery verification;
-- owner bootstrap verification;
-- RLS isolation tests with at least two distinct test users;
-- admin authorization negative tests;
-- session expiry/revocation tests;
-- no-secret-in-browser verification;
-- security advisor review;
-- public-production auth smoke.
+4.1.6 remains the frozen production Champion unless the user explicitly authorizes a different lifecycle decision.
 
-See `AUTH_PROFILE_V417_ARCHITECTURE.md` for the implementation contract.
+## Release tests
+1. User A cannot read/update User B profile.
+2. User A cannot read User B watchlist/preferences.
+3. User cannot self-promote via profile/user metadata.
+4. User cannot call admin mutations.
+5. Owner admin can perform explicitly supported admin actions.
+6. Signed-out browser cannot access protected personal endpoints.
+7. Browser bundle contains no secret/service-role credential.
+8. Account suspension/revocation blocks privileged access, including an existing-session test.
+9. Auth failure does not break Feed/Capture infrastructure.
+10. 4.1.6 champion remains functional throughout 4.1.7 Auth development.
+11. Hosted Site URL / Redirect URL configuration is correct for the published application.
+12. Password recovery/public redirect flow passes against the hosted configuration.
+13. Supabase Security Advisor is reviewed and plan-supported Auth protections are enabled.
 
+## Implementation / verification status — 2026-09-20
+Implemented and verified:
+- Supabase Auth foundation and automatic ordinary-user provisioning;
+- owner_admin / admin / user role model;
+- one-time owner bootstrap;
+- own-only Profile / Preferences / Watchlists;
+- protected `stock-hunter-admin-v417` administrative boundary;
+- staged Admin console;
+- server-side suspend/reactivate and role-management controls;
+- two-distinct-real-session RLS isolation and admin-negative tests: PASS;
+- suspended-account access test: PASS;
+- authenticated deployed Chromium smoke for login, Preferences persistence, Watchlists, normal-user Admin isolation and logout: PASS (workflow `35469683809`);
+- temporary smoke-user cleanup: PASS;
+- 4.1.6 production `index.html` remains ungated; authenticated personal market integration is staged on `index-v417.html`.
 
-## Admin implementation status
-Admin boundary status (2026-09-19): `stock-hunter-admin-v417` is deployed with `verify_jwt=true`; the staged admin console is implemented; suspension combines Auth ban with restrictive account-status RLS. Two-user real-session RLS/admin-negative self-test has passed.
+Remaining Auth/Profile release blockers:
+- hosted Supabase Site URL / Redirect allow-list correction still requires a legitimate Dashboard or Management API path;
+- the repository Management API workflow cannot run without a Supabase management access token;
+- Leaked Password Protection remains disabled and is a Pro-plan-or-above capability;
+- password-recovery/public redirect smoke remains pending until hosted redirect configuration is corrected.
 
+These blockers do not authorize any workaround that weakens redirect validation, moves privileged credentials into the browser, or alters the frozen 4.1.6 market engine.
 
-## Verification status — 2026-09-19
-- database authenticated-role cross-identity isolation drill: PASS;
-- suspended-account restrictive RLS drill: PASS;
-- test fixture cleanup: PASS;
-- final two-distinct-real-session isolation test: PASS;
-- authenticated deployed browser/DOM smoke: PASS;
-- Auth redirect URL configuration: PENDING;
-- Leaked Password Protection platform setting: PENDING.
-
-
-## Personal market-surface integration
-Status: implemented in staging for 4.1.7.
-- `index-v417.html` requires a valid Auth session and active profile.
-- Preferences hydrate/save page size, Hunt/decision filters, visible columns, theme and sound preference.
-- Personal Watchlists are selectable and can be created from the market surface.
-- Market rows and mobile cards expose ☆/★ save/remove controls.
-- "Only Watchlist" is an optional personal filter layered after the canonical Action Now → Radar → Universe filtering.
-- 4.1.6 production `index.html` remains unchanged and ungated.
-
-
-## Authenticated personal data-flow smoke — 2026-09-19
-PASS with a temporary real Auth user/session. Profile/Role/Preferences provisioning, allowed preference updates, protected timestamp denial, Watchlist CRUD and last_seen update all passed. Test-user cleanup passed and the self-test function was resealed with `verify_jwt=true`. The deployed automated real-session Chromium DOM smoke is PASS (2026-09-20, workflow 35469683809). Remaining Auth gates are platform redirect configuration, Leaked Password Protection and recovery/public-flow verification.
+Auth/Profile completion is independent from the statistical challenger lifecycle. It must never be used to bypass prospective maturity, Calibration, OOS, Promotion, Forward Shadow, Activation Review or Canary gates.
