@@ -178,9 +178,9 @@ Supabase Management API inventory for project summnepwuziwulzvpcms now includes 
 - stock-hunter-capture-v417
 - function id = 21dc3f37-1f23-4ff9-b6da-68393b238989
 - status = ACTIVE
-- deployment version = 1
+- deployment version = 2
 - verify_jwt = false
-- ezbr_sha256 = bd350c80dfcaba5a530fd7153d13c7dd19249b8ab87a1a715458ac5ed3236d4c
+- ezbr_sha256 = 066cc265d990a9673aff0d755acebe142a89170e0479616ea2fc76fe4974a543
 
 Its deployed index.ts is byte-for-byte identical to the repository source under:
 
@@ -188,14 +188,14 @@ stock-hunter-v4/release/capture-v417/stock-hunter-capture-v417/index.ts
 
 The deployment is intentionally dark: no cron/job/client/runtime caller targets the v417 slug.
 
-verify_jwt remains false because the capture endpoint uses the existing custom x-stock-hunter-capture-token validator before any write path. This matches the hardened v416 security contract rather than relying on the platform JWT gateway.
+verify_jwt remains false because the capture endpoint uses the existing replay-resistant HMAC timestamp + nonce validator before any write path. The legacy static capture-token header is rejected. This matches the active hardened v416 security contract rather than relying on the platform JWT gateway.
 
 The previous rollback component remains live and unchanged:
 
 - stock-hunter-capture-v416
 - status = ACTIVE
-- deployment version = 5
-- ezbr_sha256 = 6eb0ba0ee5e9dae3b8d6bab5c79f7f48a98ae643fd35ebe968d8d41eb73fdc76
+- deployment version = 6
+- ezbr_sha256 = b483eb96911ebb938e87564fd75e8a6cbcbad7d5a4fb087b9eab5120dd7a75af
 
 No 4.1.7 component attestation was recorded yet. Attestation is intentionally deferred until final release maturity so its 60-minute freshness window is meaningful.
 
@@ -207,8 +207,8 @@ The final FREEZE contract still archives:
 - engine 4.1.6-hunt-v2
 - service-worker cache shikar-sahm-v4.1.6-r12
 - capture slug stock-hunter-capture-v416
-- capture deployment version 5
-- capture deployment SHA-256 6eb0ba0ee5e9dae3b8d6bab5c79f7f48a98ae643fd35ebe968d8d41eb73fdc76
+- capture deployment version 6
+- capture deployment SHA-256 b483eb96911ebb938e87564fd75e8a6cbcbad7d5a4fb087b9eab5120dd7a75af
 
 The final version freeze still returns:
 
@@ -276,3 +276,15 @@ fresh external component re-verification
 -> immutable 4.1.6 rollback archive
 
 Until then, 4.1.6 remains the preserved rollback target and no final 4.1.7 release claim is valid.
+
+
+## Component-security identity refresh — 2026-09-20
+
+After the original live-close audit, both capture components were security-hardened without changing 4.1.6 scoring/prospective semantics or enabling 4.1.7 traffic.
+
+Current management-plane identities used for future attestation/rollback preparation are:
+
+- stock-hunter-capture-v416: ACTIVE, deployment version 6, SHA-256 b483eb96911ebb938e87564fd75e8a6cbcbad7d5a4fb087b9eab5120dd7a75af, custom VAULT_HMAC_NONCE_V2;
+- stock-hunter-capture-v417: ACTIVE/dark, deployment version 2, SHA-256 066cc265d990a9673aff0d755acebe142a89170e0479616ea2fc76fe4974a543, same timestamp+nonce HMAC validator and no active traffic caller.
+
+Any future final component attestation must use the then-current fresh Management API observation; these values are not a substitute for the required <=60 minute final attestation.
