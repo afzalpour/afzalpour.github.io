@@ -1,7 +1,7 @@
 # Stock Hunter — Canonical Live Snapshot Audit
 
 DATE: 2026-09-20
-STATUS: PREPARED / LIVE_EXECUTION_PENDING
+STATUS: LIVE_EXECUTION_PASS
 
 ## Purpose
 Provide a current, sanitized, read-only operational snapshot when the interactive Supabase SQL connector is unavailable or times out.
@@ -34,9 +34,40 @@ This snapshot is observational only. It cannot unlock OOS, create Promotion/Acti
 4.1.6 remains the frozen production Champion unless the user explicitly authorizes a later canonical lifecycle decision.
 
 ## Live closure
-Pending:
-1. repository CI/type verification;
-2. exact-source deployment of the upgraded read-only bridge;
-3. regression re-run of the already-passed First-Day EOD workflow;
-4. extraction and review of the live sanitized snapshot;
-5. merge to main after all evidence is PASS.
+
+Repository/runtime closure completed after the intermittent Supabase data-plane incident recovered.
+
+Final deployed bridge under test:
+- Edge Function: `stock-hunter-ci-live-check-v417`
+- deployment version: 14
+- SHA-256: `5b90c51a783f6d733ef361e4fdf035b4da235bd791e48d69ff08f1c4900e43d6`
+- `verify_jwt=false` remains intentional because the function enforces exact GitHub OIDC claims in code before database access.
+
+Final regression:
+- canonical workflow run: `35465143770`
+- attempt: 12
+- job: `106146921421`
+- mandatory First-Day EOD verifier: PASS
+- OIDC safety contract: PASS
+- snapshot transaction: `READ ONLY`
+- `snapshot_error`: null
+
+Snapshot query was intentionally simplified during hardening:
+- it uses base signal/status/count tables rather than heavyweight Calibration/Maturity/OOS computation views;
+- it reports operational evidence only;
+- it does not compute or substitute any lifecycle readiness decision;
+- stale pg_cron bookkeeping rows are excluded from the current in-flight count while historical rows are preserved.
+
+Observed sanitized state in the final regression:
+- feed rows: 1935;
+- fresh 180-second feed rows: 0;
+- local Agent heartbeat still at 2026-09-19 16:26:36 UTC;
+- shadow samples: 12;
+- calibration dataset rows: 0;
+- routing: CHAMPION_ONLY / 0% challenger / kill switch ON / state_version 1;
+- active v417 cron callers: 0;
+- OOS manifests/results, promotions, activation reviews and release pins: all 0;
+- latest completed Stock Hunter cron jobs: succeeded;
+- current in-flight Stock Hunter cron runs: 0 at snapshot time.
+
+The snapshot is therefore usable as a sanitized operational observation channel without becoming a lifecycle authority.
