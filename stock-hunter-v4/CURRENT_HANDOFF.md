@@ -255,3 +255,66 @@ Unless the user gives a newer instruction:
 - Canonical scheduled operational workflow: `2026-09-22 15:05 UTC`.
 - Until then, keep 4.1.6 as frozen Champion and keep 4.1.7 fail-closed.
 - In parallel, Auth hosted blockers remain Site URL/redirect allow-list, Free-plan Leaked Password Protection limitation, then password-recovery/public redirect smoke.
+
+
+## No-data closure checkpoint — 2026-09-20
+
+### Supabase data-plane incident
+- A read-only external diagnostic reproduced the 4.1.6 browser failure against the canonical project.
+- Diagnostic workflow run `35495501455`, attempt 1: both `stock_hunter_integrated_v1` and `stock_hunter_feed_health_v4` returned HTTP 503 / `PGRST002` (`Could not query the database for the schema cache. Retrying.`).
+- Direct management SQL also showed connection refusal/timeouts during the incident.
+- Diagnostic attempt 2 later returned HTTP 200 for both browser REST reads, confirming REST/Data API recovery.
+- The latest persisted `local-agent` heartbeat observed after REST recovery was still `2026-09-19 16:26:36.56+00`, agent `4.0.5`, 500 symbols.
+- Therefore the Supabase read outage recovered, but a fresh post-incident Feed Agent send remains unproven and requires the local Agent process to reconnect/restart.
+- Incident audit: `feed-security/SUPABASE_DATA_PLANE_INCIDENT_AUDIT_2026-09-20.md`.
+- Do not rotate the Feed key or modify 4.1.6 to compensate for this availability incident.
+
+### 4.1.6 rollback identity refresh
+- Drift found: preserved rollback metadata/source still referenced capture-v416 deployment v5 and the legacy auth contract while the live frozen Champion capture component is v6/HMAC+nonce.
+- Live `stock-hunter-capture-v416`: ACTIVE, deployment version 6, SHA-256 `b483eb96911ebb938e87564fd75e8a6cbcbad7d5a4fb087b9eab5120dd7a75af`.
+- Live source is byte-identical to `capture-security/stock-hunter-capture-v416/index.ts`.
+- Rollback archive source and final-freeze rollback identity were refreshed to exact v6 + `VAULT_HMAC_NONCE_V2`.
+- Live migration `stock_hunter_release_rollback_v6_sync_20260920`: PASS.
+- Live final-freeze function verified to contain rollback deployment version 6, current v6 SHA-256 and HMAC+nonce contract.
+- Post-migration state remained `CHAMPION_ONLY / 0% / kill switch ON / state_version=1`; no activation review, release manifest, freeze authorization or rollback archive was created.
+- PR #224 merged; merge SHA `e1568febb79f9dafba0d9ec4a041de2317375ac7`.
+- Post-merge Capture-v417 Dark Deploy Contract run `35498712244`: PASS.
+- Post-merge Final Release Pinning Contract run `35498712240`: PASS.
+- Audit: `release/rollback-v416/ROLLBACK_V416_V6_SYNC_AUDIT_2026-09-20.md`.
+
+### FK performance hardening
+- Supabase Performance Advisor reported four lifecycle/release foreign keys without covering indexes.
+- Live migration `stock_hunter_performance_fk_indexes_20260920`: PASS.
+- Added covering indexes for activation authorization consumption `review_id` and release-manifest `component_attestation_id`, `proposal_id`, and `activation_review_id`.
+- Post-DDL Performance Advisor: `unindexed_foreign_keys` = 0.
+- Remaining `unused_index` notices are INFO only and are expected for fail-closed/pre-activation lifecycle tables; do not delete those indexes merely because usage is currently zero.
+- PR #225 merged; merge SHA `98b8f16b4c83ba995f772836199d518f947ed627`.
+- Audit: `security/PERFORMANCE_FK_INDEX_AUDIT_2026-09-20.md`.
+
+### Public deployment after no-data hardening
+On main SHA `e1568febb79f9dafba0d9ec4a041de2317375ac7`:
+- Public Production Smoke run `35498712230`: PASS.
+- GitHub Pages build/deployment run `35498711586`: PASS.
+- No production 4.1.6 scorer/formula/threshold asset was intentionally changed by these hardening steps.
+
+### Security Advisor
+After the rollback DDL, no new Stock Hunter WARN/ERROR was introduced.
+Known remaining findings:
+- INFO: RLS enabled with no policy on private/API-denied `private.stock_hunter_canary_expansion_authorizations_v417`; do not add a cosmetic allow policy.
+- WARN: Supabase Leaked Password Protection disabled; hosted Pro-plan capability blocker.
+
+### Read-only live snapshot PR
+- PR #223 remains OPEN and must not be merged yet.
+- The proposed snapshot remains aggregate-only and read-only, but live regression encountered database connect/statement timeouts during the Supabase instability window.
+- The experimental bridge was rolled back after testing.
+- Live `stock-hunter-ci-live-check-v417` is restored to exact `main` source as deployment version 7, SHA-256 `6716d469eb2d0ede5754bdfff06ba55f0116d251a7974aeb00848f66522d9044`.
+- Revisit PR #223 only when the canonical verifier can complete reliably; snapshot functionality must never make or bypass a lifecycle decision.
+
+### Remaining blockers / next eligible work
+The no-data engineering/hardening items above are closed. Remaining meaningful work is blocked by one of:
+1. fresh real market/feed evidence, including confirmation that the local Feed Agent reconnects after the incident;
+2. the genuine three-future-session maturity horizon, earliest legitimate verifier deadline `2026-09-22 14:55 UTC`;
+3. hosted Supabase Auth configuration / plan capability for redirect allow-list and Leaked Password Protection;
+4. later lifecycle evidence and explicit authorization gates; no challenger traffic may be enabled early.
+
+4.1.6 remains the frozen production Champion. 4.1.7 remains fail-closed.
