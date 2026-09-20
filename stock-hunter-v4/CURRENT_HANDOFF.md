@@ -318,3 +318,28 @@ The no-data engineering/hardening items above are closed. Remaining meaningful w
 4. later lifecycle evidence and explicit authorization gates; no challenger traffic may be enabled early.
 
 4.1.6 remains the frozen production Champion. 4.1.7 remains fail-closed.
+
+
+## Data-plane recurrence — 2026-09-20 17:13–17:16 UTC
+
+The earlier REST recovery was not stable.
+
+Revalidation evidence:
+- live OIDC bridge experimental attempt 7: canonical First-Day EOD verifier PASS, but optional snapshot timed out after verifier PASS; no lifecycle bypass occurred.
+- live OIDC bridge experimental attempt 8: failed before verification with direct Postgres `CONNECT_TIMEOUT db.summnepwuziwulzvpcms.supabase.co:5432`.
+- independent read-only public REST diagnostic run `35495501455`, attempt 3:
+  - `stock_hunter_integrated_v1`: 30-second timeout, HTTP 000, zero response bytes;
+  - `stock_hunter_feed_health_v4`: 30-second timeout, HTTP 000, zero response bytes.
+- Supabase public status page at the same time reported API Gateway = Degraded Performance, while eu-central-1 and Database were reported Operational.
+- management-plane project state may therefore appear healthy while the project data plane is intermittently unavailable.
+
+Safety actions:
+- experimental `stock-hunter-ci-live-check-v417` deployment rolled back immediately;
+- live bridge is exact `main` source again as deployment version 10, SHA-256 `6716d469eb2d0ede5754bdfff06ba55f0116d251a7974aeb00848f66522d9044`;
+- PR #223 remains HOLD and must not be merged until both the mandatory verifier and observational snapshot succeed in one stable window;
+- no 4.1.6 scoring/routing/feed credential change was made as an outage workaround.
+
+Operational conclusion:
+- the current hard blocker is Supabase data-plane availability;
+- the stale Feed Agent heartbeat cannot be interpreted until the ingest/data-plane path is stable;
+- do not synthesize missing prospective data or advance maturity/lifecycle gates because of this outage.

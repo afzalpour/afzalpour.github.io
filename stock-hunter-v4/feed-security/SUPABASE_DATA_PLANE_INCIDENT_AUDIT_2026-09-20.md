@@ -59,3 +59,22 @@ The local-ingest caller contract remains unchanged.
 ## Remaining closure condition
 
 Mark local feed fully recovered only after a new successful `local-agent` heartbeat and fresh integrated/signal timestamps are observed after the Agent restart.
+
+
+## Recurrence — 2026-09-20 17:13–17:16 UTC
+
+The recovery observed earlier on 2026-09-20 was intermittent rather than durable.
+
+Evidence:
+- direct Postgres OIDC bridge connection: `CONNECT_TIMEOUT`;
+- public REST probe `35495501455`, attempt 3:
+  - integrated source: curl timeout after 30 seconds, HTTP 000, no bytes received;
+  - feed-health source: curl timeout after 30 seconds, HTTP 000, no bytes received.
+- Supabase public status page simultaneously showed API Gateway as degraded.
+
+The experimental snapshot bridge was restored to exact `main` source after testing. No production scorer, routing, Feed key, prospective data, calibration/OOS state or activation state was changed.
+
+Current classification:
+`INTERMITTENT_SUPABASE_DATA_PLANE_OUTAGE / PROJECT_RESTART_OR_PLATFORM_RECOVERY_REQUIRED`.
+
+The local Feed Agent remains unproven after the outage. A new heartbeat must only be interpreted after the project data plane is responsive again.
