@@ -165,17 +165,29 @@ Deno.serve(async(req:Request)=>{
     if(!dbUrl)return out(500,{error:"db_url_unavailable"});
     const sql=postgres(dbUrl,{prepare:false,max:1,connect_timeout:10,idle_timeout:2});
     try{
-      let snapshot:unknown=null;
       await sql.begin(async tx=>{
         await tx.unsafe("SET TRANSACTION READ ONLY");
-        await tx.unsafe("SET LOCAL statement_timeout = '45000ms'");
+        await tx.unsafe("SET LOCAL statement_timeout = '90000ms'");
         await tx.unsafe(verifier.sql);
-        if(verifier.snapshotSql){
-          const rows=await tx.unsafe(verifier.snapshotSql);
-          const row=(rows as any[])?.[0] as any;
-          snapshot=row?.snapshot??null;
-        }
       });
+
+      let snapshot:unknown=null;
+      let snapshotError:string|null=null;
+      if(verifier.snapshotSql){
+        try{
+          await sql.begin(async tx=>{
+            await tx.unsafe("SET TRANSACTION READ ONLY");
+            await tx.unsafe("SET LOCAL statement_timeout = '20000ms'");
+            const rows=await tx.unsafe(verifier.snapshotSql);
+            const row=(rows as any[])?.[0] as any;
+            snapshot=row?.snapshot??null;
+          });
+        }catch(e){
+          const msg=e instanceof Error?e.message:String(e);
+          snapshotError=msg.slice(0,500);
+        }
+      }
+
       return out(200,{
         result:verifier.result,
         purpose,
@@ -184,7 +196,8 @@ Deno.serve(async(req:Request)=>{
         workflow_ref:String(payload.workflow_ref),
         run_id:String(payload.run_id||""),
         checked_at:new Date().toISOString(),
-        snapshot
+        snapshot,
+        snapshot_error:snapshotError
       });
     }catch(e){
       const msg=e instanceof Error?e.message:String(e);
