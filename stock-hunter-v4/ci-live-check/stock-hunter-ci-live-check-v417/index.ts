@@ -20,9 +20,9 @@ select jsonb_build_object(
   'checked_at', now(),
   'transaction_read_only', current_setting('transaction_read_only'),
   'feed', jsonb_build_object(
-    'integrated_rows', (select count(*) from public.stock_hunter_integrated_v1),
-    'max_updated_at', (select max(updated_at) from public.stock_hunter_integrated_v1),
-    'fresh_180s_rows', (select count(*) from public.stock_hunter_integrated_v1 where updated_at>=now()-interval '180 seconds'),
+    'signal_rows', (select count(*) from public.stock_hunter_signals_v4),
+    'max_updated_at', (select max(updated_at) from public.stock_hunter_signals_v4),
+    'fresh_180s_rows', (select count(*) from public.stock_hunter_signals_v4 where updated_at>=now()-interval '180 seconds'),
     'health', (select to_jsonb(x) from public.stock_hunter_feed_health_v4 x limit 1)
   ),
   'prospective', jsonb_build_object(
