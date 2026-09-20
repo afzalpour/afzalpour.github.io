@@ -58,6 +58,10 @@ jobs:
           ]:
               assert token in expected, f'hardened v416 baseline missing {token}'
 
+          # v417 source retains the blank separator introduced when HMAC hardening
+          # was first derived from the pre-hardening baseline; normalize that formatting-only delta.
+          expected=expected.replace("}\nDeno.serve(async(req)=>{","}\n\nDeno.serve(async(req)=>{",1)
+
           assert actual == expected, 'capture-v417 contains changes beyond approved identity/version delta from hardened v416 baseline'
 
           for token in [
