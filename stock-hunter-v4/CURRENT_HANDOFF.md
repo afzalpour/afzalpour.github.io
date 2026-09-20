@@ -224,3 +224,34 @@ Unless the user gives a newer instruction:
 - Scheduled operational attempt: 2026-09-22 15:05 UTC, with historical-date guard.
 - No lifecycle/routing mutation is performed by this bridge.
 - First maturity result remains PENDING until the actual horizon.
+
+
+## Canonical/Auth document repair — 2026-09-20
+- PR #221 restored `AUTH_PROFILE_V417_ARCHITECTURE.md` as the dedicated Auth/Profile implementation contract after the accidental PR #200 overwrite.
+- Main Integration Gate: PASS.
+- Merge SHA: `f46a99cde9795fbef80405345a0a0650587b954f`.
+- Documentation-only repair; no runtime, scoring, routing, lifecycle or Supabase state changed.
+
+## Edge Auth hardening — 2026-09-20
+- Status: LIVE_HARDENING_PASS.
+- `stock-hunter-local-ingest-v4` deployed version 3.
+- Local Feed caller contract remains `x-feed-key`, but the plaintext accepted key is no longer embedded in deployed source; only a SHA-256 digest is stored and the presented header is hashed before comparison.
+- Local ingest deployed SHA-256: `ec28a00699ebd33546b7f91b74950ad95716df0e5d205c6eb3cfc46f11068974`.
+- `stock-hunter-capture-v417` deployed version 2.
+- Dark v417 Capture now rejects the legacy static-token header and uses the existing replay-resistant HMAC timestamp + nonce validator `stock_hunter_validate_capture_request_v416`.
+- v417 Capture deployed SHA-256: `066cc265d990a9673aff0d755acebe142a89170e0479616ea2fc76fe4974a543`.
+- Deployed sources exactly match the reviewed repository sources.
+- Post-deploy workflow `35492777241`: contract PASS and live-negative PASS.
+- v417 parity remains PASS on 9 frozen fixtures.
+- Missing/legacy/forged v417 Capture callers return 401.
+- Missing/wrong Local Feed callers return 401.
+- Main Integration run `35492777243`: PASS.
+- 4.1.6 scorer/formulas/thresholds and production routing were not changed.
+- 4.1.7 remains dark/no-traffic; this security repair does not authorize lifecycle advancement.
+
+## Immediate continuation checkpoint — 2026-09-20
+- First genuine statistical gate remains the 4.1.6 first maturity horizon.
+- Earliest legitimate verifier deadline: `2026-09-22 14:55 UTC`.
+- Canonical scheduled operational workflow: `2026-09-22 15:05 UTC`.
+- Until then, keep 4.1.6 as frozen Champion and keep 4.1.7 fail-closed.
+- In parallel, Auth hosted blockers remain Site URL/redirect allow-list, Free-plan Leaked Password Protection limitation, then password-recovery/public redirect smoke.
