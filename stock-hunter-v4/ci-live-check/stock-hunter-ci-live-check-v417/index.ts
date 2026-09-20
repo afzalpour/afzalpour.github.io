@@ -63,6 +63,9 @@ select jsonb_build_object(
                from cron.job_run_details r
                where r.jobid=j.jobid
                  and r.end_time is null
+                 and r.start_time is not null
+                 and r.start_time>=now()-interval '5 minutes'
+                 and r.status in ('connecting','running','sending')
              )::integer as inflight_runs
       from cron.job j
       left join lateral (
