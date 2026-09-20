@@ -23,31 +23,14 @@ select jsonb_build_object(
     'signal_rows', (select count(*) from public.stock_hunter_signals_v4),
     'max_updated_at', (select max(updated_at) from public.stock_hunter_signals_v4),
     'fresh_180s_rows', (select count(*) from public.stock_hunter_signals_v4 where updated_at>=now()-interval '180 seconds'),
-    'health', (select to_jsonb(x) from public.stock_hunter_feed_health_v4 x limit 1)
+    'health', (select to_jsonb(x) from public.stock_hunter_feed_health_v4 x where id='local-agent' limit 1)
   ),
-  'prospective', jsonb_build_object(
-    'collection_status', (select to_jsonb(x) from public.stock_hunter_prospective_collection_status_v416 x limit 1),
+  'prospective_raw', jsonb_build_object(
     'shadow_samples', (select count(*) from public.stock_hunter_shadow_samples_v416),
     'hunt_events', (select count(*) from public.stock_hunter_hunt_events_v416),
-    'shadow_by_trade_date_mode', (
-      select coalesce(jsonb_agg(to_jsonb(q) order by q.trade_date,q.hunt_mode),'[]'::jsonb)
-      from (
-        select trade_date,hunt_mode,count(*)::bigint as samples
-        from public.stock_hunter_shadow_samples_v416
-        group by trade_date,hunt_mode
-      ) q
-    )
-  ),
-  'maturity', (select to_jsonb(x) from public.stock_hunter_maturity_status_v416 x limit 1),
-  'calibration', jsonb_build_object(
-    'dataset_rows', (select count(*) from public.stock_hunter_calibration_dataset_v416),
-    'readiness', (select to_jsonb(x) from public.stock_hunter_calibration_readiness_v416 x limit 1),
-    'candidate_evaluation_runs', (select count(*) from public.stock_hunter_candidate_evaluation_runs_v416)
-  ),
-  'oos', jsonb_build_object(
-    'unlock_readiness', (select to_jsonb(x) from public.stock_hunter_oos_unlock_readiness_v416 x limit 1),
-    'release_manifests', (select count(*) from public.stock_hunter_oos_release_manifest_v416),
-    'release_results', (select count(*) from public.stock_hunter_oos_release_results_v416)
+    'shadow_outcomes', (select count(*) from public.stock_hunter_shadow_outcome_observations_v416),
+    'hunt_outcomes', (select count(*) from public.stock_hunter_hunt_outcome_observations_v416),
+    'calibration_dataset_rows', (select count(*) from public.stock_hunter_calibration_dataset_v416)
   ),
   'routing', (select to_jsonb(x) from public.stock_hunter_activation_status_v417 x where status_id='default' limit 1),
   'capture', jsonb_build_object(
@@ -58,25 +41,13 @@ select jsonb_build_object(
   'auth_aggregate', jsonb_build_object(
     'auth_users', (select count(*) from auth.users),
     'profiles', (select count(*) from public.stock_hunter_profiles_v417),
-    'account_status_counts', (
-      select coalesce(jsonb_object_agg(account_status,cnt),'{}'::jsonb)
-      from (
-        select account_status::text as account_status,count(*)::bigint as cnt
-        from public.stock_hunter_profiles_v417
-        group by account_status
-      ) q
-    ),
-    'role_counts', (
-      select coalesce(jsonb_object_agg(role,cnt),'{}'::jsonb)
-      from (
-        select role::text as role,count(*)::bigint as cnt
-        from public.stock_hunter_user_roles_v417
-        group by role
-      ) q
-    ),
+    'roles', (select count(*) from public.stock_hunter_user_roles_v417),
     'admin_audit_rows', (select count(*) from public.stock_hunter_admin_audit_v417)
   ),
   'release_state', jsonb_build_object(
+    'candidate_evaluation_runs', (select count(*) from public.stock_hunter_candidate_evaluation_runs_v416),
+    'oos_release_manifests', (select count(*) from public.stock_hunter_oos_release_manifest_v416),
+    'oos_release_results', (select count(*) from public.stock_hunter_oos_release_results_v416),
     'promotion_proposals', (select count(*) from public.stock_hunter_promotion_proposals_v416),
     'activation_reviews', (select count(*) from public.stock_hunter_activation_reviews_v417),
     'release_pins', (select count(*) from private.stock_hunter_release_pin_manifests_v417)
@@ -84,28 +55,20 @@ select jsonb_build_object(
   'cron_health', (
     select coalesce(jsonb_agg(to_jsonb(q) order by q.jobname),'[]'::jsonb)
     from (
-      select j.jobname,
-             (
-               select d.status
-               from cron.job_run_details d
-               where d.jobid=j.jobid
-               order by d.start_time desc
-               limit 1
-             ) as latest_status,
-             (
-               select d.start_time
-               from cron.job_run_details d
-               where d.jobid=j.jobid
-               order by d.start_time desc
-               limit 1
-             ) as latest_start
+      select j.jobname,d.status as latest_status,d.start_time as latest_start
       from cron.job j
+      left join lateral (
+        select status,start_time
+        from cron.job_run_details
+        where jobid=j.jobid
+        order by start_time desc
+        limit 1
+      ) d on true
       where j.jobname like 'stock-hunter-%'
     ) q
   )
 ) as snapshot;
 `;
-
 const VERIFIERS={
   "first-day-eod-v416":{
     workflowRef:EXPECTED_WORKFLOW_REF,
@@ -177,7 +140,7 @@ Deno.serve(async(req:Request)=>{
         try{
           await sql.begin(async tx=>{
             await tx.unsafe("SET TRANSACTION READ ONLY");
-            await tx.unsafe("SET LOCAL statement_timeout = '20000ms'");
+            await tx.unsafe("SET LOCAL statement_timeout = '10000ms'");
             const rows=await tx.unsafe(verifier.snapshotSql);
             const row=(rows as any[])?.[0] as any;
             snapshot=row?.snapshot??null;
