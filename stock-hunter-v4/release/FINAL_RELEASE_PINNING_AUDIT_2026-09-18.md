@@ -155,3 +155,14 @@ The 4.1.6 Champion capture backend was hardened in place after this audit withou
 - legacy static capture-token validation: rejected / not part of the rollback source
 
 The archived rollback Edge source is byte-identical to the reviewed/live v6 capture source. This refresh changes recovery identity only; it does not activate 4.1.7 or alter current traffic.
+
+
+## Capture-v416 v7 rollback identity refresh — 2026-09-21
+
+After the explicitly authorized per-row 180-second prospective freshness guard:
+- live capture-v416 deployment version: 7
+- live/rollback bundle SHA-256: 49f8a9a666b60801b670f4784404293bb3e0bbfee8b70d07a36a7d992fa31740
+- auth contract remains VAULT_HMAC_NONCE_V2
+- archived rollback source is byte-identical to the live/repository v7 source
+- future final-freeze rollback metadata is refreshed to v7
+- no 4.1.7 traffic, activation, release freeze, or routing transition is performed by this refresh
