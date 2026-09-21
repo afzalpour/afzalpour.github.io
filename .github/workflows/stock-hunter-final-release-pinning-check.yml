@@ -86,7 +86,7 @@ jobs:
           assert 'b550ac2dddf297d2436493f4e7384a166dbdf1dd' in rb
           assert 'shikar-sahm-v4.1.6-r12' in rb
           assert 'stock-hunter-capture-v416' in rb
-          assert 'b483eb96911ebb938e87564fd75e8a6cbcbad7d5a4fb087b9eab5120dd7a75af' in rb
+          assert '49f8a9a666b60801b670f4784404293bb3e0bbfee8b70d07a36a7d992fa31740' in rb
 
           assert "HUNT_V416_VERSION='4.1.6-hunt-v2'" in hunt
           assert '۴.۱.۶' in index
@@ -95,6 +95,8 @@ jobs:
           assert "authMode!=='hmac-sha256-v2'" in edge
           assert 'stock_hunter_validate_capture_token_v416' not in edge
           assert "source_version:'4.1.6-server-v4-parity'" in edge
+          assert "Date.now()-180000" in edge
+          assert ".gte('updated_at',freshCutoffIso)" in edge
 
           # The rollback tree must not be silently replaced by a final-v417 capture source.
           assert not Path('stock-hunter-v4/release/rollback-v416/stock-hunter-capture-v417').exists()
