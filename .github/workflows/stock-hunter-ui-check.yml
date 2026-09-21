@@ -34,6 +34,7 @@ on:
       - 'stock-hunter-v4/canary-recovery-v417.js'
       - 'stock-hunter-v4/config.js'
       - 'stock-hunter-v4/index.html'
+      - 'stock-hunter-v4/index-v417.html'
       - 'stock-hunter-v4/styles.css'
       - 'stock-hunter-v4/extra.css'
       - 'stock-hunter-v4/forecast-v415.css'
@@ -97,7 +98,7 @@ jobs:
           grep -q 'hunt-runtime-core-v417.js?v=4.1.7' stock-hunter-v4/index.html
           grep -q 'app-runtime-router-v417.js?v=4.1.7' stock-hunter-v4/index.html
           grep -q 'app-hunt-hierarchy-v416.js?v=4.1.6' stock-hunter-v4/index.html
-          grep -q 'app-universal-search-v416.js?v=4.1.6' stock-hunter-v4/index.html
+          grep -q 'app-universal-search-v416.js?v=4.1.6-search1' stock-hunter-v4/index.html
           grep -q 'app-eod-v416.js?v=4.1.6' stock-hunter-v4/index.html
           grep -q 'hunt-methodology-v416.html' stock-hunter-v4/index.html
           grep -q 'کاندید شکار' stock-hunter-v4/index.html
@@ -193,8 +194,20 @@ jobs:
           from pathlib import Path
           universe=Path('stock-hunter-v4/app-universe.js').read_text(encoding='utf-8')
           search=Path('stock-hunter-v4/app-universal-search-v416.js').read_text(encoding='utf-8')
+          runtime=Path('stock-hunter-v4/app-runtime.js').read_text(encoding='utf-8')
+          index416=Path('stock-hunter-v4/index.html').read_text(encoding='utf-8')
+          index417=Path('stock-hunter-v4/index-v417.html').read_text(encoding='utf-8')
           assert 'return universeRows.slice().sort' in universe
           assert "if(q)return universalRowsV416(q)" in search
+          assert "STOCK_HUNTER_SEARCH_UI_V416={active:true,version:'4.1.6-search-typeahead-v1'}" in search
+          assert 'search-combobox-v416' in search
+          assert 'searchSuggestionsV416' in search
+          assert "e.key==='ArrowDown'" in search and "e.key==='ArrowUp'" in search and "e.key==='Enter'" in search
+          assert 'SEARCH_RENDER_DEBOUNCE_V416=110' in search
+          assert "for(const id of ['hunt','decision','pageSize'])" in runtime
+          assert "['search','hunt','decision','pageSize']" not in runtime
+          assert 'app-universal-search-v416.js?v=4.1.6-search1' in index416
+          assert 'app-universal-search-v416.js?v=4.1.6-search1' in index417
           assert "stock_hunter_universe_v4" in search
           assert "limit','1000'" in search and "offset" in search
           assert "$('hunt')" not in search and "$('decision')" not in search
