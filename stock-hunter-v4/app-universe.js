@@ -57,6 +57,7 @@ async function searchUniverse(q){
 const searchEl=$('search');
 searchEl.placeholder='جست‌وجو در تمام نمادهای بورس، فرابورس، صندوق‌ها، اوراق، اختیار، کالا و انرژی…';
 searchEl.addEventListener('input',()=>{
+  if(typeof window!=='undefined'&&window.STOCK_HUNTER_SEARCH_UI_V416?.active)return;
   clearTimeout(universeTimer);page=1;
   const q=searchEl.value.trim();
   if(!q){universeRows=[];render();return;}
