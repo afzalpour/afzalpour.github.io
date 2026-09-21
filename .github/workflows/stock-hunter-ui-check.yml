@@ -203,6 +203,10 @@ jobs:
           assert "if(q)return universalRowsV416(q)" in search
           assert "STOCK_HUNTER_SEARCH_UI_V416={active:true,version:'4.1.6-search-typeahead-v1'}" in search
           assert 'search-combobox-v416' in search
+          styles=Path('stock-hunter-v4/styles.css').read_text(encoding='utf-8')
+          assert '.search-combobox-v416>input{display:block;width:100%;background:#131519;border-color:#2a2d33;color:#efece5}' in styles
+          assert 'styles.css?v=4.1.6-search2' in index416
+          assert 'styles.css?v=4.1.6-search2' in index417
           assert 'searchSuggestionsV416' in search
           assert "e.key==='ArrowDown'" in search and "e.key==='ArrowUp'" in search and "e.key==='Enter'" in search
           assert 'SEARCH_RENDER_DEBOUNCE_V416=110' in search
