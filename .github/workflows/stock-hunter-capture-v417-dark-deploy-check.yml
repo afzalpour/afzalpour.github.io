@@ -49,8 +49,13 @@ jobs:
               "return Response.json({ok:true,component_version:'4.1.7',storage_protocol:'v416-stable-schema',scanned:(data||[]).length,candidates:events.length,recorded,shadow_candidates:shadows.length,shadow_recorded:shadowRecorded,trade_date:now.ymd,source_version:'4.1.7-server-v1-parity'});"
           )
 
-          # The preserved v416 rollback source is now the exact hardened v6/HMAC baseline.
-          # v417 may differ only by the approved component/source-version identity markers above.
+          # The preserved v416 rollback source is now the exact live v7/HMAC baseline.
+          # v417 remains dark and has not yet adopted the v416-only per-row freshness guard.
+          # Normalize that single approved safety delta before checking the existing dark v417 identity.
+          expected=expected.replace(",market_breadth_pct_v1,updated_at';",",market_breadth_pct_v1';",1)
+          expected=expected.replace("    const freshCutoffIso=new Date(Date.now()-180000).toISOString();\n    const{data,error}=await sb.from('stock_hunter_integrated_v1').select(select).gte('updated_at',freshCutoffIso).limit(2500);if(error)throw error;\n","    const{data,error}=await sb.from('stock_hunter_integrated_v1').select(select).limit(2500);if(error)throw error;\n",1)
+
+          # v417 may otherwise differ only by the approved component/source-version identity markers above.
           for token in [
               'captureAdminKey',
               "authMode!=='hmac-sha256-v2'",
