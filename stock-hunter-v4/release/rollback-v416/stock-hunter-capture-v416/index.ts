@@ -94,8 +94,9 @@ Deno.serve(async(req)=>{
   if(claimErr)return Response.json({ok:false,error:claimErr.message},{status:500});
   if(!claimed)return Response.json({ok:true,skipped:'rate-limit'});
   try{
-    const select='id,symbol,company_name,last_price,yesterday_price,low_price,max_allowed,volume,qi,ofi,bid_stack_15s,ask_pull_15s,daily_rvol,rsi_5m,ema9_5m,ema21_5m,vwap,absorption,cancellation_ratio,price_velocity,trade_accel,recovery,depth_ratio,signal_accel,real_flow_ratio,risk_score,continuation_score,snapshots,candles,asset_type,market,integrated_eligible,flow_score_v1,trend_score_v1,momentum_score_v1,market_regime_v1,market_breadth_pct_v1';
-    const{data,error}=await sb.from('stock_hunter_integrated_v1').select(select).limit(2500);if(error)throw error;
+    const select='id,symbol,company_name,last_price,yesterday_price,low_price,max_allowed,volume,qi,ofi,bid_stack_15s,ask_pull_15s,daily_rvol,rsi_5m,ema9_5m,ema21_5m,vwap,absorption,cancellation_ratio,price_velocity,trade_accel,recovery,depth_ratio,signal_accel,real_flow_ratio,risk_score,continuation_score,snapshots,candles,asset_type,market,integrated_eligible,flow_score_v1,trend_score_v1,momentum_score_v1,market_regime_v1,market_breadth_pct_v1,updated_at';
+    const freshCutoffIso=new Date(Date.now()-180000).toISOString();
+    const{data,error}=await sb.from('stock_hunter_integrated_v1').select(select).gte('updated_at',freshCutoffIso).limit(2500);if(error)throw error;
     const evals=(data||[]).map((x:any)=>evaluate(x,now)).filter(Boolean);
     const events=evals.map((z:any)=>z.event).filter(Boolean),shadows=evals.map((z:any)=>z.shadow).filter(Boolean);
     let recorded=0,shadowRecorded=0;
