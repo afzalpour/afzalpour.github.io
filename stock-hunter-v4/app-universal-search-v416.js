@@ -17,20 +17,20 @@ function normalizeSearchV416(v){
     .replace(/[ۀة]/g,'ه')
     .replace(/[‌‍ـ]+/g,' ')
     .replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
-    .replace(/[^p{L}p{N}]+/gu,' ')
-    .replace(/s+/g,' ').trim();
+    .replace(/[^\p{L}\p{N}]+/gu,' ')
+    .replace(/\s+/g,' ').trim();
 }
-function compactSearchV416(v){return normalizeSearchV416(v).replace(/s+/g,'');}
+function compactSearchV416(v){return normalizeSearchV416(v).replace(/\s+/g,'');}
 function matchesUniversalSearchV416(r,q){
   const n=normalizeSearchV416(q),c=compactSearchV416(q);if(!n)return true;
-  const hay=normalizeSearchV416(`${r.symbol||''} ${r.company_name||r.company||''} ${r.search_key||''} ${r.isin||''}`),compact=hay.replace(/s+/g,'');
+  const hay=normalizeSearchV416(`${r.symbol||''} ${r.company_name||r.company||''} ${r.search_key||''} ${r.isin||''}`),compact=hay.replace(/\s+/g,'');
   return hay.includes(n)||(c&&compact.includes(c));
 }
 function searchIndexItemV416(r){
   const symbol=String(r.symbol||''),company=String(r.company_name||r.company||''),searchKey=String(r.search_key||''),isin=String(r.isin||'');
   const symbolNorm=normalizeSearchV416(symbol),companyNorm=normalizeSearchV416(company);
   const hay=normalizeSearchV416(`${symbol} ${company} ${searchKey} ${isin}`);
-  return {raw:r,symbol,company,symbolNorm,companyNorm,hay,compact:hay.replace(/s+/g,'')};
+  return {raw:r,symbol,company,symbolNorm,companyNorm,hay,compact:hay.replace(/\s+/g,'')};
 }
 function rebuildCatalogIndexV416(){catalogIndexV416=catalogV416.map(searchIndexItemV416);}
 function fallbackCatalogV416(){
