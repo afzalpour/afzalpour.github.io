@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch published Pages artifacts
+      - name: Wait for and fetch published Pages artifacts
         run: |
           set -euo pipefail
           mkdir -p /tmp/stock-hunter-public-smoke
@@ -28,23 +28,54 @@ jobs:
             local url="$1"
             local out="$2"
             local code
-            code="$(curl -L --silent --show-error --retry 3 --retry-delay 2 --connect-timeout 10 --max-time 30 -w '%{http_code}' -o "$out" "$url")"
+            code="$(curl -L --silent --show-error --retry 2 --retry-delay 1 --connect-timeout 10 --max-time 30 -w '%{http_code}' -o "$out" "$url")"
             test "$code" = "200"
             test -s "$out"
           }
 
-          fetch "https://afzalpour.github.io/" "/tmp/stock-hunter-public-smoke/root-index.html"
-          fetch "https://afzalpour.github.io/stock-hunter-v4/" "/tmp/stock-hunter-public-smoke/app-index.html"
-          fetch "https://afzalpour.github.io/stock-hunter-v4/sw.js" "/tmp/stock-hunter-public-smoke/sw.js"
-          fetch "https://afzalpour.github.io/stock-hunter-v4/hunt-runtime-core-v417.js" "/tmp/stock-hunter-public-smoke/hunt-runtime-core-v417.js"
-          fetch "https://afzalpour.github.io/stock-hunter-v4/app-runtime-router-v417.js" "/tmp/stock-hunter-public-smoke/app-runtime-router-v417.js"
-          fetch "https://afzalpour.github.io/stock-hunter-v4/app-runtime.js" "/tmp/stock-hunter-public-smoke/app-runtime.js"
-          fetch "https://afzalpour.github.io/stock-hunter-v4/app-universe.js" "/tmp/stock-hunter-public-smoke/app-universe.js"
-          fetch "https://afzalpour.github.io/stock-hunter-v4/app-universal-search-v416.js" "/tmp/stock-hunter-public-smoke/app-universal-search-v416.js"
-          fetch "https://afzalpour.github.io/stock-hunter-v4/styles.css" "/tmp/stock-hunter-public-smoke/styles.css"
-          fetch "https://afzalpour.github.io/stock-hunter-v4/index-v417.html" "/tmp/stock-hunter-public-smoke/index-v417.html"
-          fetch "https://afzalpour.github.io/stock-hunter-v4/app-personal-v417.js" "/tmp/stock-hunter-public-smoke/app-personal-v417.js"
-          fetch "https://afzalpour.github.io/stock-hunter-v4/personal-v417.css" "/tmp/stock-hunter-public-smoke/personal-v417.css"
+          specs=(
+            "index.html|https://afzalpour.github.io/|root-index.html"
+            "stock-hunter-v4/index.html|https://afzalpour.github.io/stock-hunter-v4/|app-index.html"
+            "stock-hunter-v4/sw.js|https://afzalpour.github.io/stock-hunter-v4/sw.js|sw.js"
+            "stock-hunter-v4/hunt-runtime-core-v417.js|https://afzalpour.github.io/stock-hunter-v4/hunt-runtime-core-v417.js|hunt-runtime-core-v417.js"
+            "stock-hunter-v4/app-runtime-router-v417.js|https://afzalpour.github.io/stock-hunter-v4/app-runtime-router-v417.js|app-runtime-router-v417.js"
+            "stock-hunter-v4/app-runtime.js|https://afzalpour.github.io/stock-hunter-v4/app-runtime.js|app-runtime.js"
+            "stock-hunter-v4/app-universe.js|https://afzalpour.github.io/stock-hunter-v4/app-universe.js|app-universe.js"
+            "stock-hunter-v4/app-universal-search-v416.js|https://afzalpour.github.io/stock-hunter-v4/app-universal-search-v416.js|app-universal-search-v416.js"
+            "stock-hunter-v4/styles.css|https://afzalpour.github.io/stock-hunter-v4/styles.css|styles.css"
+            "stock-hunter-v4/index-v417.html|https://afzalpour.github.io/stock-hunter-v4/index-v417.html|index-v417.html"
+            "stock-hunter-v4/app-personal-v417.js|https://afzalpour.github.io/stock-hunter-v4/app-personal-v417.js|app-personal-v417.js"
+            "stock-hunter-v4/personal-v417.css|https://afzalpour.github.io/stock-hunter-v4/personal-v417.css|personal-v417.css"
+          )
+
+          converged=0
+          for attempt in $(seq 1 60); do
+            all_ok=1
+            for spec in "${specs[@]}"; do
+              IFS='|' read -r repo_path url out_name <<< "$spec"
+              tmp="/tmp/stock-hunter-public-smoke/$out_name"
+              if ! fetch "$url?sha=$GITHUB_SHA&attempt=$attempt" "$tmp"; then
+                all_ok=0
+                break
+              fi
+              if ! cmp -s "$repo_path" "$tmp"; then
+                all_ok=0
+                break
+              fi
+            done
+            if [ "$all_ok" = "1" ]; then
+              converged=1
+              echo "Published Pages bytes converged to $GITHUB_SHA on attempt $attempt"
+              break
+            fi
+            echo "Published Pages bytes not converged yet (attempt $attempt/60)"
+            sleep 5
+          done
+
+          if [ "$converged" != "1" ]; then
+            echo "::error::GitHub Pages did not converge to repository bytes within the smoke window"
+            exit 1
+          fi
 
       - name: Verify deployed bytes equal repository bytes
         run: |
