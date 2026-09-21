@@ -14,16 +14,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Probe exact 4.1.6 public REST reads
+      - name: Probe exact 4.1.6 public REST reads and lifecycle views
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY' > /tmp/env.sh
           import re
           s=open('stock-hunter-v4/config.js',encoding='utf-8').read()
-          url=re.search(r"SUPABASE_URL:\s*'([^']+)'",s).group(1)
-          key=re.search(r"SUPABASE_PUBLISHABLE_KEY:\s*'([^']+)'",s).group(1)
-          table=re.search(r"TABLE:\s*'([^']+)'",s).group(1)
+          url=re.search(r"SUPABASE_URL:\\s*'([^']+)'",s).group(1)
+          key=re.search(r"SUPABASE_PUBLISHABLE_KEY:\\s*'([^']+)'",s).group(1)
+          table=re.search(r"TABLE:\\s*'([^']+)'",s).group(1)
           print("BASE="+repr(url))
           print("KEY="+repr(key))
           print("TABLE="+repr(table))
@@ -43,10 +43,15 @@ jobs:
             echo "HTTP_CODE=$code"
             sed -n '1,20p' "$headers" || true
             echo "BODY_BEGIN"
-            head -c 4000 "$body" || true
+            head -c 12000 "$body" || true
             echo
             echo "BODY_END"
           }
 
           probe integrated "$BASE/rest/v1/$TABLE?select=id,symbol,updated_at&order=updated_at.desc&limit=2"
           probe health "$BASE/rest/v1/stock_hunter_feed_health_v4?select=id,status,symbols,last_feed_at,agent_version,message&id=eq.local-agent&limit=1"
+          probe prospective "$BASE/rest/v1/stock_hunter_prospective_collection_status_v416?select=*&limit=10"
+          probe maturity "$BASE/rest/v1/stock_hunter_maturity_status_v416?select=*&limit=10"
+          probe calibration "$BASE/rest/v1/stock_hunter_calibration_readiness_v416?select=*&limit=10"
+          probe oos "$BASE/rest/v1/stock_hunter_oos_unlock_readiness_v416?select=*&limit=10"
+          probe activation "$BASE/rest/v1/stock_hunter_activation_status_v417?select=*&limit=10"
