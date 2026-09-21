@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Probe exact 4.1.6 public REST reads and lifecycle views
+      - name: Probe exact 4.1.6 public REST reads
         shell: bash
         run: |
           set -euo pipefail
@@ -33,8 +33,8 @@ jobs:
           probe() {
             local name="$1"
             local url="$2"
-            local body="/tmp/"$name".body"
-            local headers="/tmp/"$name".headers"
+            local body="/tmp/${name}.body"
+            local headers="/tmp/${name}.headers"
             local code
             code="$(curl -sS -D "$headers" -o "$body" -w '%{http_code}' \
               --connect-timeout 10 --max-time 30 \
@@ -43,15 +43,10 @@ jobs:
             echo "HTTP_CODE=$code"
             sed -n '1,20p' "$headers" || true
             echo "BODY_BEGIN"
-            head -c 12000 "$body" || true
+            head -c 4000 "$body" || true
             echo
             echo "BODY_END"
           }
 
           probe integrated "$BASE/rest/v1/$TABLE?select=id,symbol,updated_at&order=updated_at.desc&limit=2"
           probe health "$BASE/rest/v1/stock_hunter_feed_health_v4?select=id,status,symbols,last_feed_at,agent_version,message&id=eq.local-agent&limit=1"
-          probe prospective "$BASE/rest/v1/stock_hunter_prospective_collection_status_v416?select=*&limit=10"
-          probe maturity "$BASE/rest/v1/stock_hunter_maturity_status_v416?select=*&limit=10"
-          probe calibration "$BASE/rest/v1/stock_hunter_calibration_readiness_v416?select=*&limit=10"
-          probe oos "$BASE/rest/v1/stock_hunter_oos_unlock_readiness_v416?select=*&limit=10"
-          probe activation "$BASE/rest/v1/stock_hunter_activation_status_v417?select=*&limit=10"
