@@ -288,3 +288,13 @@ Current management-plane identities used for future attestation/rollback prepara
 - stock-hunter-capture-v417: ACTIVE/dark, deployment version 2, SHA-256 066cc265d990a9673aff0d755acebe142a89170e0479616ea2fc76fe4974a543, same timestamp+nonce HMAC validator and no active traffic caller.
 
 Any future final component attestation must use the then-current fresh Management API observation; these values are not a substitute for the required <=60 minute final attestation.
+
+
+## Capture-v416 v7 rollback identity refresh — 2026-09-21
+
+After the explicitly authorized per-row 180-second prospective freshness guard:
+- live capture-v416 deployment version: 7
+- live/rollback bundle SHA-256: 49f8a9a666b60801b670f4784404293bb3e0bbfee8b70d07a36a7d992fa31740
+- auth contract remains VAULT_HMAC_NONCE_V2
+- archived rollback source is byte-identical to the live/repository v7 source
+- no 4.1.7 traffic, activation, release freeze, or routing transition is performed by this refresh
