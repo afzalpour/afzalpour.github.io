@@ -536,3 +536,9 @@ Maturity:
 - direct full-verifier execution immediately after DDL encountered Postgres connection timeouts; classify as data-plane availability, not verifier failure
 
 Safety remains 4.1.6 Champion / CHAMPION_ONLY / 0% challenger / kill switch ON / state_version 1.
+
+
+Quarantine verifier closure:
+- first-maturity verifier: PASS
+- rolling-maturity verifier: PASS
+- the earlier connection timeout was transient and did not represent a maturity/quarantine invariant failure.
