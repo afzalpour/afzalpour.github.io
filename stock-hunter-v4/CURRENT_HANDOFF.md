@@ -427,3 +427,37 @@ Required next evidence:
 - verify live Supabase heartbeat advances and reports `agent_version=4.0.6`.
 
 Until that client smoke passes, this repair remains PREPARED / CLIENT_SMOKE_PENDING. No 4.1.6 scoring/routing/lifecycle state changed.
+
+
+## Market-open feed guard — 2026-09-21
+
+Live session evidence:
+- Feed Agent v4.0.6 produced one successful 500-symbol batch.
+- server-reported agent version: `4.0.6`.
+- last feed heartbeat: `2026-09-21 06:07:21.677+00`.
+- latest signal update: `2026-09-21 06:07:18.232+00`.
+- public REST/Data API is healthy: diagnostic run `35495501455`, attempt 5, integrated + feed-health HTTP 200.
+- deployed Pages/runtime is healthy: Public Production Smoke `35538341215`, attempt 2 PASS.
+
+Prospective integrity issue discovered while Feed was stale:
+- today's Shadow samples joined to current source rows: 296;
+- definitely stale-over-180 samples: 146;
+- affected IDs: `1280..1425`;
+- affected bucket: `585`;
+- prior bucket `570`: 150 samples with max source age 46 seconds and zero proven stale-over-180.
+- no rows were deleted, modified, fabricated or backfilled.
+
+Temporary fail-closed action:
+- `stock-hunter-capture-v416-mid` job id 16 was changed from active=true to active=false only.
+- schedule remains `* 6-12 * * 0-3,6`.
+- command remains `select private.invoke_stock_hunter_capture_v416();`.
+- re-enable only after live Feed heartbeat and 180-second row freshness are restored.
+
+Temporary local recovery helper:
+- `Stock_Hunter_Feed_Watchdog_v4.0.7.zip`
+- SHA-256 `b1ef976eaec3e8e471f7ef97024116835b22ebcf0fea43b49cf318bc38c12055`
+- Library path `/نرم افزار شکار سهم/Stock_Hunter_Feed_Watchdog_v4.0.7.zip`.
+- Watchdog contains no Feed secret; it only reads public feed-health and restarts the unchanged v4.0.6 executable when heartbeat remains stale.
+
+Do not advance maturity or treat the 146 proven stale-over-180 rows as clean prospective evidence until the canonical maturity review resolves them.
+4.1.6 remains Champion; routing remains CHAMPION_ONLY / 0% challenger / kill switch ON.
