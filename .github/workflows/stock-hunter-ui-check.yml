@@ -1,5 +1,7 @@
 name: Stock Hunter UI Check
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [main, 'stock-hunter-v416-*', 'stock-hunter-v417-*']
     paths:
