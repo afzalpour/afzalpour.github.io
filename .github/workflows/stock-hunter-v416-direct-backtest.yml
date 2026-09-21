@@ -1,0 +1,44 @@
+name: Stock Hunter 4.1.6 Direct Empirical Backtest
+
+on:
+  push:
+    branches:
+      - stock-hunter-v416-backtest-10d-20260922
+    paths:
+      - '.github/workflows/stock-hunter-v416-direct-backtest.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  empirical-backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Request GitHub OIDC token
+        env:
+          AUDIENCE: stock-hunter-live-gate-v417
+        run: |
+          set -euo pipefail
+          response="$(curl --fail-with-body --silent --show-error             -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN"             "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$AUDIENCE")"
+          token="$(printf '%s' "$response" | jq -r '.value')"
+          test -n "$token"
+          echo "::add-mask::$token"
+          printf '%s' "$token" > "$RUNNER_TEMP/stock-hunter-oidc-token"
+
+      - name: Execute read-only empirical backtest through direct PostgreSQL bridge
+        run: |
+          set -euo pipefail
+          token="$(cat "$RUNNER_TEMP/stock-hunter-oidc-token")"
+          body="$(mktemp)"
+          code="$(curl --silent --show-error             -o "$body" -w '%{http_code}'             -X POST             -H "Authorization: Bearer $token"             -H "Content-Type: application/json"             --data '{"purpose":"empirical-backtest-v416"}'             "https://summnepwuziwulzvpcms.supabase.co/functions/v1/stock-hunter-ci-live-check-v417")"
+          cat "$body"
+          echo
+          test "$code" = "200"
+          jq -e '.result == "stock-hunter-empirical-backtest-v416: PASS"' "$body" >/dev/null
+          jq -e '.snapshot != null' "$body" >/dev/null
+          echo "stock-hunter-direct-empirical-backtest: PASS"
