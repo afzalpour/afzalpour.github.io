@@ -79,3 +79,12 @@ Unchanged:
 - state_version: 1
 - 4.1.7 capture remains dark
 - no OOS release, Promotion, Activation Review or final release freeze
+
+
+## Final live verifier closure
+
+After the transient direct-Postgres timeout cleared:
+- `verify-first-maturity-horizon-v416.sql` -> `stock-hunter-first-maturity-horizon-v416: PASS`
+- `verify-rolling-maturity-watch-v416.sql` -> `stock-hunter-rolling-maturity-watch-v416: PASS`
+
+Therefore the quarantine is live, zero-leak, and compatible with both the first-horizon and rolling maturity contracts.
