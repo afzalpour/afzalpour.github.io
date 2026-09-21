@@ -78,6 +78,12 @@ Current market feed provenance depends on `Stock_Hunter_Feed_Agent_v4.0.5` popul
 Browser refresh interval: 15 seconds.
 A stale feed can remain searchable but cannot create active Action Now/Radar alerts.
 
+Prospective capture freshness is also per-row, not heartbeat-only:
+- `stock-hunter-capture-v416` may evaluate/write prospective Hunt Events or Shadow Samples only from source rows whose `updated_at` age is at most 180 seconds at capture invocation time;
+- a fresh global `stock_hunter_feed_health_v4` heartbeat is not sufficient if an individual symbol row is stale;
+- source rows older than 180 seconds must be excluded before Hunt evaluation and before prospective writes.
+
+
 ## 9. New-chat continuity rule
 This file is the architectural source of truth.
 Any new project chat/agent must read this file BEFORE proposing or applying changes.

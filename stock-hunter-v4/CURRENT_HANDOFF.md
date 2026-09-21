@@ -461,3 +461,53 @@ Temporary local recovery helper:
 
 Do not advance maturity or treat the 146 proven stale-over-180 rows as clean prospective evidence until the canonical maturity review resolves them.
 4.1.6 remains Champion; routing remains CHAMPION_ONLY / 0% challenger / kill switch ON.
+
+
+## Capture-v416 per-row freshness live closure — 2026-09-21
+
+User explicitly authorized PR #231 and the per-row 180-second freshness guard.
+
+Completed:
+- PR #231 merged at `24a02d6e8178adf786b20d609b951439a6329c8a`.
+- live `stock-hunter-capture-v416` deployed as version 7.
+- live bundle SHA-256: `49f8a9a666b60801b670f4784404293bb3e0bbfee8b70d07a36a7d992fa31740`.
+- live source is byte-identical to repository main.
+- capture now selects source `updated_at` and queries only rows with `updated_at >= now - 180 seconds` before Hunt evaluation.
+- HMAC timestamp+nonce authorization is unchanged.
+- formulas, thresholds, score components, routing and 4.1.7 traffic are unchanged.
+
+Live signed proof:
+- request id 742 -> HTTP 200.
+- scanned 752 fresh rows; 3 Hunt Events recorded; 218 Shadow rows recorded.
+- stale-over-180 among new Shadow rows: 0.
+- scheduled job 16 re-enabled with the exact existing schedule/command.
+- first scheduled run after re-enable succeeded at 07:45 UTC.
+- 245 new Shadow rows checked; stale-over-180: 0; capture last_error: null.
+
+Pre-fix contaminated cohorts are preserved as evidence and are not silently clean:
+- sample IDs 1280..1425: 146 rows proven stale-over-180.
+- 07:34 pre-fix capture: 74 rows proven stale-over-180; observed stale ID range 2448..2732.
+Do not fabricate/backfill replacements. Maturity review must explicitly account for these cohorts.
+
+Safety remains:
+- 4.1.6 frozen Champion.
+- CHAMPION_ONLY / 0% challenger / kill switch ON / state_version 1.
+- first maturity horizon remains time-gated; this fix does not advance lifecycle state.
+
+
+## Capture-v416 v7 rollback identity sync — 2026-09-21
+
+After live deployment of capture-v416 v7, the preserved rollback/future final-freeze identity was refreshed to avoid a stale v6 rollback package.
+
+Live rollback identity:
+- capture deployment version: 7
+- capture bundle SHA-256: `49f8a9a666b60801b670f4784404293bb3e0bbfee8b70d07a36a7d992fa31740`
+- capture auth contract: `VAULT_HMAC_NONCE_V2`
+- archived rollback Edge source is exact v7 source and contains the per-row 180-second freshness guard.
+
+Live final-freeze function definition now pins the same v7 identity.
+No final-freeze invocation occurred.
+No release manifest, freeze authorization or rollback archive was created.
+Routing remains `CHAMPION_ONLY / 0% challenger / kill switch ON / state_version 1`.
+
+The v4.1.7 capture remains dark and was not deployed or activated by this sync.
