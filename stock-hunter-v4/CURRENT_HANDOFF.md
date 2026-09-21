@@ -493,3 +493,21 @@ Safety remains:
 - 4.1.6 frozen Champion.
 - CHAMPION_ONLY / 0% challenger / kill switch ON / state_version 1.
 - first maturity horizon remains time-gated; this fix does not advance lifecycle state.
+
+
+## Capture-v416 v7 rollback identity sync — 2026-09-21
+
+After live deployment of capture-v416 v7, the preserved rollback/future final-freeze identity was refreshed to avoid a stale v6 rollback package.
+
+Live rollback identity:
+- capture deployment version: 7
+- capture bundle SHA-256: `49f8a9a666b60801b670f4784404293bb3e0bbfee8b70d07a36a7d992fa31740`
+- capture auth contract: `VAULT_HMAC_NONCE_V2`
+- archived rollback Edge source is exact v7 source and contains the per-row 180-second freshness guard.
+
+Live final-freeze function definition now pins the same v7 identity.
+No final-freeze invocation occurred.
+No release manifest, freeze authorization or rollback archive was created.
+Routing remains `CHAMPION_ONLY / 0% challenger / kill switch ON / state_version 1`.
+
+The v4.1.7 capture remains dark and was not deployed or activated by this sync.
