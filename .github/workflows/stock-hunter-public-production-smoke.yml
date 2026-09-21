@@ -38,6 +38,8 @@ jobs:
           fetch "https://afzalpour.github.io/stock-hunter-v4/sw.js" "/tmp/stock-hunter-public-smoke/sw.js"
           fetch "https://afzalpour.github.io/stock-hunter-v4/hunt-runtime-core-v417.js" "/tmp/stock-hunter-public-smoke/hunt-runtime-core-v417.js"
           fetch "https://afzalpour.github.io/stock-hunter-v4/app-runtime-router-v417.js" "/tmp/stock-hunter-public-smoke/app-runtime-router-v417.js"
+          fetch "https://afzalpour.github.io/stock-hunter-v4/app-runtime.js" "/tmp/stock-hunter-public-smoke/app-runtime.js"
+          fetch "https://afzalpour.github.io/stock-hunter-v4/app-universe.js" "/tmp/stock-hunter-public-smoke/app-universe.js"
           fetch "https://afzalpour.github.io/stock-hunter-v4/app-universal-search-v416.js" "/tmp/stock-hunter-public-smoke/app-universal-search-v416.js"
           fetch "https://afzalpour.github.io/stock-hunter-v4/styles.css" "/tmp/stock-hunter-public-smoke/styles.css"
           fetch "https://afzalpour.github.io/stock-hunter-v4/index-v417.html" "/tmp/stock-hunter-public-smoke/index-v417.html"
@@ -52,6 +54,8 @@ jobs:
           cmp stock-hunter-v4/sw.js /tmp/stock-hunter-public-smoke/sw.js
           cmp stock-hunter-v4/hunt-runtime-core-v417.js /tmp/stock-hunter-public-smoke/hunt-runtime-core-v417.js
           cmp stock-hunter-v4/app-runtime-router-v417.js /tmp/stock-hunter-public-smoke/app-runtime-router-v417.js
+          cmp stock-hunter-v4/app-runtime.js /tmp/stock-hunter-public-smoke/app-runtime.js
+          cmp stock-hunter-v4/app-universe.js /tmp/stock-hunter-public-smoke/app-universe.js
           cmp stock-hunter-v4/app-universal-search-v416.js /tmp/stock-hunter-public-smoke/app-universal-search-v416.js
           cmp stock-hunter-v4/styles.css /tmp/stock-hunter-public-smoke/styles.css
           cmp stock-hunter-v4/index-v417.html /tmp/stock-hunter-public-smoke/index-v417.html
@@ -74,6 +78,8 @@ jobs:
           SW=/tmp/stock-hunter-public-smoke/sw.js
           CORE=/tmp/stock-hunter-public-smoke/hunt-runtime-core-v417.js
           ROUTER=/tmp/stock-hunter-public-smoke/app-runtime-router-v417.js
+          APP_RUNTIME=/tmp/stock-hunter-public-smoke/app-runtime.js
+          APP_UNIVERSE=/tmp/stock-hunter-public-smoke/app-universe.js
           SEARCH=/tmp/stock-hunter-public-smoke/app-universal-search-v416.js
           STYLES=/tmp/stock-hunter-public-smoke/styles.css
           P417=/tmp/stock-hunter-public-smoke/index-v417.html
