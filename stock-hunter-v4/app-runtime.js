@@ -39,7 +39,8 @@ async function load(){
     }else{
       showFeed('bad','اطلاعات لحظه‌ای معاملات در دسترس نیست','در ساعات رسمی بازار داده تازه دریافت نشده است؛ احتمال تعطیلی رسمی بازار یا قطع مسیر دریافت داده وجود دارد.');
     }
-    render();
+    if(typeof window!=='undefined'&&typeof window.stockHunterSearchRenderAfterDataV416==='function')window.stockHunterSearchRenderAfterDataV416();
+    else render();
     const urgent=rows.filter(x=>x.hunt==='شکار ویژه'||x.hunt==='هشدار فوری');
     if(sound&&session.open&&urgent.some(x=>!seen.has(x.id))){
       try{const c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);g.gain.value=.035;o.frequency.value=900;o.start();o.stop(c.currentTime+.12);}catch{}
@@ -69,7 +70,7 @@ $('defaultColumns').onclick=()=>{visible=new Set(defaultKeys);localStorage.setIt
 $('allColumns').onclick=()=>{visible=new Set(columns.map(c=>c[0]));localStorage.setItem('sh_columns_v407',JSON.stringify([...visible]));renderColumnOptions();render();};
 $('prevPage').onclick=()=>{if(page>1){page--;render();}};
 $('nextPage').onclick=()=>{page++;render();};
-for(const id of ['search','hunt','decision','pageSize'])$(id).addEventListener(id==='search'?'input':'change',()=>{page=1;render();});
+for(const id of ['hunt','decision','pageSize'])$(id).addEventListener('change',()=>{page=1;render();});
 $('refreshBtn').onclick=load;
 $('soundBtn').onclick=()=>{sound=!sound;$('soundBtn').textContent=sound?'🔔 هشدار روشن':'🔕 هشدار خاموش';};
 
