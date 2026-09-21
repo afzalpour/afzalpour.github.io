@@ -542,3 +542,18 @@ Quarantine verifier closure:
 - first-maturity verifier: PASS
 - rolling-maturity verifier: PASS
 - the earlier connection timeout was transient and did not represent a maturity/quarantine invariant failure.
+
+
+## Pre-first-maturity readiness — 2026-09-21
+
+- first cohort 2026-09-19: 12 Shadow Samples / 8 eligible.
+- all 8 eligible samples are missing a 2026-09-20 outcome observation; 2 are also missing 2026-09-21 observation.
+- no backfill/fabrication is permitted.
+- current Calibration rows: 0.
+- required downstream cron coverage:
+  - 2026-09-20: 5/5 successful job names.
+  - 2026-09-21: repaired to 5/5 after candidate evaluator `job startup timeout`.
+- candidate evaluator recovery run succeeded at 2026-09-21 14:55 UTC; canonical schedule restored immediately.
+- candidate evaluation runs remain 0 because calibration is not ready.
+- first-maturity verifier and rolling-maturity verifier both PASS pre-horizon with the quality-quarantine contract active.
+- tomorrow's first-horizon verifier may legitimately PASS with zero mature rows; this must not be interpreted as Calibration readiness or lifecycle advancement.
