@@ -106,6 +106,8 @@ function renderSuggestionsV416(){
   const q=s.value.trim();if(!q){hideSearchSuggestionsV416();return;}
   const matches=suggestionsForV416(q);
   if(!matches.length){hideSearchSuggestionsV416();return;}
+  const qNorm=normalizeSearchV416(q);
+  if(matches.some(i=>i.symbolNorm===qNorm)){hideSearchSuggestionsV416();return;}
   searchActiveIndexV416=-1;
   list.innerHTML=matches.map((i,idx)=>{
     const r=i.raw,market=String(r.market||r.asset_type||r.assetType||'').trim();
