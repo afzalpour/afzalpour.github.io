@@ -557,3 +557,22 @@ Quarantine verifier closure:
 - candidate evaluation runs remain 0 because calibration is not ready.
 - first-maturity verifier and rolling-maturity verifier both PASS pre-horizon with the quality-quarantine contract active.
 - tomorrow's first-horizon verifier may legitimately PASS with zero mature rows; this must not be interpreted as Calibration readiness or lifecycle advancement.
+
+
+## Search responsiveness + typeahead — 2026-09-21
+
+PR #235 prepares one shared Search UX fix for both 4.1.6 public and 4.1.7 personal surfaces.
+
+Implementation:
+- removed synchronous full `render()` from search input events;
+- 110 ms debounced result rendering;
+- local full-Universe typeahead with up to 10 symbol/company suggestions;
+- exact/prefix matches rank ahead of contains matches;
+- Persian/Arabic normalization;
+- pointer/touch + Arrow Up/Down + Enter + Escape support;
+- ARIA combobox/listbox semantics;
+- server Universe search retained only as fallback while the local catalog is unavailable;
+- periodic market refresh avoids competing with an immediately active keystroke;
+- modified shared assets use cache-buster `4.1.6-search1`.
+
+No Hunt score/formula/threshold, routing, lifecycle, Feed or Auth write behavior is changed.
