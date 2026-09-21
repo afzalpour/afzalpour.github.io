@@ -1,7 +1,7 @@
 # Stock Hunter — 4.1.6 Rollback Package v7 Sync Audit
 
 DATE: 2026-09-21
-STATUS: REPOSITORY_SYNC_PREPARED
+STATUS: LIVE_SYNC_PASS
 SCOPE: recovery identity only
 
 The production Champion capture backend was explicitly upgraded to deployment v7 to enforce per-row source freshness <=180 seconds before prospective evaluation.
@@ -28,3 +28,26 @@ Safety:
 - Hunt formulas/thresholds unchanged
 
 Live SQL sync and post-sync verification are appended after application.
+
+
+## Live closure
+
+Applied the repository-defined targeted SQL through the live database connection.
+
+Verified live function:
+- `private.freeze_stock_hunter_release_v417(bigint,bigint,text)`
+- rollback capture deployment version: 7
+- rollback capture SHA-256: `49f8a9a666b60801b670f4784404293bb3e0bbfee8b70d07a36a7d992fa31740`
+- rollback auth contract: `VAULT_HMAC_NONCE_V2`
+
+Post-sync safety:
+- routing: `CHAMPION_ONLY`
+- challenger traffic: 0%
+- kill switch: ON
+- state_version: 1
+- activation_review_id: null
+- release manifests: 0
+- freeze authorizations: 0
+- rollback archives: 0
+
+No release freeze function invocation was performed.
