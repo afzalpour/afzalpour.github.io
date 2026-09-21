@@ -7,6 +7,8 @@ on:
       - '.github/workflows/stock-hunter-live-first-maturity-horizon.yml'
       - 'stock-hunter-v4/ci-live-check/stock-hunter-ci-live-check-v417/index.ts'
       - 'stock-hunter-v4/prospective-data/verify-first-maturity-horizon-v416.sql'
+      - 'stock-hunter-v4/prospective-data/shadow-sample-quality-quarantine-v416.sql'
+      - 'stock-hunter-v4/prospective-data/SHADOW_SAMPLE_QUALITY_QUARANTINE_AUDIT_2026-09-21.md'
       - 'stock-hunter-v4/prospective-data/LIVE_FIRST_MATURITY_GATE_AUDIT_2026-09-20.md'
   pull_request:
     branches: [main]
@@ -14,6 +16,8 @@ on:
       - '.github/workflows/stock-hunter-live-first-maturity-horizon.yml'
       - 'stock-hunter-v4/ci-live-check/stock-hunter-ci-live-check-v417/index.ts'
       - 'stock-hunter-v4/prospective-data/verify-first-maturity-horizon-v416.sql'
+      - 'stock-hunter-v4/prospective-data/shadow-sample-quality-quarantine-v416.sql'
+      - 'stock-hunter-v4/prospective-data/SHADOW_SAMPLE_QUALITY_QUARANTINE_AUDIT_2026-09-21.md'
       - 'stock-hunter-v4/prospective-data/LIVE_FIRST_MATURITY_GATE_AUDIT_2026-09-20.md'
   workflow_dispatch:
   schedule:
@@ -40,6 +44,7 @@ jobs:
           grep -q 'horizon_not_reached' "$src"
           grep -q "stock-hunter-first-maturity-horizon-v416: PASS" "$sql"
           grep -q "v_downstream_coverage<>15" "$sql"
+          grep -q "stock_hunter_shadow_sample_exclusions_v416" "$sql"
           if grep -Ei 'SUPABASE_(DB_URL|SECRET|SERVICE_ROLE|ACCESS_TOKEN).*\$\{\{ *secrets\.' .github/workflows/stock-hunter-live-first-maturity-horizon.yml; then
             echo "::error::Live maturity workflow must not carry Supabase database/admin credentials"
             exit 1

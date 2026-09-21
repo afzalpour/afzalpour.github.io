@@ -4,6 +4,8 @@ on:
     branches: [main, 'stock-hunter-v417-*']
     paths:
       - 'stock-hunter-v4/prospective-data/verify-rolling-maturity-watch-v416.sql'
+      - 'stock-hunter-v4/prospective-data/shadow-sample-quality-quarantine-v416.sql'
+      - 'stock-hunter-v4/prospective-data/SHADOW_SAMPLE_QUALITY_QUARANTINE_AUDIT_2026-09-21.md'
       - 'stock-hunter-v4/prospective-data/ROLLING_MATURITY_WATCH_AUDIT_2026-09-18.md'
       - '.github/workflows/stock-hunter-rolling-maturity-watch-check.yml'
 jobs:
@@ -28,6 +30,8 @@ jobs:
             "maturity_state<>'COLLECTING'",
             'downstream lifecycle advanced before calibration maturity',
             'production control plane advanced before calibration maturity',
+            'stock_hunter_shadow_sample_exclusions_v416',
+            'quarantined Shadow Samples leaked into rolling calibration dataset',
             'stock-hunter-rolling-maturity-watch-v416: PASS',
           ]:
             assert token in v, token

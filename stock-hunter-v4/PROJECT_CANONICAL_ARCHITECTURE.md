@@ -78,6 +78,14 @@ Current market feed provenance depends on `Stock_Hunter_Feed_Agent_v4.0.5` popul
 Browser refresh interval: 15 seconds.
 A stale feed can remain searchable but cannot create active Action Now/Radar alerts.
 
+
+
+Quality-quarantine contract:
+- prospective source rows are never deleted or synthetically repaired to hide a capture-quality incident;
+- a known-invalid or conservatively unsafe Shadow Sample may be placed in the immutable `stock_hunter_shadow_sample_exclusions_v416` ledger;
+- any sample in that ledger is permanently excluded from the live Calibration dataset before OOS freeze;
+- quarantine must be evidence-backed and documented; it cannot be used to improve model metrics by selectively removing poor outcomes.
+
 Prospective capture freshness is also per-row, not heartbeat-only:
 - `stock-hunter-capture-v416` may evaluate/write prospective Hunt Events or Shadow Samples only from source rows whose `updated_at` age is at most 180 seconds at capture invocation time;
 - a fresh global `stock_hunter_feed_health_v4` heartbeat is not sufficient if an individual symbol row is stale;

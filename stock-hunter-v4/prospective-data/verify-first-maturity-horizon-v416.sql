@@ -12,6 +12,7 @@ declare
   v_expected_mature bigint;
   v_bad_cal bigint;
   v_bad_future_dates bigint;
+  v_excluded_leak bigint;
   v_later_cohort_leak bigint;
   v_downstream_coverage bigint;
   v_candidate_runs bigint;
@@ -51,7 +52,12 @@ begin
     and s.observed_at>=p.prospective_start_at
     and s.trade_date=(s.observed_at at time zone 'Asia/Tehran')::date
     and s.created_at>=s.observed_at-interval '2 minutes'
-    and s.created_at<=s.observed_at + p.max_capture_lag_seconds * interval '1 second';
+    and s.created_at<=s.observed_at + p.max_capture_lag_seconds * interval '1 second'
+    and not exists (
+      select 1
+      from public.stock_hunter_shadow_sample_exclusions_v416 q
+      where q.sample_id=s.sample_id
+    );
 
   if v_cal_rows<>v_expected_mature then
     raise exception 'calibration first-cohort count mismatch: dataset %, expected mature %',
@@ -72,6 +78,14 @@ begin
 
   if v_bad_cal<>0 then
     raise exception 'first-cohort calibration contains % premature/invalid rows',v_bad_cal;
+  end if;
+
+  select count(*) into v_excluded_leak
+  from public.stock_hunter_calibration_dataset_v416 c
+  join public.stock_hunter_shadow_sample_exclusions_v416 q using(sample_id);
+
+  if v_excluded_leak<>0 then
+    raise exception 'calibration contains % quarantined Shadow Samples',v_excluded_leak;
   end if;
 
   select count(*) into v_bad_future_dates

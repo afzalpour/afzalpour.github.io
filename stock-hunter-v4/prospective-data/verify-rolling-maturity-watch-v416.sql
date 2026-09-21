@@ -18,6 +18,7 @@ declare
   v_oos bigint;
   v_dates bigint;
   v_bad bigint;
+  v_excluded_leak bigint;
   v_expected_ready boolean;
   v_candidate_runs bigint;
   v_oos_manifest bigint;
@@ -130,6 +131,14 @@ begin
 
   if v_bad<>0 then
     raise exception '% invalid/premature rows detected in rolling calibration dataset',v_bad;
+  end if;
+
+  select count(*) into v_excluded_leak
+  from public.stock_hunter_calibration_dataset_v416 c
+  join public.stock_hunter_shadow_sample_exclusions_v416 q using(sample_id);
+
+  if v_excluded_leak<>0 then
+    raise exception '% quarantined Shadow Samples leaked into rolling calibration dataset',v_excluded_leak;
   end if;
 
   v_expected_ready :=

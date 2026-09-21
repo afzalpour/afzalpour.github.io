@@ -511,3 +511,34 @@ No release manifest, freeze authorization or rollback archive was created.
 Routing remains `CHAMPION_ONLY / 0% challenger / kill switch ON / state_version 1`.
 
 The v4.1.7 capture remains dark and was not deployed or activated by this sync.
+
+
+## Shadow Sample quality quarantine — 2026-09-21
+
+Live non-destructive quarantine applied before future maturity/calibration can consume the known pre-v7 incident data.
+
+Ledger:
+- `public.stock_hunter_shadow_sample_exclusions_v416`
+- immutable after insert; RLS enabled
+- total exclusions: 438
+- 146 rows from the 06:15:06 UTC burst: all proven >180s stale
+- 292 rows from the 07:34:39 UTC pre-v7 mixed burst: conservatively quarantined because 74/292 were proven stale but the exact stale IDs were not durably retained
+
+Calibration:
+- live `stock_hunter_calibration_dataset_v416` now excludes ledger samples
+- quarantined rows currently visible in Calibration: 0
+- OOS frozen snapshot rows: 0, so quarantine is in force before any one-shot OOS freeze
+- no source Shadow Sample was deleted, overwritten, fabricated or backfilled
+
+Maturity:
+- first maturity on 2026-09-22 concerns the 2026-09-19 cohort and is not numerically altered by the 2026-09-21 quarantine
+- first/rolling maturity verifiers now explicitly fail if a quarantined sample leaks into Calibration
+- direct full-verifier execution immediately after DDL encountered Postgres connection timeouts; classify as data-plane availability, not verifier failure
+
+Safety remains 4.1.6 Champion / CHAMPION_ONLY / 0% challenger / kill switch ON / state_version 1.
+
+
+Quarantine verifier closure:
+- first-maturity verifier: PASS
+- rolling-maturity verifier: PASS
+- the earlier connection timeout was transient and did not represent a maturity/quarantine invariant failure.
