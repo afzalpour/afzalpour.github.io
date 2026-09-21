@@ -1,0 +1,187 @@
+name: Stock Hunter 4.1.6 Ten-Day Empirical Backtest
+
+on:
+  push:
+    branches:
+      - stock-hunter-v416-backtest-10d-20260922
+    paths:
+      - '.github/workflows/stock-hunter-v416-backtest-10d.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run read-only empirical backtest
+        shell: bash
+        run: |
+          cat > /tmp/backtest.py <<'PY'
+          import json, re, statistics, urllib.request, urllib.parse
+          from collections import Counter, defaultdict
+
+          cfg=open('stock-hunter-v4/config.js',encoding='utf-8').read()
+          BASE=re.search(r"SUPABASE_URL:\s*'([^']+)'",cfg).group(1).rstrip('/')
+          KEY=re.search(r"SUPABASE_PUBLISHABLE_KEY:\s*'([^']+)'",cfg).group(1)
+
+          def fetch(path, max_rows=5000):
+              rows=[]
+              offset=0
+              page=1000
+              while offset < max_rows:
+                  sep='&' if '?' in path else '?'
+                  url=f"{BASE}/rest/v1/{path}{sep}limit={page}&offset={offset}"
+                  req=urllib.request.Request(url,headers={'apikey':KEY,'Accept':'application/json'})
+                  try:
+                      with urllib.request.urlopen(req,timeout=35) as r:
+                          part=json.loads(r.read().decode('utf-8'))
+                  except Exception as e:
+                      return {'ok':False,'error':repr(e),'rows':rows}
+                  if not isinstance(part,list):
+                      return {'ok':False,'error':'non-list response','rows':rows}
+                  rows.extend(part)
+                  if len(part)<page: break
+                  offset += page
+              return {'ok':True,'rows':rows}
+
+          endpoints={
+            'outcomes':'stock_hunter_hunt_outcomes_v416?select=*&order=trade_date.desc,first_seen_at.desc',
+            'performance':'stock_hunter_hunt_performance_v416?select=*',
+            'calibration':'stock_hunter_calibration_dataset_v416?select=*&order=trade_date.desc,observed_at.desc',
+            'shadow_outcomes':'stock_hunter_shadow_outcomes_v416?select=*&order=trade_date.desc,observed_at.desc',
+            'archive':'stock_hunter_hunt_archive_v416?select=*'
+          }
+          data={}
+          print('=== ENDPOINT INVENTORY ===')
+          for name,path in endpoints.items():
+              z=fetch(path)
+              data[name]=z
+              rows=z['rows']
+              dates=sorted({str(r.get('trade_date')) for r in rows if r.get('trade_date')})
+              print(json.dumps({
+                  'name':name,'ok':z['ok'],'error':z.get('error'),'rows':len(rows),
+                  'date_count':len(dates),'min_date':dates[0] if dates else None,'max_date':dates[-1] if dates else None,
+                  'keys':sorted(rows[0].keys()) if rows else []
+              },ensure_ascii=False))
+
+          def fnum(v):
+              try:
+                  x=float(v)
+                  return x if x==x else None
+              except: return None
+          def avg(a):
+              a=[x for x in a if x is not None]
+              return sum(a)/len(a) if a else None
+          def med(a):
+              a=[x for x in a if x is not None]
+              return statistics.median(a) if a else None
+          def pct(n,d):
+              return 100*n/d if d else None
+          def bval(v):
+              if isinstance(v,bool): return v
+              if v is None: return None
+              return str(v).lower() in ('true','t','1','yes')
+
+          outcomes=data['outcomes']['rows']
+          dates=sorted({str(r.get('trade_date')) for r in outcomes if r.get('trade_date')},reverse=True)[:10]
+          sample=[r for r in outcomes if str(r.get('trade_date')) in dates]
+          print('\n=== LAST UP TO 10 EVENT TRADE DATES ===')
+          print(json.dumps({'dates':sorted(dates),'rows':len(sample)},ensure_ascii=False))
+
+          same_day_keys=sorted({k for r in sample for k in r.keys() if ('same_day' in k or 'reference' in k or 'plus_1' in k or 'plus1' in k)})
+          print('SAME_DAY_RELATED_KEYS='+json.dumps(same_day_keys,ensure_ascii=False))
+
+          def summarize(rows,label):
+              m1=[r for r in rows if fnum(r.get('return_1d_pct')) is not None]
+              m3=[r for r in rows if fnum(r.get('return_3d_pct')) is not None]
+              r1=[fnum(r.get('return_1d_pct')) for r in m1]
+              r3=[fnum(r.get('return_3d_pct')) for r in m3]
+              mfe1=[fnum(r.get('mfe_1d_pct')) for r in m1]
+              mae1=[fnum(r.get('mae_1d_pct')) for r in m1]
+              mfe3=[fnum(r.get('mfe_3d_pct')) for r in m3]
+              mae3=[fnum(r.get('mae_3d_pct')) for r in m3]
+              out={
+                'label':label,'n':len(rows),'matured_1d':len(m1),'matured_3d':len(m3),
+                'positive_1d_rate_pct':pct(sum(x>0 for x in r1 if x is not None),len(r1)),
+                'avg_return_1d_pct':avg(r1),'median_return_1d_pct':med(r1),
+                'hit_plus1_1d_pct':pct(sum((x or -999)>=1 for x in mfe1),len(mfe1)),
+                'breach_minus1_1d_pct':pct(sum((x or 999)<=-1 for x in mae1),len(mae1)),
+                'positive_3d_rate_pct':pct(sum(x>0 for x in r3 if x is not None),len(r3)),
+                'avg_return_3d_pct':avg(r3),'median_return_3d_pct':med(r3),
+                'hit_plus1_3d_pct':pct(sum((x or -999)>=1 for x in mfe3),len(mfe3)),
+                'breach_minus1_3d_pct':pct(sum((x or 999)<=-1 for x in mae3),len(mae3)),
+              }
+              rev=[r for r in rows if r.get('hunt_mode')=='reversal']
+              if rev:
+                  for k in ['reversal_crossed_reference_same_day','reversal_closed_above_reference_same_day']:
+                      vals=[bval(r.get(k)) for r in rev if r.get(k) is not None]
+                      if vals: out[k+'_rate_pct']=pct(sum(vals),len(vals))
+              return out
+
+          groups=[('ALL',sample)]
+          for mode in ['reversal','acceleration']:
+              groups.append((mode,[r for r in sample if r.get('hunt_mode')==mode]))
+          states=sorted({str(r.get('hunt_state')) for r in sample if r.get('hunt_state')})
+          for s in states:
+              groups.append(('state:'+s,[r for r in sample if r.get('hunt_state')==s]))
+          print('\n=== EVENT OUTCOME SUMMARY ===')
+          for label,rows in groups:
+              print(json.dumps(summarize(rows,label),ensure_ascii=False,sort_keys=True))
+
+          print('\n=== PER-DATE EVENT SUMMARY ===')
+          for d in sorted(dates):
+              rows=[r for r in sample if str(r.get('trade_date'))==d]
+              z=summarize(rows,d)
+              z['states']=dict(Counter(str(r.get('hunt_state')) for r in rows))
+              z['modes']=dict(Counter(str(r.get('hunt_mode')) for r in rows))
+              print(json.dumps(z,ensure_ascii=False,sort_keys=True))
+
+          # Point-in-time shadow/control analysis where mature rows are available.
+          cal=data['calibration']['rows']
+          cdates=sorted({str(r.get('trade_date')) for r in cal if r.get('trade_date')},reverse=True)[:10]
+          cal10=[r for r in cal if str(r.get('trade_date')) in cdates]
+          print('\n=== CALIBRATION / CONTROL SAMPLE ===')
+          print(json.dumps({'dates':sorted(cdates),'rows':len(cal10)},ensure_ascii=False))
+          if cal10:
+              action_states={'شکار ویژه','هشدار فوری','شکار زودهنگام'}
+              action=[r for r in cal10 if str(r.get('baseline_state')) in action_states]
+              control=[r for r in cal10 if str(r.get('baseline_state')) not in action_states]
+              def cal_sum(rows,label):
+                  r1=[fnum(r.get('return_1d_pct')) for r in rows if fnum(r.get('return_1d_pct')) is not None]
+                  r3=[fnum(r.get('return_3d_pct')) for r in rows if fnum(r.get('return_3d_pct')) is not None]
+                  return {
+                      'label':label,'n':len(rows),
+                      'positive_1d_rate_pct':pct(sum(x>0 for x in r1),len(r1)),
+                      'avg_return_1d_pct':avg(r1),'median_return_1d_pct':med(r1),
+                      'positive_3d_rate_pct':pct(sum(x>0 for x in r3),len(r3)),
+                      'avg_return_3d_pct':avg(r3),'median_return_3d_pct':med(r3)
+                  }
+              a=cal_sum(action,'action_states')
+              c=cal_sum(control,'control_states')
+              print(json.dumps(a,ensure_ascii=False,sort_keys=True))
+              print(json.dumps(c,ensure_ascii=False,sort_keys=True))
+              if a['positive_1d_rate_pct'] is not None and c['positive_1d_rate_pct'] is not None:
+                  print(json.dumps({
+                      'positive_1d_lift_pp':a['positive_1d_rate_pct']-c['positive_1d_rate_pct'],
+                      'avg_return_1d_lift_pp':(a['avg_return_1d_pct'] or 0)-(c['avg_return_1d_pct'] or 0),
+                      'action_state_counts':dict(Counter(str(r.get('baseline_state')) for r in action)),
+                      'control_state_counts':dict(Counter(str(r.get('baseline_state')) for r in control))
+                  },ensure_ascii=False,sort_keys=True))
+
+          print('\n=== DATA SUFFICIENCY ===')
+          print(json.dumps({
+              'requested_trade_days':10,
+              'event_trade_days_available':len({str(r.get('trade_date')) for r in outcomes if r.get('trade_date')}),
+              'event_last10_used':len(dates),
+              'calibration_trade_days_available':len({str(r.get('trade_date')) for r in cal if r.get('trade_date')}),
+              'can_claim_true_10day_hunt_backtest':len({str(r.get('trade_date')) for r in outcomes if r.get('trade_date')})>=10
+          },ensure_ascii=False))
+          PY
+          python /tmp/backtest.py
