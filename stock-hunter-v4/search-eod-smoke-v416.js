@@ -12,11 +12,15 @@ let controls={search:{value:'',textContent:''},hunt:{value:'',textContent:''},de
 global.$=id=>controls[id]||{value:'',textContent:'',addEventListener:()=>{}};
 
 const searchSrc=fs.readFileSync(__dirname+'/app-universal-search-v416.js','utf8');
-vm.runInThisContext(searchSrc+'\n;globalThis.__searchV416={normalizeSearchV416,matchesUniversalSearchV416,universalRowsV416};');
+vm.runInThisContext(searchSrc+'\n;globalThis.__searchV416={normalizeSearchV416,matchesUniversalSearchV416,universalRowsV416,suggestionsForV416,suggestionScoreV416};');
 assert(__searchV416.matchesUniversalSearchV416({symbol:'فملی',company_name:'ملی صنایع مس'},'فملی'));
 assert(__searchV416.matchesUniversalSearchV416({symbol:'فملی',company_name:'ملی صنایع مس'},'ملي صنايع'));
 assert.equal(__searchV416.universalRowsV416('ملت').length,1);
 assert.equal(__searchV416.universalRowsV416('ملت')[0].symbol,'وبملت');
+const suggestions=__searchV416.suggestionsForV416('مل');
+assert(suggestions.length>=1);
+assert.equal(suggestions[0].symbol,'فملی','company-prefix match should outrank a weaker contains match');
+assert(__searchV416.matchesUniversalSearchV416({symbol:'كگل',company_name:'معدنی و صنعتی گل گهر'},'کگل'),'Arabic/Persian letter normalization must match');
 
 const noonTehran=Math.floor(Date.parse('2026-09-16T08:30:00Z')/1000);
 const after17Tehran=Math.floor(Date.parse('2026-09-16T14:00:00Z')/1000);
