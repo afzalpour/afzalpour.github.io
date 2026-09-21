@@ -74,3 +74,16 @@ Negative authorization:
 - invalid OIDC token -> HTTP 401 / `oidc_verification_failed`.
 
 The maturity purpose is still time-ineligible. No claim of first maturity PASS is made before `2026-09-22T14:55:00Z`.
+
+
+## Pre-horizon readiness update — 2026-09-21
+
+The first 2026-09-19 cohort currently has 8 eligible samples but no 2026-09-20 outcome observations for those samples. No backfill is permitted.
+
+Downstream cron coverage is now complete for the first two future-session dates:
+- 2026-09-20: 5/5 required job names succeeded
+- 2026-09-21: 5/5 after recovery of a candidate-evaluator `job startup timeout`
+
+The candidate-evaluator recovery used the unchanged job command; with `calibration_ready=false`, the evaluator function is a no-op and created zero candidate-evaluation runs.
+
+Expected first-horizon result may legitimately be zero mature rows. That outcome does not advance the lifecycle.
