@@ -16,19 +16,81 @@ function marketSessionTehran(){
   if(hm>=11*60+45&&hm<=17*60)active.push('طلا، نقره، زعفران و گواهی کالایی');
   return{open:true,label:'اطلاعات لحظه‌ای بازار دریافت شد',detail:active.length?`بازارهای فعال: ${active.join('، ')}`:'بخشی از بازار در مرحله پیش‌گشایش است'};
 }
-async function load(){
-  const base=String(cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,''),key=cfg.SUPABASE_PUBLISHABLE_KEY||cfg.publishableKey||'';
+const MARKET_CACHE_V416='stock-hunter-market-v416-last-good';
+const MARKET_CACHE_SIGNALS_V416='./__market-cache__/signals-v416.json';
+const MARKET_CACHE_HEALTH_V416='./__market-cache__/health-v416.json';
+let marketLoadInFlightV416=false,marketRetryNotBeforeV416=0,marketLastGoodAtV416=0;
+
+function marketHttpErrorV416(response,label){
+  const e=new Error(`${label} — HTTP ${response.status}`);
+  e.status=response.status;
+  const retry=Number(response.headers.get('retry-after')||0);
+  e.retryAfterMs=Number.isFinite(retry)&&retry>0?retry*1000:0;
+  return e;
+}
+async function marketFetchV416(url){
+  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),30000);
+  try{return await fetch(url,{headers:headers(),cache:'no-store',signal:ctrl.signal});}
+  finally{clearTimeout(timer);}
+}
+async function marketCacheWriteV416(signalRows,healthRows){
+  if(typeof caches==='undefined')return;
+  try{
+    const cache=await caches.open(MARKET_CACHE_V416),stamp=new Date().toISOString();
+    await Promise.all([
+      cache.put(MARKET_CACHE_SIGNALS_V416,new Response(JSON.stringify({saved_at:stamp,rows:signalRows}),{headers:{'Content-Type':'application/json'}})),
+      cache.put(MARKET_CACHE_HEALTH_V416,new Response(JSON.stringify({saved_at:stamp,rows:healthRows||[]}),{headers:{'Content-Type':'application/json'}}))
+    ]);
+  }catch{}
+}
+async function marketCacheReadV416(){
+  if(typeof caches==='undefined')return null;
+  try{
+    const cache=await caches.open(MARKET_CACHE_V416),[sr,hr]=await Promise.all([
+      cache.match(MARKET_CACHE_SIGNALS_V416),cache.match(MARKET_CACHE_HEALTH_V416)
+    ]);
+    if(!sr)return null;
+    const s=await sr.json(),h=hr?await hr.json():{rows:[]};
+    return {savedAt:s.saved_at||null,signals:Array.isArray(s.rows)?s.rows:[],health:Array.isArray(h.rows)?h.rows:[]};
+  }catch{return null;}
+}
+function marketApplyRowsV416(sourceRows){
+  rows=(Array.isArray(sourceRows)?sourceRows:[]).map(norm).sort((a,b)=>b.fast-a.fast);
+  rows.forEach(x=>x.analyzed=true);
+}
+function marketRenderAfterDataV416(){
+  if(typeof window!=='undefined'&&typeof window.stockHunterSearchRenderAfterDataV416==='function')window.stockHunterSearchRenderAfterDataV416();
+  else render();
+}
+function marketOutageDetailV416(e,cache){
+  const status=Number(e?.status||0);
+  const infra=status===522||status===503||status===504;
+  const code=status?`HTTP ${status}`:(e?.name==='AbortError'?'timeout':'network');
+  const source=cache?.savedAt?new Date(cache.savedAt).toLocaleString('fa-IR',{timeZone:'Asia/Tehran'}):'ناموجود';
+  return infra
+    ? `اختلال موقت زیرساخت داده (${code}). آخرین snapshot معتبر: ${source}. داده قدیمی به‌عنوان شکار فعال استفاده نمی‌شود.`
+    : `ارتباط زنده بازار برقرار نشد (${code}). آخرین snapshot معتبر: ${source}. داده قدیمی به‌عنوان شکار فعال استفاده نمی‌شود.`;
+}
+async function load(force=false){
+  const base=String(cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,''),key=cfg.SUPABASE_PUBLISHABLE_KEY||cfg.publishableKey||'',session=marketSessionTehran();
   if(!base||!key){showFeed('bad','اتصال اطلاعات بازار تنظیم نشده','آدرس پایگاه داده در دسترس نیست');return;}
+  if(marketLoadInFlightV416)return;
+  if(!force&&Date.now()<marketRetryNotBeforeV416)return;
+  marketLoadInFlightV416=true;
   try{
     const [sr,hr]=await Promise.all([
-      fetch(`${base}/rest/v1/${cfg.TABLE||'stock_hunter_signals_v4'}?select=*&order=fast_score.desc&limit=2000`,{headers:headers(),cache:'no-store'}),
-      fetch(`${base}/rest/v1/stock_hunter_feed_health_v4?select=*&id=eq.local-agent&limit=1`,{headers:headers(),cache:'no-store'})
+      marketFetchV416(`${base}/rest/v1/${cfg.TABLE||'stock_hunter_signals_v4'}?select=*&order=fast_score.desc&limit=2000`),
+      marketFetchV416(`${base}/rest/v1/stock_hunter_feed_health_v4?select=*&id=eq.local-agent&limit=1`)
     ]);
-    if(!sr.ok)throw new Error('خطا در دریافت اطلاعات');
-    rows=(await sr.json()).map(norm).sort((a,b)=>b.fast-a.fast);
-    rows.forEach(x=>x.analyzed=true);
-    let health=[];if(hr.ok)health=await hr.json();
-    const h=health[0],age=h?.last_feed_at?Date.now()-Date.parse(h.last_feed_at):Infinity,session=marketSessionTehran();
+    if(!sr.ok)throw marketHttpErrorV416(sr,'دریافت داده بازار ناموفق بود');
+    const signalRows=await sr.json();
+    let health=[];
+    if(hr.ok)health=await hr.json();
+    marketApplyRowsV416(signalRows);
+    marketLastGoodAtV416=Date.now();
+    marketRetryNotBeforeV416=0;
+    marketCacheWriteV416(signalRows,health);
+    const h=health[0],age=h?.last_feed_at?Date.now()-Date.parse(h.last_feed_at):Infinity;
     if(!session.open){
       showFeed('closed',session.label,h?.last_feed_at?`آخرین اطلاعات ثبت‌شده: ${new Date(h.last_feed_at).toLocaleTimeString('fa-IR',{timeZone:'Asia/Tehran'})}`:session.detail);
     }else if(h&&h.status==='ok'&&age<60000){
@@ -36,17 +98,38 @@ async function load(){
       showFeed('ok',session.label,`${session.detail} — آخرین دریافت: ${when} — ${count} نماد در آخرین ارسال`);
     }else if(h&&age<180000){
       showFeed('warn','اطلاعات بازار با تأخیر دریافت می‌شود',`آخرین ارتباط ${new Date(h.last_feed_at).toLocaleTimeString('fa-IR',{timeZone:'Asia/Tehran'})}`);
+    }else if(!hr.ok){
+      showFeed('warn','داده بازار دریافت شد؛ وضعیت Feed در دسترس نیست',`اطلاعات نمادها بارگذاری شد اما endpoint سلامت Feed پاسخ HTTP ${hr.status} داد.`);
     }else{
       showFeed('bad','اطلاعات لحظه‌ای معاملات در دسترس نیست','در ساعات رسمی بازار داده تازه دریافت نشده است؛ احتمال تعطیلی رسمی بازار یا قطع مسیر دریافت داده وجود دارد.');
     }
-    if(typeof window!=='undefined'&&typeof window.stockHunterSearchRenderAfterDataV416==='function')window.stockHunterSearchRenderAfterDataV416();
-    else render();
+    marketRenderAfterDataV416();
     const urgent=rows.filter(x=>x.hunt==='شکار ویژه'||x.hunt==='هشدار فوری');
     if(sound&&session.open&&urgent.some(x=>!seen.has(x.id))){
       try{const c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);g.gain.value=.035;o.frequency.value=900;o.start();o.stop(c.currentTime+.12);}catch{}
     }
     urgent.forEach(x=>seen.add(x.id));
-  }catch(e){showFeed('bad','خطا در دریافت اطلاعات بازار',e.message);}
+  }catch(e){
+    const retry=Math.max(Number(e?.retryAfterMs||0),Number(cfg.REFRESH_MS||15000));
+    marketRetryNotBeforeV416=Date.now()+Math.min(Math.max(retry,15000),120000);
+    const cached=await marketCacheReadV416();
+    if(!rows.length&&cached?.signals?.length){
+      marketApplyRowsV416(cached.signals);
+      marketRenderAfterDataV416();
+    }else if(rows.length){
+      try{marketRenderAfterDataV416();}catch{}
+    }
+    if(!session.open){
+      const extra=cached?.savedAt?`آخرین snapshot ذخیره‌شده: ${new Date(cached.savedAt).toLocaleString('fa-IR',{timeZone:'Asia/Tehran'})}`:session.detail;
+      showFeed('closed',session.label,extra);
+    }else if(rows.length||cached?.signals?.length){
+      showFeed('warn','ارتباط زنده بازار موقتاً قطع است',marketOutageDetailV416(e,cached));
+    }else{
+      showFeed('warn','مسیر زنده اطلاعات بازار موقتاً در دسترس نیست',marketOutageDetailV416(e,cached));
+    }
+  }finally{
+    marketLoadInFlightV416=false;
+  }
 }
 function showFeed(type,title,sub){
   $('feedBadge').className=`feed-badge ${type}`;$('feedBadge').textContent=title;$('feedState').textContent=title;$('scanTimes').textContent=sub;
@@ -71,7 +154,7 @@ $('allColumns').onclick=()=>{visible=new Set(columns.map(c=>c[0]));localStorage.
 $('prevPage').onclick=()=>{if(page>1){page--;render();}};
 $('nextPage').onclick=()=>{page++;render();};
 for(const id of ['hunt','decision','pageSize'])$(id).addEventListener('change',()=>{page=1;render();});
-$('refreshBtn').onclick=load;
+$('refreshBtn').onclick=()=>{marketRetryNotBeforeV416=0;load(true);};
 $('soundBtn').onclick=()=>{sound=!sound;$('soundBtn').textContent=sound?'🔔 هشدار روشن':'🔕 هشدار خاموش';};
 
 async function registerServiceWorkerV416(){
