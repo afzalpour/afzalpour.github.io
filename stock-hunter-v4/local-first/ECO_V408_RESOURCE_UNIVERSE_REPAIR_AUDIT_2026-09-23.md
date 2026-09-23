@@ -36,7 +36,7 @@ Windows amd64 binary SHA-256:
 `0b80d20a349ca5d92acb7c61f4f23ab6a4dd747f33b1509f2fdf3d6f40abb8b4`
 
 Delivery ZIP SHA-256:
-`1d22f43d0adff54d47cca6dd831785cba7c7178096abb728fe07cb3352b41dca`
+`0d6ed1bbd11398f79a4568acd4d4f6f920d1f7fb985382a938be5408654c1139`
 
 ## Verification
 - `go test ./...`: PASS
@@ -48,3 +48,5 @@ Delivery ZIP SHA-256:
 ## Frozen model safety
 No 4.1.6 Hunt formula, threshold, model weight, routing rule, lifecycle state, OOS gate, or challenger activation state is changed.
 The browser change that preserves `snapshots` restores the data already expected by frozen `snapshotDynamicsV416`; it does not alter its formula.
+
+Launcher verification: metrics field mapping corrected to `rows` / `universe`; ZIP integrity revalidated after the correction.
