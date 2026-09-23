@@ -5,9 +5,24 @@ cell=function(k,x){
   return cellBeforeV410(k,x);
 };
 function normalizeFaSearchV410(v){return String(v||'').toLowerCase().replace(/ي|ى/g,'ی').replace(/ك/g,'ک').replace(/[\u200c\u200d\sـ]+/g,'').trim();}
+function findUniverseSeedV409(id){
+  const key=String(id||'');
+  let u=typeof universeRows!=='undefined'?universeRows.find(r=>String(r.id)===key):null;
+  if(u)return u;
+  if(typeof catalogV416!=='undefined'&&Array.isArray(catalogV416)){
+    const raw=catalogV416.find(r=>String(r.ins_code||r.id||'')===key);
+    if(raw&&typeof normUniverse==='function')return normUniverse(raw,new Map());
+  }
+  return null;
+}
 async function resolveLiveDetailRow(id){
   const key=String(id||'');
   let x=rows.find(r=>String(r.id)===key);
+  const seed=findUniverseSeedV409(key);
+  if(!x&&seed?.symbol){
+    const sk=typeof universeSymbolKeyV409==='function'?universeSymbolKeyV409(seed.symbol):normalizeFaSearchV410(seed.symbol);
+    x=rows.find(r=>(typeof universeSymbolKeyV409==='function'?universeSymbolKeyV409(r.symbol):normalizeFaSearchV410(r.symbol))===sk);
+  }
   if(!x&&typeof universeRows!=='undefined')x=universeRows.find(r=>String(r.id)===key&&r.analyzed!==false);
   if(x)return x;
   const preferred=typeof window!=='undefined'&&typeof window.stockHunterMarketBaseV416==='function'?window.stockHunterMarketBaseV416():'';
@@ -26,12 +41,51 @@ async function resolveLiveDetailRow(id){
     const i=rows.findIndex(z=>String(z.id)===key);
     if(i>=0)rows[i]=x;else rows.push(x);
     if(typeof universeRows!=='undefined'){
-      const u=universeRows.findIndex(z=>String(z.id)===key);
-      if(u>=0)universeRows[u]={...universeRows[u],...x,analyzed:true};
+      const ui=universeRows.findIndex(z=>String(z.id)===key);
+      if(ui>=0)universeRows[ui]={...universeRows[ui],...x,analyzed:true};
     }
     return x;
   }catch{return null;}
 }
+function historicalDetailHTMLV409(x){
+  const c=dailyCandles(x),latest=c[c.length-1],prev=c[c.length-2],models=forecastModels(x);
+  const pct=latest&&prev?.close?((latest.close-prev.close)/prev.close*100):null;
+  const date=latest?.t?new Date(latest.t*1000).toLocaleDateString('fa-IR',{timeZone:'Asia/Tehran'}):'—';
+  return `<div class="detail-grid">
+    <div class="alert-box"><b>نمایش کم‌مصرف اطلاعات روزانه</b><br>این نماد در Universe بازار وجود دارد، اما در آخرین Feed لحظه‌ای رکورد تحلیلی فعال نداشته است. بنابراین داده‌های روزانه واقعی و سناریوهای نمایشی نشان داده می‌شوند و هیچ Hunt Score لحظه‌ای جعل نمی‌شود.</div>
+    <div class="section-title">آخرین داده روزانه معتبر</div>
+    ${metricExplainV416('تاریخ آخرین داده',esc(date),'','این تاریخ مربوط به آخرین کندل روزانه دریافت‌شده است.')}
+    ${metricExplainV416('قیمت پایانی',latest?fa(latest.close,0):'—','','آخرین قیمت پایانی موجود در سابقه روزانه.')}
+    ${metricExplainV416('تغییر نسبت به روز قبل',pct==null?'—':fa(pct,2)+'٪',pct!=null&&pct<0?'risk-high':(pct!=null&&pct>0?'risk-low':''),'تغییر قیمت پایانی نسبت به روز معاملاتی قبل.')}
+    ${metricExplainV416('بیشترین روز',latest?fa(latest.high,0):'—','','بیشترین قیمت ثبت‌شده در آخرین روز موجود.')}
+    ${metricExplainV416('کمترین روز',latest?fa(latest.low,0):'—','','کمترین قیمت ثبت‌شده در آخرین روز موجود.')}
+    ${metricExplainV416('حجم روز',latest?fa(latest.volume,0):'—','','حجم ثبت‌شده در آخرین روز موجود.')}
+    <div class="section-title">مقایسه ۵ سناریوی عددی برای ۱۰ روز کاری آینده</div>
+    ${models.map(modelBox).join('')}
+    ${forecastTable(models)}
+    <div class="forecast-note"><b>محدودیت:</b> چون رکورد لحظه‌ای این نماد در Feed فعال موجود نیست، شاخص‌های دفتر سفارش، QI/OFI، شتاب لحظه‌ای، ورود، حد ضرر و Hunt Score نمایش داده نمی‌شوند. این پنج مدل فقط نمایشی‌اند و وارد Hunt Score نمی‌شوند.</div>
+  </div>`;
+}
+async function openHistoricalUniverseDetailV409(seed){
+  const x={...seed,analyzed:false,candles:Array.isArray(seed?.candles)?seed.candles:[],snapshots:[]};
+  currentDetail=x;
+  $('dSymbol').textContent=x.symbol||'نماد';
+  $('dCompany').textContent=x.company||'';
+  $('detailBody').innerHTML='<div class="history-loading">در حال دریافت فقط سابقه روزانه همین نماد…</div>';
+  if($('printDetailBtn')){$('printDetailBtn').disabled=true;$('printDetailBtn').title='چاپ گزارش کامل نیازمند رکورد تحلیلی لحظه‌ای است';}
+  if(!$('detailDialog').open)$('detailDialog').showModal();
+  await fetchDailyHistory(x);
+  if(currentDetail?.id!==x.id)return;
+  const c=dailyCandles(x);
+  if(!c.length){
+    $('detailBody').innerHTML='<div class="alert-box">نماد در فهرست کامل بازار وجود دارد، اما در حال حاضر حتی سابقه روزانه آن از منبع بازار قابل دریافت نیست. هیچ داده مصنوعی ساخته نشد.</div>';
+    return;
+  }
+  const latest=c[c.length-1],prev=c[c.length-2];
+  x.last=latest.close||0;x.close=latest.close||0;x.yesterday=prev?.close||0;
+  $('detailBody').innerHTML=historicalDetailHTMLV409(x);
+}
+
 searchUniverse=async function(q){
   const preferred=typeof window!=='undefined'&&typeof window.stockHunterMarketBaseV416==='function'?window.stockHunterMarketBaseV416():'';
   const base=String(preferred||cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,'');
@@ -65,13 +119,16 @@ searchUniverse=async function(q){
 openDetail=async function(id){
   const x=await resolveLiveDetailRow(id);
   if(!x){
+    const seed=findUniverseSeedV409(id);
+    if(seed)return openHistoricalUniverseDetailV409(seed);
     $('dSymbol').textContent='جزئیات در دسترس نیست';
-    $('dCompany').textContent='رکورد تحلیلی این نماد هنوز به سامانه نرسیده است.';
-    $('detailBody').innerHTML='<div class="alert-box">نماد در فهرست بازار وجود دارد، اما در حال حاضر رکورد تحلیلی قابل بازیابی نیست.</div>';
+    $('dCompany').textContent='این شناسه نه در Feed زنده و نه در Universe محلی پیدا نشد.';
+    $('detailBody').innerHTML='<div class="alert-box">رکورد این نماد در حافظه محلی بازار پیدا نشد. هیچ داده مصنوعی نمایش داده نمی‌شود.</div>';
     if(!$('detailDialog').open)$('detailDialog').showModal();
     return;
   }
   currentDetail=x;
+  if($('printDetailBtn')){$('printDetailBtn').disabled=false;$('printDetailBtn').title='';}
   $('dSymbol').textContent=x.symbol;
   $('dCompany').textContent=x.company;
   $('detailBody').innerHTML='<div class="history-loading">در حال دریافت سابقه روزانه نماد و محاسبه پیش‌بینی ۱۰ روزه…</div>';
