@@ -164,7 +164,7 @@ function setupSearchComboboxV416(){
 async function loadCatalogV416(force=false){
   if(catalogLoadingV416)return;
   if(!force&&catalogV416.length&&Date.now()-catalogLoadedAtV416<30*60*1000)return;
-  const base=String(cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,'');if(!base)return;
+  const preferred=typeof window!=='undefined'&&typeof window.stockHunterMarketBaseV416==='function'?window.stockHunterMarketBaseV416():'';\n  const base=String(preferred||cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,'');if(!base)return;
   catalogLoadingV416=true;
   try{
     const all=[];
