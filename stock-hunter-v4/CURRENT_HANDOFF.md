@@ -576,3 +576,13 @@ Implementation:
 - modified shared assets use cache-buster `4.1.6-search1`.
 
 No Hunt score/formula/threshold, routing, lifecycle, Feed or Auth write behavior is changed.
+
+
+## Local-First recovery checkpoint — 2026-09-23
+- User priority: finish as quickly as possible with zero paid dependency.
+- Supabase project management plane reports ACTIVE_HEALTHY while PostgreSQL still returns TCP ECONNREFUSED; support tickets SU-482131 / SU-482142 are open.
+- Free-plan overage is Egress with grace period through 2026-10-22; that is separate from the current Postgres process outage.
+- New primary live path: patched Agent v4.0.7 LocalFirst -> loopback bridge 127.0.0.1:41716 -> browser local-first REST.
+- Supabase is retained only as fallback/legacy evidence until recovery; it is no longer required for live 4.1.6 market availability.
+- Frozen 4.1.6 Hunt formulas/thresholds/routing/lifecycle remain unchanged.
+- Local bridge archives one compressed point-in-time snapshot per 15-minute bucket for future empirical validation; no synthetic/backfilled prospective rows are created.
