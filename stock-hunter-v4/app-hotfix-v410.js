@@ -10,12 +10,14 @@ async function resolveLiveDetailRow(id){
   let x=rows.find(r=>String(r.id)===key);
   if(!x&&typeof universeRows!=='undefined')x=universeRows.find(r=>String(r.id)===key&&r.analyzed!==false);
   if(x)return x;
-  const base=String(cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,'');
+  const preferred=typeof window!=='undefined'&&typeof window.stockHunterMarketBaseV416==='function'?window.stockHunterMarketBaseV416():'';
+  const base=String(preferred||cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,'');
   if(!base||!key)return null;
   try{
     const table=cfg.TABLE||'stock_hunter_signals_v4';
     const p=new URLSearchParams({select:'*',id:`eq.${key}`,limit:'1'});
-    const r=await fetch(`${base}/rest/v1/${table}?${p.toString()}`,{headers:headers(),cache:'no-store'});
+    const u=`${base}/rest/v1/${table}?${p.toString()}`;
+    const r=typeof marketFetchV416==='function'?await marketFetchV416(u,base,9000):await fetch(u,{headers:headers(),cache:'no-store'});
     if(!r.ok)return null;
     const a=await r.json();
     if(!a.length)return null;
@@ -31,7 +33,8 @@ async function resolveLiveDetailRow(id){
   }catch{return null;}
 }
 searchUniverse=async function(q){
-  const base=String(cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,'');
+  const preferred=typeof window!=='undefined'&&typeof window.stockHunterMarketBaseV416==='function'?window.stockHunterMarketBaseV416():'';
+  const base=String(preferred||cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,'');
   const raw=String(q||'').trim(),key=normalizeFaSearchV410(raw);
   if(!base||!raw){universeRows=[];universeLoading=false;render();return;}
   universeLoading=true;
@@ -41,7 +44,8 @@ searchUniverse=async function(q){
     p.set('or',`(search_key.like.*${key}*,symbol.ilike.*${term}*,company_name.ilike.*${term}*)`);
     p.set('order','is_active.desc,symbol.asc');
     p.set('limit','200');
-    const r=await fetch(`${base}/rest/v1/stock_hunter_universe_v4?${p.toString()}`,{headers:headers(),cache:'no-store'});
+    const u=`${base}/rest/v1/stock_hunter_universe_v4?${p.toString()}`;
+    const r=typeof marketFetchV416==='function'?await marketFetchV416(u,base,9000):await fetch(u,{headers:headers(),cache:'no-store'});
     if(!r.ok)throw new Error('جست‌وجوی جامع ناموفق بود');
     let items=await r.json();
     if(!items.length){
@@ -49,7 +53,8 @@ searchUniverse=async function(q){
       sp.set('select','id,symbol,company_name,updated_at');
       sp.set('or',`(symbol.ilike.*${term}*,company_name.ilike.*${term}*)`);
       sp.set('limit','200');
-      const sr=await fetch(`${base}/rest/v1/${table}?${sp.toString()}`,{headers:headers(),cache:'no-store'});
+      const su=`${base}/rest/v1/${table}?${sp.toString()}`;
+      const sr=typeof marketFetchV416==='function'?await marketFetchV416(su,base,9000):await fetch(su,{headers:headers(),cache:'no-store'});
       if(sr.ok)items=(await sr.json()).map(s=>({ins_code:String(s.id),symbol:s.symbol,company_name:s.company_name,market:'',asset_type:'',is_active:true,updated_at:s.updated_at}));
     }
     const signalMap=await fetchSignalsForUniverse(base,items);

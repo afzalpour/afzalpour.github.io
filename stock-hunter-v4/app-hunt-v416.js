@@ -342,10 +342,15 @@ filtered=function(){
   const q=$('search').value.trim();
   if(q)return filteredBeforeHuntV416(); // Universal search is intentionally outside Hunt constraints.
   const h=$('hunt').value,d=$('decision').value;
+  if(h==='__all__'&&typeof universalRowsV416==='function'){
+    return universalRowsV416('').sort((a,b)=>
+      (Number(b.analyzed===true)-Number(a.analyzed===true))||
+      ((Number(b.huntScoreV416)||0)-(Number(a.huntScoreV416)||0))||
+      String(a.symbol||'').localeCompare(String(b.symbol||''),'fa')
+    );
+  }
   return rows.map(applyHuntV416).filter(x=>{
-    if(h==='__all__'){
-      // Explicit universe view: preserve every loaded symbol, including non-Hunt instruments.
-    }else if(h){
+    if(h){
       if(x.hunt!==h)return false;
       if(['شکار ویژه','هشدار فوری','شکار زودهنگام'].includes(h)&&(!isActionFreshV416(x)||!isActionSessionV416(x)))return false;
     }else if(!isActionNowV416(x))return false;

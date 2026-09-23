@@ -111,6 +111,11 @@ jobs:
           grep -q 'تاریخچه زمانی معتبر برای محاسبه Delta' stock-hunter-v4/app-hunt-v416.js
           grep -q 'Universal search is intentionally outside Hunt constraints' stock-hunter-v4/app-hunt-v416.js
           grep -q 'Search is a universe browser, not a Hunt filter' stock-hunter-v4/app-universe.js
+          grep -q 'snapshots:parseArr(r.snapshots)' stock-hunter-v4/app-core.js
+          grep -q "h==='__all__'&&typeof universalRowsV416==='function'" stock-hunter-v4/app-hunt-v416.js
+          grep -q "universalRowsV416('')" stock-hunter-v4/app-hunt-v416.js
+          grep -q 'stockHunterMarketBaseV416' stock-hunter-v4/app-hotfix-v410.js
+          grep -q 'marketFetchV416' stock-hunter-v4/app-hotfix-v410.js
           grep -q 'if(q)return universalRowsV416(q)' stock-hunter-v4/app-universal-search-v416.js
           grep -q "defaultStates=new Set(\['شکار ویژه','هشدار فوری'\])" stock-hunter-v4/app-eod-v416.js
           grep -q 'hadActivity9to17V416' stock-hunter-v4/app-eod-v416.js
