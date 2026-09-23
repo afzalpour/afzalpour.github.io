@@ -39,7 +39,7 @@ async function fetchSignalsForUniverse(base,items){
   }catch{return new Map();}
 }
 async function searchUniverse(q){
-  const base=String(cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,'');
+  const preferred=typeof window!=='undefined'&&typeof window.stockHunterMarketBaseV416==='function'?window.stockHunterMarketBaseV416():'';\n  const base=String(preferred||cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,'');
   if(!base||!q.trim()){universeRows=[];universeLoading=false;render();return;}
   universeLoading=true;
   try{
