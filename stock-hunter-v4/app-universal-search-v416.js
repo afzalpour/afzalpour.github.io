@@ -171,7 +171,7 @@ async function loadCatalogV416(force=false){
     const all=[];
     for(let offset=0;offset<10000;offset+=1000){
       const p=new URLSearchParams();p.set('select','ins_code,symbol,company_name,isin,market,asset_type,is_active,last_seen_at,updated_at,search_key');p.set('order','symbol.asc');p.set('limit','1000');p.set('offset',String(offset));
-      const r=await fetch(`${base}/rest/v1/stock_hunter_universe_v4?${p.toString()}`,{headers:headers(),cache:'no-store'});if(!r.ok)throw new Error(`Universe HTTP ${r.status}`);
+      const u=`${base}/rest/v1/stock_hunter_universe_v4?${p.toString()}`;const r=typeof marketFetchV416==='function'?await marketFetchV416(u,base,9000):await fetch(u,{headers:headers(),cache:'no-store'});if(!r.ok)throw new Error(`Universe HTTP ${r.status}`);
       const batch=await r.json();all.push(...batch);if(batch.length<1000)break;
     }
     if(all.length){
