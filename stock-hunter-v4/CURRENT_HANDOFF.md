@@ -586,3 +586,13 @@ No Hunt score/formula/threshold, routing, lifecycle, Feed or Auth write behavior
 - Supabase is retained only as fallback/legacy evidence until recovery; it is no longer required for live 4.1.6 market availability.
 - Frozen 4.1.6 Hunt formulas/thresholds/routing/lifecycle remain unchanged.
 - Local bridge archives one compressed point-in-time snapshot per 15-minute bucket for future empirical validation; no synthetic/backfilled prospective rows are created.
+
+
+## Eco feed recovery checkpoint — 2026-09-23
+- v4.0.7 Local-First Agent+Bridge is DEPRECATED after a real client run showed unacceptable bandwidth/CPU pressure and a misleading 500-live-row ceiling.
+- Root cause: legacy Agent architecture repeatedly fetched full MarketWatch plus many concurrent per-symbol enrichment calls and a hot-symbol loop; live MarketWatch rows were also conflated with the complete Universe.
+- Replacement: single-process `Stock_Hunter_Eco_Bridge_v4.0.8.exe`, loopback-only on 127.0.0.1:41716.
+- Eco cadence: bulk MarketWatch /30s, bulk ClientTypeAll /120s, bounded per-symbol fallback, cached history, GOMAXPROCS=2, BelowNormal launcher priority.
+- Full instrument Universe is independent from live rows, cached locally, refreshed at low frequency, and exposed through paginated local REST.
+- Browser fixes: preserve `snapshots` for frozen 4.1.6 Delta, make explicit All Symbols use the full Universe catalog, and route Detail/Search hotfixes through the active local-first base.
+- 4.1.6 Hunt formulas/thresholds/models/routing/lifecycle remain unchanged.
