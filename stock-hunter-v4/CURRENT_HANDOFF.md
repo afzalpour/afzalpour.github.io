@@ -604,3 +604,12 @@ No Hunt score/formula/threshold, routing, lifecycle, Feed or Auth write behavior
 - Repair: exact-ID + normalized-symbol live matching, then one-symbol daily-history fallback if no genuine live analytical row exists.
 - Historical-only Detail never fabricates Hunt Score/QI/OFI/entry/stop.
 - Eco scan cadence and frozen 4.1.6 Hunt formulas remain unchanged.
+
+
+## Eco Governor v4.0.9 checkpoint — 2026-09-24
+- Real client v4.0.8 status: Universe 4267 (full-catalog repair confirmed), rows 0 outside trading hours, 36 MarketWatch scans, last decoded MarketWatch payload 3,574,135 bytes.
+- rows=0 outside market is expected; the remaining defect was unnecessary 30-second MarketWatch polling while all configured sessions were closed.
+- v4.0.9 Governor keeps active Eco v4.0.8 only Sat-Wed 08:20-17:05 Tehran and otherwise serves Universe from a passive localhost cache bridge with zero external MarketWatch/ClientType polling.
+- Passive mode deliberately exposes no live rows, so stale off-hours data cannot become actionable.
+- Package SHA-256: 39c7640a9a754b2e3fd37d49aa27ce76d7e1175417a560b3b239eb3e0a029991.
+- Frozen 4.1.6 Hunt formulas/thresholds/routing/lifecycle remain unchanged.
