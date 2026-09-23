@@ -613,3 +613,11 @@ No Hunt score/formula/threshold, routing, lifecycle, Feed or Auth write behavior
 - Passive mode deliberately exposes no live rows, so stale off-hours data cannot become actionable.
 - Package SHA-256: 39c7640a9a754b2e3fd37d49aa27ce76d7e1175417a560b3b239eb3e0a029991.
 - Frozen 4.1.6 Hunt formulas/thresholds/routing/lifecycle remain unchanged.
+
+
+## Replay Backtest v4.1.0 checkpoint — 2026-09-24
+- Added a standalone Windows replay/backtest package that scans genuine local point-in-time archives from LocalFirst/Eco/Replay directories.
+- It reports DIAGNOSTIC_REPLAY_OK / LIMITED / INSUFFICIENT_SINGLE_POINT / NO_DATA and never fabricates missing intraday data.
+- Diagnostic same-day outcomes: reversal later reaches >=0%; acceleration later reaches >=+1%; these do not replace prospective OOS/lift validation.
+- Added localhost-only 15-minute recorder for future complete-session replay; it skips when Live rows=0 and makes no external request itself.
+- Package SHA-256: b3077fe1ef4f4b5353576a5f595bc715938b55e1d06d5baae8a616b13af14da5.
