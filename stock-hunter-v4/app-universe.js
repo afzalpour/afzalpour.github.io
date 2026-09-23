@@ -2,10 +2,21 @@
 let universeRows=[], universeLoading=false, universeTimer=null;
 if(!columns.some(c=>c[0]==='market'))columns.splice(columns.length-1,0,['market','بازار',false,10],['assetType','نوع ابزار',false,10]);
 
+let universeRowsRefV409=null,universeLiveBySymbolV409=new Map();
+function universeSymbolKeyV409(v){return String(v||'').toLowerCase().replace(/ي|ى/g,'ی').replace(/ك/g,'ک').replace(/[‌‍\sـ]+/g,'').trim();}
+function universeLiveSymbolMapV409(){
+  if(universeRowsRefV409!==rows){
+    universeRowsRefV409=rows;
+    universeLiveBySymbolV409=new Map();
+    for(const x of rows){const k=universeSymbolKeyV409(x?.symbol);if(k&&!universeLiveBySymbolV409.has(k))universeLiveBySymbolV409.set(k,x);}
+  }
+  return universeLiveBySymbolV409;
+}
 function normUniverse(r,signalMap=new Map()){
-  const id=String(r.ins_code||r.id||''),live=signalMap.get(id)||rows.find(x=>x.id===id);
-  if(live)return {...live,analyzed:true,market:r.market||live.market||'',assetType:r.asset_type||live.assetType||''};
-  return {id,symbol:r.symbol||'—',company:r.company_name||'—',market:r.market||'',assetType:r.asset_type||'نامشخص',analyzed:false,hunt:'در انتظار تحلیل لحظه‌ای',decision:'فاقد سیگنال زنده',reason:'این ابزار در فهرست جامع بازار وجود دارد اما در آخرین پایش، سیگنال لحظه‌ای برای آن ثبت نشده است.',candles:[],snapshots:[]};
+  const id=String(r.ins_code||r.id||''),sk=universeSymbolKeyV409(r.symbol);
+  const live=signalMap.get(id)||rows.find(x=>x.id===id)||(sk?universeLiveSymbolMapV409().get(sk):null);
+  if(live)return {...live,analyzed:true,market:r.market||live.market||'',assetType:r.asset_type||live.assetType||'',universeInsCodeV409:id||live.universeInsCodeV409||''};
+  return {id,symbol:r.symbol||'—',company:r.company_name||'—',market:r.market||'',assetType:r.asset_type||'نامشخص',analyzed:false,hunt:'در انتظار تحلیل لحظه‌ای',decision:'فاقد سیگنال زنده',reason:'این ابزار در فهرست جامع بازار وجود دارد اما در آخرین پایش، سیگنال لحظه‌ای برای آن ثبت نشده است.',candles:[],snapshots:[],universeInsCodeV409:id};
 }
 const oldCell=cell;
 cell=function(k,x){

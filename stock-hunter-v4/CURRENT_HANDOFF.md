@@ -596,3 +596,11 @@ No Hunt score/formula/threshold, routing, lifecycle, Feed or Auth write behavior
 - Full instrument Universe is independent from live rows, cached locally, refreshed at low frequency, and exposed through paginated local REST.
 - Browser fixes: preserve `snapshots` for frozen 4.1.6 Delta, make explicit All Symbols use the full Universe catalog, and route Detail/Search hotfixes through the active local-first base.
 - 4.1.6 Hunt formulas/thresholds/models/routing/lifecycle remain unchanged.
+
+
+## Eco Detail fallback checkpoint — 2026-09-24
+- Real client confirmed Eco Bridge v4.0.8 starts quickly and without the v4.0.7 resource freeze.
+- Remaining UI bug: complete-Universe symbols could open with no analytical record when live-feed ID differed from Universe ins_code or the symbol had no current live row.
+- Repair: exact-ID + normalized-symbol live matching, then one-symbol daily-history fallback if no genuine live analytical row exists.
+- Historical-only Detail never fabricates Hunt Score/QI/OFI/entry/stop.
+- Eco scan cadence and frozen 4.1.6 Hunt formulas remain unchanged.

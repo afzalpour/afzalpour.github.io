@@ -202,6 +202,7 @@ jobs:
           universe=Path('stock-hunter-v4/app-universe.js').read_text(encoding='utf-8')
           search=Path('stock-hunter-v4/app-universal-search-v416.js').read_text(encoding='utf-8')
           runtime=Path('stock-hunter-v4/app-runtime.js').read_text(encoding='utf-8')
+          hotfix=Path('stock-hunter-v4/app-hotfix-v410.js').read_text(encoding='utf-8')
           index416=Path('stock-hunter-v4/index.html').read_text(encoding='utf-8')
           index417=Path('stock-hunter-v4/index-v417.html').read_text(encoding='utf-8')
           assert 'return universeRows.slice().sort' in universe
@@ -220,6 +221,10 @@ jobs:
           assert 'app-universal-search-v416.js?v=4.1.6-local-first1' in index416
           assert 'app-universal-search-v416.js?v=4.1.6-local-first1' in index417
           assert "stock_hunter_universe_v4" in search
+          assert 'universeLiveSymbolMapV409' in universe
+          assert 'historicalDetailHTMLV409' in hotfix
+          assert 'openHistoricalUniverseDetailV409' in hotfix
+          assert 'هیچ Hunt Score لحظه‌ای جعل نمی‌شود' in hotfix
           assert "limit','1000'" in search and "offset" in search
           assert "$('hunt')" not in search and "$('decision')" not in search
           print('search-isolation: PASS')
