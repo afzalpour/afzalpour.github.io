@@ -28,11 +28,43 @@ function marketHttpErrorV416(response,label){
   e.retryAfterMs=Number.isFinite(retry)&&retry>0?retry*1000:0;
   return e;
 }
-async function marketFetchV416(url){
-  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),30000);
-  try{return await fetch(url,{headers:headers(),cache:'no-store',signal:ctrl.signal});}
+const MARKET_LOCAL_BASE_V416=String(cfg.LOCAL_BRIDGE_URL||'').replace(/\/$/,'');
+let marketActiveBaseV416='',marketActiveSourceV416='none';
+
+function marketIsLocalBaseV416(base){return !!MARKET_LOCAL_BASE_V416&&String(base).replace(/\/$/,'')===MARKET_LOCAL_BASE_V416;}
+function marketHeadersForBaseV416(base){return marketIsLocalBaseV416(base)?{Accept:'application/json'}:headers();}
+async function marketFetchV416(url,base,timeoutMs=30000){
+  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),timeoutMs);
+  const opts={headers:marketHeadersForBaseV416(base),cache:'no-store',signal:ctrl.signal};
+  if(marketIsLocalBaseV416(base))opts.targetAddressSpace='loopback';
+  try{return await fetch(url,opts);}
   finally{clearTimeout(timer);}
 }
+async function marketReadBaseV416(base,source){
+  const timeout=source==='local'?3000:30000;
+  const [sr,hr]=await Promise.all([
+    marketFetchV416(`${base}/rest/v1/${cfg.TABLE||'stock_hunter_signals_v4'}?select=*&order=fast_score.desc&limit=2000`,base,timeout),
+    marketFetchV416(`${base}/rest/v1/stock_hunter_feed_health_v4?select=*&id=eq.local-agent&limit=1`,base,timeout)
+  ]);
+  if(!sr.ok)throw marketHttpErrorV416(sr,source==='local'?'پل محلی بازار پاسخ معتبر نداد':'دریافت داده بازار ناموفق بود');
+  const signalRows=await sr.json();
+  let health=[];if(hr.ok)health=await hr.json();
+  if(source==='local'&&!signalRows.length&&!health.length){const e=new Error('پل محلی هنوز snapshot بازار ندارد');e.status=204;throw e;}
+  return{base,source,sr,hr,signalRows,health};
+}
+function marketBaseCandidatesV416(){
+  const out=[];
+  if(MARKET_LOCAL_BASE_V416)out.push({base:MARKET_LOCAL_BASE_V416,source:'local'});
+  const cloud=String(cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,'');
+  const key=cfg.SUPABASE_PUBLISHABLE_KEY||cfg.publishableKey||'';
+  if(cloud&&key)out.push({base:cloud,source:'supabase'});
+  return out;
+}
+if(typeof window!=='undefined'){
+  window.stockHunterMarketBaseV416=()=>marketActiveBaseV416||String(cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,'');
+  window.stockHunterMarketSourceV416=()=>marketActiveSourceV416;
+}
+
 async function marketCacheWriteV416(signalRows,healthRows){
   if(typeof caches==='undefined')return;
   try{
@@ -72,36 +104,37 @@ function marketOutageDetailV416(e,cache){
     : `ارتباط زنده بازار برقرار نشد (${code}). آخرین snapshot معتبر: ${source}. داده قدیمی به‌عنوان شکار فعال استفاده نمی‌شود.`;
 }
 async function load(force=false){
-  const base=String(cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,''),key=cfg.SUPABASE_PUBLISHABLE_KEY||cfg.publishableKey||'',session=marketSessionTehran();
-  if(!base||!key){showFeed('bad','اتصال اطلاعات بازار تنظیم نشده','آدرس پایگاه داده در دسترس نیست');return;}
+  const session=marketSessionTehran(),candidates=marketBaseCandidatesV416();
+  if(!candidates.length){showFeed('bad','اتصال اطلاعات بازار تنظیم نشده','نه پل محلی و نه مسیر ابری داده تنظیم نشده است');return;}
   if(marketLoadInFlightV416)return;
   if(!force&&Date.now()<marketRetryNotBeforeV416)return;
   marketLoadInFlightV416=true;
   try{
-    const [sr,hr]=await Promise.all([
-      marketFetchV416(`${base}/rest/v1/${cfg.TABLE||'stock_hunter_signals_v4'}?select=*&order=fast_score.desc&limit=2000`),
-      marketFetchV416(`${base}/rest/v1/stock_hunter_feed_health_v4?select=*&id=eq.local-agent&limit=1`)
-    ]);
-    if(!sr.ok)throw marketHttpErrorV416(sr,'دریافت داده بازار ناموفق بود');
-    const signalRows=await sr.json();
-    let health=[];
-    if(hr.ok)health=await hr.json();
+    let chosen=null,lastErr=null;
+    for(const c of candidates){
+      try{chosen=await marketReadBaseV416(c.base,c.source);break;}
+      catch(e){lastErr=e;}
+    }
+    if(!chosen)throw lastErr||new Error('هیچ مسیر داده‌ای پاسخ نداد');
+    const {base,source,sr,hr,signalRows,health}=chosen;
+    marketActiveBaseV416=base;marketActiveSourceV416=source;
     marketApplyRowsV416(signalRows);
     marketLastGoodAtV416=Date.now();
     marketRetryNotBeforeV416=0;
     marketCacheWriteV416(signalRows,health);
     const h=health[0],age=h?.last_feed_at?Date.now()-Date.parse(h.last_feed_at):Infinity;
+    const route=source==='local'?'مسیر محلی':'مسیر ابری پشتیبان';
     if(!session.open){
-      showFeed('closed',session.label,h?.last_feed_at?`آخرین اطلاعات ثبت‌شده: ${new Date(h.last_feed_at).toLocaleTimeString('fa-IR',{timeZone:'Asia/Tehran'})}`:session.detail);
+      showFeed('closed',session.label,h?.last_feed_at?`آخرین اطلاعات ثبت‌شده: ${new Date(h.last_feed_at).toLocaleTimeString('fa-IR',{timeZone:'Asia/Tehran'})} — ${route}`:session.detail);
     }else if(h&&h.status==='ok'&&age<60000){
       const when=new Date(h.last_feed_at).toLocaleTimeString('fa-IR',{timeZone:'Asia/Tehran'}),count=Number(h.symbols||0).toLocaleString('fa-IR');
-      showFeed('ok',session.label,`${session.detail} — آخرین دریافت: ${when} — ${count} نماد در آخرین ارسال`);
+      showFeed('ok',session.label,`${session.detail} — آخرین دریافت: ${when} — ${count} نماد — ${route}`);
     }else if(h&&age<180000){
-      showFeed('warn','اطلاعات بازار با تأخیر دریافت می‌شود',`آخرین ارتباط ${new Date(h.last_feed_at).toLocaleTimeString('fa-IR',{timeZone:'Asia/Tehran'})}`);
+      showFeed('warn','اطلاعات بازار با تأخیر دریافت می‌شود',`آخرین ارتباط ${new Date(h.last_feed_at).toLocaleTimeString('fa-IR',{timeZone:'Asia/Tehran'})} — ${route}`);
     }else if(!hr.ok){
-      showFeed('warn','داده بازار دریافت شد؛ وضعیت Feed در دسترس نیست',`اطلاعات نمادها بارگذاری شد اما endpoint سلامت Feed پاسخ HTTP ${hr.status} داد.`);
+      showFeed('warn','داده بازار دریافت شد؛ وضعیت Feed در دسترس نیست',`اطلاعات نمادها بارگذاری شد اما endpoint سلامت Feed پاسخ HTTP ${hr.status} داد — ${route}.`);
     }else{
-      showFeed('bad','اطلاعات لحظه‌ای معاملات در دسترس نیست','در ساعات رسمی بازار داده تازه دریافت نشده است؛ احتمال تعطیلی رسمی بازار یا قطع مسیر دریافت داده وجود دارد.');
+      showFeed('bad','اطلاعات لحظه‌ای معاملات در دسترس نیست',`در ساعات رسمی بازار داده تازه دریافت نشده است؛ احتمال تعطیلی رسمی بازار یا قطع مسیر دریافت داده وجود دارد — ${route}.`);
     }
     marketRenderAfterDataV416();
     const urgent=rows.filter(x=>x.hunt==='شکار ویژه'||x.hunt==='هشدار فوری');
@@ -111,7 +144,8 @@ async function load(force=false){
     urgent.forEach(x=>seen.add(x.id));
   }catch(e){
     const retry=Math.max(Number(e?.retryAfterMs||0),Number(cfg.REFRESH_MS||15000));
-    marketRetryNotBeforeV416=Date.now()+Math.min(Math.max(retry,15000),120000);
+    const maxRetry=MARKET_LOCAL_BASE_V416?15000:120000;
+    marketRetryNotBeforeV416=Date.now()+Math.min(Math.max(retry,15000),maxRetry);
     const cached=await marketCacheReadV416();
     if(!rows.length&&cached?.signals?.length){
       marketApplyRowsV416(cached.signals);

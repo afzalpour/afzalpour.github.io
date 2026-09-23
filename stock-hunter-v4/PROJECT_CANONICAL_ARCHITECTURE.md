@@ -74,9 +74,10 @@ Current safety baseline until lifecycle advancement:
 Do not activate 4.1.7 merely because implementation is complete. Continue prospective collection → maturity → calibration → robustness → candidate evaluation → OOS → promotion proposal → forward shadow → activation review → canary.
 
 ## 8. Feed/freshness contract
-Current market feed provenance depends on `Stock_Hunter_Feed_Agent_v4.0.5` populating `stock_hunter_integrated_v1` and `stock_hunter_feed_health_v4`.
+Primary live-market provenance is Local-First: `Stock_Hunter_Feed_Agent_v4.0.7_LocalFirst` sends the unchanged v4.0.6 market/scoring payload to `Stock_Hunter_Local_Bridge_v4.0.7` on `127.0.0.1:41716`; the browser reads the local REST-compatible bridge first. Supabase remains a cloud fallback/legacy evidence store and is no longer required for day-to-day live Hunt availability.
+The local bridge binds loopback only, persists the latest snapshot locally, and archives one compressed point-in-time snapshot per 15-minute bucket.
 Browser refresh interval: 15 seconds.
-A stale feed can remain searchable but cannot create active Action Now/Radar alerts.
+A stale feed can remain searchable but cannot create active Action Now/Radar alerts. The frozen <=180-second Action Now freshness gate is unchanged.
 
 
 

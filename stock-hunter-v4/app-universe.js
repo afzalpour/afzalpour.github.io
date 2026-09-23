@@ -33,13 +33,14 @@ async function fetchSignalsForUniverse(base,items){
   try{
     const table=cfg.TABLE||'stock_hunter_signals_v4',p=new URLSearchParams();
     p.set('select','*');p.set('id',`in.(${ids.join(',')})`);p.set('limit',String(Math.max(150,ids.length)));
-    const r=await fetch(`${base}/rest/v1/${table}?${p.toString()}`,{headers:headers(),cache:'no-store'});
+    const u=`${base}/rest/v1/${table}?${p.toString()}`;const r=typeof marketFetchV416==='function'?await marketFetchV416(u,base,9000):await fetch(u,{headers:headers(),cache:'no-store'});
     if(!r.ok)return new Map();
     return new Map((await r.json()).map(s=>{const x=norm(s);x.analyzed=true;return[x.id,x]}));
   }catch{return new Map();}
 }
 async function searchUniverse(q){
-  const base=String(cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,'');
+  const preferred=typeof window!=='undefined'&&typeof window.stockHunterMarketBaseV416==='function'?window.stockHunterMarketBaseV416():'';
+  const base=String(preferred||cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,'');
   if(!base||!q.trim()){universeRows=[];universeLoading=false;render();return;}
   universeLoading=true;
   try{
@@ -47,7 +48,7 @@ async function searchUniverse(q){
     p.set('select','ins_code,symbol,company_name,market,asset_type,is_active,updated_at');
     p.set('or',`(symbol.ilike.*${term}*,company_name.ilike.*${term}*)`);
     p.set('order','is_active.desc,symbol.asc');p.set('limit','150');
-    const r=await fetch(`${base}/rest/v1/stock_hunter_universe_v4?${p.toString()}`,{headers:headers(),cache:'no-store'});
+    const u=`${base}/rest/v1/stock_hunter_universe_v4?${p.toString()}`;const r=typeof marketFetchV416==='function'?await marketFetchV416(u,base,9000):await fetch(u,{headers:headers(),cache:'no-store'});
     if(!r.ok)throw new Error('جست‌وجوی جامع ناموفق بود');
     const items=await r.json(),signalMap=await fetchSignalsForUniverse(base,items);
     universeRows=items.map(x=>normUniverse(x,signalMap));
