@@ -621,3 +621,11 @@ No Hunt score/formula/threshold, routing, lifecycle, Feed or Auth write behavior
 - Diagnostic same-day outcomes: reversal later reaches >=0%; acceleration later reaches >=+1%; these do not replace prospective OOS/lift validation.
 - Added localhost-only 15-minute recorder for future complete-session replay; it skips when Live rows=0 and makes no external request itself.
 - Package SHA-256: b3077fe1ef4f4b5353576a5f595bc715938b55e1d06d5baae8a616b13af14da5.
+
+
+## Replay Diagnostics v4.1.2 checkpoint — 2026-09-24
+- First real replay found 4 archives / 3 distinct times / 523 symbols but 0 candidates.
+- v4.1.0 quality labeling was too permissive because it did not require in-session/Delta-ready/Huntable observations.
+- v4.1.2 now reports exact Tehran archive times, in-session/off-hours counts, valid price-volume, Delta-ready, Huntable, mode counts and gate/rejection distributions.
+- Zero candidates is interpretable only after those data-quality gates pass.
+- Package SHA-256: 77fa9a628bd34cce77cfe3515fbe684d53f79473421ee86ff2d8580e4f08e6f0.
