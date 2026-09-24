@@ -1,0 +1,94 @@
+name: Stock Hunter Cloud Raw Daily Pack
+
+on:
+  workflow_dispatch:
+    inputs:
+      tehran_date:
+        description: 'Tehran market date YYYY-MM-DD (blank = today in Tehran)'
+        required: false
+        type: string
+  schedule:
+    - cron: '45 14 * * 0-3,6'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stock-hunter-cloud-raw-pack-${{ github.event.inputs.tehran_date || 'scheduled' }}
+  cancel-in-progress: false
+
+jobs:
+  compact:
+    runs-on: ubuntu-latest
+    environment: stock-hunter-cloud-production
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      BUCKET: stock-hunter-market-v1
+      STOCK_HUNTER_RAW_PACK_MAX_BYTES: '200000000'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Require R2 read/write credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$AWS_ACCESS_KEY_ID"
+          test -n "$AWS_SECRET_ACCESS_KEY"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+
+      - name: Resolve Tehran date
+        id: date
+        shell: bash
+        env:
+          INPUT_DATE: ${{ github.event.inputs.tehran_date || '' }}
+        run: |
+          set -euo pipefail
+          d="$INPUT_DATE"
+          if [ -z "$d" ]; then d="$(TZ=Asia/Tehran date +%F)"; fi
+          [[ "$d" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]
+          echo "value=$d" >> "$GITHUB_OUTPUT"
+
+      - name: Check raw objects
+        id: raw
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint="https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com"
+          prefix="raw/v1/${{ steps.date.outputs.value }}/"
+          count="$(aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "$prefix" --max-items 1 --endpoint-url "$endpoint" --query 'KeyCount' --output text)"
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+
+      - name: Download raw day
+        if: steps.raw.outputs.count != '0'
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint="https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com"
+          mkdir -p raw-day
+          aws s3 cp "s3://$BUCKET/raw/v1/${{ steps.date.outputs.value }}/" raw-day/ --recursive --endpoint-url "$endpoint" --only-show-errors
+
+      - name: Build deterministic raw pack
+        if: steps.raw.outputs.count != '0'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node stock-hunter-v4/cloud-v1/historical/compact-r2-day-v1.mjs             --input raw-day --output pack-out --date "${{ steps.date.outputs.value }}"
+
+      - name: Upload and verify pack
+        if: steps.raw.outputs.count != '0'
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint="https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com"
+          prefix="packs/raw-v1/${{ steps.date.outputs.value }}"
+          aws s3 cp pack-out/market-facts.ndjson.gz "s3://$BUCKET/$prefix/market-facts.ndjson.gz" --endpoint-url "$endpoint" --only-show-errors
+          aws s3 cp pack-out/manifest.json "s3://$BUCKET/$prefix/manifest.json" --endpoint-url "$endpoint" --only-show-errors
+          aws s3api head-object --bucket "$BUCKET" --key "$prefix/market-facts.ndjson.gz" --endpoint-url "$endpoint" >/dev/null
+          aws s3api head-object --bucket "$BUCKET" --key "$prefix/manifest.json" --endpoint-url "$endpoint" >/dev/null
+
+      - name: No raw data notice
+        if: steps.raw.outputs.count == '0'
+        run: echo "No raw cloud snapshots for ${{ steps.date.outputs.value }}; no pack fabricated."
