@@ -383,6 +383,8 @@ class TsetmcFeed:
                     "flow": price.get("flow"),
                     "cs": price.get("cs"),
                     "pf": price.get("pf"),
+                    "yval": price.get("yval"),
+                    "cgrvalcot": price.get("cgrvalcot"),
                     "best_limits": [levels[k] for k in sorted(levels) if 1 <= k <= 5],
                     "client_type": self.client_type.get(ins),
                 }
