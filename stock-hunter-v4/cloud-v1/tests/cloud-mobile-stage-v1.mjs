@@ -1,0 +1,10 @@
+import fs from "node:fs";
+const html=fs.readFileSync("../staging/index.html","utf8");
+const js=fs.readFileSync("../staging/stage.js","utf8");
+const prod=fs.readFileSync("../../index.html","utf8");
+if(!html.includes("stage.js"))throw new Error("stage_loader_missing");
+if(!js.includes("cloud-market-client-v1.js"))throw new Error("cloud_client_import_missing");
+if(/tsetmc|tsev2|MarketWatchInit|MarketWatchPlus|ClientTypeAll/i.test(html+"\n"+js))throw new Error("direct_tsetmc_reference_in_stage");
+if(/COLLECTOR_KEYS_JSON|STOCK_HUNTER_COLLECTOR_SECRET|X-SH-Signature/i.test(html+"\n"+js))throw new Error("secret_contract_exposed_in_stage");
+if(prod.includes("cloud-v1/staging")||prod.includes("stage.js"))throw new Error("production_references_cloud_stage");
+console.log("cloud-mobile-stage-v1: PASS");
