@@ -161,7 +161,7 @@ export function buildBaseSignalFeatures(
   out.frozen_hunt_input_ready=false;
   out.frozen_hunt_blockers=[
     "integrated_view_provenance_unresolved",
-    "asset_session_classification_provenance_unresolved",
+    "asset_type_market_derivation_provenance_unresolved",
   ];
 
   return out;
