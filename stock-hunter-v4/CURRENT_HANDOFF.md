@@ -640,3 +640,13 @@ No Hunt score/formula/threshold, routing, lifecycle, Feed or Auth write behavior
 - Historical BestLimits is deferred to a separate stateful delta carry-forward reconstruction after trade-history coverage.
 - ZIP SHA-256: d4914650bf8c46d94279b33c2e568e8622fa59c006c509789724345614f8635b.
 - Frozen production 4.1.6 Hunt formulas/thresholds/routing/lifecycle unchanged.
+
+
+## Historical Cache/Resume v4.1.9 checkpoint — 2026-09-24
+- Real v4.1.8 batch: 75 candidates, 71 success, 4 failed, 7,636,441 network bytes; ledger resolved 280/957; accumulated 277 reversal + 263 acceleration.
+- Identified starvation risk: failed post-300 symbols could be reselected before unseen symbols in normal continue mode.
+- v4.1.9 separates queues: continue=fresh-only post-300; retry-first=unresolved first 300; retry-post=failed post-300.
+- Added AUTO_CONTINUE_3_BATCHES_20260923 with max 3 fresh batches and 15-second cooldown.
+- Persistent ledger/cache remains under %LOCALAPPDATA%\StockHunterHistorical.
+- ZIP SHA-256: 558f35a039e366116db9cd13af24c7189e9fffb9d3f3459ccf31419cff215075.
+- Frozen production 4.1.6 Hunt formulas/thresholds/routing/lifecycle unchanged.
