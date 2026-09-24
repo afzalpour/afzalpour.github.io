@@ -228,7 +228,10 @@ export default {
         return json({ error: "websocket_upgrade_required" }, 426);
       }
       const stub = await marketStub(env);
-      return stub.fetch("https://market.internal/ws", request);
+      return stub.fetch(new Request("https://market.internal/ws", {
+        method: "GET",
+        headers: request.headers,
+      }));
     }
 
     if (request.method === "GET" && url.pathname === "/v1/latest") {
