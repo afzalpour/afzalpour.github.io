@@ -144,3 +144,27 @@ The full 4k-symbol snapshot is **not** broadcast over every socket. After `snaps
 Application-level `ping`/ `pong` is configured with platform auto-response so the Durable Object does not need to wake for routine keepalive traffic.
 
 No browser is allowed to publish market data over this socket.
+
+
+## Staging cloud market client
+
+Module:
+
+`client/cloud-market-client-v1.js`
+
+This module is deliberately **not referenced by production `index.html`**. CI fails if production begins loading it before cutover gates are explicitly completed.
+
+Responsibilities:
+- HTTPS-only API base;
+- `/v1/health` probe;
+- `/v1/latest` retrieval;
+- `/v1/ws` connection;
+- exponential WebSocket reconnect (1s → 30s);
+- sequence-aware refresh;
+- single in-flight latest fetch with coalescing;
+- explicit freshness classification;
+- `activeHuntAllowed=false` for data older than the freshness threshold.
+
+It contains no collector or cloud secret.
+
+A future staging loader may instantiate it with the deployed Cloudflare API base and map a fresh validated snapshot into the existing frontend normalization path. Production cutover remains blocked until Iran-egress live probe plus full live feature provenance/parity gates pass.
