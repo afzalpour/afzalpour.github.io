@@ -842,3 +842,27 @@ Remaining exact Frozen Hunt live-input blocker:
 `integrated_view_provenance_unresolved`.
 
 `frozen_hunt_input_ready` remains false; production cloud Hunt/source cutover is still not authorized.
+
+
+## Model Validation Gate v4.5.0 checkpoint — 2026-09-25
+
+User explicitly prioritized validating Frozen Hunt 4.1.6 before completing the remaining cloud-production rollout.
+
+Production infrastructure work is paused at its current safe checkpoint. The next primary gate is model validation:
+
+- G0 mechanical/formula invariants;
+- G1 PIT historical evidence quality;
+- G2 2026-09-23 historical gross-error diagnostic;
+- G3 exact prospective shadow validation;
+- G4 production readiness.
+
+Package:
+`Stock_Hunter_Model_Validation_Gate_v4.5.0.zip`
+
+SHA-256:
+`7b63e48e6b9a9444740e0b11dc2e8928404c41f558deff86b9311ed983c43e3f`
+
+The 2026-09-23 run is diagnostic only. It must never be represented as prospective/OOS proof, and missing PIT realFlow/integrated inputs must never be fabricated. Production cloud cutover remains blocked until this validation sequence is resolved.
+
+See:
+`model-validation-v416/MODEL_VALIDATION_GATE_V416.md`.
