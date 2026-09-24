@@ -798,3 +798,22 @@ Prepared provider-neutral Iran-egress deployment assets:
 - ephemeral free PaaS without persistent volume is probe-only, not production-ready.
 
 No secret is committed and no Hunt behavior is changed.
+
+
+## Cloud bootstrap v2 checkpoint — 2026-09-24
+
+Deployment prerequisites are now normalized in `cloud-v1/DEPLOYMENT_BOOTSTRAP.md`.
+
+External credentials:
+- `CLOUDFLARE_API_TOKEN`;
+- `CLOUDFLARE_ACCOUNT_ID`;
+- `STOCK_HUNTER_COLLECTOR_KEYS_JSON`;
+- `R2_ACCESS_KEY_ID`;
+- `R2_SECRET_ACCESS_KEY`.
+
+The first three deploy Worker/DO/R2/lifecycle/collector secret. The last two are bucket-scoped S3 credentials for the deterministic daily raw-pack workflow.
+
+After deploy, the canonical live validation order is:
+Iran `--source-probe` -> one signed `--once` -> cloud `/v1/health` + `/v1/latest` -> mobile staging WebSocket smoke -> only then long-running collector.
+
+This still does not authorize production Hunt source cutover while exact integrated-view and asset-label provenance remain unresolved.
