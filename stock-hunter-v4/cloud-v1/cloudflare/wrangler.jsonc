@@ -1,0 +1,33 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "stock-hunter-cloud-v1",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-24",
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "MARKET_COORDINATOR",
+        "class_name": "MarketCoordinator"
+      }
+    ]
+  },
+  "exports": {
+    "MarketCoordinator": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    }
+  },
+  "r2_buckets": [
+    {
+      "binding": "MARKET_LATEST",
+      "bucket_name": "stock-hunter-market-v1"
+    }
+  ],
+  "vars": {
+    "PUBLIC_ORIGIN": "https://afzalpour.github.io",
+    "INGEST_MAX_SKEW_SECONDS": "180"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
