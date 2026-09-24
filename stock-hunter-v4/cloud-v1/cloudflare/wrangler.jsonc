@@ -25,7 +25,10 @@
   ],
   "vars": {
     "PUBLIC_ORIGIN": "https://afzalpour.github.io",
-    "INGEST_MAX_SKEW_SECONDS": "180"
+    "INGEST_MAX_SKEW_SECONDS": "180",
+    "RAW_ARCHIVE_ENABLED": "1",
+    "RAW_ARCHIVE_DAILY_MAX_BYTES": "1000000000",
+    "RAW_ARCHIVE_DAILY_MAX_OBJECTS": "1500"
   },
   "observability": {
     "enabled": true
