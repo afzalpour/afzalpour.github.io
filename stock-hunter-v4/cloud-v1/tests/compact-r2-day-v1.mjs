@@ -19,7 +19,7 @@ const r=spawnSync(process.execPath,[script,"--input",input,"--output",output,"--
 if(r.status!==0)throw new Error(r.stderr||r.stdout||`status ${r.status}`);
 const m=JSON.parse(fs.readFileSync(path.join(output,"manifest.json"),"utf8"));
 if(m.snapshot_count!==3||m.total_rows!==3||m.streams[0].gaps.length!==0)throw new Error("manifest_mismatch");
-const lines=zlib.gunzipSync(fs.readFileSync(path.join(output,"market-facts.ndjson.gz"),"utf8")).toString("utf8").trim().split("\n");
+const lines=zlib.gunzipSync(fs.readFileSync(path.join(output,"market-facts.ndjson.gz"))).toString("utf8").trim().split("\n");
 if(lines.length!==3)throw new Error("pack_line_count_mismatch");
 fs.rmSync(root,{recursive:true,force:true});
 console.log("cloud-r2-day-compactor-v1: PASS");
