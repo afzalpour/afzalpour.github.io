@@ -84,6 +84,14 @@ jobs:
         working-directory: stock-hunter-v4/cloud-v1/cloudflare
         run: npm run test:websocket
 
+      - name: Bounded R2 archive policy contract
+        working-directory: stock-hunter-v4/cloud-v1/cloudflare
+        run: npm run test:archive
+
+      - name: R2 daily raw-pack compactor contract
+        working-directory: stock-hunter-v4/cloud-v1/cloudflare
+        run: npm run test:compactor
+
       - name: Staging cloud client fail-closed contract
         working-directory: stock-hunter-v4/cloud-v1/cloudflare
         run: npm run test:client
