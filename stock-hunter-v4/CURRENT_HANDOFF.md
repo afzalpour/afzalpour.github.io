@@ -629,3 +629,14 @@ No Hunt score/formula/threshold, routing, lifecycle, Feed or Auth write behavior
 - v4.1.2 now reports exact Tehran archive times, in-session/off-hours counts, valid price-volume, Delta-ready, Huntable, mode counts and gate/rejection distributions.
 - Zero candidates is interpretable only after those data-quality gates pass.
 - Package SHA-256: 77fa9a628bd34cce77cfe3515fbe684d53f79473421ee86ff2d8580e4f08e6f0.
+
+
+## Historical Cache/Resume v4.1.8 checkpoint — 2026-09-24
+- First real 2026-09-23 historical objective run: 2294 daily rows, 957 shortlist, 300 trade requests, 211 success, 89 failed, 208 reversal + 199 acceleration events, 42,702,776 decoded bytes.
+- v4.1.8 persists gzip cache + resumable ledger under %LOCALAPPDATA%\StockHunterHistorical.
+- Bootstrap imports all 407 prior objective events and marks 209 event-bearing prior symbols covered; 91 first-300 items remain targeted-retry candidates.
+- Continue mode starts after prior slot 300 in 75-symbol batches; retry-first mode handles unresolved first-300 items in 40-symbol batches.
+- ClientTypeHistory is not used in point-in-time scoring because it is day-level and would risk look-ahead.
+- Historical BestLimits is deferred to a separate stateful delta carry-forward reconstruction after trade-history coverage.
+- ZIP SHA-256: d4914650bf8c46d94279b33c2e568e8622fa59c006c509789724345614f8635b.
+- Frozen production 4.1.6 Hunt formulas/thresholds/routing/lifecycle unchanged.
