@@ -69,6 +69,7 @@ Recommended row fields:
 - source time: `heven`;
 - prices: `closing_price`, `last_price`, `low_price`, `high_price`, `yesterday_price`, `min_allowed`, `max_allowed`;
 - activity: `tno`, `volume`, `value`, `flow`;
+- classification source: raw `yval` (string, preserved without reinterpretation);
 - five BestLimits levels with prices, quantities, and order counts;
 - raw ClientType intraday counters when available.
 
