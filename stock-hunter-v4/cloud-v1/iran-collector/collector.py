@@ -383,6 +383,7 @@ class TsetmcFeed:
                     "flow": price.get("flow"),
                     "cs": price.get("cs"),
                     "pf": price.get("pf"),
+                    "yval": price.get("yval"),
                     "best_limits": [levels[k] for k in sorted(levels) if 1 <= k <= 5],
                     "client_type": self.client_type.get(ins),
                 }
@@ -557,11 +558,13 @@ def self_test():
     }
     assert decode_payload(encode_payload(sample)) == sample
     fake = TsetmcFeed("https://example.invalid/")
-    fake.prices = {"1": {"id": "1"}}
+    fake.prices = {"1": {"id": "1", "yval": "301"}}
     fake.client_type = {"1": {}}
     fake.refid = 17
     fake.heven = 101530
     fake.market_state = "OPEN"
+    payload = fake.payload("collector-test", "stream-test", 1)
+    assert payload["rows"][0]["yval"] == "301"
     summary = source_probe_summary(fake)
     assert summary["ok"] is True
     assert summary["rows"] == 1
