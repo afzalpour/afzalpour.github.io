@@ -78,7 +78,7 @@ assert.ok(Number.isFinite(Number(second.qi)));
 assert.ok(Number.isFinite(Number(second.ofi)));
 assert.deepStrictEqual(second.frozen_hunt_blockers,[
   "integrated_view_provenance_unresolved",
-  "asset_session_classification_provenance_unresolved",
+  "asset_type_market_derivation_provenance_unresolved",
 ]);
 
 console.log("cloud-base-signal-feature-builder: PASS");
