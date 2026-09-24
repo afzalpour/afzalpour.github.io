@@ -19,6 +19,11 @@
       "path": "stock-hunter-v4/hunt-parity-v416.js",
       "git_blob_sha1": "400fb64e841de6261d0e5e744c475e032f9c9dfe",
       "role": "existing_parity_harness"
+    },
+    {
+      "path": "stock-hunter-v4/capture-security/stock-hunter-capture-v416/index.ts",
+      "git_blob_sha1": "0c1edf26b1ff30c2829b507752b0c4ec5a7ca250",
+      "role": "parity_approved_server_scorer_source"
     }
   ],
   "rules": {
@@ -26,5 +31,11 @@
     "cloud_may_claim_hunt_parity_before_exact_parity_pass": false,
     "future_data_in_pre_event_features": false,
     "synthetic_data_counts_as_prospective": false
+  },
+  "generated_runtime": {
+    "path": "stock-hunter-v4/cloud-v1/frozen-runtime/generated-hunt-v416.ts",
+    "generation_script": "stock-hunter-v4/cloud-v1/scripts/generate-frozen-runtime.mjs",
+    "source_role": "parity_approved_server_scorer_source",
+    "generation_rule": "strip import line(s), take exact source before captureAdminKey(), append exports"
   }
 }

@@ -5,9 +5,12 @@
   "scripts": {
     "check": "wrangler deploy --dry-run --outdir .wrangler-dry-run",
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "parity": "tsx ../tests/cloud-frozen-parity.ts",
+    "check:frozen": "node ../scripts/generate-frozen-runtime.mjs --check"
   },
   "devDependencies": {
-    "wrangler": "4.137.0"
+    "wrangler": "4.137.0",
+    "tsx": "4.23.15"
   }
 }
