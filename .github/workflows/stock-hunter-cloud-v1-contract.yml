@@ -43,6 +43,16 @@ jobs:
       - name: Iran collector Python protocol self-test
         run: python3 stock-hunter-v4/cloud-v1/iran-collector/collector.py --self-test
 
+      - name: Iran collector deployment contract
+        working-directory: stock-hunter-v4/cloud-v1/cloudflare
+        run: node ../tests/iran-collector-deployment-v1.mjs
+
+      - name: Iran collector container build + offline self-test
+        working-directory: stock-hunter-v4/cloud-v1/iran-collector
+        run: |
+          docker build -t stock-hunter-iran-collector:contract .
+          docker run --rm stock-hunter-iran-collector:contract --self-test
+
       - name: Node protocol interoperability self-test
         run: node stock-hunter-v4/cloud-v1/tests/protocol-selftest.mjs
 

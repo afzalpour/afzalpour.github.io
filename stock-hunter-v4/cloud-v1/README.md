@@ -205,3 +205,15 @@ It is intentionally isolated from production `index.html`. It accepts a deployed
 - the client-side freshness fail-closed gate.
 
 It performs no Hunt scoring and contains no collector secret. It is intended for the first phone/browser smoke after Cloudflare deployment and Iran-egress live probe.
+
+
+## Iran collector deployment package
+
+`iran-collector/` now contains provider-neutral deployment assets:
+- `install-systemd.sh` — installs but deliberately does not start;
+- `activate-systemd.py` — source probe -> one cloud snapshot -> service start;
+- `Dockerfile` and `compose.example.yml`;
+- `DEPLOYMENT.md`;
+- collector `--source-probe` mode that requires no cloud credential.
+
+Persistent collector state is mandatory. Ephemeral free containers are probe-only unless a persistent volume is attached.
