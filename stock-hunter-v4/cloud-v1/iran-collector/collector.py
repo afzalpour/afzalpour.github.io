@@ -469,6 +469,20 @@ def decode_payload(body: bytes) -> dict:
     return json.loads(gzip.decompress(body).decode("utf-8"))
 
 
+def source_probe_summary(feed: TsetmcFeed) -> dict:
+    rows = len(feed.prices)
+    return {
+        "ok": rows > 0,
+        "probe": "tsetmc_source",
+        "base": feed.base,
+        "rows": rows,
+        "client_type_rows": len(feed.client_type),
+        "refid": int(feed.refid),
+        "heven": int(feed.heven),
+        "market_state": str(feed.market_state or ""),
+    }
+
+
 def market_window_open() -> bool:
     now = datetime.now(TEHRAN)
     if now.weekday() not in {0, 1, 2, 5, 6}:  # Mon-Wed + Sat-Sun
@@ -542,6 +556,18 @@ def self_test():
         "rows": [{"id": "1"}],
     }
     assert decode_payload(encode_payload(sample)) == sample
+    fake = TsetmcFeed("https://example.invalid/")
+    fake.prices = {"1": {"id": "1"}}
+    fake.client_type = {"1": {}}
+    fake.refid = 17
+    fake.heven = 101530
+    fake.market_state = "OPEN"
+    summary = source_probe_summary(fake)
+    assert summary["ok"] is True
+    assert summary["rows"] == 1
+    assert summary["client_type_rows"] == 1
+    assert summary["refid"] == 17
+    assert summary["heven"] == 101530
     print("collector-protocol-selftest: PASS")
 
 
@@ -550,10 +576,25 @@ def main():
     parser.add_argument("--once", action="store_true")
     parser.add_argument("--loop", action="store_true")
     parser.add_argument("--self-test", action="store_true")
+    parser.add_argument(
+        "--source-probe",
+        action="store_true",
+        help="Probe TSETMC from this host without requiring or sending cloud credentials.",
+    )
     args = parser.parse_args()
 
     if args.self_test:
         self_test()
+        return
+
+    base = os.environ.get("STOCK_HUNTER_TSETMC_BASE", DEFAULT_BASE).strip()
+    if args.source_probe:
+        feed = TsetmcFeed(base)
+        feed.init()
+        summary = source_probe_summary(feed)
+        print(json.dumps(summary, ensure_ascii=False), flush=True)
+        if not summary["ok"]:
+            raise SystemExit(4)
         return
 
     ingest_url = os.environ.get("STOCK_HUNTER_INGEST_URL", "").strip()
@@ -564,7 +605,6 @@ def main():
         )
 
     collector_id = os.environ.get("STOCK_HUNTER_COLLECTOR_ID", "iran-primary").strip()
-    base = os.environ.get("STOCK_HUNTER_TSETMC_BASE", DEFAULT_BASE).strip()
     interval = max(15, int(os.environ.get("STOCK_HUNTER_INTERVAL_SECONDS", "30")))
     state_root = Path(
         os.environ.get(
