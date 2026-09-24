@@ -26,7 +26,7 @@ const pure=
   source.slice(utilStart,utilEnd).trimEnd()+"\n"+
   source.slice(funcsStart,funcsEnd).trimEnd();
 
-if(/tsetmc|https?:\/\/|Deno\.|createClient\(|SUPABASE_/i.test(pure)){
+if(/https?:\/\/|\bfetch\s*\(|Deno\.|createClient\(|SUPABASE_/i.test(pure)){
   throw new Error("network/backend dependency leaked into pure signal core");
 }
 
