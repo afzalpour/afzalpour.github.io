@@ -722,3 +722,23 @@ Implemented scaffold:
 8. Add PWA/Web Push and later a second Iran collector for redundancy.
 
 Do not resume the old personal-PC-as-primary-feed architecture.
+
+
+## Cloud provenance recovery checkpoint — 2026-09-24
+
+Continuity ID: `SHIKAR-CLOUD-IRAN-EGRESS-V1`.
+
+Recovered:
+- exact session rules are already preserved in committed `app-session-v413.js` and the parity-approved frozen server runtime;
+- Git history commit `7e4772bf86cc50e15c59d7369824fff609362a3e` preserves the documented v4.1.0 integrated-engine formulas/decision thresholds;
+- live Supabase management-plane Edge sources remain readable even while PostgreSQL is down.
+
+Still unresolved for an **exact** production parity claim:
+1. original SQL definition/dependencies of `public.stock_hunter_integrated_v1`;
+2. exact old Eco Bridge derivation of descriptive `asset_type` / `market` labels from the Universe source.
+
+The cloud readiness blocker name was corrected from the over-broad `asset_session_classification_provenance_unresolved` to:
+`asset_type_market_derivation_provenance_unresolved`.
+
+Do not infer that session logic is missing. Do not fabricate/default the unresolved integrated fields. See:
+`cloud-v1/live-features/INTEGRATED_V410_PROVENANCE_RECOVERY_AUDIT_2026-09-24.md`.
