@@ -1,9 +1,13 @@
+import { archiveBudgetDecision, rawArchiveKey, recordArchiveBudget, tehranDateFromEpochSeconds, type ArchiveBudgetLedger } from "./archive-policy-v1.ts";
 export interface Env {
   MARKET_COORDINATOR: DurableObjectNamespace;
   MARKET_LATEST: R2Bucket;
   COLLECTOR_KEYS_JSON: string;
   PUBLIC_ORIGIN?: string;
   INGEST_MAX_SKEW_SECONDS?: string;
+  RAW_ARCHIVE_ENABLED?: string;
+  RAW_ARCHIVE_DAILY_MAX_BYTES?: string;
+  RAW_ARCHIVE_DAILY_MAX_OBJECTS?: string;
 }
 
 const PROTOCOL = "stock-hunter-iran-ingest-v1";
@@ -266,6 +270,9 @@ type LatestMeta = {
   accepted_at: number;
   body_sha256: string;
   row_count: number;
+  archive_status?: "stored"|"disabled"|"budget_exhausted"|"write_error";
+  archive_key?: string;
+  archive_reason?: string;
 };
 
 export type SnapshotNotificationV1 = {
@@ -385,9 +392,55 @@ export class MarketCoordinator {
         },
       });
 
+      const archiveEnabled=(this.env.RAW_ARCHIVE_ENABLED||"1")!=="0";
+      let archiveLedger=(await this.state.storage.get<ArchiveBudgetLedger>("archive_budget_ledger_v1"))||{};
+      if(!archiveEnabled){
+        meta.archive_status="disabled";
+        meta.archive_reason="archive_disabled";
+      }else{
+        const archiveDate=tehranDateFromEpochSeconds(observedAt);
+        const decision=archiveBudgetDecision({
+          ledger:archiveLedger,
+          date:archiveDate,
+          bodyBytes:body.byteLength,
+          maxBytes:Number(this.env.RAW_ARCHIVE_DAILY_MAX_BYTES||"1000000000"),
+          maxObjects:Number(this.env.RAW_ARCHIVE_DAILY_MAX_OBJECTS||"1500"),
+        });
+        if(!decision.allowed){
+          meta.archive_status="budget_exhausted";
+          meta.archive_reason=decision.reason;
+        }else{
+          const archiveKey=rawArchiveKey({
+            observedAt,collectorId,streamId,sequence,bodyHash,
+          });
+          try{
+            await this.env.MARKET_LATEST.put(archiveKey,body,{
+              httpMetadata:{contentType:"application/json",contentEncoding:"gzip"},
+              customMetadata:{
+                protocol:PROTOCOL,
+                collector_id:collectorId,
+                stream_id:streamId,
+                sequence:String(sequence),
+                observed_at:String(observedAt),
+                accepted_at:String(acceptedAt),
+                body_sha256:bodyHash,
+                row_count:String(rowCount),
+              },
+            });
+            archiveLedger=recordArchiveBudget(archiveLedger,archiveDate,decision.next);
+            meta.archive_status="stored";
+            meta.archive_key=archiveKey;
+          }catch(error){
+            meta.archive_status="write_error";
+            meta.archive_reason=error instanceof Error?error.message.slice(0,160):"archive_write_error";
+          }
+        }
+      }
+
       await this.state.storage.put({
         [seqKey]: sequence,
         latest_meta: meta,
+        archive_budget_ledger_v1: archiveLedger,
       });
 
       this.broadcastSnapshot(meta);
