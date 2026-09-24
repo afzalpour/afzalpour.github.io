@@ -866,3 +866,19 @@ The 2026-09-23 run is diagnostic only. It must never be represented as prospecti
 
 See:
 `model-validation-v416/MODEL_VALIDATION_GATE_V416.md`.
+
+
+## Model Validation v4.5.1 daily-reference repair — 2026-09-25
+
+First real v4.5.0 run:
+- all mechanical Hunt 4.1.6 checks PASS;
+- historical stage could not find the daily reference at the single hard-coded path `cache\\bulk\\20260923.json.gz`.
+
+This is not a model failure.
+
+v4.5.1 keeps all validation criteria unchanged and adds bounded deterministic discovery of existing local daily/bulk caches, including gzip magic-byte detection. No network request and no TradeHistory/BestLimits re-download is allowed.
+
+Package SHA-256:
+`0f61f1c39ff0af25ea5c57a44529593ce18cbbea9f522d89a9c8b900157ccbdd`
+
+Primary next action: run `RUN_MODEL_VALIDATION_20260923.cmd` from v4.5.1 and analyze its full final output before resuming production infrastructure work.
