@@ -650,3 +650,11 @@ No Hunt score/formula/threshold, routing, lifecycle, Feed or Auth write behavior
 - Persistent ledger/cache remains under %LOCALAPPDATA%\StockHunterHistorical.
 - ZIP SHA-256: 558f35a039e366116db9cd13af24c7189e9fffb9d3f3459ccf31419cff215075.
 - Frozen production 4.1.6 Hunt formulas/thresholds/routing/lifecycle unchanged.
+
+
+## Historical Cache/Resume v4.2.1 checkpoint — 2026-09-24
+- v4.2.0 classified all 15 post-300 unresolved symbols as terminal NO_TRADES, then failed only during HTML rendering because Report lacked LedgerNoTrades.
+- Ledger is saved after every symbol; the classifications should persist despite the report error.
+- v4.2.1 fixes the struct/template mismatch, adds offline report rebuild mode, and adds a report-smoke selftest.
+- ZIP SHA-256: 843b3c394a2a11fd7308d5cd8d0988982e051f07fcd5c20862f04d579a76f9bb.
+- Frozen production Hunt 4.1.6 remains unchanged.
