@@ -114,3 +114,33 @@ Ingest:
 - No unbounded storage.
 - Stale market data must fail closed for active Hunt.
 - Supabase is not required by this scaffold.
+
+
+## Multi-user live fan-out
+
+The cloud runtime exposes:
+
+`GET /v1/ws`
+
+as a browser WebSocket upgrade endpoint. It is origin-restricted to the configured public origin.
+
+The Durable Object uses WebSocket Hibernation APIs. Clients receive only small control messages such as:
+
+```json
+{
+  "protocol": "stock-hunter-live-v1",
+  "type": "snapshot_available",
+  "observed_at": 1790272800,
+  "accepted_at": 1790272802,
+  "sequence": 77,
+  "row_count": 4267,
+  "body_sha256": "...",
+  "collector_id": "iran-primary"
+}
+```
+
+The full 4k-symbol snapshot is **not** broadcast over every socket. After `snapshot_available`, clients fetch `GET /v1/latest`. This keeps one accepted upstream market snapshot shared across all users while bounding per-client WebSocket traffic.
+
+Application-level `ping`/ `pong` is configured with platform auto-response so the Durable Object does not need to wake for routine keepalive traffic.
+
+No browser is allowed to publish market data over this socket.
