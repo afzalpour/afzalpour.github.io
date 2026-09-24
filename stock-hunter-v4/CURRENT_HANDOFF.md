@@ -758,3 +758,17 @@ Prepared on branch `stock-hunter-cloud-r2-archive-v1`:
 - foreign GitHub Actions consumes R2 only and never TSETMC.
 
 This archive work does not clear `frozen_hunt_input_ready=false` and does not authorize production frontend cutover.
+
+
+## Cloud ingest atomicity checkpoint — 2026-09-24
+
+A concurrency audit found that Durable Object requests may interleave during external R2 awaits. The cloud Market Coordinator was hardened with a durable transactional global ingest lease:
+- per-stream replay remains rejected;
+- concurrent collector ingest fails closed with `409 ingest_busy` and is retried/spooled by the collector;
+- stale lease recovery window: 300 seconds;
+- old observations cannot regress `live/latest`;
+- identical same-time snapshots do not rewrite latest;
+- failed live R2 writes release the lease so the same sequence can retry;
+- archive budget access is serialized by the same lease.
+
+This is cloud transport/state hardening only. Frozen Hunt 4.1.6 is unchanged and `frozen_hunt_input_ready` remains false until provenance gates close.
