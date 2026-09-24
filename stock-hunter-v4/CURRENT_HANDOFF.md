@@ -658,3 +658,67 @@ No Hunt score/formula/threshold, routing, lifecycle, Feed or Auth write behavior
 - v4.2.1 fixes the struct/template mismatch, adds offline report rebuild mode, and adds a report-smoke selftest.
 - ZIP SHA-256: 843b3c394a2a11fd7308d5cd8d0988982e051f07fcd5c20862f04d579a76f9bb.
 - Frozen production Hunt 4.1.6 remains unchanged.
+
+
+## Cloud-first production superseding checkpoint — 2026-09-24
+
+This checkpoint supersedes older feed-topology recommendations while preserving all frozen Hunt/lifecycle invariants.
+
+Canonical architecture document:
+`CLOUD_PRODUCTION_ARCHITECTURE_CANONICAL.md`
+
+Continuity ID:
+`SHIKAR-CLOUD-IRAN-EGRESS-V1`
+
+### Confirmed production requirements
+- Owner PC must not be required for production.
+- Mobile and multiple public users must work independently of the owner's computer.
+- Treat TSETMC as Iran-egress-only.
+- Foreign cloud must never directly depend on TSETMC.
+- Production live path becomes Iran Collector -> signed cloud ingest -> shared cloud state/scoring -> PWA/users.
+- Collector sends market facts only; it does not calculate Hunt.
+- Exact Frozen Hunt 4.1.6 must be reused in cloud only after browser/server parity proof.
+- All storage layers have hard caps; no unbounded database or local archive.
+
+### Supabase incident / architectural consequence
+Project `summnepwuziwulzvpcms` entered a PostgreSQL restart loop with `pg_wal/xlogtemp...: No space left on device`.
+- public Data API returned PGRST000/PGRST002 / 503;
+- direct SQL returned connection refused;
+- project Restart did not recover PostgreSQL;
+- Pause failed because the pre-pause backup could not complete;
+- Table Editor could not load schemas/tables;
+- Supabase recovery is a side track and is no longer a blocker for Stock Hunter production architecture.
+
+### New implementation branch
+`stock-hunter-cloud-architecture-v1`
+
+Implemented scaffold:
+- Iran collector protocol v1;
+- Python MarketWatch/ClientType facts collector;
+- bounded local spool;
+- HMAC transport;
+- Cloudflare ingest verifier;
+- Durable Object sequence/replay coordination;
+- R2 latest snapshot;
+- cloud health/latest API;
+- cross-runtime protocol self-tests;
+- CI guard preventing TSETMC references in foreign cloud runtime;
+- CI guard preserving frozen Hunt/session assets.
+
+### Historical checkpoint remains valid
+- TradeHistory 2026-09-23: CLOSED, 957/957 resolved.
+- BestLimits reconstruction: CLOSED for eligible coverage; no v4.3.x reruns.
+- 26 incomplete depth snapshots remain quality-excluded, never backfilled.
+- v4.4.0 PIT/provenance work remains scientifically relevant, but target execution architecture becomes bounded cloud archive + GitHub Actions rather than owner-PC production dependency.
+
+### Next engineering sequence
+1. Make cloud-v1 contract CI green.
+2. Create/deploy Cloudflare resources when account access is available.
+3. Run one signed `--once` probe from a real Iran-egress host.
+4. Verify cloud freshness/latest path.
+5. Extract exact frozen 4.1.6 shared runtime and pass parity before cloud scoring.
+6. Add WebSocket fan-out and switch production frontend from localhost/Supabase feed to cloud API.
+7. Add bounded R2 feature/provenance archive and move PIT jobs to GitHub Actions.
+8. Add PWA/Web Push and later a second Iran collector for redundancy.
+
+Do not resume the old personal-PC-as-primary-feed architecture.
