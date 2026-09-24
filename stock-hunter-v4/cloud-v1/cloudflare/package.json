@@ -13,7 +13,8 @@
     "test:websocket": "tsx ../tests/websocket-notification-v1.ts",
     "test:client": "tsx ../tests/cloud-market-client-v1.ts",
     "test:archive": "tsx ../tests/archive-policy-v1.ts",
-    "test:compactor": "node ../tests/compact-r2-day-v1.mjs"
+    "test:compactor": "node ../tests/compact-r2-day-v1.mjs",
+    "test:ingest-order": "tsx ../tests/ingest-order-v1.ts"
   },
   "devDependencies": {
     "wrangler": "4.137.0",
