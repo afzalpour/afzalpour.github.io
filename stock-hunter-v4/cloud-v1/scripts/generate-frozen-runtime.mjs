@@ -5,7 +5,7 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const root = path.resolve(here, "../../..");
+const root = path.resolve(here, "../..");
 const sourceRel = "capture-security/stock-hunter-capture-v416/index.ts";
 const outputRel = "cloud-v1/frozen-runtime/generated-hunt-v416.ts";
 const sourcePath = path.join(root, sourceRel);
