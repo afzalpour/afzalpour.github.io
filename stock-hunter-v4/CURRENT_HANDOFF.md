@@ -772,3 +772,16 @@ A concurrency audit found that Durable Object requests may interleave during ext
 - archive budget access is serialized by the same lease.
 
 This is cloud transport/state hardening only. Frozen Hunt 4.1.6 is unchanged and `frozen_hunt_input_ready` remains false until provenance gates close.
+
+
+## Mobile cloud staging checkpoint — 2026-09-24
+
+Prepared an isolated public staging probe at `stock-hunter-v4/cloud-v1/staging/`.
+- accepts only an HTTPS Cloud API base;
+- checks health/latest/WebSocket from mobile or desktop;
+- displays freshness, age, sequence, row count and a small raw snapshot sample;
+- performs no Hunt scoring;
+- contains no secret and no direct TSETMC reference;
+- Production `index.html` remains explicitly isolated from this staging surface.
+
+After a real Cloudflare deploy, use the staging page for phone/browser live validation before any production source switch.
