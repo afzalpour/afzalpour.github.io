@@ -80,6 +80,10 @@ jobs:
         working-directory: stock-hunter-v4/cloud-v1/cloudflare
         run: npm run test:features
 
+      - name: Metadata-only WebSocket fan-out contract
+        working-directory: stock-hunter-v4/cloud-v1/cloudflare
+        run: npm run test:websocket
+
       - name: Cloudflare dry-run compile
         working-directory: stock-hunter-v4/cloud-v1/cloudflare
         run: npm run check
