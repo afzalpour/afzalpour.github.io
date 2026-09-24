@@ -1,0 +1,59 @@
+name: Stock Hunter Cloud v1 Contract
+
+on:
+  pull_request:
+    paths:
+      - 'stock-hunter-v4/cloud-v1/**'
+      - 'stock-hunter-v4/CLOUD_PRODUCTION_ARCHITECTURE_CANONICAL.md'
+      - '.github/workflows/stock-hunter-cloud-v1-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Frozen 4.1.6 asset guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --name-only origin/main...HEAD -- \
+            stock-hunter-v4/app-hunt-v416.js \
+            stock-hunter-v4/app-session-v413.js | grep -q .; then
+            echo "Frozen Hunt/session assets changed. Cloud architecture PR must not modify them." >&2
+            exit 1
+          fi
+
+      - name: Iran collector Python protocol self-test
+        run: python3 stock-hunter-v4/cloud-v1/iran-collector/collector.py --self-test
+
+      - name: Node protocol interoperability self-test
+        run: node stock-hunter-v4/cloud-v1/tests/protocol-selftest.mjs
+
+      - name: Foreign cloud must not call TSETMC directly
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RniE 'tsetmc|tsev2|MarketWatchInit|MarketWatchPlus|ClientTypeAll' \
+            stock-hunter-v4/cloud-v1/cloudflare/src; then
+            echo "Direct TSETMC reference found in foreign cloud runtime." >&2
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pinned Cloudflare tooling
+        working-directory: stock-hunter-v4/cloud-v1/cloudflare
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Cloudflare dry-run compile
+        working-directory: stock-hunter-v4/cloud-v1/cloudflare
+        run: npm run check

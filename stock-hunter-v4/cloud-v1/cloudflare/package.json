@@ -1,0 +1,13 @@
+{
+  "name": "stock-hunter-cloud-v1",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "check": "wrangler deploy --dry-run --outdir .wrangler-dry-run",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.137.0"
+  }
+}
