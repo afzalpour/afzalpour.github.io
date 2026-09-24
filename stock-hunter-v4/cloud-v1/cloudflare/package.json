@@ -9,7 +9,8 @@
     "parity": "tsx ../tests/cloud-frozen-parity.ts",
     "check:frozen": "node ../scripts/generate-frozen-runtime.mjs --check",
     "check:signal": "node ../scripts/generate-signal-core.mjs --check",
-    "test:features": "tsx ../tests/live-feature-builder-v1.ts"
+    "test:features": "tsx ../tests/live-feature-builder-v1.ts",
+    "test:websocket": "tsx ../tests/websocket-notification-v1.ts"
   },
   "devDependencies": {
     "wrangler": "4.137.0",
