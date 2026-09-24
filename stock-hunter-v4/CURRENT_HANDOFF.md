@@ -785,3 +785,16 @@ Prepared an isolated public staging probe at `stock-hunter-v4/cloud-v1/staging/`
 - Production `index.html` remains explicitly isolated from this staging surface.
 
 After a real Cloudflare deploy, use the staging page for phone/browser live validation before any production source switch.
+
+
+## Iran Collector deployment checkpoint — 2026-09-24
+
+Prepared provider-neutral Iran-egress deployment assets:
+- source-only `collector.py --source-probe` proves TSETMC reachability without requiring/sending Cloud credentials;
+- fail-closed systemd installer installs/enables but does not start;
+- one-command activator runs source-probe, one signed `--once`, then starts the loop only after both succeed;
+- Docker image runs non-root;
+- Docker/compose explicitly require persistent state volume for stream ID, sequence and bounded spool;
+- ephemeral free PaaS without persistent volume is probe-only, not production-ready.
+
+No secret is committed and no Hunt behavior is changed.
