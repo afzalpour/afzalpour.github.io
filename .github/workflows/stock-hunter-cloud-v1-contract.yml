@@ -84,6 +84,19 @@ jobs:
         working-directory: stock-hunter-v4/cloud-v1/cloudflare
         run: npm run test:websocket
 
+      - name: Staging cloud client fail-closed contract
+        working-directory: stock-hunter-v4/cloud-v1/cloudflare
+        run: npm run test:client
+
+      - name: Production frontend must not load staging cloud client
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -Fq 'cloud-market-client-v1' stock-hunter-v4/index.html; then
+            echo "Production index.html must not load the staging cloud client before cutover gates pass." >&2
+            exit 1
+          fi
+
       - name: Cloudflare dry-run compile
         working-directory: stock-hunter-v4/cloud-v1/cloudflare
         run: npm run check
