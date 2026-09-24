@@ -54,6 +54,19 @@ jobs:
             npx wrangler r2 bucket info stock-hunter-market-v1 --json >/dev/null
           fi
 
+      - name: Ensure bounded R2 lifecycle rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          rules="$(npx wrangler r2 bucket lifecycle list stock-hunter-market-v1 2>&1 || true)"
+          if ! printf '%s' "$rules" | grep -Fq 'stock-hunter-raw-v1-expire-3d'; then
+            npx wrangler r2 bucket lifecycle add stock-hunter-market-v1 stock-hunter-raw-v1-expire-3d raw/v1/ --expire-days 3
+          fi
+          if ! printf '%s' "$rules" | grep -Fq 'stock-hunter-raw-pack-v1-expire-15d'; then
+            npx wrangler r2 bucket lifecycle add stock-hunter-market-v1 stock-hunter-raw-pack-v1-expire-15d packs/raw-v1/ --expire-days 15
+          fi
+          npx wrangler r2 bucket lifecycle list stock-hunter-market-v1
+
       - name: Initial Worker deploy
         run: npx wrangler deploy
 

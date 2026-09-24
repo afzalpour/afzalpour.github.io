@@ -742,3 +742,19 @@ The cloud readiness blocker name was corrected from the over-broad `asset_sessio
 
 Do not infer that session logic is missing. Do not fabricate/default the unresolved integrated fields. See:
 `cloud-v1/live-features/INTEGRATED_V410_PROVENANCE_RECOVERY_AUDIT_2026-09-24.md`.
+
+
+## Bounded cloud archive checkpoint — 2026-09-24
+
+Architecture remains `SHIKAR-CLOUD-IRAN-EGRESS-V1`.
+
+Prepared on branch `stock-hunter-cloud-r2-archive-v1`:
+- each accepted signed collector snapshot can be retained as short-lived R2 raw evidence under `raw/v1/YYYY-MM-DD/...`;
+- raw archive is bounded to 1 GB and 1,500 objects per Tehran date;
+- raw lifecycle target is 3 days;
+- live latest-state availability does not fail if archival storage is saturated/unavailable; archive gaps remain explicit in health metadata;
+- deterministic daily cross-snapshot gzip pack + manifest compactor records source hashes, counts and sequence gaps and never fills missing observations;
+- daily pack upload is capped at 200 MB and lifecycle target is 15 days;
+- foreign GitHub Actions consumes R2 only and never TSETMC.
+
+This archive work does not clear `frozen_hunt_input_ready=false` and does not authorize production frontend cutover.

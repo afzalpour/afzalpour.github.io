@@ -168,3 +168,24 @@ Responsibilities:
 It contains no collector or cloud secret.
 
 A future staging loader may instantiate it with the deployed Cloudflare API base and map a fresh validated snapshot into the existing frontend normalization path. Production cutover remains blocked until Iran-egress live probe plus full live feature provenance/parity gates pass.
+
+
+## Bounded R2 raw archive
+
+Accepted collector bodies can also be stored under `raw/v1/` for short-horizon forensic/PIT work. This path is bounded independently of the overwritten `live/latest.json.gz` object.
+
+Current staging contract:
+- raw daily byte cap: 1,000,000,000 compressed bytes;
+- raw daily object cap: 1,500;
+- raw lifecycle: 3 days;
+- deterministic daily raw pack cap: 200,000,000 compressed bytes;
+- raw-pack lifecycle: 15 days.
+
+Archive exhaustion/failure does not break the live latest path; health metadata exposes the archive status so missing historical evidence cannot be silently inferred.
+
+Policy: `ARCHIVE_POLICY.md`.
+
+Scheduled/manual GitHub compaction workflow:
+`.github/workflows/stock-hunter-cloud-raw-pack-v1.yml`.
+
+The workflow requires R2 S3 credentials and consumes R2 only. It never calls TSETMC.
