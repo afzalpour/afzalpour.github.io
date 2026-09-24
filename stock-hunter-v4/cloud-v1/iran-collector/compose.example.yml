@@ -1,0 +1,14 @@
+services:
+  collector:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - collector.env
+    volumes:
+      - stock_hunter_collector_state:/var/lib/stock-hunter-collector
+    command: ["--loop"]
+
+volumes:
+  stock_hunter_collector_state:
