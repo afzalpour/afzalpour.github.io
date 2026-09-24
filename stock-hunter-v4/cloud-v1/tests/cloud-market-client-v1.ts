@@ -74,32 +74,37 @@ const client=new StockHunterCloudClientV1({
   onSnapshot:x=>snapshots.push(x),
   onState:x=>states.push(x),
 });
-await client.start();
-await new Promise(r=>setTimeout(r,0));
+async function main(){
+  await client.start();
+  await new Promise(r=>setTimeout(r,0));
+  
+  assert.equal(snapshots.length,1);
+  assert.equal(snapshots[0].fresh,true);
+  assert.equal(snapshots[0].activeHuntAllowed,true);
+  assert.equal(snapshots[0].payload.sequence,4);
+  assert.equal(FakeWebSocket.instances.length,1);
+  assert.equal(FakeWebSocket.instances[0].url,"wss://market.example.test/v1/ws");
+  
+  latestSequence=5;
+  FakeWebSocket.instances[0].push({
+    protocol:STOCK_HUNTER_CLOUD_CLIENT_PROTOCOL,
+    type:"snapshot_available",
+    sequence:5,
+    observed_at:ts,
+    accepted_at:ts,
+    row_count:2,
+    body_sha256:"a".repeat(64),
+    collector_id:"iran-primary",
+  });
+  await new Promise(r=>setTimeout(r,10));
+  assert.equal(snapshots.at(-1).payload.sequence,5);
+  assert.ok(fetches.filter(x=>x.endsWith("/v1/latest")).length>=2);
+  
+  client.stop();
+  assert.equal(client.running,false);
+  
+  console.log("staging-cloud-market-client: PASS");
+  
+}
 
-assert.equal(snapshots.length,1);
-assert.equal(snapshots[0].fresh,true);
-assert.equal(snapshots[0].activeHuntAllowed,true);
-assert.equal(snapshots[0].payload.sequence,4);
-assert.equal(FakeWebSocket.instances.length,1);
-assert.equal(FakeWebSocket.instances[0].url,"wss://market.example.test/v1/ws");
-
-latestSequence=5;
-FakeWebSocket.instances[0].push({
-  protocol:STOCK_HUNTER_CLOUD_CLIENT_PROTOCOL,
-  type:"snapshot_available",
-  sequence:5,
-  observed_at:ts,
-  accepted_at:ts,
-  row_count:2,
-  body_sha256:"a".repeat(64),
-  collector_id:"iran-primary",
-});
-await new Promise(r=>setTimeout(r,10));
-assert.equal(snapshots.at(-1).payload.sequence,5);
-assert.ok(fetches.filter(x=>x.endsWith("/v1/latest")).length>=2);
-
-client.stop();
-assert.equal(client.running,false);
-
-console.log("staging-cloud-market-client: PASS");
+main().catch(error=>{console.error(error);process.exit(1);});
