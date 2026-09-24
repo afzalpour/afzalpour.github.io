@@ -100,6 +100,10 @@ jobs:
         working-directory: stock-hunter-v4/cloud-v1/cloudflare
         run: npm run test:client
 
+      - name: Mobile cloud staging isolation contract
+        working-directory: stock-hunter-v4/cloud-v1/cloudflare
+        run: node ../tests/cloud-mobile-stage-v1.mjs
+
       - name: Production frontend must not load staging cloud client
         shell: bash
         run: |

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src https: wss:; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Stock Hunter Cloud v1 — Staging Probe</title>
+  <link rel="stylesheet" href="./stage.css">
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <p class="eyebrow">SHIKAR-CLOUD-IRAN-EGRESS-V1</p>
+      <h1>آزمون اتصال Cloud — فقط Staging</h1>
+      <p class="warning">این صفحه تصمیم Hunt تولید نمی‌کند و بخشی از Production نیست. فقط سلامت Cloud API، تازگی Snapshot و WebSocket را بررسی می‌کند.</p>
+    </header>
+
+    <section class="panel">
+      <label for="api">Cloud API Base</label>
+      <div class="connect-row">
+        <input id="api" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://stock-hunter-cloud-v1....workers.dev">
+        <button id="connect" type="button">اتصال</button>
+        <button id="disconnect" type="button" class="secondary">قطع</button>
+      </div>
+      <p class="hint">می‌توان آدرس را با پارامتر <code>?api=https://...</code> نیز وارد کرد. هیچ secret در این صفحه ذخیره نمی‌شود.</p>
+    </section>
+
+    <section class="grid" aria-live="polite">
+      <article class="card"><span>وضعیت Client</span><strong id="state">متوقف</strong></article>
+      <article class="card"><span>تازگی</span><strong id="fresh">—</strong></article>
+      <article class="card"><span>سن Snapshot</span><strong id="age">—</strong></article>
+      <article class="card"><span>Sequence</span><strong id="sequence">—</strong></article>
+      <article class="card"><span>تعداد نماد</span><strong id="rows">—</strong></article>
+      <article class="card"><span>Freshness Gate</span><strong id="gate">بسته</strong></article>
+    </section>
+
+    <section class="panel">
+      <h2>آخرین رویدادها</h2>
+      <pre id="events">هنوز متصل نشده است.</pre>
+    </section>
+
+    <section class="panel">
+      <h2>نمونه Snapshot</h2>
+      <p class="hint">حداکثر ۳۰ ردیف صرفاً برای کنترل انتقال داده؛ هیچ امتیاز Hunt در این جدول محاسبه نمی‌شود.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>نماد</th><th>آخرین</th><th>حجم</th><th>hEven</th></tr></thead>
+          <tbody id="sample"><tr><td colspan="4">داده‌ای دریافت نشده است.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="./stage.js"></script>
+</body>
+</html>

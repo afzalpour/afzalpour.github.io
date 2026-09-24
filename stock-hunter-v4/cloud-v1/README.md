@@ -189,3 +189,19 @@ Scheduled/manual GitHub compaction workflow:
 `.github/workflows/stock-hunter-cloud-raw-pack-v1.yml`.
 
 The workflow requires R2 S3 credentials and consumes R2 only. It never calls TSETMC.
+
+
+## Mobile cloud staging probe
+
+A separate no-index staging surface is available under:
+
+`cloud-v1/staging/`
+
+It is intentionally isolated from production `index.html`. It accepts a deployed HTTPS Worker base through the `api` query parameter or input field and verifies:
+- `/v1/health`;
+- `/v1/latest`;
+- `/v1/ws` reconnect/fan-out;
+- snapshot age, sequence and row count;
+- the client-side freshness fail-closed gate.
+
+It performs no Hunt scoring and contains no collector secret. It is intended for the first phone/browser smoke after Cloudflare deployment and Iran-egress live probe.
