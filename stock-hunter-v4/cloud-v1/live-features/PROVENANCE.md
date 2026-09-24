@@ -94,11 +94,25 @@ Therefore these fields are classified:
 
 `UNRESOLVED_PROVENANCE — DO NOT FABRICATE / DO NOT DEFAULT FOR PARITY CLAIMS`
 
-## Asset/session classification gap
+## Session logic recovered; asset labels still unresolved
 
-The collector now preserves raw `flow`, `cs`, and `pf`, but exact production `asset_type` / `market` derivation used by the old full-universe bridge has not yet been recovered from a committed source.
+The **session rules themselves are no longer unresolved**. Exact production session logic is committed in:
 
-Until the classifier is recovered or rebuilt and independently validated, asset/session provenance is also unresolved for exact cloud cutover.
+`stock-hunter-v4/app-session-v413.js`
+
+and the parity-approved capture runtime carries the same session boundaries in:
+
+`stock-hunter-v4/capture-security/stock-hunter-capture-v416/index.ts`
+
+The generated cloud Frozen Hunt runtime is byte-derived from that reviewed capture source and therefore already preserves the session gate used by the server scorer.
+
+The remaining classification gap is narrower: the collector preserves raw `flow`, `cs`, and `pf`, but the exact production derivation of the descriptive `asset_type` / `market` labels used by the old full-universe Eco Bridge has not been recovered from a committed source/package.
+
+Therefore the unresolved blocker is:
+
+`asset_type_market_derivation_provenance_unresolved`
+
+—not the session clock/rules themselves.
 
 ## Readiness rule
 
@@ -109,8 +123,8 @@ It must report:
 `frozen_hunt_input_ready = false`
 
 while either of these remain unresolved:
-1. integrated-view provenance;
-2. exact asset/session classification provenance.
+1. exact integrated-view provenance;
+2. exact `asset_type` / `market` derivation provenance where those labels affect the frozen session/eligibility path.
 
 The generated Frozen Hunt runtime may be tested with fixtures, but **must not be connected to production live ingest** until the missing inputs are resolved and browser/cloud live parity passes.
 
@@ -118,10 +132,13 @@ The generated Frozen Hunt runtime may be tested with fixtures, but **must not be
 
 Preferred:
 1. recover Supabase long enough to read `pg_get_viewdef('public.stock_hunter_integrated_v1'::regclass, true)` and related dependent views/functions;
-2. recover the source package for the Eco Bridge universe classifier;
+2. recover the source package for the Eco Bridge universe label classifier;
 3. commit both recovered definitions with hashes;
 4. port/generate them deterministically;
 5. add live parity fixtures.
+
+Recovery audit:
+`INTEGRATED_V410_PROVENANCE_RECOVERY_AUDIT_2026-09-24.md` documents what was recovered from Git history, the live Supabase management plane, and what remains unavailable.
 
 Fallback:
 - independently redesign those features only as a new challenger/research path, never silently label them as Frozen 4.1.6 parity.
