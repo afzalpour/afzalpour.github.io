@@ -1,4 +1,5 @@
 import { archiveBudgetDecision, rawArchiveKey, recordArchiveBudget, tehranDateFromEpochSeconds, type ArchiveBudgetLedger } from "./archive-policy-v1.ts";
+import { INGEST_LEASE_SECONDS, ingestClaimDecision, sameIngestLease, type GlobalIngestLease } from "./ingest-order-v1.ts";
 export interface Env {
   MARKET_COORDINATOR: DurableObjectNamespace;
   MARKET_LATEST: R2Bucket;
@@ -320,6 +321,66 @@ export class MarketCoordinator {
     }
   }
 
+  private async claimIngest(args:{
+    collectorId:string;streamId:string;sequence:number;observedAt:number;bodyHash:string;
+  }){
+    const seqKey=`seq:${args.collectorId}:${args.streamId}`;
+    const now=Math.floor(Date.now()/1000);
+    return this.state.storage.transaction(async txn=>{
+      const lastSequence=(await txn.get<number>(seqKey))||0;
+      const lease=(await txn.get<GlobalIngestLease>("global_ingest_lease_v1"))||null;
+      const latest=(await txn.get<LatestMeta>("latest_meta"))||null;
+      const decision=ingestClaimDecision({
+        lastSequence,
+        incomingSequence:args.sequence,
+        now,
+        lease,
+        leaseSeconds:INGEST_LEASE_SECONDS,
+        latest,
+        observedAt:args.observedAt,
+        bodyHash:args.bodyHash,
+      });
+      if(decision.action==="claim"){
+        const nextLease:GlobalIngestLease={
+          collector_id:args.collectorId,
+          stream_id:args.streamId,
+          sequence:args.sequence,
+          claimed_at:now,
+        };
+        await txn.put("global_ingest_lease_v1",nextLease);
+      }
+      return {seqKey,decision};
+    });
+  }
+
+  private async releaseIngestClaim(args:{
+    collectorId:string;streamId:string;sequence:number;
+  }){
+    await this.state.storage.transaction(async txn=>{
+      const lease=(await txn.get<GlobalIngestLease>("global_ingest_lease_v1"))||null;
+      if(sameIngestLease(lease,args)){
+        await txn.delete("global_ingest_lease_v1");
+      }
+    });
+  }
+
+  private async commitIngest(args:{
+    collectorId:string;streamId:string;sequence:number;seqKey:string;
+    meta:LatestMeta;applyLatest:boolean;archiveLedger:ArchiveBudgetLedger;
+  }){
+    await this.state.storage.transaction(async txn=>{
+      const lease=(await txn.get<GlobalIngestLease>("global_ingest_lease_v1"))||null;
+      if(!sameIngestLease(lease,args))throw new Error("ingest_claim_lost");
+      const writes:Record<string,unknown>={
+        [args.seqKey]:args.sequence,
+        archive_budget_ledger_v1:args.archiveLedger,
+      };
+      if(args.applyLatest)writes.latest_meta=args.meta;
+      await txn.put(writes);
+      await txn.delete("global_ingest_lease_v1");
+    });
+  }
+
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
@@ -358,14 +419,27 @@ export class MarketCoordinator {
       const bodyHash = requiredHeader(request, "X-SH-Body-SHA256");
       const rowCount = Number(requiredHeader(request, "X-SH-Row-Count"));
 
-      const seqKey = `seq:${collectorId}:${streamId}`;
-      const lastSequence = (await this.state.storage.get<number>(seqKey)) || 0;
-      if (sequence <= lastSequence) {
+      const claim=await this.claimIngest({
+        collectorId,streamId,sequence,observedAt,bodyHash,
+      });
+      if(claim.decision.action==="replay"){
         return json(
-          { error: "sequence_replay", last_sequence: lastSequence },
+          {error:"sequence_replay",last_sequence:claim.decision.lastSequence},
           409,
         );
       }
+      if(claim.decision.action==="busy"){
+        return json(
+          {
+            error:"ingest_busy",
+            last_sequence:claim.decision.lastSequence,
+            pending_sequence:claim.decision.pendingSequence,
+            retry_after_seconds:5,
+          },
+          409,
+        );
+      }
+      const applyLatest=claim.decision.applyLatest;
 
       const body = await request.arrayBuffer();
       const acceptedAt = Math.floor(Date.now() / 1000);
@@ -379,18 +453,28 @@ export class MarketCoordinator {
         row_count: rowCount,
       };
 
-      await this.env.MARKET_LATEST.put("live/latest.json.gz", body, {
-        httpMetadata: { contentType: "application/json", contentEncoding: "gzip" },
-        customMetadata: {
-          collector_id: collectorId,
-          stream_id: streamId,
-          sequence: String(sequence),
-          observed_at: String(observedAt),
-          accepted_at: String(acceptedAt),
-          body_sha256: bodyHash,
-          row_count: String(rowCount),
-        },
-      });
+      if(applyLatest){
+        try{
+          await this.env.MARKET_LATEST.put("live/latest.json.gz", body, {
+            httpMetadata: { contentType: "application/json", contentEncoding: "gzip" },
+            customMetadata: {
+              collector_id: collectorId,
+              stream_id: streamId,
+              sequence: String(sequence),
+              observed_at: String(observedAt),
+              accepted_at: String(acceptedAt),
+              body_sha256: bodyHash,
+              row_count: String(rowCount),
+            },
+          });
+        }catch(error){
+          await this.releaseIngestClaim({collectorId,streamId,sequence});
+          return json({
+            error:"live_store_failed",
+            message:error instanceof Error?error.message.slice(0,160):"r2_write_failed",
+          },503);
+        }
+      }
 
       const archiveEnabled=(this.env.RAW_ARCHIVE_ENABLED||"1")!=="0";
       let archiveLedger=(await this.state.storage.get<ArchiveBudgetLedger>("archive_budget_ledger_v1"))||{};
@@ -437,14 +521,20 @@ export class MarketCoordinator {
         }
       }
 
-      await this.state.storage.put({
-        [seqKey]: sequence,
-        latest_meta: meta,
-        archive_budget_ledger_v1: archiveLedger,
-      });
+      try{
+        await this.commitIngest({
+          collectorId,streamId,sequence,seqKey:claim.seqKey,
+          meta,applyLatest,archiveLedger,
+        });
+      }catch(error){
+        return json({
+          error:"ingest_commit_failed",
+          message:error instanceof Error?error.message.slice(0,160):"commit_failed",
+        },503);
+      }
 
-      this.broadcastSnapshot(meta);
-      return json({ ok: true, accepted: meta });
+      if(applyLatest)this.broadcastSnapshot(meta);
+      return json({ ok: true, latest_applied: applyLatest, accepted: meta });
     }
 
     if (request.method === "GET" && url.pathname === "/latest") {
