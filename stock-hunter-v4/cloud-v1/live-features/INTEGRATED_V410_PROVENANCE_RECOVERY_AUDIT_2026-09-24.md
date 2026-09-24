@@ -1,7 +1,7 @@
 # Stock Hunter — Integrated v4.1.0 Provenance Recovery Audit
 
 Date: 2026-09-24  
-Status: PARTIAL RECOVERY / FAIL-CLOSED  
+Status: ECO LABEL RECOVERED / INTEGRATED SQL STILL FAIL-CLOSED  
 Architecture: `SHIKAR-CLOUD-IRAN-EGRESS-V1`
 
 ## Purpose
@@ -18,7 +18,7 @@ This audit does **not** authorize any scoring, threshold, objective, routing, li
 4. Current parity-approved capture source / generated Frozen Hunt runtime.
 5. Live Supabase Edge Function source fetched through the management plane while PostgreSQL itself remained unavailable.
 6. Supabase migration metadata attempt — failed because PostgreSQL still returns `ECONNREFUSED :5432`.
-7. Project/Library search for the Eco Bridge v4.0.8 source package — no recoverable source package was found.
+7. Canonical Project Library Eco v4.0.8 ZIP/EXE artifact, recovered and reverse-audited by Go 1.23 pclntab + x86-64 assembly.
 
 ## Recovered: integrated-engine documented formulas
 
@@ -174,17 +174,30 @@ select pg_get_viewdef(
 
 plus definitions of any dependent functions/views.
 
-## Still unresolved: asset_type / market label derivation
+## Recovered: exact Eco v4.0.8 asset_type / market label derivation
 
-The session function itself is exact, but the old Eco full-universe source that derived descriptive `asset_type` / `market` labels has not been recovered in the repository or Project Library.
+The canonical Library artifact was recovered:
 
-The live local-ingest Edge Function confirms those labels were supplied by the client/Universe payload rather than reconstructed in Supabase.
+- ZIP SHA-256: `0d6ed1bbd11398f79a4568acd4d4f6f920d1f7fb985382a938be5408654c1139`
+- EXE SHA-256: `0b80d20a349ca5d92acb7c61f4f23ab6a4dd747f33b1509f2fdf3d6f40abb8b4`
 
-Therefore the exact remaining label blocker is:
+The stripped PE retains Go 1.23 pclntab. Exact function ranges and the inlined market switch were recovered from the executable.
+
+Source-equivalent port:
+
+`recovered-eco-labels-v408.ts`
+
+The classifier uses raw `symbol`, `company_name`, `yval`, and `flow`. The Iran collector now includes the already-parsed raw `yval` string in its signed payload.
+
+Detailed binary audit:
+
+`ECO_V408_LABEL_CLASSIFIER_BINARY_RECOVERY_AUDIT_2026-09-24.md`
+
+Therefore:
 
 `asset_type_market_derivation_provenance_unresolved`
 
-Raw TSETMC `flow`, `cs`, and `pf` are preserved by the new Iran collector so the original classifier can be reattached once recovered.
+is closed.
 
 ## Fail-closed conclusion
 
@@ -194,14 +207,13 @@ Full live Frozen Hunt input readiness remains:
 
 `false`
 
-with blockers:
+with blocker:
 1. `integrated_view_provenance_unresolved`
-2. `asset_type_market_derivation_provenance_unresolved`
 
 No production cloud scoring/cutover may remove these blockers based only on inference.
 
 ## Next legitimate recovery paths
 
-1. Infrastructure recovery of Supabase long enough to extract the exact view/dependency definitions.
-2. Recovery of the original Eco Bridge v4.0.8 source package/classifier.
-3. If exact sources cannot be recovered, a separately versioned reconstructed/challenger integrated layer may be built and validated, but it must never be silently labelled Frozen 4.1.6 parity.
+1. Infrastructure recovery of Supabase long enough to extract the exact integrated view/dependency definitions.
+2. Search any retained migration/export evidence for the authoritative integrated SQL while Supabase remains unavailable.
+3. If the exact integrated source cannot be recovered, a separately versioned reconstructed/challenger integrated layer may be built and validated, but it must never be silently labelled Frozen 4.1.6 parity.

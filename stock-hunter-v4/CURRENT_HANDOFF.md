@@ -817,3 +817,28 @@ After deploy, the canonical live validation order is:
 Iran `--source-probe` -> one signed `--once` -> cloud `/v1/health` + `/v1/latest` -> mobile staging WebSocket smoke -> only then long-running collector.
 
 This still does not authorize production Hunt source cutover while exact integrated-view and asset-label provenance remain unresolved.
+
+
+## Eco label provenance recovered from canonical binary — 2026-09-24
+
+Architecture remains `SHIKAR-CLOUD-IRAN-EGRESS-V1`.
+
+Recovered canonical artifact:
+- Library ZIP: `Stock_Hunter_Eco_v4.0.8.zip`;
+- ZIP SHA-256: `0d6ed1bbd11398f79a4568acd4d4f6f920d1f7fb985382a938be5408654c1139`;
+- EXE SHA-256: `0b80d20a349ca5d92acb7c61f4f23ab6a4dd747f33b1509f2fdf3d6f40abb8b4`.
+
+Go 1.23 pclntab + x86-64 assembly recovered the exact Eco v4.0.8 descriptive label logic:
+- `asset_type`: exact YVal fallback + symbol/company classifier;
+- `market`: exact raw `flow` mapping (1 بورس, 2 فرابورس, 4 بازار پایه, 6 بورس کالا, 7 بورس انرژی, default بازار سرمایه).
+
+The Iran collector already parsed raw `yval`; signed payload serialization now preserves it.
+Cloud feature builder derives labels from raw `symbol/company_name/yval/flow` using `recovered-eco-labels-v408.ts`.
+
+Closed blocker:
+`asset_type_market_derivation_provenance_unresolved`.
+
+Remaining exact Frozen Hunt live-input blocker:
+`integrated_view_provenance_unresolved`.
+
+`frozen_hunt_input_ready` remains false; production cloud Hunt/source cutover is still not authorized.

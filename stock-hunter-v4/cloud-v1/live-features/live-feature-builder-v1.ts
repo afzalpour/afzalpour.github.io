@@ -1,4 +1,5 @@
 import { legacySignalScoreV401 } from "./generated-signal-core-v401.ts";
+import { classifyEcoUniverseLabelsV408 } from "./recovered-eco-labels-v408.ts";
 
 export type CollectorBestLimit = {
   level: number;
@@ -40,6 +41,7 @@ export type CollectorMarketRow = {
   flow?: number;
   cs?: string | null;
   pf?: number;
+  yval?: string | null;
   best_limits?: CollectorBestLimit[];
   client_type?: CollectorClientType | null;
   asset_type?: string | null;
@@ -79,6 +81,12 @@ export function baseSignalRowFromCollector(row: CollectorMarketRow) {
   const bestBid=num(l1.bid_price), bestAsk=num(l1.ask_price);
   const bestBidQty=num(l1.bid_qty), bestAskQty=num(l1.ask_qty);
   const minAllowed=num(row.min_allowed), maxAllowed=num(row.max_allowed);
+  const labels=classifyEcoUniverseLabelsV408({
+    symbol:String(row.symbol??"").trim(),
+    company_name:String(row.company_name??"").trim(),
+    yval:row.yval,
+    flow:row.flow,
+  });
 
   return {
     id:String(row.id??"").trim(),
@@ -109,8 +117,9 @@ export function baseSignalRowFromCollector(row: CollectorMarketRow) {
     source_flow:num(row.flow),
     source_cs:String(row.cs??"").trim()||null,
     source_pf:num(row.pf),
-    asset_type:String(row.asset_type??"").trim()||null,
-    market:String(row.market??"").trim()||null,
+    source_yval:String(row.yval??"").trim()||null,
+    asset_type:labels.asset_type,
+    market:labels.market,
   };
 }
 
@@ -124,7 +133,7 @@ const AUTHORITATIVE_SIGNAL_FIELDS=[
   "rsi_5m","ema9_5m","ema21_5m","vwap","atr_5m","technical_score",
   "microprice","absorption","cancellation_ratio","price_velocity",
   "trade_accel","recovery","depth_ratio","queue_decay","momentum",
-  "snapshots","candles","asset_type","market","source_flow","source_cs","source_pf"
+  "snapshots","candles","asset_type","market","source_flow","source_cs","source_pf","source_yval"
 ] as const;
 
 export function buildBaseSignalFeatures(
@@ -154,6 +163,7 @@ export function buildBaseSignalFeatures(
   out.source_flow=base.source_flow;
   out.source_cs=base.source_cs;
   out.source_pf=base.source_pf;
+  out.source_yval=base.source_yval;
 
   // Explicitly do not expose obsolete legacy decision/entry/target outputs.
   out.cloud_feature_stage="BASE_SIGNAL_PARITY_V401";
@@ -161,7 +171,6 @@ export function buildBaseSignalFeatures(
   out.frozen_hunt_input_ready=false;
   out.frozen_hunt_blockers=[
     "integrated_view_provenance_unresolved",
-    "asset_type_market_derivation_provenance_unresolved",
   ];
 
   return out;

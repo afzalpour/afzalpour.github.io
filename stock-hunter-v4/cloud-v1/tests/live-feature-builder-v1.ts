@@ -1,17 +1,49 @@
 import assert from "node:assert/strict";
 import { legacySignalScoreV401 } from "../live-features/generated-signal-core-v401.ts";
 import {
+  assetTypeFromYValV408,
+  inferAssetTypeV408,
+  marketFromFlowV408,
+} from "../live-features/recovered-eco-labels-v408.ts";
+import {
   baseSignalRowFromCollector,
   buildBaseSignalFeatures,
   frozenHuntReadiness,
   realFlowRatioFromClientType,
 } from "../live-features/live-feature-builder-v1.ts";
 
+assert.equal(assetTypeFromYValV408("300"),"سهام");
+assert.equal(assetTypeFromYValV408("301"),"حق تقدم");
+assert.equal(assetTypeFromYValV408("303"),"صندوق");
+assert.equal(assetTypeFromYValV408("305"),"صندوق");
+assert.equal(assetTypeFromYValV408("306"),"صندوق");
+assert.equal(assetTypeFromYValV408("400"),"اوراق بدهی");
+assert.equal(assetTypeFromYValV408("403"),"اوراق بدهی");
+assert.equal(assetTypeFromYValV408("404"),"اوراق بدهی");
+assert.equal(assetTypeFromYValV408("999"),"");
+
+assert.equal(inferAssetTypeV408("ضتست","نمونه","سهام"),"اختیار معامله");
+assert.equal(inferAssetTypeV408("نماد","اختیار خرید نمونه","سهام"),"اختیار معامله");
+for(const symbol of ["اخزا001","اراد001","گام001","افاد001","تسه001"]){
+  assert.equal(inferAssetTypeV408(symbol,"نمونه","سهام"),"اوراق بدهی");
+}
+assert.equal(inferAssetTypeV408("نماد","صندوق\u200cدرآمد ثابت نمونه",""),"صندوق درآمد ثابت");
+assert.equal(inferAssetTypeV408("نماد","صندوق سهامی نمونه",""),"صندوق");
+assert.equal(inferAssetTypeV408("نماد","شرکت نمونه","حق تقدم"),"حق تقدم");
+assert.equal(inferAssetTypeV408("نماد","شرکت نمونه",""),"سهام");
+
+assert.equal(marketFromFlowV408(1),"بورس");
+assert.equal(marketFromFlowV408(2),"فرابورس");
+assert.equal(marketFromFlowV408(4),"بازار پایه");
+assert.equal(marketFromFlowV408(6),"بورس کالا");
+assert.equal(marketFromFlowV408(7),"بورس انرژی");
+assert.equal(marketFromFlowV408(0),"بازار سرمایه");
+
 const row1={
   id:"1001", isin:"IRO1TEST0001", symbol:"تست", company_name:"شرکت تست",
   heven:100000, closing_price:98, last_price:99, yesterday_price:100,
   low_price:97, high_price:101, min_allowed:90, max_allowed:110,
-  tno:20, volume:10000, value:990000, flow:1, cs:"300", pf:0,
+  tno:20, volume:10000, value:990000, flow:1, cs:"300", pf:0, yval:"300",
   best_limits:[
     {level:1,buy_orders:3,sell_orders:4,bid_price:98,ask_price:100,bid_qty:500,ask_qty:450},
     {level:2,buy_orders:2,sell_orders:2,bid_price:97,ask_price:101,bid_qty:400,ask_qty:350},
@@ -33,6 +65,9 @@ assert.equal(base1.best_bid,98);
 assert.equal(base1.best_ask,100);
 assert.equal(base1.real_flow_ratio,1);
 assert.equal(base1.source_cs,"300");
+assert.equal(base1.source_yval,"300");
+assert.equal(base1.asset_type,"سهام");
+assert.equal(base1.market,"بورس");
 
 const t1=1790272800;
 const first=buildBaseSignalFeatures(row1,null,t1);
@@ -78,7 +113,6 @@ assert.ok(Number.isFinite(Number(second.qi)));
 assert.ok(Number.isFinite(Number(second.ofi)));
 assert.deepStrictEqual(second.frozen_hunt_blockers,[
   "integrated_view_provenance_unresolved",
-  "asset_type_market_derivation_provenance_unresolved",
 ]);
 
 console.log("cloud-base-signal-feature-builder: PASS");

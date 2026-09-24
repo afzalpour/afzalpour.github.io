@@ -94,48 +94,67 @@ Therefore these fields are classified:
 
 `UNRESOLVED_PROVENANCE — DO NOT FABRICATE / DO NOT DEFAULT FOR PARITY CLAIMS`
 
-## Session logic recovered; asset labels still unresolved
+## Session logic and Eco asset/market labels recovered
 
-The **session rules themselves are no longer unresolved**. Exact production session logic is committed in:
+Exact production session logic remains committed in:
 
 `stock-hunter-v4/app-session-v413.js`
 
-and the parity-approved capture runtime carries the same session boundaries in:
+and the parity-approved capture runtime carries the equivalent session gate.
 
-`stock-hunter-v4/capture-security/stock-hunter-capture-v416/index.ts`
+The descriptive Eco v4.0.8 `asset_type` / `market` derivation is now also recovered from the canonical Project Library artifact:
 
-The generated cloud Frozen Hunt runtime is byte-derived from that reviewed capture source and therefore already preserves the session gate used by the server scorer.
+- ZIP SHA-256: `0d6ed1bbd11398f79a4568acd4d4f6f920d1f7fb985382a938be5408654c1139`
+- EXE SHA-256: `0b80d20a349ca5d92acb7c61f4f23ab6a4dd747f33b1509f2fdf3d6f40abb8b4`
 
-The remaining classification gap is narrower: the collector preserves raw `flow`, `cs`, and `pf`, but the exact production derivation of the descriptive `asset_type` / `market` labels used by the old full-universe Eco Bridge has not been recovered from a committed source/package.
+The Go 1.23 `pclntab` and x86-64 assembly preserve the exact classifier branches. The source-equivalent port is:
 
-Therefore the unresolved blocker is:
+`cloud-v1/live-features/recovered-eco-labels-v408.ts`
+
+Its inputs are raw collector facts:
+
+- `symbol`
+- `company_name`
+- `yval`
+- `flow`
+
+The collector already parsed `yval`; the signed v1 payload now preserves it explicitly.
+
+Recovery audit:
+
+`ECO_V408_LABEL_CLASSIFIER_BINARY_RECOVERY_AUDIT_2026-09-24.md`
+
+Therefore:
 
 `asset_type_market_derivation_provenance_unresolved`
 
-—not the session clock/rules themselves.
+is CLOSED.
 
 ## Readiness rule
 
 The cloud feature builder may produce `BASE_SIGNAL_PARITY_V401` rows for engineering/staging.
 
-It must report:
+It must still report:
 
 `frozen_hunt_input_ready = false`
 
-while either of these remain unresolved:
-1. exact integrated-view provenance;
-2. exact `asset_type` / `market` derivation provenance where those labels affect the frozen session/eligibility path.
+while the authoritative integrated-view provenance remains unresolved.
 
-The generated Frozen Hunt runtime may be tested with fixtures, but **must not be connected to production live ingest** until the missing inputs are resolved and browser/cloud live parity passes.
+Current blocker:
+
+1. `integrated_view_provenance_unresolved`
+
+The generated Frozen Hunt runtime may be tested with fixtures, but production cloud Hunt cutover remains blocked until the authoritative integrated SQL/dependencies are recovered and live browser/cloud parity passes.
 
 ## Recovery paths
 
 Preferred:
 1. recover Supabase long enough to read `pg_get_viewdef('public.stock_hunter_integrated_v1'::regclass, true)` and related dependent views/functions;
-2. recover the source package for the Eco Bridge universe label classifier;
-3. commit both recovered definitions with hashes;
-4. port/generate them deterministically;
-5. add live parity fixtures.
+2. commit the recovered integrated definitions with hashes;
+3. port/generate them deterministically;
+4. add live parity fixtures.
+
+Eco v4.0.8 asset/market label provenance is already recovered from the canonical executable artifact and no longer blocks readiness.
 
 Recovery audit:
 `INTEGRATED_V410_PROVENANCE_RECOVERY_AUDIT_2026-09-24.md` documents what was recovered from Git history, the live Supabase management plane, and what remains unavailable.

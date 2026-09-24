@@ -129,8 +129,9 @@ can compact already captured R2 raw objects into deterministic daily packs. It n
 Cloud deployment + successful Iran feed transport **does not authorize production Hunt cutover**.
 
 Production source switching remains blocked until exact Frozen Hunt live input provenance is closed for:
-1. `public.stock_hunter_integrated_v1` authoritative SQL/dependencies;
-2. exact Eco Bridge `asset_type` / `market` derivation.
+1. `public.stock_hunter_integrated_v1` authoritative SQL/dependencies.
+
+The Eco v4.0.8 `asset_type` / `market` derivation has been recovered exactly from the canonical executable artifact and is no longer a blocker.
 
 Until then:
 - cloud facts/staging may run;
