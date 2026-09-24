@@ -8,6 +8,17 @@ export interface Env {
 
 const PROTOCOL = "stock-hunter-iran-ingest-v1";
 const DEFAULT_PUBLIC_ORIGIN = "https://afzalpour.github.io";
+const WS_PROTOCOL = "stock-hunter-live-v1";
+
+function allowedPublicOrigin(request: Request, env: Env): boolean {
+  const origin = request.headers.get("Origin") || "";
+  const allowed = env.PUBLIC_ORIGIN || DEFAULT_PUBLIC_ORIGIN;
+  return origin === allowed;
+}
+
+function isWebSocketUpgrade(request: Request): boolean {
+  return (request.headers.get("Upgrade") || "").toLowerCase() === "websocket";
+}
 
 function json(body: unknown, status = 200, headers: HeadersInit = {}): Response {
   return Response.json(body, {
@@ -209,6 +220,17 @@ export default {
       }
     }
 
+    if (request.method === "GET" && url.pathname === "/v1/ws") {
+      if (!allowedPublicOrigin(request, env)) {
+        return json({ error: "origin_not_allowed" }, 403);
+      }
+      if (!isWebSocketUpgrade(request)) {
+        return json({ error: "websocket_upgrade_required" }, 426);
+      }
+      const stub = await marketStub(env);
+      return stub.fetch("https://market.internal/ws", request);
+    }
+
     if (request.method === "GET" && url.pathname === "/v1/latest") {
       const stub = await marketStub(env);
       const response = await stub.fetch("https://market.internal/latest");
@@ -243,14 +265,76 @@ type LatestMeta = {
   row_count: number;
 };
 
+export type SnapshotNotificationV1 = {
+  protocol: typeof WS_PROTOCOL;
+  type: "snapshot_available";
+  observed_at: number;
+  accepted_at: number;
+  sequence: number;
+  row_count: number;
+  body_sha256: string;
+  collector_id: string;
+};
+
+export function snapshotNotificationV1(meta: LatestMeta): SnapshotNotificationV1 {
+  return {
+    protocol: WS_PROTOCOL,
+    type: "snapshot_available",
+    observed_at: meta.observed_at,
+    accepted_at: meta.accepted_at,
+    sequence: meta.sequence,
+    row_count: meta.row_count,
+    body_sha256: meta.body_sha256,
+    collector_id: meta.collector_id,
+  };
+}
+
 export class MarketCoordinator {
   constructor(
     private readonly state: DurableObjectState,
     private readonly env: Env,
-  ) {}
+  ) {
+    this.state.setWebSocketAutoResponse(
+      new WebSocketRequestResponsePair("ping", "pong"),
+    );
+  }
+
+  private broadcastSnapshot(meta: LatestMeta) {
+    const message = JSON.stringify(snapshotNotificationV1(meta));
+    for (const socket of this.state.getWebSockets()) {
+      try {
+        socket.send(message);
+      } catch {
+        try { socket.close(1011, "broadcast_failed"); } catch {}
+      }
+    }
+  }
 
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
+
+    if (request.method === "GET" && url.pathname === "/ws") {
+      if (!isWebSocketUpgrade(request)) {
+        return json({ error: "websocket_upgrade_required" }, 426);
+      }
+
+      const pair = new WebSocketPair();
+      const [client, server] = Object.values(pair);
+      this.state.acceptWebSocket(server);
+      server.serializeAttachment({
+        protocol: WS_PROTOCOL,
+        connected_at: Math.floor(Date.now() / 1000),
+      });
+
+      const meta = await this.state.storage.get<LatestMeta>("latest_meta");
+      if (meta) {
+        server.send(JSON.stringify(snapshotNotificationV1(meta)));
+      } else {
+        server.send(JSON.stringify({ protocol: WS_PROTOCOL, type: "waiting_for_snapshot" }));
+      }
+
+      return new Response(null, { status: 101, webSocket: client });
+    }
 
     if (request.method === "POST" && url.pathname === "/ingest") {
       if (request.headers.get("X-Internal-Verified") !== "1") {
@@ -303,6 +387,7 @@ export class MarketCoordinator {
         latest_meta: meta,
       });
 
+      this.broadcastSnapshot(meta);
       return json({ ok: true, accepted: meta });
     }
 
@@ -335,5 +420,28 @@ export class MarketCoordinator {
     }
 
     return json({ error: "not_found" }, 404);
+  }
+
+  webSocketMessage(socket: WebSocket, message: string | ArrayBuffer) {
+    // Market data is server-to-client only. Auto-response handles ping/pong
+    // without waking the Durable Object.
+    if (typeof message === "string" && message === "health") {
+      socket.send(JSON.stringify({ protocol: WS_PROTOCOL, type: "alive" }));
+      return;
+    }
+    socket.send(JSON.stringify({ protocol: WS_PROTOCOL, type: "unsupported_message" }));
+  }
+
+  webSocketClose(
+    socket: WebSocket,
+    code: number,
+    reason: string,
+    wasClean: boolean,
+  ) {
+    try { socket.close(code, reason || (wasClean ? "closed" : "unclean")); } catch {}
+  }
+
+  webSocketError(socket: WebSocket) {
+    try { socket.close(1011, "websocket_error"); } catch {}
   }
 }
