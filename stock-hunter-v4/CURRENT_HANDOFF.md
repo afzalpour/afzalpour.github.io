@@ -1120,3 +1120,21 @@ The execution environment used to build this package cannot currently resolve `c
 
 
 Forecast Audit v4.2.0 one-click delivery adds `RUN_SHPAKSA_BACKTEST.cmd`; it runs the default Shpaksa audit in UTF-8 and pauses so the console result remains visible. The EXE bytes/hash are unchanged; only the ZIP identity changed.
+
+
+## Forecast Audit v4.2.1 — clean-evidence quarantine + 90-case batch — 2026-09-25
+
+v4.2.1 extends the merged v4.2.0 validator without changing Frozen Hunt 4.1.6.
+
+Changes:
+- corporate-action/discontinuity warnings are now dated evidence records;
+- any detected discontinuity from retained training start through target marks the case `EXCLUDED_CORPORATE_ACTION`;
+- excluded cases remain in raw evidence but are removed from aggregate validation metrics;
+- interval coverage is reported both raw and integer-display-rounded;
+- each model reports whether it beats the no-change baseline;
+- batch mode accepts up to 500 CSV cases and caches TSETMC history per instrument;
+- included sample is 30 Universe symbols x 3 exact two-session windows = 90 requested cases.
+
+The batch aggregate reports mean/median APE, direction accuracy, raw/display interval coverage, and baseline-beat percentage on CLEAN cases only.
+
+Execution remains on the user's Windows network because the assistant runtime cannot resolve TSETMC. CI proves compilation/tests/package integrity, not live TSETMC outcomes.
