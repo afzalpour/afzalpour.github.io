@@ -78,7 +78,8 @@ async function openHistoricalUniverseDetailV409(seed){
   if(currentDetail?.id!==x.id)return;
   const c=dailyCandles(x);
   if(!c.length){
-    $('detailBody').innerHTML='<div class="alert-box">نماد در فهرست کامل بازار وجود دارد، اما در حال حاضر حتی سابقه روزانه آن از منبع بازار قابل دریافت نیست. هیچ داده مصنوعی ساخته نشد.</div>';
+    if($('printDetailBtn')){$('printDetailBtn').disabled=true;$('printDetailBtn').title='داده روزانه‌ای برای چاپ موجود نیست';}
+    $('detailBody').innerHTML='<div class="alert-box">برای این نماد در حال حاضر سابقه روزانه قابل‌نمایش وجود ندارد.</div>';
     return;
   }
   const latest=c[c.length-1],prev=c[c.length-2];
