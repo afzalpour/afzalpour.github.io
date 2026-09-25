@@ -88,12 +88,10 @@ async function main(){
     await page.waitForFunction(()=>typeof forecastFibonacci==='function'&&typeof forecastModels==='function',null,{timeout:10000});
     const forecastContract=await page.evaluate(()=>({
       fibonacciType:typeof forecastFibonacci,
-      hasFibKey:/key:\s*['"]fib['"]/.test(String(forecastModels)),
-      hasSixTitle:String(detailHTML).includes('مقایسه ۶ سناریوی عددی')
+      keys:forecastModels({candles:[],last:0}).map(m=>m.key)
     }));
     assert.equal(forecastContract.fibonacciType,'function','Fibonacci model must be loaded');
-    assert.equal(forecastContract.hasFibKey,true,'forecastModels must include Fibonacci');
-    assert.equal(forecastContract.hasSixTitle,true,'detail renderer must expose six-model comparison');
+    assert.deepEqual(forecastContract.keys,['ichi','gann','fib','boll','macd','obv'],'forecastModels must expose exactly six diagnostic models');
     const accountLink=page.locator('a.top-link[href="profile-v417.html"]');
     await accountLink.waitFor({state:'visible',timeout:10000});
     await Promise.all([
