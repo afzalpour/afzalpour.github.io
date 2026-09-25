@@ -1173,3 +1173,21 @@ Decision:
 - production combined forecast price/direction is gated OFF;
 - final verdict: `NO_STATISTICALLY_CONFIRMED_EDGE`;
 - Frozen Hunt `4.1.6-hunt-v2` remains unchanged.
+
+
+### Forecast Final v4.3.0 final delivery identity
+
+PR #288 merged at `24f102fb160e267be4f077d46507c0486f60641b`.
+
+CI run `Stock Hunter Forecast Final v4.3.0 #1` passed unit tests, vet, built-in self-test, Windows amd64 cross-compile, evidence-gate verification, packaging and artifact upload.
+
+Official CI hashes:
+- EXE SHA-256: `7481479d1abec6af5276d21648406e387791adb59dfa93d15f6afedcd46a9dcb`
+- CI ZIP SHA-256: `e29f27c4bc7e29ca9d4574ca87f5337308bb20d92c44e4c33cb83327f1ccddbd`
+
+Complete handoff package SHA-256:
+- `0092d6fa8ff905d8c7b10f01a2b96b9f6ef181a81c1f8d0ca6d919a423016756`
+
+The complete package includes the final EXE, Persian validation report, model statistics CSV, cross-validation/trial CSV, final model policy JSON, and the original v4.2.1 batch evidence JSON.
+
+Current evidence verdict remains `NO_STATISTICALLY_CONFIRMED_EDGE`; five technical models are diagnostic only and Frozen Hunt 4.1.6 is unchanged.
