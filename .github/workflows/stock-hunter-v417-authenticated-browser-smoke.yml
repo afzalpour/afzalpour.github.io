@@ -63,7 +63,15 @@ jobs:
           grep -q 'EXPECTED_WORKFLOW_REF="afzalpour/afzalpour.github.io/.github/workflows/stock-hunter-v417-authenticated-browser-smoke.yml@refs/heads/main"' stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts
           grep -q 'EMAIL_RE=/^stock-hunter-browser-smoke-' stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts
           grep -q '.auth-form label\[hidden\]{display:none!important}' stock-hunter-v4/auth-v417.css
-          grep -q 'auth-v417.css?v=3' stock-hunter-v4/auth-v417.html
+          grep -q '.auth-form .auth-field\[hidden\]{display:none!important}' stock-hunter-v4/auth-v417.css
+          grep -q 'id="confirmPasswordWrap"' stock-hunter-v4/auth-v417.html
+          grep -q 'data-password-toggle="password"' stock-hunter-v4/auth-v417.html
+          grep -q 'data-password-toggle="confirmPassword"' stock-hunter-v4/auth-v417.html
+          grep -q 'data-password-toggle="newPassword"' stock-hunter-v4/auth-v417.html
+          grep -q 'app-auth-v417.js?v=3' stock-hunter-v4/auth-v417.html
+          grep -q 'password_confirmation_and_eye_controls:true' stock-hunter-v4/auth/browser-smoke-v417.cjs
+          grep -q 'malformed_recovery_email_guard:true' stock-hunter-v4/auth/browser-smoke-v417.cjs
+          grep -q 'auth-v417.css?v=4' stock-hunter-v4/auth-v417.html
           grep -q '.admin-grid\[hidden\]{display:none}' stock-hunter-v4/auth-v417.css
           if grep -Ei 'SUPABASE_(SERVICE_ROLE|SECRET|DB_URL|ACCESS_TOKEN).*secrets\.' .github/workflows/stock-hunter-v417-authenticated-browser-smoke.yml; then
             echo "::error::Browser smoke must use GitHub OIDC, not repository-held Supabase admin credentials"

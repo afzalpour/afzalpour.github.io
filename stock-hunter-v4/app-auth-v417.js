@@ -67,6 +67,35 @@ function paintIdentity(profile,user,watchlists=[]){
   }
 }
 
+function friendlyAuthError(err,mode){
+  const raw=String(err?.message||'').trim();
+  if(/invalid login credentials/i.test(raw))return 'ایمیل یا رمز عبور نادرست است. اگر رمز را به خاطر ندارید از «بازیابی رمز» استفاده کنید.';
+  if(/invalid.*email|email.*invalid/i.test(raw))return 'این ایمیل نامعتبر است.';
+  return raw||(mode==='signin'?'ورود ناموفق بود.':'عملیات حساب ناموفق بود.');
+}
+function initPasswordToggles(){
+  document.querySelectorAll('[data-password-toggle]').forEach(button=>{
+    const input=$(button.dataset.passwordToggle);
+    if(!input)return;
+    const label=String(button.dataset.passwordLabel||'رمز');
+    const sync=()=>{
+      const visible=input.type==='text';
+      button.setAttribute('aria-pressed',String(visible));
+      button.setAttribute('aria-label',(visible?'مخفی کردن ':'نمایش ')+label);
+      button.title=(visible?'مخفی کردن ':'نمایش ')+label;
+    };
+    button.addEventListener('click',()=>{
+      input.type=input.type==='password'?'text':'password';
+      sync();
+      input.focus({preventScroll:true});
+    });
+    sync();
+  });
+}
+function emailIsValid(input){
+  return !!input && !!input.value.trim() && input.checkValidity();
+}
+
 async function initAuthPage(){
   if(!$('authForm'))return;
   const params=new URLSearchParams(location.search);
@@ -74,15 +103,18 @@ async function initAuthPage(){
   const validModes=new Set(['signin','signup','recovery','reset']);
   const requestedMode=String(params.get('mode')||'signin');
   const mode=validModes.has(requestedMode)?requestedMode:'signin';
+  initPasswordToggles();
 
   const setMode=m=>{
     document.body.dataset.authMode=m;
     document.querySelectorAll('[data-auth-tab]').forEach(b=>b.classList.toggle('active',b.dataset.authTab===m));
     $('displayNameWrap').hidden=m!=='signup';
     $('passwordWrap').hidden=m==='recovery'||m==='reset';
+    $('confirmPasswordWrap').hidden=m!=='signup';
     $('newPasswordWrap').hidden=m!=='reset';
     $('email').required=m!=='reset';
     $('password').required=m==='signin'||m==='signup';
+    $('confirmPassword').required=m==='signup';
     $('newPassword').required=m==='reset';
     $('authSubmit').textContent=m==='signup'?'ساخت حساب':m==='recovery'?'ارسال لینک بازیابی':m==='reset'?'ثبت رمز جدید':'ورود';
   };
@@ -102,10 +134,28 @@ async function initAuthPage(){
   $('authForm').addEventListener('submit',async e=>{
     e.preventDefault(); message('در حال انجام…');
     const m=document.body.dataset.authMode||'signin';
-    const email=$('email').value.trim();
+    const emailInput=$('email');
+    const email=emailInput.value.trim();
     const password=$('password').value;
+    if(m!=='reset'&&!emailIsValid(emailInput)){
+      message('این ایمیل نامعتبر است.','bad');
+      emailInput.focus();
+      return;
+    }
+    if((m==='signin'||m==='signup')&&!password){
+      message('رمز عبور را وارد کنید.','bad');
+      $('password').focus();
+      return;
+    }
     try{
       if(m==='signup'){
+        const confirmPassword=$('confirmPassword').value;
+        if(password.length<8)throw new Error('رمز عبور باید حداقل ۸ کاراکتر باشد.');
+        if(password!==confirmPassword){
+          message('رمز عبور و تکرار آن یکسان نیستند.','bad');
+          $('confirmPassword').focus();
+          return;
+        }
         const displayName=$('displayName').value.trim();
         const callback=new URL('auth-v417.html',location.href);
         callback.searchParams.set('verified','1');
@@ -119,7 +169,7 @@ async function initAuthPage(){
         callback.searchParams.set('mode','reset'); callback.searchParams.set('next',next);
         const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:callback.href});
         if(error)throw error;
-        message('اگر این ایمیل معتبر باشد، لینک بازیابی ارسال شد.','ok');
+        message('اگر این ایمیل در سامانه ثبت شده باشد، لینک بازیابی ارسال می‌شود.','ok');
       }else if(m==='reset'){
         const np=$('newPassword').value;
         if(np.length<8)throw new Error('رمز جدید باید حداقل ۸ کاراکتر باشد.');
@@ -135,7 +185,7 @@ async function initAuthPage(){
         if(!user)throw new Error('اعتبارسنجی حساب کامل نشد.');
         location.replace(next);
       }
-    }catch(err){message(err?.message||'عملیات ورود ناموفق بود.','bad');}
+    }catch(err){message(friendlyAuthError(err,m),'bad');}
   });
 
   $('continueSession')?.addEventListener('click',()=>location.replace(next));

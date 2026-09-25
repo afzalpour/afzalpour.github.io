@@ -6,7 +6,7 @@
   <title>ورود به حساب — شکارچی سهم</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="extra.css?v=4.1.7-auth">
-  <link rel="stylesheet" href="auth-v417.css?v=3">
+  <link rel="stylesheet" href="auth-v417.css?v=4">
 </head>
 <body>
 <main class="auth-shell">
@@ -28,19 +28,43 @@
       <button type="button" data-auth-tab="signup">ثبت‌نام</button>
       <button type="button" data-auth-tab="recovery">بازیابی رمز</button>
     </div>
-    <form id="authForm" class="auth-form">
+    <form id="authForm" class="auth-form" novalidate>
       <label id="displayNameWrap" hidden>نام نمایشی
         <input id="displayName" autocomplete="name" maxlength="80">
       </label>
       <label>ایمیل
         <input id="email" type="email" autocomplete="email" required>
       </label>
-      <label id="passwordWrap">رمز عبور
-        <input id="password" type="password" autocomplete="current-password" minlength="8">
-      </label>
-      <label id="newPasswordWrap" hidden>رمز جدید
-        <input id="newPassword" type="password" autocomplete="new-password" minlength="8">
-      </label>
+      <div id="passwordWrap" class="auth-field">
+        <label for="password">رمز عبور</label>
+        <div class="password-input-wrap">
+          <input id="password" type="password" autocomplete="current-password" minlength="8">
+          <button class="password-toggle" type="button" data-password-toggle="password" data-password-label="رمز عبور" aria-controls="password" aria-pressed="false" aria-label="نمایش رمز عبور" title="نمایش رمز عبور">
+            <svg class="password-eye password-eye-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>
+            <svg class="password-eye password-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle><path d="M4 4l16 16"></path></svg>
+          </button>
+        </div>
+      </div>
+      <div id="confirmPasswordWrap" class="auth-field" hidden>
+        <label for="confirmPassword">تکرار رمز عبور</label>
+        <div class="password-input-wrap">
+          <input id="confirmPassword" type="password" autocomplete="new-password" minlength="8">
+          <button class="password-toggle" type="button" data-password-toggle="confirmPassword" data-password-label="تکرار رمز عبور" aria-controls="confirmPassword" aria-pressed="false" aria-label="نمایش تکرار رمز عبور" title="نمایش تکرار رمز عبور">
+            <svg class="password-eye password-eye-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>
+            <svg class="password-eye password-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle><path d="M4 4l16 16"></path></svg>
+          </button>
+        </div>
+      </div>
+      <div id="newPasswordWrap" class="auth-field" hidden>
+        <label for="newPassword">رمز جدید</label>
+        <div class="password-input-wrap">
+          <input id="newPassword" type="password" autocomplete="new-password" minlength="8">
+          <button class="password-toggle" type="button" data-password-toggle="newPassword" data-password-label="رمز جدید" aria-controls="newPassword" aria-pressed="false" aria-label="نمایش رمز جدید" title="نمایش رمز جدید">
+            <svg class="password-eye password-eye-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>
+            <svg class="password-eye password-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle><path d="M4 4l16 16"></path></svg>
+          </button>
+        </div>
+      </div>
       <button id="authSubmit" type="submit">ورود</button>
     </form>
     <div id="authMessage" class="auth-message" hidden></div>
@@ -48,6 +72,6 @@
   </section>
 </main>
 <script src="config.js?v=4.1.6"></script>
-<script type="module" src="app-auth-v417.js?v=2"></script>
+<script type="module" src="app-auth-v417.js?v=3"></script>
 </body>
 </html>
