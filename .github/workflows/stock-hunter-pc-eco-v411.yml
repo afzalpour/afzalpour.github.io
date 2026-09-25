@@ -1,0 +1,49 @@
+name: Stock Hunter PC Eco v4.1.1
+
+on:
+  pull_request:
+    paths:
+      - 'stock-hunter-v4/pc-eco-v411/**'
+      - 'stock-hunter-v4/feed-security/stock-hunter-pc-ingest-v410/index.ts'
+      - '.github/workflows/stock-hunter-pc-eco-v411.yml'
+      - 'stock-hunter-v4/PC_ECO_PRODUCTION_ARCHITECTURE_CANONICAL.md'
+      - 'stock-hunter-v4/CURRENT_HANDOFF.md'
+  push:
+    branches: [main]
+    paths:
+      - 'stock-hunter-v4/pc-eco-v411/**'
+      - 'stock-hunter-v4/feed-security/stock-hunter-pc-ingest-v410/index.ts'
+      - '.github/workflows/stock-hunter-pc-eco-v411.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pc-eco-full-universe:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: stock-hunter-v4/pc-eco-v411
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+      - name: Unit tests
+        run: go test ./...
+      - name: Vet
+        run: go vet ./...
+      - name: Cross-compile Windows x64
+        env:
+          GOOS: windows
+          GOARCH: amd64
+          CGO_ENABLED: '0'
+        run: go build -trimpath -ldflags='-s -w' -o Stock_Hunter_PC_Eco_Bridge_v4.1.1.exe .
+      - name: Verify full-universe contract
+        run: |
+          grep -F '4.1.1-pc-eco-full-universe' main.go
+          grep -F 'batchSize=250' main.go
+          ! grep -F 'rows=rows[:220]' main.go
+          ! grep -F 'sort.Slice(rows' main.go
+          grep -F '4.1.6' main.go
