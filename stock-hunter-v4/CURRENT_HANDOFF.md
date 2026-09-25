@@ -932,3 +932,14 @@ A validator-universe defect was also found: 17/35 persistent Hard-Miss findings 
 Package SHA-256: `6b6bb4850ecbe9a3c1d802435783d534e2410aca3b010c7e20bfeb9fca2125f6`.
 
 Primary next action: run v4.5.6 once and analyze the remaining eligible Hard-Miss blocker lines. Do not resume production infrastructure or tune thresholds before that result.
+
+
+## Model Validation v4.5.7 diagnostic accumulator repair — 2026-09-25
+
+Real v4.5.6 showed 18 persistent Hard-Miss diagnostics after the recovered Eco asset filter. Six have no pre-cross observation and are not model-assessable. The remaining diagnostics incorrectly printed zero best-score/evidence values because the diagnostic accumulator incremented `Obs` before first-observation seeding.
+
+v4.5.7 fixes that instrumentation bug, adds a unit test, and labels zero-pre-cross cases `UNSCORABLE_EARLY_CROSS`. Frozen Hunt 4.1.6 is unchanged.
+
+Package SHA-256: `7f07aeea36b6f0d09f5d38135b0ad74d45af681475414b609dc536edb52ea6ca`.
+
+Next action: run v4.5.7 once; analyze only the model-assessable persistent Hard-Miss blocker lines. Do not tune thresholds or resume production rollout before that analysis.
