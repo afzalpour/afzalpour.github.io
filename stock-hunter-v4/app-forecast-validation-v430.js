@@ -27,15 +27,15 @@
     return Number(v).toLocaleString('fa-IR',{minimumFractionDigits:d,maximumFractionDigits:d});
   }
   function gateHTML(){
-    return '<div class="forecast-validation-gate-v430" role="note" aria-label="وضعیت اعتبارسنجی پنج مدل">'
-      +'<div class="forecast-validation-gate-head-v430"><b>اعتبارسنجی پنج مدل: خروجی تشخیصی</b><span>Final Gate: NO_EDGE</span></div>'
-      +'<p>ایچیموکو، گن، بولینگر، MACD/EMA و OBV برای مقایسه نمایش داده می‌شوند، اما در داده اعتبارسنجی فعلی برتری آماری پایدار نسبت به Baseline اثبات نشده است؛ بنابراین هیچ قیمت یا جهت ترکیبی به‌عنوان پیش‌بینی نهایی معتبر تولید نمی‌شود.</p>'
+    return '<div class="forecast-validation-gate-v430" role="note" aria-label="وضعیت اعتبارسنجی مدل‌های تشخیصی">'
+      +'<div class="forecast-validation-gate-head-v430"><b>اعتبارسنجی مدل‌های تشخیصی</b><span>Final Gate: NO_EDGE</span></div>'
+      +'<p>پنج مدل پیشین ـ ایچیموکو، گن، بولینگر، MACD/EMA و OBV ـ در داده اعتبارسنجی فعلی برتری آماری پایدار نسبت به مدل مبنا نشان نداده‌اند. مدل فیبوناچی تازه به بخش مقایسه افزوده شده و هنوز در مجموعه آزمون ۹۰ موردی نسخه ۴.۳.۰ ارزیابی نشده است؛ بنابراین فعلاً فقط خروجی تشخیصی دارد و هیچ قیمت یا جهت ترکیبی به‌عنوان پیش‌بینی نهایی معتبر تولید نمی‌شود.</p>'
       +'<div class="forecast-validation-stats-v430">'
       +'<span>۹۰ آزمون</span><span>۷۰ نمونه پاک</span><span>۶۸ نمونه قابل‌پیش‌بینی</span><span>۳ پنجره مستقل</span>'
       +'<span>بهترین Mean APE منفرد: '+faNum(evidence.bestIndividualMeanAPE,2)+'٪</span>'
       +'<span>Adjusted p: '+faNum(evidence.bestIndividualAdjustedP,3)+'</span>'
       +'</div>'
-      +'<small>این Gate فقط به بخش پنج سناریوی ۱۰روزه مربوط است و موتور Frozen Hunt 4.1.6 را تغییر نمی‌دهد.</small>'
+      +'<small>دروازه آماری نسخه ۴.۳.۰ فقط پنج مدل پیشین را پوشش می‌دهد. فیبوناچی باید در یک اعتبارسنجی مستقل خارج‌ازنمونه بررسی شود. این بخش موتور ثابت شکار ۴.۱.۶ را تغییر نمی‌دهد.</small>'
       +'</div>';
   }
 
@@ -43,7 +43,7 @@
     const detailBefore430=detailHTML;
     detailHTML=function(...args){
       let html=detailBefore430(...args);
-      const marker='<div class="section-title">مقایسه ۵ سناریوی عددی برای ۱۰ روز کاری آینده</div>';
+      const marker='<div class="section-title">مقایسه ۶ سناریوی عددی برای ۱۰ روز کاری آینده</div>';
       if(html.includes(marker) && !html.includes('forecast-validation-gate-v430')){
         html=html.replace(marker,marker+gateHTML());
       }
