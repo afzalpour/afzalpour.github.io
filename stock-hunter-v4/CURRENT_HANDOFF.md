@@ -1114,6 +1114,9 @@ Local verification before commit:
 Delivery:
 - `Stock_Hunter_Forecast_Audit_v4.2.0.exe`
 - EXE SHA-256: `62f6f38dd4d7ab311b0da23d6ecc5b5dbb1f1031f4c578b449af20edebd4e75c`
-- ZIP SHA-256: `de33a97f18e1771325a2140b337efd8fee4f3b96c0f07ce96ded5736d66b1945`
+- ZIP SHA-256: `732950a9b6399d9c97f928550482044483d8c0e04960095c3d216aff46e58a00`
 
 The execution environment used to build this package cannot currently resolve `cdn.tsetmc.com`, so the real Shpaksa HTTP run must execute on the user's Windows network. Do not fabricate the real five-model result before that run.
+
+
+Forecast Audit v4.2.0 one-click delivery adds `RUN_SHPAKSA_BACKTEST.cmd`; it runs the default Shpaksa audit in UTF-8 and pauses so the console result remains visible. The EXE bytes/hash are unchanged; only the ZIP identity changed.
