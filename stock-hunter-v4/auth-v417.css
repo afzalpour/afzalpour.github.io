@@ -12,6 +12,14 @@ html,body{min-height:100%;margin:0;background:#0a0b0d;color:#efece5}
 .auth-form{display:grid;gap:12px}
 /* Auth mode visibility: author CSS must never override the native hidden attribute. */
 .auth-form label[hidden]{display:none!important}
+.auth-form .auth-field[hidden]{display:none!important}
+.auth-field{display:grid;gap:5px}
+.password-input-wrap{position:relative}
+.password-input-wrap input{padding-inline-end:46px}
+.password-toggle{position:absolute;inset-inline-end:5px;top:50%;transform:translateY(-50%);width:34px;height:34px;display:grid;place-items:center;padding:0!important;border:0!important;background:transparent!important;color:#8d9096!important;cursor:pointer}
+.password-toggle:hover,.password-toggle:focus-visible{color:#f0b25c!important;outline:1px solid #3a3d43}
+.password-eye{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.password-toggle[aria-pressed="false"] .password-eye-off,.password-toggle[aria-pressed="true"] .password-eye-open{display:none}
 
 .auth-form label,.profile-form label{display:grid;gap:5px;color:#8d9096;font-size:10px}
 .auth-form input,.profile-form input,.profile-form select{width:100%;box-sizing:border-box;background:#0a0b0d;border:1px solid #25282e;color:#efece5;padding:10px}
