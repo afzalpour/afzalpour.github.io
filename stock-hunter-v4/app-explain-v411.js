@@ -139,10 +139,11 @@ metric=function(label,value,c=''){
 };
 
 const detailBefore411=detailHTML;
-detailHTML=function(x,ichi,gann){
+detailHTML=function(...args){
+  const x=args[0];
   window.__shMetricContext411=x;
   try{
-    let html=detailBefore411(x,ichi,gann);
+    let html=detailBefore411(...args);
     html=html.replaceAll('امتیاز اجماع','امتیاز تصمیم');
     html=html.replace('احتمال کالیبره‌شده نیست','شاخص ۰ تا ۱۰۰؛ احتمال موفقیت نیست');
     return html;
