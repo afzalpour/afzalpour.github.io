@@ -943,3 +943,10 @@ v4.5.7 fixes that instrumentation bug, adds a unit test, and labels zero-pre-cro
 Package SHA-256: `7f07aeea36b6f0d09f5d38135b0ad74d45af681475414b609dc536edb52ea6ca`.
 
 Next action: run v4.5.7 once; analyze only the model-assessable persistent Hard-Miss blocker lines. Do not tune thresholds or resume production rollout before that analysis.
+
+
+## Final model validation decision 2026-09-25
+
+Historical v4.5.x validation is CLOSED; do not request more local validator runs unless materially better PIT historical evidence appears. v4.5.7: mechanics PASS; 18 persistent findings after Eco filter; 2 unscorable early-cross; 16 assessable; 14 DYNAMIC_NOT_READY; 1 TODAY_LT_64 at optimistic 62.1; 1 OTHER_HARD_GATE. No evidence justifies changing Frozen Hunt 4.1.6 formulas or thresholds. Final model-quality proof is exact Live Shadow PIT validation while production finalization resumes fail-closed.
+
+Supabase Stock Hunter project `summnepwuziwulzvpcms` is ACTIVE_HEALTHY again. Exact `pg_get_viewdef(public.stock_hunter_integrated_v1)` was recovered directly from PostgreSQL on 2026-09-25, so the former integrated-view provenance unknown is closed. Next engineering focus: source-equivalent cloud port/parity of the recovered integrated logic, then Cloudflare/Iran collector live transport and Live Shadow validation before actionable frontend cutover.
