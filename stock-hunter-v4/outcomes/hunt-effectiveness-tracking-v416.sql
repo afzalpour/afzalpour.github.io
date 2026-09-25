@@ -189,7 +189,7 @@ exception when others then
    where singleton=true;
   raise;
 end;
-$function$
+$function$;
 
 revoke all on function private.capture_stock_hunter_hunt_market_tape_v416() from public, anon, authenticated;
 
@@ -480,7 +480,7 @@ exception when others then
    where singleton=true;
   raise;
 end;
-$function$
+$function$;
 
 revoke all on function private.refresh_stock_hunter_hunt_effectiveness_v416() from public, anon, authenticated;
 
@@ -511,7 +511,7 @@ as
     round(avg(same_day_mae_from_alert_pct) FILTER (WHERE same_day_observed), 3) AS avg_same_day_mae_pct,
     round(avg(d1_return_from_alert_pct) FILTER (WHERE d1_observed), 3) AS avg_d1_return_from_alert_pct
    FROM stock_hunter_hunt_effectiveness_v416
-  GROUP BY channel, hunt_mode, hunt_state, asset_type;;
+  GROUP BY channel, hunt_mode, hunt_state, asset_type;
 revoke all on table public.stock_hunter_hunt_effectiveness_summary_v416 from anon, authenticated;
 
 select cron.unschedule(jobid)
