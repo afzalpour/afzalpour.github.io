@@ -71,6 +71,10 @@ jobs:
           node --check stock-hunter-v4/app-forecast-bridge-v414.js
           node --check stock-hunter-v4/app-forecast-trend-v415.js
           node --check stock-hunter-v4/app-forecast-validation-v430.js
+          grep -q 'function forecastFibonacci' stock-hunter-v4/app-forecast.js
+          grep -q "key:'fib'" stock-hunter-v4/app-forecast.js
+          grep -q 'مقایسه ۶ سناریوی عددی' stock-hunter-v4/app-forecast.js
+          grep -q 'فیبوناچی' stock-hunter-v4/app-forecast-validation-v430.js
           node --check stock-hunter-v4/app-theme-v412.js
           node --check stock-hunter-v4/app-session-v413.js
           node --check stock-hunter-v4/app-hunt-v416.js
@@ -156,7 +160,7 @@ jobs:
           grep -q 'hadActivity9to17V416' stock-hunter-v4/app-eod-v416.js
           grep -q 'تأیید تکمیلی ۱–۳ روزه' stock-hunter-v4/app-hunt-hierarchy-v416.js
           grep -q 'موتور شکار درون‌روزی' stock-hunter-v4/methodology.html
-          grep -q 'پنج مدل ۱۰روزه' stock-hunter-v4/methodology.html
+          grep -q 'شش مدل ۱۰روزه' stock-hunter-v4/methodology.html
           grep -q 'وزن‌های مهندسی اولیه' stock-hunter-v4/methodology.html
           grep -q 'RequiredVelocity_15sec' stock-hunter-v4/hunt-methodology-v416.html
           grep -q "shikar-sahm-v4.1.6-r13" stock-hunter-v4/sw.js
@@ -184,6 +188,7 @@ jobs:
           js=Path('stock-hunter-v4/performance-v416.js').read_text(encoding='utf-8')
           assert 'این صفحه احتمال موفقیت مدل را نمایش نمی‌دهد.' in html
           assert 'قیمت نخستین هشدار' in html
+          assert 'overflow-y:auto!important' in html
           assert 'stock_hunter_hunt_performance_v416' in js
           assert 'stock_hunter_hunt_outcomes_v416' in js
           assert 'positive_rate_1d_pct' in js
@@ -200,6 +205,7 @@ jobs:
           ev=Path('stock-hunter-v4/candidate-evaluator-v416.js').read_text(encoding='utf-8')
           rb=Path('stock-hunter-v4/robustness-gate-v416.js').read_text(encoding='utf-8')
           assert 'مجموعه‌داده سایه' in html
+          assert 'overflow-y:auto!important' in html
           assert 'آموزش، اعتبارسنجی و خارج‌ازنمونه' in html
           assert 'ارتقای خودکار عمداً خاموش است' in html
           assert 'بخش خارج‌ازنمونه عمداً قفل است' in html
@@ -285,7 +291,7 @@ jobs:
           from pathlib import Path
           hunt=Path('stock-hunter-v4/app-hunt-v416.js').read_text(encoding='utf-8')
           body=hunt[hunt.index('function applyHuntV416'):hunt.index('function isGoalCandidateV416')]
-          forbidden=['forecastIchimoku','forecastGann','bollinger','macd','obv']
+          forbidden=['forecastIchimoku','forecastGann','forecastFibonacci','fibonacci','bollinger','macd','obv']
           for token in forbidden:
               assert token.lower() not in body.lower(), token
           print('forecast-exclusion: PASS')
