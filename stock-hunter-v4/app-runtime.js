@@ -107,7 +107,7 @@ function marketOutageDetailV416(e,cache){
   const code=status?`HTTP ${status}`:(e?.name==='AbortError'?'timeout':'network');
   const source=cache?.savedAt?marketFaDateTimeV416(cache.savedAt):'ناموجود';
   return infra
-    ? `اختلال موقت زیرساخت داده (${code}). آخرین snapshot معتبر: ${source}. داده قدیمی به‌عنوان شکار فعال استفاده نمی‌شود.`
+    ? `اختلال موقت زیرساخت داده (${code}). آخرین داده معتبر: ${source}. داده قدیمی به‌عنوان شکار فعال استفاده نمی‌شود.`
     : `ارتباط زنده بازار برقرار نشد (${code}). آخرین snapshot معتبر: ${source}. داده قدیمی به‌عنوان شکار فعال استفاده نمی‌شود.`;
 }
 async function load(force=false){
