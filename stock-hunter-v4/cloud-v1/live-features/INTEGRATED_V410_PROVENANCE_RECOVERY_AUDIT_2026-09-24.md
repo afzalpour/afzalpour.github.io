@@ -217,3 +217,55 @@ No production cloud scoring/cutover may remove these blockers based only on infe
 1. Infrastructure recovery of Supabase long enough to extract the exact integrated view/dependency definitions.
 2. Search any retained migration/export evidence for the authoritative integrated SQL while Supabase remains unavailable.
 3. If the exact integrated source cannot be recovered, a separately versioned reconstructed/challenger integrated layer may be built and validated, but it must never be silently labelled Frozen 4.1.6 parity.
+
+
+## Recovery closure — 2026-09-25
+
+PostgreSQL recovered and is `ACTIVE_HEALTHY`. The authoritative view definition was extracted directly with:
+
+`pg_get_viewdef('public.stock_hunter_integrated_v1'::regclass, true)`
+
+Recovered definition fingerprint:
+
+`MD5 = 09f820b9692f94010a5391c489ac9c96`
+
+The exact recovered SQL is preserved at:
+
+`stock_hunter_integrated_v1.recovered.sql`
+
+The previously unresolved implementation details are now closed from the authoritative SQL itself:
+
+- exact `integrated_eligible` predicate;
+- exact Flow / Trend / Momentum expressions and NULL defaults;
+- exact five-minute market breadth population;
+- exact market-regime thresholds and precedence;
+- exact RegimeAdjustment, including its precedence difference from the regime label;
+- exact DataQuality freshness bands;
+- exact positive/negative expert thresholds;
+- exact confidence calculation;
+- exact Risk Gate and gate-reason ordering;
+- exact final-decision ordering, thresholds and stale-data behavior.
+
+Eco v4.0.8 uses `سهام` for the ordinary-share label while the legacy universe taxonomy used by the SQL predicate uses `سهام / سایر`. The cloud port contains an explicit taxonomy adapter only for this eligibility spelling. A live aggregate comparison on 2026-09-25 returned:
+
+- universe rows: 2259
+- authoritative SQL eligible: 696
+- Eco-compatible spelling eligible: 696
+
+so the adapter introduces no current eligibility drift.
+
+Source-equivalent TypeScript port:
+
+`integrated-v410-source-equivalent.ts`
+
+The base single-row feature builder remains fail-closed. Only the full batch builder, after exact market-context calculation across the snapshot, may mark:
+
+`frozen_hunt_input_ready=true`
+
+with an empty blocker list.
+
+The old blocker:
+
+`integrated_view_provenance_unresolved`
+
+is therefore closed once this port's CI parity/contract suite is green.
