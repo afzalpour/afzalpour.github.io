@@ -48,6 +48,22 @@ async function waitSynced(page){
   },null,{timeout:15000});
 }
 
+async function assertStandaloneScroll(page,path){
+  await page.goto(BASE_URL+'/'+path,{waitUntil:'domcontentloaded',timeout:30000});
+  const state=await page.evaluate(()=>({
+    htmlOverflowY:getComputedStyle(document.documentElement).overflowY,
+    bodyOverflowY:getComputedStyle(document.body).overflowY,
+    scrollHeight:Math.max(document.documentElement.scrollHeight,document.body.scrollHeight),
+    viewportHeight:window.innerHeight
+  }));
+  assert.notEqual(state.htmlOverflowY,'hidden',path+' html overflow must allow vertical scrolling');
+  assert.notEqual(state.bodyOverflowY,'hidden',path+' body overflow must allow vertical scrolling');
+  assert.ok(state.scrollHeight>state.viewportHeight+40,path+' must have scrollable document height');
+  await page.evaluate(()=>window.scrollTo(0,Math.min(500,Math.max(1,document.documentElement.scrollHeight-window.innerHeight))));
+  await page.waitForTimeout(120);
+  assert.ok(await page.evaluate(()=>window.scrollY>0),path+' must actually scroll in Chromium');
+}
+
 async function main(){
   const browser=await chromium.launch({headless:true});
   const context=await browser.newContext({
@@ -63,7 +79,21 @@ async function main(){
   });
 
   try{
+    await page.setViewportSize({width:1280,height:600});
+    await assertStandaloneScroll(page,'performance.html');
+    await assertStandaloneScroll(page,'calibration.html');
+    await page.setViewportSize({width:1440,height:1000});
+
     await page.goto(BASE_URL+'/index.html',{waitUntil:'domcontentloaded',timeout:30000});
+    await page.waitForFunction(()=>typeof forecastFibonacci==='function'&&typeof forecastModels==='function',null,{timeout:10000});
+    const forecastContract=await page.evaluate(()=>({
+      fibonacciType:typeof forecastFibonacci,
+      hasFibKey:/key:\s*['"]fib['"]/.test(String(forecastModels)),
+      hasSixTitle:String(detailHTML).includes('مقایسه ۶ سناریوی عددی')
+    }));
+    assert.equal(forecastContract.fibonacciType,'function','Fibonacci model must be loaded');
+    assert.equal(forecastContract.hasFibKey,true,'forecastModels must include Fibonacci');
+    assert.equal(forecastContract.hasSixTitle,true,'detail renderer must expose six-model comparison');
     const accountLink=page.locator('a.top-link[href="profile-v417.html"]');
     await accountLink.waitFor({state:'visible',timeout:10000});
     await Promise.all([
