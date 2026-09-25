@@ -13,6 +13,6 @@ This revision fixes the v4.1.0 top-220 transport prefilter mismatch.
 
 The local `fast_score` no longer decides whether a symbol reaches the browser Hunt engine.
 
-EXE SHA-256: `999d79257049a8d4357420a9b8de72b6e6c506afe4bfc5904a0616b9f52f290d`
+EXE SHA-256: `a318401d3d6e3fc7640139cc4370a0b61301db4b1b26421ade49dc0ec3e1671e`
 
-ZIP SHA-256: `7c2f7fbbfd2f0196ef97b832d4e516a0575e281fbe486d754899a700ca2fb2c3`
+ZIP SHA-256: `0d51471a3a9f0dfefc7273b273e840b4798dc8590bcdefe040ad26cc323aee54`
