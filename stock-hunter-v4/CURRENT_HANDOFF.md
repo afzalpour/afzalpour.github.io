@@ -943,3 +943,35 @@ v4.5.7 fixes that instrumentation bug, adds a unit test, and labels zero-pre-cro
 Package SHA-256: `7f07aeea36b6f0d09f5d38135b0ad74d45af681475414b609dc536edb52ea6ca`.
 
 Next action: run v4.5.7 once; analyze only the model-assessable persistent Hard-Miss blocker lines. Do not tune thresholds or resume production rollout before that analysis.
+
+
+## Final model validation + integrated provenance closure — 2026-09-25
+
+Historical v4.5.x validation is CLOSED. No further local validator runs are required unless materially better PIT historical evidence appears.
+
+Final model interpretation:
+- mechanical Frozen Hunt 4.1.6 invariants PASS;
+- after exact Eco asset filtering: 18 persistent findings;
+- 2 are unscorable early-cross;
+- 16 are model-assessable;
+- 14/16 are DYNAMIC_NOT_READY;
+- 1 is TODAY_LT_64 at optimistic 62.1;
+- 1 is OTHER_HARD_GATE.
+This does not justify changing Frozen Hunt formulas or thresholds.
+
+Supabase Stock Hunter project is ACTIVE_HEALTHY again. The exact definition of public.stock_hunter_integrated_v1 was recovered directly from PostgreSQL. Authoritative viewdef MD5:
+`09f820b9692f94010a5391c489ac9c96`.
+
+PR #277 merged exact source-equivalent integrated cloud port:
+`7ff6d693167fac809c657345375c7a02d9de9cd6`.
+
+PR #278 merged prospective R2 Live Shadow replay/automation:
+`4f11e97981560944285815482cf67f0033d1f1bb`.
+
+The old integrated-provenance recovery workflow is retired because the exact SQL is now preserved in-repo and the blocker is closed.
+
+Remaining external blockers before real live validation:
+1. Cloudflare production environment/secrets bootstrap.
+2. One persistent Linux host with Iranian outbound IP.
+
+Production actionable Hunt remains fail-closed until real Iran-egress cloud snapshots and prospective Live Shadow evidence exist.
