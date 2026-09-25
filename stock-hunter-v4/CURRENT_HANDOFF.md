@@ -882,3 +882,12 @@ Package SHA-256:
 `0f61f1c39ff0af25ea5c57a44529593ce18cbbea9f522d89a9c8b900157ccbdd`
 
 Primary next action: run `RUN_MODEL_VALIDATION_20260923.cmd` from v4.5.1 and analyze its full final output before resuming production infrastructure work.
+
+
+## Model Validation v4.5.2 evidence-reader repair — 2026-09-25
+
+v4.5.1 mechanical checks all PASS, but its historical verdict is NOT a model result because `TradeParsed=0` and `DailyReference=0`. The canonical v4.2.1 executable exposes cache naming `trade_%s_%s.json.gz` and `bulk_daily.json.gz`; v4.5.2 repairs discovery accordingly. It may recover only the missing official daily reference with one network request; TradeHistory/BestLimits remain cache-only.
+
+Package SHA-256: `dcd0ae9e844fc6bf098a7b59f60f6a0bc83d3d70356cb656b2e2420f2d7a2f99`
+
+Next primary action: run v4.5.2 and require nonzero `TradeParsed` and `DailyReference` before interpreting any Hunt quality verdict.
