@@ -6,7 +6,7 @@ const perfN=v=>{const x=Number(v);return Number.isFinite(x)?x:null};
 const perfFa=(v,d=2)=>perfN(v)==null?'—':Number(v).toLocaleString('fa-IR',{maximumFractionDigits:d});
 const perfPct=(v,d=2)=>perfN(v)==null?'—':`${perfFa(v,d)}٪`;
 const perfEsc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const perfMode=v=>v==='reversal'?'Reversal':v==='acceleration'?'Acceleration':String(v||'—');
+const perfMode=v=>v==='reversal'?'برگشت منفی به مثبت':v==='acceleration'?'شتاب مثبت اولیه':String(v||'—');
 const perfClass=v=>perfN(v)==null?'muted':Number(v)>0?'pos':Number(v)<0?'neg':'muted';
 let performanceRowsV416=[],recentOutcomeRowsV416=[];
 
@@ -56,7 +56,7 @@ function renderRecentV416(){
     <td>${perfEsc(r.trade_date||'—')}</td><td><b>${perfEsc(r.symbol)}</b></td><td>${perfEsc(perfMode(r.hunt_mode))}</td><td>${perfEsc(r.hunt_state)}</td><td>${perfFa(r.max_hunt_score,1)}</td><td>${perfFa(r.first_price,0)}</td><td>${perfFa(r.future_sessions_observed,0)}</td>
     <td class="${perfClass(r.return_1d_pct)}">${perfPct(r.return_1d_pct,2)}</td><td class="${perfClass(r.mfe_1d_pct)}">${perfPct(r.mfe_1d_pct,2)}</td><td class="${perfClass(r.mae_1d_pct)}">${perfPct(r.mae_1d_pct,2)}</td>
     <td class="${perfClass(r.return_3d_pct)}">${perfPct(r.return_3d_pct,2)}</td><td class="${perfClass(r.mfe_3d_pct)}">${perfPct(r.mfe_3d_pct,2)}</td><td class="${perfClass(r.mae_3d_pct)}">${perfPct(r.mae_3d_pct,2)}</td>
-  </tr>`).join(''):'<tr><td colspan="13" class="perf-empty">Ledger رسمی هنوز Event قابل ارزیابی ندارد؛ ثبت Outcome از جلسه معاملاتی بعد به‌صورت خودکار آغاز می‌شود.</td></tr>';
+  </tr>`).join(''):'<tr><td colspan="13" class="perf-empty">دفتر ثبت رسمی هنوز رخداد قابل ارزیابی ندارد؛ ثبت نتیجه از جلسه معاملاتی بعد به‌صورت خودکار آغاز می‌شود.</td></tr>';
 }
 function renderAllV416(){renderSummaryV416();renderPerformanceTableV416();renderRecentV416()}
 async function loadPerformanceV416(){
