@@ -60,10 +60,10 @@ function historicalDetailHTMLV409(x){
     ${metricExplainV416('بیشترین روز',latest?fa(latest.high,0):'—','','بیشترین قیمت ثبت‌شده در آخرین روز موجود.')}
     ${metricExplainV416('کمترین روز',latest?fa(latest.low,0):'—','','کمترین قیمت ثبت‌شده در آخرین روز موجود.')}
     ${metricExplainV416('حجم روز',latest?fa(latest.volume,0):'—','','حجم ثبت‌شده در آخرین روز موجود.')}
-    <div class="section-title">مقایسه ۵ سناریوی عددی برای ۱۰ روز کاری آینده</div>
+    <div class="section-title">مقایسه ۶ سناریوی عددی برای ۱۰ روز کاری آینده</div>
     ${models.map(modelBox).join('')}
     ${forecastTable(models)}
-    <div class="forecast-note"><b>محدودیت:</b> چون رکورد لحظه‌ای این نماد در Feed فعال موجود نیست، شاخص‌های دفتر سفارش، QI/OFI، شتاب لحظه‌ای، ورود، حد ضرر و Hunt Score نمایش داده نمی‌شوند. این پنج مدل فقط نمایشی‌اند و وارد Hunt Score نمی‌شوند.</div>
+    <div class="forecast-note"><b>محدودیت:</b> چون رکورد لحظه‌ای این نماد در Feed فعال موجود نیست، شاخص‌های دفتر سفارش، QI/OFI، شتاب لحظه‌ای، ورود، حد ضرر و Hunt Score نمایش داده نمی‌شوند. این شش مدل فقط نمایشی‌اند و وارد امتیاز شکار نمی‌شوند.</div>
   </div>`;
 }
 async function openHistoricalUniverseDetailV409(seed){
@@ -135,6 +135,6 @@ openDetail=async function(id){
   if(!$('detailDialog').open)$('detailDialog').showModal();
   await fetchDailyHistory(x);
   if(currentDetail?.id!==x.id)return;
-  const ichi=forecastIchimoku(x),gann=forecastGann(x);
-  $('detailBody').innerHTML=detailHTML(x,ichi,gann);
+  const models=forecastModels(x);
+  $('detailBody').innerHTML=detailHTML(x,...models.map(m=>m.data));
 };
