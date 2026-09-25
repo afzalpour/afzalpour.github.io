@@ -12,7 +12,7 @@ The equations are a direct Go port of the current `app-forecast.js` formulas. Fr
 
 ## Default Shpaksa audit
 
-The Windows build defaults to:
+For one-click use, run `RUN_SHPAKSA_BACKTEST.cmd`. The Windows build defaults to:
 
 - symbol: `شپاکسا`
 - TSETMC instrument code: `11622051128546106`
@@ -58,4 +58,4 @@ Self-test:
 
 `Stock_Hunter_Forecast_Audit_v4.2.0.exe --self-test`
 
-The tool writes a JSON evidence file in the working directory.
+The tool writes a JSON evidence file in the working directory. The runner keeps the console window open so the result can be copied.
