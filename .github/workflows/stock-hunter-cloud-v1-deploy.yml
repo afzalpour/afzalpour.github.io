@@ -37,6 +37,46 @@ jobs:
           test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "Missing CLOUDFLARE_ACCOUNT_ID" >&2; exit 1; }
           test -n "$COLLECTOR_KEYS_JSON" || { echo "Missing STOCK_HUNTER_COLLECTOR_KEYS_JSON" >&2; exit 1; }
 
+      - name: Validate collector HMAC key map
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const raw = process.env.COLLECTOR_KEYS_JSON || "";
+          let parsed;
+          try {
+            parsed = JSON.parse(raw);
+          } catch {
+            console.error("STOCK_HUNTER_COLLECTOR_KEYS_JSON must be valid JSON.");
+            process.exit(1);
+          }
+
+          if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") {
+            console.error("STOCK_HUNTER_COLLECTOR_KEYS_JSON must be a JSON object.");
+            process.exit(1);
+          }
+
+          const entries = Object.entries(parsed);
+          if (entries.length === 0) {
+            console.error("STOCK_HUNTER_COLLECTOR_KEYS_JSON must contain at least one collector.");
+            process.exit(1);
+          }
+
+          const collectorIdPattern = /^[A-Za-z0-9._:-]{1,128}$/;
+          for (const [collectorId, secret] of entries) {
+            if (!collectorIdPattern.test(collectorId)) {
+              console.error("Collector ID does not satisfy the Worker protocol contract.");
+              process.exit(1);
+            }
+            if (typeof secret !== "string" || secret.length < 16) {
+              console.error("Each collector HMAC secret must be a string with at least 16 characters.");
+              process.exit(1);
+            }
+          }
+
+          console.log(`Validated ${entries.length} collector key entr${entries.length === 1 ? "y" : "ies"} without exposing secret material.`);
+          NODE
+
       - name: Install pinned Wrangler
         run: npm install --ignore-scripts --no-audit --no-fund
 

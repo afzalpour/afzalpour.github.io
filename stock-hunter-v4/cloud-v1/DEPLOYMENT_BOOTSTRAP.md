@@ -1,9 +1,9 @@
-# Cloudflare Bootstrap / Deploy Gate v2
+# Cloudflare Bootstrap / Deploy Gate v3
 
 Architecture: `SHIKAR-CLOUD-IRAN-EGRESS-V1`  
-Status: EXTERNAL ACCOUNT BOOTSTRAP REQUIRED / CODE READY
+Status: EXTERNAL ACCOUNT + IRAN-EGRESS BOOTSTRAP REQUIRED / REPOSITORY READY
 
-The repository side is deployable. Real Cloudflare resource creation still requires credentials belonging to the user's Cloudflare account. No credential is committed to the repository.
+The repository side is deployable. Exact integrated-view provenance and its source-equivalent Cloud port are closed. Real Cloudflare resource creation still requires credentials belonging to the user's Cloudflare account, and real market transport still requires one persistent Linux host with Iranian outbound IP. No credential is committed to the repository.
 
 ## GitHub environment
 
@@ -26,6 +26,13 @@ The collector key JSON maps collector IDs to long random HMAC secrets, for examp
 ```
 
 The example value is not a real secret.
+
+The deploy workflow validates the map before any Cloudflare mutation. The map must:
+- be a non-empty JSON object;
+- use collector IDs matching `[A-Za-z0-9._:-]{1,128}`;
+- use string HMAC secrets of at least 16 characters.
+
+This mirrors the current Worker ingest contract and prevents a malformed key map from reaching production.
 
 ### R2 S3 secrets for daily raw-pack workflow
 
@@ -58,16 +65,17 @@ Trigger: manual `workflow_dispatch`.
 
 It:
 
-1. verifies `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and `STOCK_HUNTER_COLLECTOR_KEYS_JSON`;
-2. installs the pinned Wrangler;
-3. runs the cloud contract dry-run compile;
-4. creates private R2 bucket `stock-hunter-market-v1` if absent;
-5. installs bounded lifecycle rules:
+1. verifies `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and `STOCK_HUNTER_COLLECTOR_KEYS_JSON` are present;
+2. validates the collector key map without printing secret material;
+3. installs the pinned Wrangler;
+4. runs the cloud contract dry-run compile;
+5. creates private R2 bucket `stock-hunter-market-v1` if absent;
+6. installs bounded lifecycle rules:
    - `raw/v1/` -> expire after 3 days;
    - `packs/raw-v1/` -> expire after 15 days;
-6. deploys Worker `stock-hunter-cloud-v1` + SQLite Durable Object;
-7. installs `COLLECTOR_KEYS_JSON` as a Worker secret;
-8. lists deployed Worker versions.
+7. deploys Worker `stock-hunter-cloud-v1` + SQLite Durable Object;
+8. installs `COLLECTOR_KEYS_JSON` as a Worker secret;
+9. lists deployed Worker versions.
 
 The R2 bucket remains private. Browser clients read only through the Worker.
 
@@ -124,16 +132,32 @@ Once R2 S3 credentials exist, the scheduled/manual workflow:
 
 can compact already captured R2 raw objects into deterministic daily packs. It never calls TSETMC.
 
+## Provenance closure
+
+The former exact-input provenance blocker is closed:
+
+- authoritative `pg_get_viewdef(public.stock_hunter_integrated_v1)` is preserved in-repo;
+- authoritative viewdef MD5: `09f820b9692f94010a5391c489ac9c96`;
+- PR #277 merged the source-equivalent integrated Cloud port;
+- Eco v4.0.8 `asset_type` / `market` derivation is also recovered and ported;
+- only a full snapshot batch may mark `frozen_hunt_input_ready=true`; the single-row base builder remains fail-closed.
+
 ## Cutover gate
 
-Cloud deployment + successful Iran feed transport **does not authorize production Hunt cutover**.
+Cloud deployment alone **does not authorize production Hunt cutover**.
 
-Production source switching remains blocked until exact Frozen Hunt live input provenance is closed for:
-1. `public.stock_hunter_integrated_v1` authoritative SQL/dependencies.
+The next evidence chain is operational and prospective:
 
-The Eco v4.0.8 `asset_type` / `market` derivation has been recovered exactly from the canonical executable artifact and is no longer a blocker.
+1. successful TSETMC `--source-probe` from an Iranian outbound IP;
+2. one accepted signed `--once` snapshot;
+3. fresh `/v1/health` and valid `/v1/latest`;
+4. mobile staging WebSocket smoke;
+5. long-running collector activation;
+6. deterministic R2 raw-pack production;
+7. prospective Live Shadow evidence through the exact Cloud feature builder + Frozen Hunt 4.1.6.
 
-Until then:
-- cloud facts/staging may run;
+Until those gates are actually observed:
 - production `index.html` remains on the existing frozen path;
-- `frozen_hunt_input_ready=false` remains mandatory.
+- actionable cloud Hunt remains fail-closed;
+- historical diagnostics must not be substituted for prospective evidence;
+- Frozen Hunt 4.1.6 formulas, thresholds, objectives, and session policy remain unchanged.

@@ -975,3 +975,20 @@ Remaining external blockers before real live validation:
 2. One persistent Linux host with Iranian outbound IP.
 
 Production actionable Hunt remains fail-closed until real Iran-egress cloud snapshots and prospective Live Shadow evidence exist.
+
+## Cloud bootstrap hardening v3 — 2026-09-25
+
+Repository-side first-deploy preflight is hardened:
+- `stock-hunter-cloud-v1-deploy.yml` now validates `STOCK_HUNTER_COLLECTOR_KEYS_JSON` before any Cloudflare mutation;
+- validation mirrors the Worker collector-ID and minimum-secret contract and never prints secret material;
+- `cloud-v1/DEPLOYMENT_BOOTSTRAP.md` now reflects that integrated-view provenance is CLOSED, not an active blocker.
+
+The only unavoidable external bootstrap remains:
+1. Cloudflare production credentials/environment;
+2. one persistent Linux host with Iranian outbound IP.
+
+After those are ready, execute the existing order:
+deploy -> Iran `--source-probe` -> signed `--once` -> `/v1/health` + `/v1/latest` -> mobile staging WebSocket -> long-running collector -> prospective Live Shadow evidence.
+
+Production actionable Hunt remains fail-closed until that real operational/prospective evidence exists.
+
