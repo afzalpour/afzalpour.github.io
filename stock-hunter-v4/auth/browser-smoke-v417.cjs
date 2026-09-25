@@ -72,15 +72,50 @@ async function main(){
     ]);
 
     assert.equal(await page.locator('#displayNameWrap').isHidden(),true,'sign-in must hide display name');
+    assert.equal(await page.locator('#confirmPasswordWrap').isHidden(),true,'sign-in must hide confirm password');
     assert.equal(await page.locator('#newPasswordWrap').isHidden(),true,'sign-in must hide reset/new-password field');
     assert.equal(await page.locator('#email').isVisible(),true,'sign-in must show email');
     assert.equal(await page.locator('#password').isVisible(),true,'sign-in must show password');
+    assert.equal(await page.locator('[data-password-toggle="password"]').isVisible(),true,'sign-in password eye must be visible');
+    assert.equal(await page.locator('#password').getAttribute('type'),'password');
+    await page.click('[data-password-toggle="password"]');
+    assert.equal(await page.locator('#password').getAttribute('type'),'text','password eye must reveal password');
+    assert.equal(await page.locator('[data-password-toggle="password"]').getAttribute('aria-pressed'),'true');
+    await page.click('[data-password-toggle="password"]');
+    assert.equal(await page.locator('#password').getAttribute('type'),'password','password eye must hide password');
 
     await page.click('[data-auth-tab="signup"]');
     assert.equal(await page.locator('#displayNameWrap').isVisible(),true,'signup must show display name');
+    assert.equal(await page.locator('#confirmPasswordWrap').isVisible(),true,'signup must require confirm password');
     assert.equal(await page.locator('#newPasswordWrap').isHidden(),true,'signup must not show reset/new-password field');
-    await page.click('[data-auth-tab="signin"]');
+    assert.equal(await page.locator('[data-password-toggle="confirmPassword"]').isVisible(),true,'confirm-password eye must be visible');
+    await page.fill('#email','signup-check@example.invalid');
+    await page.fill('#password','SignupCheck-123');
+    await page.fill('#confirmPassword','SignupCheck-124');
+    await page.click('#authSubmit');
+    await page.locator('#authMessage').waitFor({state:'visible',timeout:5000});
+    assert.match((await page.locator('#authMessage').textContent())||'',/یکسان نیستند/,'signup must reject mismatched passwords');
 
+    await page.click('[data-auth-tab="recovery"]');
+    assert.equal(await page.locator('#passwordWrap').isHidden(),true,'recovery must hide password');
+    assert.equal(await page.locator('#confirmPasswordWrap').isHidden(),true,'recovery must hide confirm password');
+    assert.equal(await page.locator('#newPasswordWrap').isHidden(),true,'recovery must hide new password');
+    await page.fill('#email','not-an-email');
+    await page.click('#authSubmit');
+    await page.locator('#authMessage').waitFor({state:'visible',timeout:5000});
+    assert.match((await page.locator('#authMessage').textContent())||'',/این ایمیل نامعتبر است/,'recovery must reject malformed email locally');
+
+    await page.goto(BASE_URL+'/auth-v417.html?mode=reset&next=profile-v417.html',{waitUntil:'domcontentloaded',timeout:30000});
+    assert.equal(await page.locator('#newPasswordWrap').isVisible(),true,'reset must show new password');
+    assert.equal(await page.locator('#passwordWrap').isHidden(),true,'reset must hide current password');
+    assert.equal(await page.locator('#confirmPasswordWrap').isHidden(),true,'reset must hide signup confirm password');
+    assert.equal(await page.locator('[data-password-toggle="newPassword"]').isVisible(),true,'new-password eye must be visible');
+    assert.equal(await page.locator('#newPassword').getAttribute('type'),'password');
+    await page.click('[data-password-toggle="newPassword"]');
+    assert.equal(await page.locator('#newPassword').getAttribute('type'),'text','new-password eye must reveal password');
+    await page.click('[data-password-toggle="newPassword"]');
+
+    await page.goto(BASE_URL+'/auth-v417.html?next=profile-v417.html',{waitUntil:'domcontentloaded',timeout:30000});
     await page.fill('#email',EMAIL);
     await page.fill('#password',PASSWORD);
     await Promise.all([
@@ -183,6 +218,8 @@ async function main(){
 
     console.log(JSON.stringify({
       result:'stock-hunter-v417-authenticated-browser-smoke: PASS',
+      password_confirmation_and_eye_controls:true,
+      malformed_recovery_email_guard:true,
       public_account_to_own_profile:true,
       profile_to_personal_market:true,
       preference_persistence:true,
