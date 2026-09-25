@@ -1191,3 +1191,23 @@ Complete handoff package SHA-256:
 The complete package includes the final EXE, Persian validation report, model statistics CSV, cross-validation/trial CSV, final model policy JSON, and the original v4.2.1 batch evidence JSON.
 
 Current evidence verdict remains `NO_STATISTICALLY_CONFIRMED_EDGE`; five technical models are diagnostic only and Frozen Hunt 4.1.6 is unchanged.
+
+
+## Forecast Validation UI Gate v4.3.0 — site integration — 2026-09-25
+
+The evidence-gated conclusion from Forecast Final v4.3.0 is now integrated into the public Stock Hunter detail UI without changing any five-model equation or Frozen Hunt 4.1.6 logic.
+
+New UI asset:
+- `app-forecast-validation-v430.js`
+
+Behavior:
+- keeps Ichimoku, Gann, Bollinger, MACD/EMA and OBV visible as diagnostics;
+- shows `Final Gate: NO_EDGE` next to the five-model section;
+- exposes the validated evidence summary (90 requested, 88 completed, 70 clean, 68 forecastable-clean, 3 anchor windows);
+- states that no combined final price/direction is promoted while the evidence verdict is `NO_STATISTICALLY_CONFIRMED_EDGE`;
+- explicitly states that this gate does not affect Frozen Hunt 4.1.6.
+
+Delivery integration:
+- loaded by both `index.html` and `index-v417.html` after `app-forecast-trend-v415.js`;
+- precached by service worker cache `shikar-sahm-v4.1.6-r13`;
+- UI CI checks JS syntax, load order, gate semantics and service-worker presence.
