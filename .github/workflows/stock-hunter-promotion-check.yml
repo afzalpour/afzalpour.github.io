@@ -21,10 +21,10 @@ jobs:
           html=Path('stock-hunter-v4/calibration.html').read_text(encoding='utf-8')
           js=Path('stock-hunter-v4/promotion-decision-v416.js').read_text(encoding='utf-8')
           sw=Path('stock-hunter-v4/sw.js').read_text(encoding='utf-8')
-          assert 'Promotion Decision Protocol' in html
-          assert 'معیارهای Promotion قبل از مشاهده OOS فریز شده‌اند' in html
-          assert 'UI هیچ مسیر نوشتنی برای Promotion ندارد' in html
-          assert 'promotion-decision-v416.js?v=4.1.6' in html
+          assert 'پروتکل تصمیم ارتقا' in html
+          assert 'معیارهای ارتقا پیش از مشاهده خارج‌ازنمونه تثبیت شده‌اند' in html
+          assert 'رابط کاربری هیچ مسیر نوشتنی برای ارتقا ندارد' in html
+          assert 'promotion-decision-v416.js?v=4.1.6-fa1' in html
           assert 'stock_hunter_promotion_policy_v416' in js
           assert 'stock_hunter_promotion_readiness_v416' in js
           assert 'stock_hunter_promotion_assessment_v416' in js
@@ -32,7 +32,7 @@ jobs:
           assert '/rpc/' not in js
           assert 'fetch(' in js and 'method:' not in js
           assert 'promotion-decision-v416.js' in sw
-          assert "shikar-sahm-v4.1.6-r12" in sw
+          assert "shikar-sahm-v4.1.6-r13" in sw
           assert 'hunt-runtime-core-v417.js' in sw and 'app-runtime-router-v417.js' in sw
           assert 'canary-admission-v417.js' in sw and 'canary-expansion-v417.js' in sw and 'canary-hold-rollback-v417.js' in sw and 'canary-recovery-v417.js' in sw
           print('promotion-protocol: PASS')
