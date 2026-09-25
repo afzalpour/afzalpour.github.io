@@ -1,0 +1,47 @@
+name: Stock Hunter Forecast Audit v4.2.0
+
+on:
+  pull_request:
+    paths:
+      - 'stock-hunter-v4/forecast-audit-v420/**'
+      - '.github/workflows/stock-hunter-forecast-audit-v420.yml'
+      - 'stock-hunter-v4/CURRENT_HANDOFF.md'
+  push:
+    branches: [main]
+    paths:
+      - 'stock-hunter-v4/forecast-audit-v420/**'
+      - '.github/workflows/stock-hunter-forecast-audit-v420.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  forecast-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: stock-hunter-v4/forecast-audit-v420
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+      - name: Unit tests
+        run: go test ./...
+      - name: Vet
+        run: go vet ./...
+      - name: Built-in no-lookahead self-test
+        run: go run . --self-test
+      - name: Cross-compile Windows x64
+        env:
+          GOOS: windows
+          GOARCH: amd64
+          CGO_ENABLED: '0'
+        run: go build -trimpath -ldflags='-s -w' -o Stock_Hunter_Forecast_Audit_v4.2.0.exe .
+      - name: Verify Shpaksa default contract
+        run: |
+          grep -F 'const defaultSymbol = "شپاکسا"' main.go
+          grep -F 'const defaultAnchor = "20260921"' main.go
+          grep -F 'const defaultTarget = "20260924"' main.go
+          grep -F 'historyDepth = 120' main.go

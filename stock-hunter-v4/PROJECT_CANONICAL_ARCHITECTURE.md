@@ -74,17 +74,22 @@ Current safety baseline until lifecycle advancement:
 Do not activate 4.1.7 merely because implementation is complete. Continue prospective collection → maturity → calibration → robustness → candidate evaluation → OOS → promotion proposal → forward shadow → activation review → canary.
 
 ## 8. Feed/freshness contract
-Primary live-market provenance is Local-First Eco on the owner's Windows PC. The canonical operational launcher is `Stock_Hunter_Eco_Desktop_v4.1.0.exe`, which supervises byte-pinned existing Eco components rather than reimplementing market acquisition or Hunt scoring.
-- During the Tehran market network window (Saturday-Wednesday 08:20-17:05), it runs the validated `Stock_Hunter_Eco_Bridge_v4.0.8.exe`.
-- Outside that window it runs the validated `Stock_Hunter_Eco_Passive_Bridge_v4.0.9.exe` in cache-only mode.
-- Both child binaries are SHA-256 pinned and the controller refuses changed binaries.
-- The deprecated v4.0.5/v4.0.6 Feed Agent and v4.0.7 Agent+Bridge pair must not run concurrently with Eco Desktop.
-Eco active acquisition remains low-frequency: MarketWatch every 30 seconds and ClientTypeAll every 120 seconds; per-symbol depth/history requests are bounded and cached. The complete instrument Universe is collected independently at low frequency and cached locally, so the live MarketWatch row count is never treated as the Universe size.
-The public GitHub Pages app remains the UI and reads live data from loopback REST at `127.0.0.1:41716` on the same PC. No fixed Iranian IP, VPS, Cloudflare credential, GitHub token, or live-data commit to GitHub is required for this primary day-to-day path. The controller exposes local operational status on `127.0.0.1:41717`.
-Supabase remains a cloud fallback/legacy evidence store and is no longer required for day-to-day live Hunt availability. The Cloudflare/Iran-egress design is retained only as an optional parked architecture, not a production prerequisite.
-Browser refresh interval: 15 seconds.
-A stale feed can remain searchable but cannot create active Action Now/Radar alerts. The frozen <=180-second Action Now freshness gate is unchanged. Feed snapshots must be preserved into the browser normalization path because the frozen 4.1.6 Delta logic consumes them.
+Primary live-market provenance is the approved PC Eco architecture `SHIKAR-PC-ECO-GITHUB-V1`.
 
+Canonical path:
+- the owner's Windows PC reads TSETMC bulk MarketWatch every 30 seconds and ClientType every 120 seconds;
+- `Stock_Hunter_PC_Eco_Bridge_v4.1.1.exe` processes the full eligible MarketWatch universe for flows 1/2/4;
+- no local Top-N transport prefilter may prevent an eligible symbol from reaching Frozen Hunt;
+- upload remains low-bandwidth through gzip batches of at most 250 rows;
+- Supabase Edge Function `stock-hunter-pc-ingest-v410` is the ingest boundary and writes the existing signal/universe/feed-health tables;
+- GitHub Pages remains the public UI;
+- the browser remains the authoritative `4.1.6-hunt-v2` scorer.
+
+The earlier v4.0.8/v4.0.9 loopback-controller path and the Iran-VPS/Cloudflare architecture are retained only as legacy/optional redundancy designs. They are not the primary feed prerequisite.
+
+No fixed Iranian IP, VPS, Cloudflare credential, Python runtime, or Windows service is required for the primary path.
+
+Browser refresh interval remains 15 seconds. A stale feed can remain searchable but cannot create active Action Now/Radar alerts. The frozen <=180-second Action Now freshness gate is unchanged. Feed snapshots must be preserved into browser normalization because the frozen 4.1.6 Delta logic consumes them.
 
 
 Quality-quarantine contract:

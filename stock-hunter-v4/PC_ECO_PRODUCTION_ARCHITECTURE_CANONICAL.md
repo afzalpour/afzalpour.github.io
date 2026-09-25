@@ -28,7 +28,8 @@ Windows PC
 - one bulk MarketWatch stream at 30-second cadence;
 - one bulk ClientType refresh every 120 seconds;
 - no whole-market per-symbol request fan-out;
-- full eligible MarketWatch universe uploaded every cycle in gzip batches of at most 250 rows;\n- no local top-N transport prefilter may prevent an eligible symbol from reaching Frozen Hunt;
+- full eligible MarketWatch universe uploaded every cycle in gzip batches of at most 250 rows;
+- no local top-N transport prefilter may prevent an eligible symbol from reaching Frozen Hunt;
 - gzip transport;
 - two Go scheduler threads maximum;
 - no upload outside the configured Tehran market window;
