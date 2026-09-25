@@ -43,6 +43,7 @@ jobs:
             "stock-hunter-v4/app-universe.js|https://afzalpour.github.io/stock-hunter-v4/app-universe.js|app-universe.js"
             "stock-hunter-v4/app-universal-search-v416.js|https://afzalpour.github.io/stock-hunter-v4/app-universal-search-v416.js|app-universal-search-v416.js"
             "stock-hunter-v4/styles.css|https://afzalpour.github.io/stock-hunter-v4/styles.css|styles.css"
+            "stock-hunter-v4/search-neutral-v416.css|https://afzalpour.github.io/stock-hunter-v4/search-neutral-v416.css|search-neutral-v416.css"
             "stock-hunter-v4/index-v417.html|https://afzalpour.github.io/stock-hunter-v4/index-v417.html|index-v417.html"
             "stock-hunter-v4/app-personal-v417.js|https://afzalpour.github.io/stock-hunter-v4/app-personal-v417.js|app-personal-v417.js"
             "stock-hunter-v4/personal-v417.css|https://afzalpour.github.io/stock-hunter-v4/personal-v417.css|personal-v417.css"
@@ -89,6 +90,7 @@ jobs:
           cmp stock-hunter-v4/app-universe.js /tmp/stock-hunter-public-smoke/app-universe.js
           cmp stock-hunter-v4/app-universal-search-v416.js /tmp/stock-hunter-public-smoke/app-universal-search-v416.js
           cmp stock-hunter-v4/styles.css /tmp/stock-hunter-public-smoke/styles.css
+          cmp stock-hunter-v4/search-neutral-v416.css /tmp/stock-hunter-public-smoke/search-neutral-v416.css
           cmp stock-hunter-v4/index-v417.html /tmp/stock-hunter-public-smoke/index-v417.html
           cmp stock-hunter-v4/app-personal-v417.js /tmp/stock-hunter-public-smoke/app-personal-v417.js
           cmp stock-hunter-v4/personal-v417.css /tmp/stock-hunter-public-smoke/personal-v417.css
@@ -113,13 +115,14 @@ jobs:
           APP_UNIVERSE=/tmp/stock-hunter-public-smoke/app-universe.js
           SEARCH=/tmp/stock-hunter-public-smoke/app-universal-search-v416.js
           STYLES=/tmp/stock-hunter-public-smoke/styles.css
+          SEARCH_NEUTRAL=/tmp/stock-hunter-public-smoke/search-neutral-v416.css
           P417=/tmp/stock-hunter-public-smoke/index-v417.html
           PERSONAL=/tmp/stock-hunter-public-smoke/app-personal-v417.js
           PERSONAL_CSS=/tmp/stock-hunter-public-smoke/personal-v417.css
 
           grep -q 'hunt-runtime-core-v417.js' "$APP"
           grep -q 'app-runtime-router-v417.js' "$APP"
-          grep -q 'shikar-sahm-v4.1.6-r12' "$SW"
+          grep -q 'shikar-sahm-v4.1.6-r13' "$SW"
           grep -q 'hunt-runtime-core-v417.js' "$SW"
           grep -q 'app-runtime-router-v417.js' "$SW"
           grep -q 'canary-recovery-v417.js' "$SW"
@@ -138,6 +141,13 @@ jobs:
             exit 1
           fi
           grep -q '.personal-star-v417.saved' "$PERSONAL_CSS"
+          grep -q 'search-neutral-v416.css?v=1' "$APP"
+          grep -q 'background:#131519' "$SEARCH_NEUTRAL"
+          grep -q 'background:#191c21' "$SEARCH_NEUTRAL"
+          if grep -q '#10243a' "$SEARCH_NEUTRAL"; then
+            echo "::error::Published neutral search skin contains legacy blue active background"
+            exit 1
+          fi
 
       - name: Verify smoke remains read-only
         run: |
