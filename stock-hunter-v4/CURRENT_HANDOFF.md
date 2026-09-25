@@ -921,3 +921,14 @@ Do not interpret prior historical verdicts as Hunt-model quality. Require positi
 ## v4.5.5 real validation findings — 2026-09-25
 
 G0 mechanical validation PASS. Historical evidence reader is now working on real caches. Real run: eligible 948, BestLimits 948, TradeParsed 684, DailyReference 684, temporal-reliable 114, unreliable 570, missing raw trade cache 209, parse-fail 55, ground truth 1316. Verdict HISTORICAL_DATA_INADEQUATE is evidence-quality only, not a Hunt quality verdict. Across six polling phases robustTP/robustFP/robustSignals are zero because historical PIT envelopes are too wide; phase-local hardMiss counts are ~17–22 per objective and require cross-phase intersection + binding-gate diagnosis before any production rollout resumes. Do not tune Frozen thresholds from this day.
+
+
+## Model Validation v4.5.6 hard-miss diagnosis — 2026-09-25
+
+Real v4.5.5 JSON was analyzed in full. Dominant temporal-completeness failure is `grouped=true`: 569/570 temporal-unreliable parsed symbols use that variant, while 39/40 `grouped=false` symbols are temporally reliable. This is an evidence-source limitation, not a demonstrated Hunt failure.
+
+A validator-universe defect was also found: 17/35 persistent Hard-Miss findings begin with `ض`; recovered Eco v4.0.8 classifies that prefix as `اختیار معامله`, which Frozen Hunt excludes. v4.5.6 fixes the diagnostic universe and adds per-Hard-Miss binding-gate diagnostics without changing Frozen Hunt.
+
+Package SHA-256: `6b6bb4850ecbe9a3c1d802435783d534e2410aca3b010c7e20bfeb9fca2125f6`.
+
+Primary next action: run v4.5.6 once and analyze the remaining eligible Hard-Miss blocker lines. Do not resume production infrastructure or tune thresholds before that result.
