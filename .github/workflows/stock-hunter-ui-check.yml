@@ -15,6 +15,7 @@ on:
       - 'stock-hunter-v4/app-explain-v411.js'
       - 'stock-hunter-v4/app-forecast-bridge-v414.js'
       - 'stock-hunter-v4/app-forecast-trend-v415.js'
+      - 'stock-hunter-v4/app-forecast-validation-v430.js'
       - 'stock-hunter-v4/app-theme-v412.js'
       - 'stock-hunter-v4/app-session-v413.js'
       - 'stock-hunter-v4/app-hunt-v416.js'
@@ -63,6 +64,7 @@ jobs:
           node --check stock-hunter-v4/app-explain-v411.js
           node --check stock-hunter-v4/app-forecast-bridge-v414.js
           node --check stock-hunter-v4/app-forecast-trend-v415.js
+          node --check stock-hunter-v4/app-forecast-validation-v430.js
           node --check stock-hunter-v4/app-theme-v412.js
           node --check stock-hunter-v4/app-session-v413.js
           node --check stock-hunter-v4/app-hunt-v416.js
@@ -96,6 +98,11 @@ jobs:
           grep -q 'performance.html' stock-hunter-v4/index.html
           grep -q 'calibration.html' stock-hunter-v4/index.html
           grep -q 'app-session-v413.js?v=4.1.6' stock-hunter-v4/index.html
+          grep -q 'app-forecast-validation-v430.js?v=4.3.0' stock-hunter-v4/index.html
+          grep -q 'app-forecast-validation-v430.js?v=4.3.0' stock-hunter-v4/index-v417.html
+          grep -q 'NO_STATISTICALLY_CONFIRMED_EDGE' stock-hunter-v4/app-forecast-validation-v430.js
+          grep -q 'finalForecastEnabled:false' stock-hunter-v4/app-forecast-validation-v430.js
+          grep -q 'Final Gate: NO_EDGE' stock-hunter-v4/app-forecast-validation-v430.js
           grep -q 'app-hunt-v416.js?v=4.1.6' stock-hunter-v4/index.html
           grep -q 'hunt-runtime-core-v417.js?v=4.1.7' stock-hunter-v4/index.html
           grep -q 'app-runtime-router-v417.js?v=4.1.7' stock-hunter-v4/index.html
@@ -124,7 +131,8 @@ jobs:
           grep -q 'پنج مدل ۱۰روزه' stock-hunter-v4/methodology.html
           grep -q 'Engineering Heuristic' stock-hunter-v4/methodology.html
           grep -q 'RequiredVelocity_15sec' stock-hunter-v4/hunt-methodology-v416.html
-          grep -q "shikar-sahm-v4.1.6-r12" stock-hunter-v4/sw.js
+          grep -q "shikar-sahm-v4.1.6-r13" stock-hunter-v4/sw.js
+          grep -q 'app-forecast-validation-v430.js' stock-hunter-v4/sw.js
           grep -q 'hunt-runtime-core-v417.js' stock-hunter-v4/sw.js
           grep -q 'app-runtime-router-v417.js' stock-hunter-v4/sw.js
           grep -q 'performance.html' stock-hunter-v4/sw.js
@@ -191,6 +199,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           html=Path('stock-hunter-v4/index.html').read_text(encoding='utf-8')
+          assert html.index('app-forecast-trend-v415.js') < html.index('app-forecast-validation-v430.js') < html.index('app-theme-v412.js')
           assert html.index('app-session-v413.js') < html.index('app-hunt-v416.js') < html.index('hunt-runtime-core-v417.js') < html.index('app-runtime-router-v417.js') < html.index('app-hunt-hierarchy-v416.js') < html.index('app-universal-search-v416.js') < html.index('app-eod-v416.js')
           assert 'مستعد تداوم</option>' not in html
           print('load-order: PASS')
