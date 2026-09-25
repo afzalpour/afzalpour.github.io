@@ -8,9 +8,15 @@ import {
 import {
   baseSignalRowFromCollector,
   buildBaseSignalFeatures,
+  buildFrozenHuntReadyBatch,
   frozenHuntReadiness,
   realFlowRatioFromClientType,
 } from "../live-features/live-feature-builder-v1.ts";
+import {
+  applyIntegratedBatchV410,
+  integratedEligibleV410,
+  INTEGRATED_V410_VIEWDEF_MD5,
+} from "../live-features/integrated-v410-source-equivalent.ts";
 
 assert.equal(assetTypeFromYValV408("300"),"سهام");
 assert.equal(assetTypeFromYValV408("301"),"حق تقدم");
@@ -115,4 +121,54 @@ assert.deepStrictEqual(second.frozen_hunt_blockers,[
   "integrated_view_provenance_unresolved",
 ]);
 
-console.log("cloud-base-signal-feature-builder: PASS");
+
+assert.equal(INTEGRATED_V410_VIEWDEF_MD5,"09f820b9692f94010a5391c489ac9c96");
+assert.equal(integratedEligibleV410({asset_type:"سهام",symbol:"نماد",company_name:"شرکت نمونه"}),true);
+assert.equal(integratedEligibleV410({asset_type:"صندوق",symbol:"نماد",company_name:"صندوق نمونه"}),false);
+assert.equal(integratedEligibleV410({asset_type:"سهام",symbol:"ضتست",company_name:"اختیار خرید نمونه"}),false);
+
+const exactNow=t2;
+const exactRows=applyIntegratedBatchV410([
+  {
+    symbol:"الف",company_name:"شرکت الف",asset_type:"سهام",
+    last_price:101,yesterday_price:100,volume:1000,fast_score:70,continuation_score:65,
+    real_flow_ratio:1.4,ofi:.2,daily_rvol:1.5,technical_score:12,
+    ema9_5m:101,ema21_5m:100,vwap:100,rsi_5m:55,momentum:.5,
+    risk_score:30,cancellation_ratio:20,absorption:50,
+    updated_at:new Date((exactNow-30)*1000).toISOString(),legacy_decision_v401:"ورود اولیه",
+  },
+  {
+    symbol:"ب",company_name:"شرکت ب",asset_type:"سهام",
+    last_price:99,yesterday_price:100,volume:1000,fast_score:55,continuation_score:50,
+    real_flow_ratio:1,ofi:0,daily_rvol:1,technical_score:7.5,
+    ema9_5m:99,ema21_5m:100,vwap:100,rsi_5m:35,momentum:-.2,
+    risk_score:80,cancellation_ratio:20,absorption:50,
+    updated_at:new Date((exactNow-30)*1000).toISOString(),legacy_decision_v401:"نخر",
+  },
+],exactNow);
+assert.equal(exactRows[0].integrated_eligible,true);
+assert.equal(exactRows[0].data_quality_score_v1,100);
+assert.equal(exactRows[1].risk_gate_v1,true);
+assert.equal(exactRows[1].final_decision_v1,"عدم ورود");
+assert.equal(exactRows[0].market_breadth_pct_v1,50);
+assert.ok(Number.isFinite(Number(exactRows[0].integrated_score_v1)));
+assert.ok(Number.isFinite(Number(exactRows[0].confidence_score_v1)));
+
+const row3={...row2,id:"1002",symbol:"تست2",company_name:"شرکت تست 2",last_price:101};
+const readyBatch=buildFrozenHuntReadyBatch([row2,row3],new Map([["1001",first]]),t2,t2);
+assert.equal(readyBatch.length,2);
+for(const x of readyBatch){
+  assert.equal(x.cloud_feature_stage,"INTEGRATED_V410_EXACT_SQL");
+  assert.equal(x.integrated_viewdef_md5,INTEGRATED_V410_VIEWDEF_MD5);
+  assert.equal(x.frozen_hunt_input_ready,true);
+  assert.deepStrictEqual(x.frozen_hunt_blockers,[]);
+  assert.equal(frozenHuntReadiness(x).ready,true);
+  assert.ok(Object.hasOwn(x,"integrated_eligible"));
+  assert.ok(Object.hasOwn(x,"flow_score_v1"));
+  assert.ok(Object.hasOwn(x,"trend_score_v1"));
+  assert.ok(Object.hasOwn(x,"momentum_score_v1"));
+  assert.ok(Object.hasOwn(x,"market_regime_v1"));
+  assert.ok(Object.hasOwn(x,"market_breadth_pct_v1"));
+}
+
+console.log("cloud-base-and-integrated-feature-builder: PASS");
