@@ -1,5 +1,6 @@
 import { legacySignalScoreV401 } from "./generated-signal-core-v401.ts";
 import { classifyEcoUniverseLabelsV408 } from "./recovered-eco-labels-v408.ts";
+import { applyIntegratedBatchV410, INTEGRATED_V410_STAGE, INTEGRATED_V410_VIEWDEF_MD5 } from "./integrated-v410-source-equivalent.ts";
 
 export type CollectorBestLimit = {
   level: number;
@@ -133,7 +134,7 @@ const AUTHORITATIVE_SIGNAL_FIELDS=[
   "rsi_5m","ema9_5m","ema21_5m","vwap","atr_5m","technical_score",
   "microprice","absorption","cancellation_ratio","price_velocity",
   "trade_accel","recovery","depth_ratio","queue_decay","momentum",
-  "snapshots","candles","asset_type","market","source_flow","source_cs","source_pf","source_yval"
+  "snapshots","candles","updated_at","asset_type","market","source_flow","source_cs","source_pf","source_yval"
 ] as const;
 
 export function buildBaseSignalFeatures(
@@ -164,6 +165,9 @@ export function buildBaseSignalFeatures(
   out.source_cs=base.source_cs;
   out.source_pf=base.source_pf;
   out.source_yval=base.source_yval;
+  // Preserve the exact legacy decision only under an internal provenance name so
+  // the recovered integrated view can reproduce its non-integrated fallback.
+  out.legacy_decision_v401=(evaluated as any).decision;
 
   // Explicitly do not expose obsolete legacy decision/entry/target outputs.
   out.cloud_feature_stage="BASE_SIGNAL_PARITY_V401";
@@ -174,6 +178,27 @@ export function buildBaseSignalFeatures(
   ];
 
   return out;
+}
+
+export function buildFrozenHuntReadyBatch(
+  rows: CollectorMarketRow[],
+  previousById: Map<string,Record<string,unknown>>|Record<string,Record<string,unknown>>|null|undefined,
+  observedAtSeconds: number,
+  nowSeconds=observedAtSeconds,
+){
+  if(!Array.isArray(rows)) throw new Error("rows_invalid");
+  const prev=(id:string)=>{
+    if(previousById instanceof Map) return previousById.get(id);
+    return previousById?.[id];
+  };
+  const baseRows=rows.map(row=>buildBaseSignalFeatures(row,prev(String(row.id??"")),observedAtSeconds));
+  return applyIntegratedBatchV410(baseRows,nowSeconds).map(row=>({
+    ...row,
+    cloud_feature_stage:INTEGRATED_V410_STAGE,
+    integrated_viewdef_md5:INTEGRATED_V410_VIEWDEF_MD5,
+    frozen_hunt_input_ready:true,
+    frozen_hunt_blockers:[],
+  }));
 }
 
 export function frozenHuntReadiness(row: Record<string,unknown>){
