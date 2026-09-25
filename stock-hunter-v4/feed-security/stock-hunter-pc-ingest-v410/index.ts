@@ -36,16 +36,16 @@ Deno.serve(async req=>{
   if(!supplied||await sha256Hex(supplied)!==PC_KEY_SHA256)return new Response(JSON.stringify({ok:false,error:'unauthorized'}),{status:401,headers:{...cors,'Content-Type':'application/json'}});
   try{
     const body=await decodeBody(req),rows=Array.isArray(body?.rows)?body.rows:[];
-    if(rows.length<1||rows.length>300)return new Response(JSON.stringify({ok:false,error:'row_count'}),{status:413,headers:{...cors,'Content-Type':'application/json'}});
+    if(rows.length<1||rows.length>300)return new Response(JSON.stringify({ok:false,error:'row_count'}),{status:413,headers:{...cors,'Content-Type':'application/json'}});const totalSymbols=Number(body?.total_symbols||rows.length),batchIndex=Number(body?.batch_index||1),batchCount=Number(body?.batch_count||1);if(!Number.isInteger(totalSymbols)||totalSymbols<rows.length||totalSymbols>5000||!Number.isInteger(batchIndex)||!Number.isInteger(batchCount)||batchIndex<1||batchCount<1||batchIndex>batchCount||batchCount>32)return new Response(JSON.stringify({ok:false,error:'batch_metadata'}),{status:400,headers:{...cors,'Content-Type':'application/json'}});
     const url=Deno.env.get('SUPABASE_URL')||'',key=backendKey();if(!url||!key)throw new Error('backend credentials unavailable');
     const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
     const clean=rows.map(safeRow).filter((r:any)=>r.id&&r.symbol&&r.symbol!=='—');if(!clean.length)throw new Error('no valid rows');
     const {error}=await db.from('stock_hunter_signals_v4').upsert(clean,{onConflict:'id'});if(error)throw error;
-    const seed=clean.map((r:any)=>({ins_code:r.id,symbol:r.symbol,company_name:r.company_name,source:'pc-eco-bridge-v410',is_active:true,last_seen_at:r.updated_at,updated_at:new Date().toISOString()}));
+    const seed=clean.map((r:any)=>({ins_code:r.id,symbol:r.symbol,company_name:r.company_name,source:'pc-eco-bridge-v411',is_active:true,last_seen_at:r.updated_at,updated_at:new Date().toISOString()}));
     const {error:se}=await db.from('stock_hunter_universe_v4').upsert(seed,{onConflict:'ins_code'});if(se)throw se;
-    const health={id:'local-agent',source:'pc-eco-bridge-v410',status:'ok',message:String(body?.message||'compressed pc bridge'),symbols:clean.length,agent_version:String(body?.agent_version||'4.1.0-pc-eco'),last_feed_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+    const health={id:'local-agent',source:'pc-eco-bridge-v411',status:'ok',message:String(body?.message||'compressed pc bridge'),symbols:totalSymbols,agent_version:String(body?.agent_version||'4.1.1-pc-eco-full-universe'),last_feed_at:new Date().toISOString(),updated_at:new Date().toISOString()};
     const {error:he}=await db.from('stock_hunter_feed_health_v4').upsert(health,{onConflict:'id'});if(he)throw he;
-    return new Response(JSON.stringify({ok:true,count:clean.length}),{headers:{...cors,'Content-Type':'application/json','Cache-Control':'no-store'}});
+    return new Response(JSON.stringify({ok:true,count:clean.length,total_symbols:totalSymbols,batch_index:batchIndex,batch_count:batchCount}),{headers:{...cors,'Content-Type':'application/json','Cache-Control':'no-store'}});
   }catch(e){
     return new Response(JSON.stringify({ok:false,error:String((e as any)?.message||e)}),{status:500,headers:{...cors,'Content-Type':'application/json','Cache-Control':'no-store'}});
   }
