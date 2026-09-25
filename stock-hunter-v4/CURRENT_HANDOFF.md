@@ -898,3 +898,12 @@ Next primary action: run v4.5.2 and require nonzero `TradeParsed` and `DailyRefe
 Use v4.5.3 instead of v4.5.1/v4.5.2. It repairs canonical TradeHistory/daily cache names and adds a fast precheck so unreadable historical evidence exits quickly instead of running the full replay. Package SHA-256: `1ba10a6bdd487671cbcfed8270ce95d52dcf6b9bff04bff92d3a745e5844a88c`.
 
 Do not interpret v4.5.1's `HISTORICAL_DATA_INADEQUATE` as a Hunt-model result because `TradeParsed=0` and `DailyReference=0`.
+
+
+## Model Validation v4.5.4 canonical TradeHistory cache repair — 2026-09-25
+
+Real v4.5.3 run proved daily-reference recovery is correct (`2294` rows) but TradeHistory discovery still returned `cache-found=0`. v4.5.4 now uses the canonical cache layout `<InsCode>_grouped_true.json.gz` / `_grouped_false.json.gz` and builds a bounded recursive cache index as fallback. It prints real TradeHistory sample paths before any heavy replay.
+
+Package SHA-256: `b484cbe708a3f6e4f455d46ab3aff9b1ab58663a6c757c9ca84baa19554f9f64`.
+
+Do not interpret v4.5.1/v4.5.3 historical verdicts as Hunt-model results. Require positive TradeHistory precheck first.
