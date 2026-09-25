@@ -1062,3 +1062,26 @@ TSETMC fetch -> gzip upload -> feed-health advance -> fresh GitHub Pages display
 
 Read `PC_ECO_PRODUCTION_ARCHITECTURE_CANONICAL.md` before making new feed-architecture changes.
 
+
+
+## PC Eco v4.1.1 full-universe correction — 2026-09-25
+
+The v4.1.0 Top-220 transport prefilter was inconsistent with the intended contract: every eligible market symbol must reach Frozen Hunt, while the default UI should display only actual Hunt states.
+
+v4.1.1 fixes this without changing Frozen Hunt 4.1.6:
+- removes local fast-score Top-220 truncation;
+- reads all MarketWatch rows in equity flows 1/2/4;
+- uploads the full eligible universe in gzip batches of up to 250 rows;
+- feed health reports total universe size across batches;
+- default web view remains active Hunt states only; universal search / "all symbols" remains inspection behavior;
+- Supabase `stock-hunter-pc-ingest-v410` is ACTIVE v3 with batch metadata validation and the existing desktop credential remains valid.
+
+Delivery:
+- EXE: `Stock_Hunter_PC_Eco_Bridge_v4.1.1.exe`
+- EXE SHA-256: `a318401d3d6e3fc7640139cc4370a0b61301db4b1b26421ade49dc0ec3e1671e`
+- ZIP SHA-256: `0d51471a3a9f0dfefc7273b273e840b4798dc8590bcdefe040ad26cc323aee54`
+
+Operational acceptance remains a real Windows market-hours run. A successful cycle now prints:
+`OK rows=<TOTAL> batches=<N> gzip=<KB> server=...`
+
+Do not reintroduce a top-N transport cutoff ahead of Frozen Hunt.
