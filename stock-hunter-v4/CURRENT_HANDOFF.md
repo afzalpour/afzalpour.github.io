@@ -1265,3 +1265,27 @@ NEXT LIVE ACCEPTANCE:
 2. After close, confirm same-day effectiveness rows mature.
 3. On the next observed market session, confirm D+1 rows mature and buy-queue fields populate.
 4. Only after multiple genuine sessions accumulate, compute statistically meaningful primary Hunt success rates.
+
+
+## Search neutral skin + final per-user profile flow — 2026-09-25
+
+Approved UX work:
+1. Search combobox dark-mode dropdown changed from the legacy blue surface to the neutral Precision Optics gray surface through `search-neutral-v416.css`.
+2. Public `index.html` now exposes `حساب من`.
+3. Signed-out users entering `profile-v417.html` are redirected to Auth and successful login returns to their own profile.
+4. Default login destination is the own-profile page; arbitrary redirect targets are blocked by an internal allow-list.
+5. Profile page is redesigned as the user's account home with identity, role/status, profile edit, preferences, watchlists and an explicit link to `index-v417.html`.
+6. Missing/inactive profiles no longer fall back to an implicit active user state.
+7. Existing Supabase provisioning and own-only RLS remain authoritative; no schema change was required.
+
+Live foundation check before release:
+- auth users / profiles / roles / preferences = 1 / 1 / 1 / 1;
+- auth provisioning trigger active;
+- active-account RLS policies verified RESTRICTIVE;
+- own-row policies verified auth.uid()-scoped.
+
+Release acceptance requires:
+- UI Check PASS;
+- Main Integration Gate PASS;
+- authenticated browser smoke PASS for public -> login -> profile -> personal market;
+- GitHub Pages deployment success.

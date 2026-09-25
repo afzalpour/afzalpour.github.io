@@ -268,3 +268,23 @@ The narrow tape has 30-day retention; permanent alert outcomes remain after tape
 Missing/unmatured D+1 evidence is excluded from denominators and is never counted as failure.
 
 This tracking layer is observational only. It does **not** modify Frozen Hunt `4.1.6-hunt-v2` formulas, thresholds, state classification, Action Now/Radar visibility, calibration gates, or production routing.
+
+
+## 14. Personal account entry and own-profile landing contract
+The public 4.1.6 market surface remains ungated, but it may expose a visible **حساب من** entry to the authenticated personal surface.
+
+Canonical account flow:
+1. public user chooses `حساب من`;
+2. `profile-v417.html` protects itself and redirects signed-out users to `auth-v417.html?next=profile-v417.html`;
+3. successful login validates the Supabase Auth user and lands on the user's own profile by default;
+4. profile data are loaded only through own-row RLS;
+5. the profile page provides the explicit entry to the authenticated personal market `index-v417.html`.
+
+Allowed post-auth destinations are restricted to the internal allow-list:
+- `profile-v417.html`
+- `index-v417.html`
+- `admin-v417.html`
+
+An inactive or missing profile must never be treated as active by browser fallback logic.
+
+This UX contract is independent from Frozen Hunt scoring and does not gate the public 4.1.6 Champion.

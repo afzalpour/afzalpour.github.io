@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
     paths:
+      - 'stock-hunter-v4/index.html'
+      - 'stock-hunter-v4/profile-v417.html'
+      - 'stock-hunter-v4/search-neutral-v416.css'
       - 'stock-hunter-v4/index-v417.html'
       - 'stock-hunter-v4/app-personal-v417.js'
       - 'stock-hunter-v4/auth-v417.html'
@@ -49,6 +52,12 @@ jobs:
           grep -q "byId('personalNameV417')" stock-hunter-v4/app-personal-v417.js
           grep -q "byId('personalWatchlistV417')" stock-hunter-v4/app-personal-v417.js
           grep -q "location.replace('auth-v417.html?next=index-v417.html')" stock-hunter-v4/app-personal-v417.js
+          grep -q 'href="profile-v417.html">حساب من</a>' stock-hunter-v4/index.html
+          grep -q 'id="profileDisplayTitle"' stock-hunter-v4/profile-v417.html
+          grep -q 'class="profile-primary-link" href="index-v417.html"' stock-hunter-v4/profile-v417.html
+          grep -q "SAFE_NEXT=new Set(\['profile-v417.html','index-v417.html','admin-v417.html'\])" stock-hunter-v4/app-auth-v417.js
+          grep -q "location.replace(next)" stock-hunter-v4/app-auth-v417.js
+          grep -q 'background:#191c21' stock-hunter-v4/search-neutral-v416.css
           grep -q 'EXPECTED_REPO_ID="1350071624"' stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts
           grep -q 'EXPECTED_REF="refs/heads/main"' stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts
           grep -q 'EXPECTED_WORKFLOW_REF="afzalpour/afzalpour.github.io/.github/workflows/stock-hunter-v417-authenticated-browser-smoke.yml@refs/heads/main"' stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts
@@ -79,7 +88,10 @@ jobs:
         run: |
           set -euo pipefail
           files=(
+            index.html
             index-v417.html
+            profile-v417.html
+            search-neutral-v416.css
             app-personal-v417.js
             auth-v417.html
             app-auth-v417.js

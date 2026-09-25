@@ -177,3 +177,21 @@ Remaining Auth/Profile release blockers:
 These blockers do not authorize any workaround that weakens redirect validation, moves privileged credentials into the browser, or alters the frozen 4.1.6 market engine.
 
 Auth/Profile completion is independent from the statistical challenger lifecycle. It must never be used to bypass prospective maturity, Calibration, OOS, Promotion, Forward Shadow, Activation Review or Canary gates.
+
+
+## Final own-profile landing UX — 2026-09-25
+
+The account UX is finalized as:
+`public market -> حساب من -> sign in -> own profile -> personal market`.
+
+Requirements:
+- default successful-login landing is `profile-v417.html`;
+- protected profile validates both session and current Auth user;
+- profile requires an existing active own profile row;
+- role/status are read from protected database state, not user-editable metadata;
+- arbitrary `next` destinations are rejected through an internal allow-list;
+- ordinary users see only their own Profile / Preferences / Watchlists via RLS;
+- the personal market remains `index-v417.html` and is entered explicitly from the profile;
+- the public 4.1.6 Champion remains available without login.
+
+The authenticated Chromium smoke must cover the full public-entry -> login -> own-profile -> personal-market path using a temporary normal user, followed by preference/watchlist persistence, admin isolation and logout.
