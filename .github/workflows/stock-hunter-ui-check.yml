@@ -45,6 +45,7 @@ on:
       - 'stock-hunter-v4/auth-v417.css'
       - 'stock-hunter-v4/styles.css'
       - 'stock-hunter-v4/search-neutral-v416.css'
+      - 'stock-hunter-v4/neutral-theme-v416.css'
       - 'stock-hunter-v4/extra.css'
       - 'stock-hunter-v4/forecast-v415.css'
       - 'stock-hunter-v4/methodology.html'
@@ -63,6 +64,8 @@ jobs:
           node --check stock-hunter-v4/app-core.js
           node --check stock-hunter-v4/app-forecast.js
           node --check stock-hunter-v4/app-runtime.js
+          grep -q 'function marketFaDateTimeV416' stock-hunter-v4/app-runtime.js
+          grep -q "calendar:'persian'" stock-hunter-v4/app-runtime.js
           node --check stock-hunter-v4/app-universe.js
           node --check stock-hunter-v4/app-hotfix-v410.js
           node --check stock-hunter-v4/app-integrated-v410.js
@@ -89,6 +92,7 @@ jobs:
           node --check stock-hunter-v4/app-universal-search-v416.js
           node --check stock-hunter-v4/app-eod-v416.js
           node --check stock-hunter-v4/performance-v416.js
+          grep -q 'function perfJalaliDateV416' stock-hunter-v4/performance-v416.js
           node --check stock-hunter-v4/calibration-v416.js
           node --check stock-hunter-v4/candidate-evaluator-v416.js
           node --check stock-hunter-v4/robustness-gate-v416.js
@@ -117,6 +121,11 @@ jobs:
           grep -q 'app-forecast-validation-v430.js?v=4.3.0' stock-hunter-v4/index-v417.html
           grep -q 'search-neutral-v416.css?v=1' stock-hunter-v4/index.html
           grep -q 'search-neutral-v416.css?v=1' stock-hunter-v4/index-v417.html
+          grep -q 'neutral-theme-v416.css?v=1' stock-hunter-v4/index.html
+          grep -q 'neutral-theme-v416.css?v=1' stock-hunter-v4/index-v417.html
+          grep -q 'app-runtime.js?v=4.1.6-jalali1' stock-hunter-v4/index.html
+          grep -q 'app-hotfix-v410.js?v=4.1.6-print1' stock-hunter-v4/index.html
+          grep -q 'app-integrated-v410.js?v=4.1.6-print1' stock-hunter-v4/index.html
           grep -q 'href="profile-v417.html">حساب من</a>' stock-hunter-v4/index.html
           grep -q 'id="profileDisplayTitle"' stock-hunter-v4/profile-v417.html
           grep -q 'id="confirmPasswordWrap"' stock-hunter-v4/auth-v417.html
@@ -173,6 +182,7 @@ jobs:
           grep -q 'app-runtime-router-v417.js' stock-hunter-v4/sw.js
           grep -q 'performance.html' stock-hunter-v4/sw.js
           grep -q 'performance-v416.js' stock-hunter-v4/sw.js
+          grep -q 'neutral-theme-v416.css' stock-hunter-v4/sw.js
           grep -q 'calibration.html' stock-hunter-v4/sw.js
           grep -q 'calibration-v416.js' stock-hunter-v4/sw.js
           grep -q 'candidate-evaluator-v416.js' stock-hunter-v4/sw.js
@@ -198,6 +208,9 @@ jobs:
           assert 'positive_rate_1d_pct' in js
           assert 'mfe_1d_pct' in js and 'mae_1d_pct' in js
           assert 'return_3d_pct' in js
+          assert 'perfJalaliDateV416(r.trade_date)' in js
+          assert 'performance-v416.js?v=4.1.6-jalali1' in html
+          assert 'neutral-theme-v416.css?v=1' in html
           print('performance-semantics: PASS')
           PY
       - name: Check calibration and robustness semantics
@@ -273,7 +286,10 @@ jobs:
           assert 'universeLiveSymbolMapV409' in universe
           assert 'historicalDetailHTMLV409' in hotfix
           assert 'openHistoricalUniverseDetailV409' in hotfix
-          assert 'هیچ Hunt Score لحظه‌ای جعل نمی‌شود' in hotfix
+          assert 'اطلاعات روزانه این نماد' in hotfix
+          assert 'نمایش کم‌مصرف اطلاعات روزانه' not in hotfix
+          assert "printDetailBtn').disabled=false" in hotfix
+          assert 'printHistoricalDetailV416' in Path('stock-hunter-v4/app-integrated-v410.js').read_text(encoding='utf-8')
           assert "limit','1000'" in search and "offset" in search
           assert "$('hunt')" not in search and "$('decision')" not in search
           print('search-isolation: PASS')
