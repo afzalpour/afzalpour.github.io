@@ -311,19 +311,3 @@ html:not([data-theme="light"]) .brand h1 span {
 .hunt-radar-item-v416 small{color:var(--po-dim)}
 @media(max-width:900px){.hunt-radar-list-v416{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.hunt-radar-list-v416{grid-template-columns:1fr}}
-
-
-/* Search combobox must use the same neutral Precision Optics surface as the main screen. */
-html:not([data-theme="light"]) .search-suggestions-v416{
-  background:var(--po-raised);border-color:var(--po-line);border-radius:2px;
-  box-shadow:0 16px 42px #0008;
-}
-html:not([data-theme="light"]) .search-suggestion-v416{
-  background:transparent;color:var(--po-ink);border-bottom-color:var(--po-line-soft);border-radius:0;
-}
-html:not([data-theme="light"]) .search-suggestion-v416:hover,
-html:not([data-theme="light"]) .search-suggestion-v416.active{
-  background:var(--po-raised-2);outline:1px solid var(--po-line);color:var(--po-ink);
-}
-html:not([data-theme="light"]) .search-suggestion-v416 small,
-html:not([data-theme="light"]) .search-suggestion-v416 em{color:var(--po-dim)}
