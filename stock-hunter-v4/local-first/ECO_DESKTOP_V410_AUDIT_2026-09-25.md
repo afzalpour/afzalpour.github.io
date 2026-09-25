@@ -59,7 +59,7 @@ Delivery ZIP:
 
 SHA-256:
 
-`0799b882dd04231e9da21ad5dff03da1ef6da5c950ec2c20c93b67393a38f533`
+`5fb211eac296d46148edbddcf461a6e221ed63894527ea11a3bc1d0ba6b9f7dc`
 
 Controller EXE SHA-256:
 
@@ -80,7 +80,7 @@ Completed before delivery:
 - Windows amd64 cross-compile: PASS;
 - package child SHA locks: PASS;
 - final ZIP checksum: PASS;
-- shutdown double-`Wait` race found during review and repaired before the final package hash.
+- shutdown double-`Wait` race found during review and repaired before the final package hash;\n- a GitHub-only market-window test registration typo was then caught by CI, corrected, and the delivery ZIP was rebuilt with the corrected source test while preserving identical controller EXE bytes.
 
 The Linux build environment cannot execute a Windows PE against the owner's real TSETMC/network/browser environment. The first actual Windows run is therefore an operational live smoke, not a missing implementation step.
 
