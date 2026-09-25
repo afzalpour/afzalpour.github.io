@@ -907,3 +907,12 @@ Real v4.5.3 run proved daily-reference recovery is correct (`2294` rows) but Tra
 Package SHA-256: `b484cbe708a3f6e4f455d46ab3aff9b1ab58663a6c757c9ca84baa19554f9f64`.
 
 Do not interpret v4.5.1/v4.5.3 historical verdicts as Hunt-model results. Require positive TradeHistory precheck first.
+
+
+## Model Validation v4.5.5 ledger-first cache locator — 2026-09-25
+
+Real v4.5.4 confirmed daily reference is valid (2294 rows), but its Trade cache root assumptions still found zero roots. v4.5.5 removes path guessing: it reads recorded cache paths from the real historical ledger first, then resolves moved basenames and finally performs a bounded read-only StockHunter state inventory. No TradeHistory/BestLimits redownload is allowed.
+
+Package SHA-256: `39cdedc894b1003311b4e603d252674a6c4b6b3d55839dda8e96cf9b49f66f27`.
+
+Do not interpret prior historical verdicts as Hunt-model quality. Require positive TradeHistory precheck first.
