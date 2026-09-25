@@ -109,7 +109,16 @@ jobs:
           grep -q 'search-neutral-v416.css?v=1' stock-hunter-v4/index-v417.html
           grep -q 'href="profile-v417.html">حساب من</a>' stock-hunter-v4/index.html
           grep -q 'id="profileDisplayTitle"' stock-hunter-v4/profile-v417.html
-          grep -q 'app-auth-v417.js?v=2' stock-hunter-v4/profile-v417.html
+          grep -q 'id="confirmPasswordWrap"' stock-hunter-v4/auth-v417.html
+          grep -q 'data-password-toggle="password"' stock-hunter-v4/auth-v417.html
+          grep -q 'data-password-toggle="confirmPassword"' stock-hunter-v4/auth-v417.html
+          grep -q 'data-password-toggle="newPassword"' stock-hunter-v4/auth-v417.html
+          grep -q 'novalidate' stock-hunter-v4/auth-v417.html
+          grep -q 'auth-v417.css?v=4' stock-hunter-v4/auth-v417.html
+          grep -q 'app-auth-v417.js?v=3' stock-hunter-v4/auth-v417.html
+          grep -q "password!==confirmPassword" stock-hunter-v4/app-auth-v417.js
+          grep -q "این ایمیل نامعتبر است" stock-hunter-v4/app-auth-v417.js
+          grep -q 'app-auth-v417.js?v=3' stock-hunter-v4/profile-v417.html
           grep -q "SAFE_NEXT=new Set(\['profile-v417.html','index-v417.html','admin-v417.html'\])" stock-hunter-v4/app-auth-v417.js
           grep -q 'background:#131519' stock-hunter-v4/search-neutral-v416.css
           grep -q 'background:#191c21' stock-hunter-v4/search-neutral-v416.css
