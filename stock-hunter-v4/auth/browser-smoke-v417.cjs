@@ -71,6 +71,16 @@ async function main(){
       accountLink.click()
     ]);
 
+    assert.equal(await page.locator('#displayNameWrap').isHidden(),true,'sign-in must hide display name');
+    assert.equal(await page.locator('#newPasswordWrap').isHidden(),true,'sign-in must hide reset/new-password field');
+    assert.equal(await page.locator('#email').isVisible(),true,'sign-in must show email');
+    assert.equal(await page.locator('#password').isVisible(),true,'sign-in must show password');
+
+    await page.click('[data-auth-tab="signup"]');
+    assert.equal(await page.locator('#displayNameWrap').isVisible(),true,'signup must show display name');
+    assert.equal(await page.locator('#newPasswordWrap').isHidden(),true,'signup must not show reset/new-password field');
+    await page.click('[data-auth-tab="signin"]');
+
     await page.fill('#email',EMAIL);
     await page.fill('#password',PASSWORD);
     await Promise.all([

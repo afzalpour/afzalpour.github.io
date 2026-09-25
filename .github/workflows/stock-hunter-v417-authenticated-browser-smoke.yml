@@ -62,6 +62,8 @@ jobs:
           grep -q 'EXPECTED_REF="refs/heads/main"' stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts
           grep -q 'EXPECTED_WORKFLOW_REF="afzalpour/afzalpour.github.io/.github/workflows/stock-hunter-v417-authenticated-browser-smoke.yml@refs/heads/main"' stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts
           grep -q 'EMAIL_RE=/^stock-hunter-browser-smoke-' stock-hunter-v4/auth/browser-smoke-admin-v417/index.ts
+          grep -q '.auth-form label\[hidden\]{display:none!important}' stock-hunter-v4/auth-v417.css
+          grep -q 'auth-v417.css?v=3' stock-hunter-v4/auth-v417.html
           grep -q '.admin-grid\[hidden\]{display:none}' stock-hunter-v4/auth-v417.css
           if grep -Ei 'SUPABASE_(SERVICE_ROLE|SECRET|DB_URL|ACCESS_TOKEN).*secrets\.' .github/workflows/stock-hunter-v417-authenticated-browser-smoke.yml; then
             echo "::error::Browser smoke must use GitHub OIDC, not repository-held Supabase admin credentials"

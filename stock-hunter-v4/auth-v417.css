@@ -10,6 +10,9 @@ html,body{min-height:100%;margin:0;background:#0a0b0d;color:#efece5}
 .auth-tabs{display:flex;gap:6px;margin-bottom:14px}.auth-tabs button{flex:1}
 .auth-tabs button.active{border-color:#d99a3f;color:#f0b25c}
 .auth-form{display:grid;gap:12px}
+/* Auth mode visibility: author CSS must never override the native hidden attribute. */
+.auth-form label[hidden]{display:none!important}
+
 .auth-form label,.profile-form label{display:grid;gap:5px;color:#8d9096;font-size:10px}
 .auth-form input,.profile-form input,.profile-form select{width:100%;box-sizing:border-box;background:#0a0b0d;border:1px solid #25282e;color:#efece5;padding:10px}
 .auth-form button,.profile-form button,.profile-actions button,.profile-actions a,.auth-tabs button{background:#191c21;border:1px solid #25282e;color:#efece5;padding:9px 12px;text-decoration:none;cursor:pointer}
