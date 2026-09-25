@@ -30,6 +30,7 @@ on:
       - 'stock-hunter-v4/calibration-v416.js'
       - 'stock-hunter-v4/candidate-evaluator-v416.js'
       - 'stock-hunter-v4/robustness-gate-v416.js'
+      - 'stock-hunter-v4/promotion-decision-v416.js'
       - 'stock-hunter-v4/calibration.html'
       - 'stock-hunter-v4/hunt-smoke-v416.js'
       - 'stock-hunter-v4/search-eod-smoke-v416.js'
@@ -83,6 +84,7 @@ jobs:
           node --check stock-hunter-v4/calibration-v416.js
           node --check stock-hunter-v4/candidate-evaluator-v416.js
           node --check stock-hunter-v4/robustness-gate-v416.js
+          node --check stock-hunter-v4/promotion-decision-v416.js
           node --check stock-hunter-v4/hunt-smoke-v416.js
           node --check stock-hunter-v4/search-eod-smoke-v416.js
           node --check stock-hunter-v4/canary-hold-rollback-v417.js
@@ -155,7 +157,7 @@ jobs:
           grep -q 'تأیید تکمیلی ۱–۳ روزه' stock-hunter-v4/app-hunt-hierarchy-v416.js
           grep -q 'موتور شکار درون‌روزی' stock-hunter-v4/methodology.html
           grep -q 'پنج مدل ۱۰روزه' stock-hunter-v4/methodology.html
-          grep -q 'Engineering Heuristic' stock-hunter-v4/methodology.html
+          grep -q 'وزن‌های مهندسی اولیه' stock-hunter-v4/methodology.html
           grep -q 'RequiredVelocity_15sec' stock-hunter-v4/hunt-methodology-v416.html
           grep -q "shikar-sahm-v4.1.6-r13" stock-hunter-v4/sw.js
           grep -q 'app-forecast-validation-v430.js' stock-hunter-v4/sw.js
@@ -180,8 +182,8 @@ jobs:
           from pathlib import Path
           html=Path('stock-hunter-v4/performance.html').read_text(encoding='utf-8')
           js=Path('stock-hunter-v4/performance-v416.js').read_text(encoding='utf-8')
-          assert 'Probability مدل نیست' in html
-          assert 'قیمت اولین Alert' in html
+          assert 'این صفحه احتمال موفقیت مدل را نمایش نمی‌دهد.' in html
+          assert 'قیمت نخستین هشدار' in html
           assert 'stock_hunter_hunt_performance_v416' in js
           assert 'stock_hunter_hunt_outcomes_v416' in js
           assert 'positive_rate_1d_pct' in js
@@ -197,14 +199,14 @@ jobs:
           js=Path('stock-hunter-v4/calibration-v416.js').read_text(encoding='utf-8')
           ev=Path('stock-hunter-v4/candidate-evaluator-v416.js').read_text(encoding='utf-8')
           rb=Path('stock-hunter-v4/robustness-gate-v416.js').read_text(encoding='utf-8')
-          assert 'Shadow Dataset' in html
-          assert 'Train / Validation / Out-of-Sample' in html
-          assert 'Auto-Promote عمداً خاموش است' in html
-          assert 'OOS عمداً قفل است' in html
-          assert 'Candidate Weight Evaluator' in html
-          assert 'Stability & Robustness Gate' in html
-          assert 'Moving-Block Bootstrap' in html
-          assert 'بازگشایی OOS فقط با یک عملیات دستی' in html
+          assert 'مجموعه‌داده سایه' in html
+          assert 'آموزش، اعتبارسنجی و خارج‌ازنمونه' in html
+          assert 'ارتقای خودکار عمداً خاموش است' in html
+          assert 'بخش خارج‌ازنمونه عمداً قفل است' in html
+          assert 'ارزیاب وزن گزینه‌های آزمایشی' in html
+          assert 'دروازه پایداری و استحکام' in html
+          assert 'بوت‌استرپ بلوکی متحرک' in html
+          assert 'بازگشایی بخش خارج‌ازنمونه فقط با یک عملیات دستی' in html
           assert 'stock_hunter_calibration_readiness_v416' in js
           assert 'stock_hunter_calibration_policy_v416' in js
           assert 'stock_hunter_shadow_samples_v416' in js
@@ -217,6 +219,8 @@ jobs:
           assert 'stock_hunter_candidate_robustness_v416' in rb
           assert 'stock_hunter_oos_unlock_readiness_v416' in rb
           assert 'stock_hunter_candidate_time_slice_metrics_v416' in rb
+          promo=Path('stock-hunter-v4/promotion-decision-v416.js').read_text(encoding='utf-8')
+          assert 'آزمایش سایه پیشرو ۴.۱.۷' in promo
           assert 'bootstrap_win_rate' in rb and 'bootstrap_p10_diff' in rb
           print('calibration-robustness-semantics: PASS')
           PY

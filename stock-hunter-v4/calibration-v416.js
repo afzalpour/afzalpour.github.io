@@ -3,19 +3,30 @@ const cfg=window.STOCK_HUNTER_CONFIG||{};
 const $=id=>document.getElementById(id);
 const fa=(v,d=0)=>{const n=Number(v);return Number.isFinite(n)?n.toLocaleString('fa-IR',{maximumFractionDigits:d}):'—'};
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const faTerms=s=>String(s??'—')
+  .replace(/challenger/gi,'گزینه آزمایشی')
+  .replace(/Candidate/gi,'گزینه آزمایشی')
+  .replace(/Baseline/gi,'مبنا')
+  .replace(/Validation/gi,'اعتبارسنجی')
+  .replace(/Train/gi,'آموزش')
+  .replace(/OOS/g,'خارج‌ازنمونه')
+  .replace(/Release/gi,'آزادسازی')
+  .replace(/Robustness/gi,'پایداری')
+  .replace(/Dataset/gi,'مجموعه‌داده')
+  .replace(/Mode/gi,'سناریو');
 function headers(extra={}){const k=cfg.SUPABASE_PUBLISHABLE_KEY||cfg.publishableKey||'';return{apikey:k,Accept:'application/json',...extra}}
-function weightRows(w){const modes=[['reversal','Reversal'],['acceleration','Acceleration']];return modes.map(([key,label])=>{const x=w?.[key]||{};return `<tr><td>${label}</td><td>${fa(x.order_pressure,2)}</td><td>${fa(x.impulse,2)}</td><td>${fa(x.feasibility,2)}</td><td>${fa(x.flow_volume,2)}</td><td>${fa(x.market_context,2)}</td><td>${fa(x.continuation_modifier_min,2)} تا ${fa(x.continuation_modifier_max,2)}</td></tr>`}).join('')}
+function weightRows(w){const modes=[['reversal','برگشت منفی به مثبت'],['acceleration','شتاب مثبت اولیه']];return modes.map(([key,label])=>{const x=w?.[key]||{};return `<tr><td>${label}</td><td>${fa(x.order_pressure,2)}</td><td>${fa(x.impulse,2)}</td><td>${fa(x.feasibility,2)}</td><td>${fa(x.flow_volume,2)}</td><td>${fa(x.market_context,2)}</td><td>${fa(x.continuation_modifier_min,2)} تا ${fa(x.continuation_modifier_max,2)}</td></tr>`}).join('')}
 async function loadCalibration(){
   const base=String(cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,'');
   if(!base){$('calStatus').textContent='تنظیمات اتصال در دسترس نیست.';return}
-  $('calStatus').textContent='در حال دریافت وضعیت Calibration…';
+  $('calStatus').textContent='در حال دریافت وضعیت کالیبراسیون…';
   try{
     const [rr,pr,sr]=await Promise.all([
       fetch(`${base}/rest/v1/stock_hunter_calibration_readiness_v416?select=*&limit=1`,{headers:headers(),cache:'no-store'}),
       fetch(`${base}/rest/v1/stock_hunter_calibration_policy_v416?select=*&policy_id=eq.default&limit=1`,{headers:headers(),cache:'no-store'}),
       fetch(`${base}/rest/v1/stock_hunter_shadow_samples_v416?select=sample_id&limit=1`,{headers:headers({Prefer:'count=exact'}),cache:'no-store'})
     ]);
-    if(!rr.ok||!pr.ok)throw new Error('دریافت وضعیت Calibration ناموفق بود');
+    if(!rr.ok||!pr.ok)throw new Error('دریافت وضعیت کالیبراسیون ناموفق بود');
     const ready=(await rr.json())[0]||{},policy=(await pr.json())[0]||{};
     const range=sr.headers.get('content-range')||'',shadowCount=Number((range.split('/')[1]||'0'))||0;
     $('shadowCount').textContent=fa(shadowCount);
@@ -24,11 +35,11 @@ async function loadCalibration(){
     $('oosCount').textContent=fa(ready.oos_samples||0);
     $('revCount').textContent=fa(ready.reversal_samples||0);
     $('accCount').textContent=fa(ready.acceleration_samples||0);
-    $('readyFlag').textContent=ready.calibration_ready?'آماده ارزیابی Candidate':'هنوز آماده نیست';
+    $('readyFlag').textContent=ready.calibration_ready?'آماده ارزیابی گزینه‌های آزمایشی':'هنوز آماده نیست';
     $('readyFlag').className=ready.calibration_ready?'ok-text':'warn-text';
-    $('reason').textContent=ready.readiness_reason||'—';
-    $('thresholds').textContent=`حداقل‌ها: ${fa(policy.min_total_samples)} نمونه کل، ${fa(policy.min_mode_samples)} نمونه برای هر Mode، ${fa(policy.min_oos_samples)} نمونه OOS و ${fa(policy.min_trade_dates)} روز معاملاتی.`;
-    $('promotion').textContent=policy.auto_promote?'فعال':'غیرفعال — تغییر وزن فقط پس از بررسی انسانی';
+    $('reason').textContent=faTerms(ready.readiness_reason||'—');
+    $('thresholds').textContent=`حداقل‌ها: ${fa(policy.min_total_samples)} نمونه کل، ${fa(policy.min_mode_samples)} نمونه برای هر سناریو، ${fa(policy.min_oos_samples)} نمونه خارج‌ازنمونه و ${fa(policy.min_trade_dates)} روز معاملاتی.`;
+    $('promotion').textContent=policy.auto_promote?'فعال':'خاموش — تغییر وزن فقط پس از بررسی انسانی';
     $('riskFormula').textContent=policy.risk_formula||'—';
     $('weightsBody').innerHTML=weightRows(policy.baseline_weights||{});
     $('dateRange').textContent=ready.first_trade_date?`${ready.first_trade_date} تا ${ready.last_trade_date||ready.first_trade_date}`:'هنوز نمونه بالغ وجود ندارد';
