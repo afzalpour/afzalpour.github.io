@@ -21,122 +21,122 @@ h1,h2,h3{margin-top:0}.m{color:#8ea7bd}.t{width:100%;border-collapse:collapse}.t
 <h1>راهنمای محاسبات، تعریف و تفسیر شاخص‌ها</h1>
 <p class="m">نسخه ۴.۱.۶ — طراح: دکتر نیما افضل پور</p>
 <p>هسته این نسخه «موتور شکار درون‌روزی» است. هدف موتور، شناسایی <b>برگشت منفی به مثبت در همان جلسه</b> و <b>حرکت‌های اولیه از ۰ تا کمتر از +۱٪</b> است؛ نه پیش‌بینی قیمت روز دهم.</p>
-<div class="warn"><b>اصل روش‌شناسی:</b> Hunt Score یک امتیاز مهندسی ۰ تا ۱۰۰ است و احتمال موفقیت نیست. پنج مدل ۱۰روزه ایچیموکو، گن، بولینگر، MACD/EMA و OBV فقط برای نمایش/مقایسه‌اند و هیچ وزن مستقیمی در Hunt Score ندارند.</div>
+<div class="warn"><b>اصل روش‌شناسی:</b> «امتیاز شکار» یک امتیاز مهندسی از ۰ تا ۱۰۰ است و به معنی احتمال موفقیت نیست. پنج مدل ۱۰روزه ایچیموکو، گن، بولینگر، MACD/EMA و OBV فقط برای نمایش/مقایسه‌اند و هیچ وزن مستقیمی در امتیاز شکار ندارند.</div>
 </section>
 
 <section class="c"><h2>۱. موتور شکار درون‌روزی</h2>
 <table class="t">
 <tr><th>موضوع</th><th>تعریف / فرمول</th><th>تفسیر</th><th>نقش</th></tr>
-<tr><td><b>Reversal</b></td><td><div class="e">dayChange &lt; 0</div></td><td>نماد منفی است؛ موتور بررسی می‌کند آیا در زمان باقی‌مانده قابلیت رسیدن به صفر و ترجیحاً مثبت‌شدن دارد.</td><td>هدف A</td></tr>
-<tr><td><b>Acceleration</b></td><td><div class="e">0 ≤ dayChange &lt; 1%</div></td><td>نماد هنوز در ابتدای حرکت است؛ فقط با چند شاهد هم‌زمان و پویا وارد Hunt می‌شود.</td><td>هدف B</td></tr>
-<tr><td><b>Outside</b></td><td><div class="e">dayChange ≥ 1%</div></td><td>از دامنه «آغاز حرکت» عبور کرده و در جدول Hunt نمی‌آید؛ در Search عمومی همچنان قابل مشاهده است.</td><td>عدم شکار</td></tr>
-<tr><td><b>Hunt Score</b></td><td><div class="e">HuntScore = TodayOpportunity × (0.82 + 0.18 × Continuation/100)</div></td><td>Modifier بین ۰٫۸۲ تا ۱ است؛ تداوم نمی‌تواند Setup ضعیف امروز را به شکار قوی تبدیل کند.</td><td>رتبه‌بندی Hunt</td></tr>
+<tr><td><b>برگشت منفی به مثبت</b></td><td><div class="e">dayChange &lt; 0</div></td><td>نماد منفی است؛ موتور بررسی می‌کند آیا در زمان باقی‌مانده قابلیت رسیدن به صفر و ترجیحاً مثبت‌شدن دارد.</td><td>هدف A</td></tr>
+<tr><td><b>شتاب مثبت اولیه</b></td><td><div class="e">0 ≤ dayChange &lt; 1%</div></td><td>نماد هنوز در ابتدای حرکت است؛ فقط با چند شاهد هم‌زمان و پویا وارد Hunt می‌شود.</td><td>هدف B</td></tr>
+<tr><td><b>خارج از دامنه شکار</b></td><td><div class="e">dayChange ≥ 1%</div></td><td>از دامنه «آغاز حرکت» عبور کرده و در جدول شکار نمی‌آید؛ در جست‌وجوی عمومی همچنان قابل مشاهده است.</td><td>عدم شکار</td></tr>
+<tr><td><b>امتیاز شکار</b></td><td><div class="e">HuntScore = TodayOpportunity × (0.82 + 0.18 × Continuation/100)</div></td><td>ضریب تداوم بین ۰٫۸۲ تا ۱ است؛ بنابراین تداوم روزهای بعد نمی‌تواند یک موقعیت ضعیف امروز را به شکار قوی تبدیل کند.</td><td>رتبه‌بندی شکار</td></tr>
 </table>
 
-<h3>وزن‌های Engineering Heuristic</h3>
+<h3>وزن‌های مهندسی اولیه</h3>
 <table class="t">
-<tr><th>حالت</th><th>فرمول TodayOpportunity</th></tr>
-<tr><td>Reversal</td><td><div class="e">0.28×OrderPressure + 0.27×Impulse + 0.20×Feasibility + 0.15×FlowVolume + 0.10×MarketContext − RiskPenalty</div></td></tr>
-<tr><td>Acceleration</td><td><div class="e">0.30×OrderPressure + 0.30×Impulse + 0.15×Feasibility + 0.15×FlowVolume + 0.10×MarketContext − RiskPenalty</div></td></tr>
+<tr><th>حالت</th><th>فرمول «فرصت امروز»</th></tr>
+<tr><td>برگشت</td><td><div class="e">0.28×OrderPressure + 0.27×Impulse + 0.20×Feasibility + 0.15×FlowVolume + 0.10×MarketContext − RiskPenalty</div></td></tr>
+<tr><td>شتاب اولیه</td><td><div class="e">0.30×OrderPressure + 0.30×Impulse + 0.15×Feasibility + 0.15×FlowVolume + 0.10×MarketContext − RiskPenalty</div></td></tr>
 </table>
-<p class="m">این وزن‌ها آموزش‌دیده یا کالیبره‌شده نیستند و پس از جمع‌آوری Snapshotهای Intraday باید با Walk-Forward Backtest تنظیم شوند.</p>
+<p class="m">این وزن‌ها هنوز آموزش‌دیده یا کالیبره‌شده نیستند و پس از جمع‌آوری نمونه‌های لحظه‌ای درون‌روزی باید با پس‌آزمایی گام‌به‌گام (Walk-Forward) تنظیم شوند.</p>
 </section>
 
-<section class="c"><h2>۲. آمادگی Delta و تاریخچه Snapshot</h2>
-<p>سیگنال‌های پویا فقط وقتی معتبرند که چند Snapshot زمان‌دار واقعی وجود داشته باشد. موتور نسخه ۴.۱.۶ وجود حداقل سه Snapshot، فاصله زمانی معتبر و قابلیت محاسبه تغییرات قیمت/عمق/حجم را کنترل می‌کند. صفر بودن OFI یا Price Velocity به‌تنهایی «خرابی Feed» محسوب نمی‌شود؛ اگر تاریخچه معتبر باشد، صفر می‌تواند واقعاً به معنی عدم تغییر در بازه اخیر باشد.</p>
+<section class="c"><h2>۲. آمادگی داده تغییرات و تاریخچه نمونه‌های لحظه‌ای</h2>
+<p>سیگنال‌های پویا فقط زمانی معتبرند که چند نمونه لحظه‌ای واقعی و زمان‌دار وجود داشته باشد. موتور نسخه ۴.۱.۶ وجود حداقل سه نمونه، فاصله زمانی معتبر و امکان محاسبه تغییرات قیمت، عمق سفارش و حجم را بررسی می‌کند. صفر بودن OFI یا سرعت قیمت به‌تنهایی به معنی «خرابی خوراک داده» نیست؛ اگر تاریخچه معتبر باشد، صفر می‌تواند واقعاً نشان‌دهنده نبود تغییر در بازه اخیر باشد.</p>
 <table class="t">
 <tr><th>شاخص</th><th>فرمول / تعریف</th><th>مناسب</th><th>نامناسب</th><th>نقش</th></tr>
-<tr><td><b>Delta Readiness</b></td><td>حداقل ۳ Snapshot زمان‌دار؛ Span حداقل ۲۰ ثانیه و آخرین فاصله حداکثر ۵ دقیقه.</td><td>Ready</td><td>تاریخچه ناکافی/زمان نامعتبر</td><td>Risk Gate برای هر دو حالت</td></tr>
-<tr><td><b>Window Price Velocity</b></td><td><div class="e">%Change(Last_first, Last_last) × 15 / span_seconds</div></td><td>&gt;+0.05% در ۱۵ ثانیه معادل</td><td>منفی محسوس</td><td>Reversal + Acceleration</td></tr>
-<tr><td><b>Window OFI</b></td><td><div class="e">(ΔBuyDepth−ΔSellDepth)/(|ΔBuyDepth|+|ΔSellDepth|+0.08×TotalDepth)</div></td><td>&gt;+0.05؛ قوی‌تر از +0.25</td><td>&lt;−0.25</td><td>هر دو</td></tr>
-<tr><td><b>Bid Stack</b></td><td><div class="e">100×(BuyDepth_last−BuyDepth_first)/BuyDepth_first</div></td><td>&gt;+10%؛ قوی &gt;+50%</td><td>کاهش شدید</td><td>شاهد پویا</td></tr>
-<tr><td><b>Ask Pull</b></td><td><div class="e">100×(SellDepth_first−SellDepth_last)/SellDepth_first</div></td><td>&gt;+10%؛ قوی &gt;+35%</td><td>منفی محسوس</td><td>شاهد پویا</td></tr>
+<tr><td><b>آمادگی داده تغییرات</b></td><td>حداقل ۳ نمونه لحظه‌ای زمان‌دار؛ طول بازه حداقل ۲۰ ثانیه و فاصله آخرین نمونه حداکثر ۵ دقیقه.</td><td>آماده</td><td>تاریخچه ناکافی/زمان نامعتبر</td><td>شرط توقف ریسک برای هر دو حالت</td></tr>
+<tr><td><b>سرعت قیمت در پنجره زمانی</b></td><td><div class="e">%Change(Last_first, Last_last) × 15 / span_seconds</div></td><td>&gt;+0.05% در ۱۵ ثانیه معادل</td><td>منفی محسوس</td><td>برگشت + شتاب اولیه</td></tr>
+<tr><td><b>OFI در پنجره زمانی</b></td><td><div class="e">(ΔBuyDepth−ΔSellDepth)/(|ΔBuyDepth|+|ΔSellDepth|+0.08×TotalDepth)</div></td><td>&gt;+0.05؛ قوی‌تر از +0.25</td><td>&lt;−0.25</td><td>هر دو</td></tr>
+<tr><td><b>انباشت سفارش خرید</b></td><td><div class="e">100×(BuyDepth_last−BuyDepth_first)/BuyDepth_first</div></td><td>&gt;+10%؛ قوی &gt;+50%</td><td>کاهش شدید</td><td>شاهد پویا</td></tr>
+<tr><td><b>جمع‌شدن سفارش فروش</b></td><td><div class="e">100×(SellDepth_first−SellDepth_last)/SellDepth_first</div></td><td>&gt;+10%؛ قوی &gt;+35%</td><td>منفی محسوس</td><td>شاهد پویا</td></tr>
 </table>
 </section>
 
-<section class="c"><h2>۳. فشار سفارش (Order Pressure)</h2>
+<section class="c"><h2>۳. فشار سفارش</h2>
 <table class="t">
 <tr><th>شاخص</th><th>تعریف / فرمول</th><th>بازه مناسب / نامناسب</th><th>نقش</th></tr>
-<tr><td><b>QI</b></td><td><div class="e">QI=(BuyDepth−SellDepth)/(BuyDepth+SellDepth)</div></td><td>+۰٫۳۵ به بالا قوی؛ ±۰٫۱۰ متعادل؛ زیر −۰٫۳۵ عرضه قوی.</td><td>هر دو؛ مؤلفه OrderPressure</td></tr>
+<tr><td><b>QI</b></td><td><div class="e">QI=(BuyDepth−SellDepth)/(BuyDepth+SellDepth)</div></td><td>+۰٫۳۵ به بالا قوی؛ ±۰٫۱۰ متعادل؛ زیر −۰٫۳۵ عرضه قوی.</td><td>هر دو؛ مؤلفه فشار سفارش</td></tr>
 <tr><td><b>OFI</b></td><td><div class="e">OFI=(ΔBuyDepth−ΔSellDepth)/(|ΔBuyDepth|+|ΔSellDepth|+0.08×TotalDepth)</div></td><td>+۰٫۲۵ قوی؛ ±۰٫۰۵ خنثی؛ زیر −۰٫۲۵ منفی.</td><td>هر دو؛ شاهد پویا</td></tr>
-<tr><td><b>Depth Ratio</b></td><td><div class="e">BuyDepth / SellDepth</div></td><td>&gt;۲ قوی؛ ۱٫۲–۲ مثبت؛ ۰٫۸–۱٫۲ متعادل؛ &lt;۰٫۸ ضعیف.</td><td>هر دو</td></tr>
-<tr><td><b>Bid Stack</b></td><td>رشد عمق خرید نسبت به Snapshot قبلی/پنجره.</td><td>&gt;۱۰٪ شاهد مثبت؛ &gt;۵۰٪ قوی.</td><td>هر دو؛ پویا</td></tr>
-<tr><td><b>Ask Pull</b></td><td>کاهش عمق فروش نسبت به Snapshot قبلی/پنجره.</td><td>&gt;۱۰٪ مثبت؛ &gt;۳۵٪ قوی.</td><td>هر دو؛ پویا</td></tr>
+<tr><td><b>نسبت عمق خرید به فروش</b></td><td><div class="e">BuyDepth / SellDepth</div></td><td>&gt;۲ قوی؛ ۱٫۲–۲ مثبت؛ ۰٫۸–۱٫۲ متعادل؛ &lt;۰٫۸ ضعیف.</td><td>هر دو</td></tr>
+<tr><td><b>انباشت سفارش خرید</b></td><td>رشد عمق خرید نسبت به نمونه قبلی یا پنجره زمانی.</td><td>&gt;۱۰٪ شاهد مثبت؛ &gt;۵۰٪ قوی.</td><td>هر دو؛ پویا</td></tr>
+<tr><td><b>جمع‌شدن سفارش فروش</b></td><td>کاهش عمق فروش نسبت به نمونه قبلی یا پنجره زمانی.</td><td>&gt;۱۰٪ مثبت؛ &gt;۳۵٪ قوی.</td><td>هر دو؛ پویا</td></tr>
 </table>
-<p class="m">وزن داخلی OrderPressure: QI=32%، OFI=30%، DepthRatio=18%، BidStack=10%، AskPull=10%.</p>
+<p class="m">وزن داخلی فشار سفارش: QI برابر ۳۲٪، OFI برابر ۳۰٪، نسبت عمق ۱۸٪، انباشت سفارش خرید ۱۰٪ و جمع‌شدن سفارش فروش ۱۰٪ است.</p>
 </section>
 
-<section class="c"><h2>۴. شتاب حرکت (Impulse)</h2>
+<section class="c"><h2>۴. شتاب حرکت</h2>
 <table class="t">
 <tr><th>شاخص</th><th>تعریف</th><th>تفسیر</th><th>نقش</th></tr>
-<tr><td><b>Price Velocity</b></td><td>در Feed به نرخ معادل <b>۱۵ ثانیه</b> نرمال می‌شود.</td><td>&gt;+۰٫۰۵ شاهد شروع حرکت؛ مقدار منفی فشار خلاف جهت است.</td><td>Reversal + Acceleration</td></tr>
-<tr><td><b>Trade Acceleration</b></td><td>تغییر نرخ حجم معامله بین دو بازه متوالی.</td><td>&gt;+۱۵٪ شاهد مثبت؛ مقادیر بسیار بزرگ باید همراه نقدشوندگی و سایر شواهد خوانده شوند.</td><td>پویا</td></tr>
-<tr><td><b>Signal Acceleration</b></td><td><div class="e">FastScore_now − FastScore_prev</div></td><td>&gt;+۵ شاهد تقویت؛ +۲۰ به بالا تقویت شدید.</td><td>پویا</td></tr>
-<tr><td><b>Recovery</b></td><td>موقعیت قیمت در فاصله Low تا High یا برای Reversal میزان بازیابی Low تا قیمت دیروز.</td><td>۵۵+ برای برگشت آرام حمایتی؛ پایین یعنی بازیابی ضعیف.</td><td>بیشتر Reversal</td></tr>
-<tr><td><b>VWAP</b></td><td><div class="e">CumulativeTradeValue / CumulativeTradeVolume</div></td><td>قیمت بالای VWAP تأیید مثبت؛ مستقل سیگنال Hunt نیست.</td><td>تأیید Impulse</td></tr>
-<tr><td><b>EMA9 / EMA21</b></td><td>میانگین متحرک نمایی کوتاه‌مدت.</td><td>EMA9 بالاتر از EMA21 تأیید روند کوتاه‌مدت.</td><td>تأیید Impulse</td></tr>
-<tr><td><b>RSI</b></td><td><div class="e">RSI=100−100/(1+AvgGain/AvgLoss)</div></td><td>۴۵–۷۲ مساعد؛ بالای ۸۲ جریمه؛ زیر ۳۰ به‌تنهایی سیگنال خرید نیست.</td><td>تأیید Impulse</td></tr>
+<tr><td><b>سرعت قیمت</b></td><td>در خوراک داده به نرخ معادل <b>۱۵ ثانیه</b> نرمال می‌شود.</td><td>&gt;+۰٫۰۵ شاهد شروع حرکت؛ مقدار منفی فشار خلاف جهت است.</td><td>برگشت + شتاب اولیه</td></tr>
+<tr><td><b>شتاب معاملات</b></td><td>تغییر نرخ حجم معامله بین دو بازه متوالی.</td><td>&gt;+۱۵٪ شاهد مثبت؛ مقادیر بسیار بزرگ باید همراه نقدشوندگی و سایر شواهد خوانده شوند.</td><td>پویا</td></tr>
+<tr><td><b>شتاب سیگنال</b></td><td><div class="e">FastScore_now − FastScore_prev</div></td><td>&gt;+۵ شاهد تقویت؛ +۲۰ به بالا تقویت شدید.</td><td>پویا</td></tr>
+<tr><td><b>بازیابی قیمت</b></td><td>موقعیت قیمت در فاصله کمینه تا بیشینه روز؛ یا در سناریوی برگشت، میزان بازیابی از کمینه روز تا قیمت پایانی روز قبل.</td><td>۵۵+ برای برگشت آرام حمایتی؛ پایین یعنی بازیابی ضعیف.</td><td>بیشتر برای سناریوی برگشت</td></tr>
+<tr><td><b>VWAP</b></td><td><div class="e">CumulativeTradeValue / CumulativeTradeVolume</div></td><td>قرار گرفتن قیمت بالای VWAP یک تأیید مثبت است؛ اما به‌تنهایی سیگنال شکار محسوب نمی‌شود.</td><td>تأیید شتاب حرکت</td></tr>
+<tr><td><b>EMA9 / EMA21</b></td><td>میانگین متحرک نمایی کوتاه‌مدت.</td><td>EMA9 بالاتر از EMA21 تأیید روند کوتاه‌مدت.</td><td>تأیید شتاب حرکت</td></tr>
+<tr><td><b>RSI</b></td><td><div class="e">RSI=100−100/(1+AvgGain/AvgLoss)</div></td><td>۴۵–۷۲ مساعد؛ بالای ۸۲ جریمه؛ زیر ۳۰ به‌تنهایی سیگنال خرید نیست.</td><td>تأیید شتاب حرکت</td></tr>
 </table>
 </section>
 
-<section class="c"><h2>۵. امکان تکمیل حرکت امروز (Feasibility)</h2>
+<section class="c"><h2>۵. امکان تکمیل حرکت امروز</h2>
 <table class="t">
 <tr><th>شاخص</th><th>فرمول</th><th>تفسیر</th></tr>
-<tr><td><b>Distance to Zero</b></td><td><div class="e">max(0, −dayChange)</div></td><td>هرچه فاصله کمتر، شانس عملی رسیدن به صفر در زمان باقی‌مانده بیشتر.</td></tr>
-<tr><td><b>Required Velocity</b></td><td><div class="e">RequiredVelocity_15min = DistanceToZero / MinutesToClose × 15</div></td><td>برای نمایش انسانی استفاده می‌شود.</td></tr>
-<tr><td><b>مقایسه هم‌واحد</b></td><td><div class="e">RequiredVelocity_15sec = DistanceToZero / (MinutesToClose×60) × 15</div></td><td>Price Velocity در Feed «۱۵ ثانیه‌ای» است؛ بنابراین برای امتیازدهی فقط با RequiredVelocity_15sec مقایسه می‌شود. این اصلاح از خطای واحد زمان جلوگیری می‌کند.</td></tr>
-<tr><td><b>Acceleration Headroom</b></td><td>فاصله قیمت فعلی تا سقف مجاز روز + زمان باقی‌مانده + وضعیت تکنیکال.</td><td>برای نمادهای ۰ تا کمتر از +۱٪؛ فضای حرکتی بیشتر مفید است اما بدون شواهد پویا کافی نیست.</td></tr>
+<tr><td><b>فاصله تا صفر</b></td><td><div class="e">max(0, −dayChange)</div></td><td>هرچه فاصله کمتر، شانس عملی رسیدن به صفر در زمان باقی‌مانده بیشتر.</td></tr>
+<tr><td><b>سرعت لازم</b></td><td><div class="e">RequiredVelocity_15min = DistanceToZero / MinutesToClose × 15</div></td><td>برای نمایش انسانی استفاده می‌شود.</td></tr>
+<tr><td><b>مقایسه هم‌واحد</b></td><td><div class="e">RequiredVelocity_15sec = DistanceToZero / (MinutesToClose×60) × 15</div></td><td>سرعت قیمت در خوراک داده با مقیاس «۱۵ ثانیه» محاسبه می‌شود؛ بنابراین در امتیازدهی فقط با سرعت لازم در همان مقیاس زمانی مقایسه می‌شود. این کار از خطای واحد زمان جلوگیری می‌کند.</td></tr>
+<tr><td><b>فضای باقی‌مانده برای شتاب</b></td><td>فاصله قیمت فعلی تا سقف مجاز روز + زمان باقی‌مانده + وضعیت تکنیکال.</td><td>برای نمادهای ۰ تا کمتر از +۱٪؛ فضای حرکتی بیشتر مفید است اما بدون شواهد پویا کافی نیست.</td></tr>
 </table>
 </section>
 
 <section class="c"><h2>۶. جریان پول و حجم</h2>
 <table class="t">
 <tr><th>شاخص</th><th>تعریف</th><th>تفسیر</th><th>نقش</th></tr>
-<tr><td><b>Real Flow Ratio</b></td><td><div class="e">(RealBuyVolume/RealBuyCount) / (RealSellVolume/RealSellCount)</div></td><td>&gt;۱٫۱ مثبت؛ &gt;۱٫۵ قابل‌توجه؛ &lt;۱ فشار فروشنده حقیقی.</td><td>هر دو</td></tr>
-<tr><td><b>RVOL</b></td><td>حجم بازه فعلی نسبت به حجم معمول بازه‌های قابل مقایسه.</td><td>۱٫۱+ شاهد؛ ۱٫۵+ قوی؛ ۲+ بسیار قوی. صفر در صورت ناکافی‌بودن Candle history نباید به‌تنهایی به‌عنوان سیگنال منفی قطعی تفسیر شود.</td><td>هر دو</td></tr>
-<tr><td><b>Absorption</b></td><td><div class="e">100×ΔTradeVolume / RemovedSellVolume</div></td><td>۶۰+ قوی؛ ۳۰–۶۰ متوسط؛ زیر ۱۵ ضعیف.</td><td>Flow + Risk Gate</td></tr>
-<tr><td><b>Cancellation</b></td><td><div class="e">100 − Absorption</div></td><td>۹۰+ همراه Absorption زیر ۱۲، Risk Gate ایجاد می‌کند.</td><td>ریسک</td></tr>
+<tr><td><b>نسبت جریان پول حقیقی</b></td><td><div class="e">(RealBuyVolume/RealBuyCount) / (RealSellVolume/RealSellCount)</div></td><td>&gt;۱٫۱ مثبت؛ &gt;۱٫۵ قابل‌توجه؛ &lt;۱ فشار فروشنده حقیقی.</td><td>هر دو</td></tr>
+<tr><td><b>RVOL</b></td><td>حجم بازه فعلی نسبت به حجم معمول در بازه‌های زمانی قابل مقایسه.</td><td>۱٫۱+ شاهد؛ ۱٫۵+ قوی؛ ۲+ بسیار قوی. اگر تاریخچه کندل کافی نباشد، مقدار صفر نباید به‌تنهایی یک سیگنال منفی قطعی تلقی شود.</td><td>هر دو</td></tr>
+<tr><td><b>جذب سفارش فروش</b></td><td><div class="e">100×ΔTradeVolume / RemovedSellVolume</div></td><td>۶۰+ قوی؛ ۳۰–۶۰ متوسط؛ زیر ۱۵ ضعیف.</td><td>جریان پول + شرط توقف ریسک</td></tr>
+<tr><td><b>لغو سفارش</b></td><td><div class="e">100 − Absorption</div></td><td>۹۰ یا بیشتر همراه با جذب سفارش زیر ۱۲، شرط توقف ریسک را فعال می‌کند.</td><td>ریسک</td></tr>
 </table>
 </section>
 
 <section class="c"><h2>۷. شرایط بازار و تداوم ۱–۲ روزه</h2>
 <table class="t">
 <tr><th>شاخص</th><th>تعریف</th><th>تفسیر</th></tr>
-<tr><td><b>Market Breadth</b></td><td>نسبت نمادهای مثبت در Universe واجد شرایط.</td><td>عرض قوی‌تر، Context مساعدتر؛ به‌تنهایی شکار تولید نمی‌کند.</td></tr>
-<tr><td><b>Market Regime</b></td><td>ترکیب Breadth، بازده متوسط و ریسک بازار.</td><td>صعودی/خنثی/نزولی/پرنوسان؛ فقط ۱۰٪ TodayOpportunity.</td></tr>
-<tr><td><b>Continuation 1–2D</b></td><td>ترکیب Continuation، Trend، Flow و Momentum موجود.</td><td>فقط Modifier محدود؛ حداکثر Hunt Score را تا TodayOpportunity نگه می‌دارد.</td></tr>
+<tr><td><b>وسعت بازار</b></td><td>نسبت نمادهای مثبت در کل نمادهای واجد شرایط.</td><td>وسعت قوی‌تر بازار، وضعیت مساعدتری ایجاد می‌کند؛ اما به‌تنهایی فرصت شکار تولید نمی‌کند.</td></tr>
+<tr><td><b>رژیم بازار</b></td><td>ترکیبی از وسعت بازار، بازده متوسط و ریسک بازار.</td><td>صعودی، خنثی، نزولی یا پرنوسان؛ با وزن فقط ۱۰٪ در «فرصت امروز».</td></tr>
+<tr><td><b>تداوم ۱–۲ روزه</b></td><td>ترکیبی از تداوم، روند، جریان پول و مومنتوم موجود.</td><td>فقط یک ضریب محدودکننده است و نمی‌گذارد امتیاز شکار از «فرصت امروز» بالاتر برود.</td></tr>
 </table>
 </section>
 
-<section class="c"><h2>۸. Evidence Count و False Positive Control</h2>
-<p>برای Acceleration، مثبت بودن قیمت به‌تنهایی کافی نیست. نسخه ۴.۱.۶ حداقل <b>۳ شاهد هم‌زمان</b> می‌خواهد که حداقل <b>۲ شاهد پویا</b> باشند. شواهد پویا: Price Velocity، OFI، Trade Acceleration، Signal Acceleration، Bid Stack و Ask Pull. شواهد تکمیلی: QI، RVOL و Real Flow Ratio.</p>
-<p>برای Reversal نیز تاریخچه Delta باید آماده باشد؛ اگر Feasibility بسیار ضعیف باشد یا هیچ شاهد پویایی وجود نداشته و Recovery کمتر از ۵۵ باشد، موتور Abstain می‌کند.</p>
+<section class="c"><h2>۸. تعداد شواهد و کنترل مثبت کاذب</h2>
+<p>در سناریوی شتاب اولیه، مثبت بودن قیمت به‌تنهایی کافی نیست. نسخه ۴.۱.۶ حداقل <b>۳ شاهد هم‌زمان</b> می‌خواهد که حداقل <b>۲ شاهد پویا</b> باشند. شواهد پویا شامل سرعت قیمت، OFI، شتاب معاملات، شتاب سیگنال، انباشت سفارش خرید و جمع‌شدن سفارش فروش هستند. شواهد تکمیلی نیز QI، حجم نسبی (RVOL) و نسبت جریان پول حقیقی‌اند.</p>
+<p>در سناریوی برگشت نیز تاریخچه تغییرات باید آماده باشد؛ اگر امکان‌پذیری بسیار ضعیف باشد، یا هیچ شاهد پویایی وجود نداشته باشد و بازیابی قیمت کمتر از ۵۵ باشد، موتور از اعلام فرصت خودداری می‌کند.</p>
 </section>
 
-<section class="c"><h2>۹. Risk Gate و Abstention</h2>
+<section class="c"><h2>۹. شرط توقف ریسک و خودداری از اعلام فرصت</h2>
 <table class="t">
 <tr><th>شرط</th><th>اثر</th></tr>
 <tr><td>قیمت/حجم نامعتبر</td><td>عدم شکار</td></tr>
-<tr><td>Delta history ناکافی</td><td>عدم شکار</td></tr>
-<tr><td>Risk Score ≥ 75</td><td>عدم شکار</td></tr>
-<tr><td>Cancellation ≥ 90 و Absorption &lt; 12</td><td>عدم شکار</td></tr>
-<tr><td>Reversal با Feasibility &lt; 28</td><td>عدم شکار</td></tr>
-<tr><td>Acceleration با Evidence &lt; 3 یا Dynamic Evidence &lt; 2</td><td>عدم شکار</td></tr>
-<tr><td>dayChange ≥ +1%</td><td>خارج از جدول Hunt؛ قابل مشاهده در Search</td></tr>
+<tr><td>تاریخچه تغییرات ناکافی</td><td>عدم شکار</td></tr>
+<tr><td>امتیاز ریسک ≥ ۷۵</td><td>عدم شکار</td></tr>
+<tr><td>لغو سفارش ≥ ۹۰ و جذب سفارش &lt; ۱۲</td><td>عدم شکار</td></tr>
+<tr><td>برگشت با امکان‌پذیری &lt; ۲۸</td><td>عدم شکار</td></tr>
+<tr><td>شتاب اولیه با کمتر از ۳ شاهد یا کمتر از ۲ شاهد پویا</td><td>عدم شکار</td></tr>
+<tr><td>dayChange ≥ +1%</td><td>خارج از جدول شکار؛ قابل مشاهده در جست‌وجو</td></tr>
 </table>
-<p class="m">خروجی «No Hunt / Abstention» یک پاسخ معتبر موتور است؛ موتور مجبور نیست همیشه فرصت تولید کند.</p>
+<p class="m">خروجی «عدم شکار / خودداری از اعلام فرصت» یک پاسخ معتبر موتور است؛ موتور مجبور نیست همیشه فرصت تولید کند.</p>
 </section>
 
-<section class="c"><h2>۱۰. وضعیت‌های Hunt</h2>
+<section class="c"><h2>۱۰. وضعیت‌های شکار</h2>
 <table class="t">
 <tr><th>وضعیت</th><th>آستانه مهندسی فعلی</th></tr>
-<tr><td>شکار ویژه</td><td>HuntScore ≥ 78، TodayOpportunity ≥ 82، Risk ≤ 45، Evidence ≥ 4، بدون Gate</td></tr>
-<tr><td>هشدار فوری</td><td>HuntScore ≥ 68، TodayOpportunity ≥ 74، Risk ≤ 55، Evidence ≥ 3، بدون Gate</td></tr>
-<tr><td>شکار زودهنگام</td><td>HuntScore ≥ 58، TodayOpportunity ≥ 64، Risk ≤ 62، Evidence ≥ 3، بدون Gate</td></tr>
-<tr><td>رصد</td><td>HuntScore ≥ 50 و TodayOpportunity ≥ 55</td></tr>
-<tr><td>عادی / عدم شکار</td><td>Gate فعال یا امتیاز پایین‌تر</td></tr>
+<tr><td>شکار ویژه</td><td>امتیاز شکار ≥ ۷۸، فرصت امروز ≥ ۸۲، ریسک ≤ ۴۵، تعداد شواهد ≥ ۴، بدون شرط توقف</td></tr>
+<tr><td>هشدار فوری</td><td>امتیاز شکار ≥ ۶۸، فرصت امروز ≥ ۷۴، ریسک ≤ ۵۵، تعداد شواهد ≥ ۳، بدون شرط توقف</td></tr>
+<tr><td>شکار زودهنگام</td><td>امتیاز شکار ≥ ۵۸، فرصت امروز ≥ ۶۴، ریسک ≤ ۶۲، تعداد شواهد ≥ ۳، بدون شرط توقف</td></tr>
+<tr><td>رصد</td><td>امتیاز شکار ≥ ۵۰ و فرصت امروز ≥ ۵۵</td></tr>
+<tr><td>عادی / عدم شکار</td><td>شرط توقف فعال یا امتیاز پایین‌تر</td></tr>
 </table>
-<p class="m">این آستانه‌ها Probability نیستند و باید با Backtest Intraday و Walk-Forward اعتبارسنجی شوند.</p>
+<p class="m">این آستانه‌ها «احتمال موفقیت» نیستند و باید با پس‌آزمایی درون‌روزی و اعتبارسنجی گام‌به‌گام بررسی شوند.</p>
 </section>
 
 <section class="c"><h2>۱۱. ساعات معاملات و دامنه نمایش</h2>
@@ -148,23 +148,23 @@ h1,h2,h3{margin-top:0}.m{color:#8ea7bd}.t{width:100%;border-collapse:collapse}.t
 <tr><td>صندوق سپرده کالایی انرژی</td><td>10:45–11:00</td><td>11:00–15:00</td></tr>
 <tr><td>طلا، نقره، زعفران و گواهی کالایی</td><td>11:45–12:00</td><td>12:00–17:00</td></tr>
 </table>
-<p>Hunt Table فقط نمادهای دارای فعالیت معتبر امروز و داخل ساعت معامله را نشان می‌دهد. <b>Search عمومی مستقل از این Gate است</b> و می‌تواند نماد بسته، متوقف، بالای +۱٪ یا فاقد سیگنال Hunt را نمایش دهد.</p>
+<p>جدول شکار فقط نمادهایی را نشان می‌دهد که امروز فعالیت معتبر داشته‌اند و داخل ساعت معامله هستند. <b>جست‌وجوی عمومی مستقل از این شرط است</b> و می‌تواند نماد بسته، متوقف، بالای +۱٪ یا فاقد سیگنال Hunt را نمایش دهد.</p>
 </section>
 
-<section class="c"><h2>۱۲. پنج مدل ۱۰روزه: تشخیصی و Evidence-Gated</h2>
+<section class="c"><h2>۱۲. پنج مدل ۱۰روزه: تشخیصی و وابسته به شواهد</h2>
 <p><span class="tag">Ichimoku</span><span class="tag">Gann</span><span class="tag">Bollinger</span><span class="tag">MACD/EMA</span><span class="tag">OBV</span></p>
-<p>این مدل‌ها برای مشاهده سناریوهای تکنیکال و مقایسه کاربر باقی می‌مانند. خروجی آنها نه وارد TodayOpportunity می‌شود، نه Risk Gate، نه Hunt Score و نه رتبه‌بندی شکار.</p>
-<div class="warn"><b>Forecast Validation Gate v4.3.0:</b> در اعتبارسنجی ۹۰ موردی، ۸۸ مورد اجرا شد، ۱۸ مورد دارای discontinuity از امتیاز کنار گذاشته شد و ۷۰ نمونه پاک باقی ماند. هیچ مدل منفرد یا Ensemble آزمایش‌شده برتری آماری پایدار و خارج‌ازنمونه نسبت به Baseline نشان نداد؛ بنابراین وضعیت فعلی <b>NO_STATISTICALLY_CONFIRMED_EDGE</b> است و پیش‌بینی نهایی ترکیبی خاموش می‌ماند.</div>
-<p class="m">پنج خروجی عددی همچنان سناریوی تشخیصی‌اند، نه احتمال موفقیت یا توصیه قطعی معامله. بازشدن Final Forecast Gate نیازمند شواهد مستقل Walk-Forward قوی‌تر است.</p>
+<p>این مدل‌ها برای مشاهده سناریوهای تکنیکال و مقایسه کاربر باقی می‌مانند. خروجی آن‌ها نه وارد «فرصت امروز» می‌شود، نه شرط توقف ریسک را تغییر می‌دهد، نه در امتیاز شکار دخالت دارد و نه در رتبه‌بندی شکار.</p>
+<div class="warn"><b>دروازه اعتبارسنجی پیش‌بینی نسخه ۴.۳.۰:</b> در اعتبارسنجی ۹۰ موردی، ۸۸ مورد اجرا شد، ۱۸ مورد دارای گسست داده از ارزیابی کنار گذاشته شد و ۷۰ نمونه پاک باقی ماند. هیچ مدل منفرد یا ترکیب چندمدلی آزمایش‌شده، برتری آماری پایدار و خارج‌ازنمونه نسبت به مدل مبنا نشان نداد؛ بنابراین وضعیت فعلی «برتری آماری تأییدشده وجود ندارد» است و پیش‌بینی نهایی ترکیبی خاموش می‌ماند.</div>
+<p class="m">پنج خروجی عددی همچنان سناریوی تشخیصی‌اند، نه احتمال موفقیت یا توصیه قطعی معامله. بازشدن دروازه پیش‌بینی نهایی به شواهد مستقل و قوی‌تر از اعتبارسنجی گام‌به‌گام نیاز دارد.</p>
 </section>
 
-<section class="c"><h2>۱۳. مسیر Backtest صحیح</h2>
-<p>برای ارزیابی موتور باید Snapshotهای Intraday در زمان‌های ثابت ذخیره شوند و سه Label ساخته شود:</p>
+<section class="c"><h2>۱۳. مسیر صحیح پس‌آزمایی</h2>
+<p>برای ارزیابی موتور باید نمونه‌های لحظه‌ای درون‌روزی در زمان‌های ثابت ذخیره شوند و سه برچسب ارزیابی ساخته شود:</p>
 <ol>
-<li><b>Label A:</b> نماد در Snapshot منفی بوده؛ آیا تا پایان جلسه از صفر عبور کرده و مثبت بسته شده است؟</li>
-<li><b>Label B:</b> نماد بین ۰ تا +۱٪ بوده؛ آیا بعداً همان روز به حرکت قوی، مثلاً +۲٪/+۳٪ یا نزدیک سقف روز رسیده است؟</li>
-<li><b>Label C:</b> آیا حرکت در D+1 یا D+2 ادامه داشته است؟</li>
+<li><b>برچسب A:</b> نماد در نمونه لحظه‌ای منفی بوده است؛ آیا تا پایان جلسه از صفر عبور کرده و مثبت بسته شده است؟</li>
+<li><b>برچسب B:</b> نماد بین ۰ تا +۱٪ بوده است؛ آیا بعداً همان روز به حرکت قوی‌تری، مثلاً +۲٪ یا +۳٪ یا نزدیک سقف روز، رسیده است؟</li>
+<li><b>برچسب C:</b> آیا حرکت در یک یا دو روز کاری بعد ادامه داشته است؟</li>
 </ol>
-<p>تنظیم وزن‌ها باید Walk-Forward باشد؛ تا قبل از کالیبراسیون خارج از نمونه، هیچ عددی با عنوان «احتمال موفقیت» نمایش داده نمی‌شود.</p>
+<p>تنظیم وزن‌ها باید به‌صورت گام‌به‌گام و زمان‌محور انجام شود؛ تا پیش از کالیبراسیون خارج‌ازنمونه، هیچ عددی با عنوان «احتمال موفقیت» نمایش داده نمی‌شود.</p>
 </section>
 </div></body></html>
