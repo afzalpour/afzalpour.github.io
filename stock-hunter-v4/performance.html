@@ -17,8 +17,8 @@
 <main class="perf-shell">
   <header class="perf-head">
     <div>
-      <h1>ارزیابی تجربی Hunt 4.1.6</h1>
-      <p>Outcome Tracking برای Reversal و Early Acceleration — بر پایه قیمت واقعی بعد از اولین Event</p>
+      <h1>ارزیابی تجربی شکار ۴.۱.۶</h1>
+      <p>پایش نتایج برای «برگشت منفی به مثبت» و «شتاب مثبت اولیه» — بر پایه قیمت واقعی پس از نخستین رخداد ثبت‌شده</p>
     </div>
     <nav class="perf-nav">
       <a class="top-link" href="index.html">بازگشت به شکارچی سهم</a>
@@ -27,43 +27,43 @@
   </header>
 
   <section class="perf-note">
-    <strong>این صفحه Probability مدل نیست.</strong>
-    «نرخ بازده مثبت» فقط سهم نمونه‌های بالغ‌شده‌ای است که بازده Close آن‌ها نسبت به قیمت اولین Alert بیشتر از صفر بوده است. MFE بیشترین حرکت مساعد و MAE بیشترین حرکت نامساعد از همان قیمت مبناست. معیارهای ۱/۲/۳ جلسه فقط پس از مشاهده واقعی جلسه بعدی تکمیل می‌شوند و هیچ داده آینده‌ای در زمان ثبت Event استفاده نمی‌شود.
+    <strong>این صفحه احتمال موفقیت مدل را نمایش نمی‌دهد.</strong>
+    «نرخ بازده مثبت» فقط سهم نمونه‌های بالغ‌شده‌ای است که بازده قیمت پایانی آن‌ها نسبت به قیمت نخستین هشدار بیشتر از صفر بوده است. MFE یعنی بیشترین حرکت مساعد و MAE یعنی بیشترین حرکت نامساعد نسبت به همان قیمت مبنا. معیارهای ۱، ۲ و ۳ جلسه فقط پس از مشاهده واقعی جلسات بعدی تکمیل می‌شوند و هنگام ثبت رخداد از هیچ داده آینده‌ای استفاده نمی‌شود.
   </section>
 
   <section class="perf-controls">
-    <select id="modeFilter"><option value="">هر دو سناریو</option><option value="reversal">Reversal</option><option value="acceleration">Acceleration</option></select>
+    <select id="modeFilter"><option value="">هر دو سناریو</option><option value="reversal">برگشت منفی به مثبت</option><option value="acceleration">شتاب مثبت اولیه</option></select>
     <select id="stateFilter"><option value="">شکار ویژه + هشدار فوری</option><option value="شکار ویژه">شکار ویژه</option><option value="هشدار فوری">هشدار فوری</option></select>
     <button id="refreshPerf">↻ تازه‌سازی</button>
   </section>
   <div id="perfStatus" class="perf-status">در حال دریافت داده عملکرد…</div>
 
   <section class="perf-cards">
-    <article class="perf-card"><span>کل Eventها</span><b id="eventsTotal">۰</b><small>ثبت پایدار Intraday</small></article>
+    <article class="perf-card"><span>کل رخدادها</span><b id="eventsTotal">۰</b><small>ثبت پایدار درون‌روزی</small></article>
     <article class="perf-card"><span>نمونه بالغ ۱ جلسه</span><b id="matured1">۰</b><small id="avgRet1">میانگین بازده: —</small></article>
-    <article class="perf-card"><span>بازده مثبت ۱ جلسه</span><b id="positive1">—</b><small>Empirical rate، نه Probability</small></article>
-    <article class="perf-card"><span>MFE / MAE تا ۱ جلسه</span><b id="mfeMae1">—</b><small>از قیمت اولین Alert</small></article>
+    <article class="perf-card"><span>بازده مثبت ۱ جلسه</span><b id="positive1">—</b><small>نرخ تجربی، نه احتمال موفقیت</small></article>
+    <article class="perf-card"><span>MFE / MAE تا ۱ جلسه</span><b id="mfeMae1">—</b><small>از قیمت نخستین هشدار</small></article>
     <article class="perf-card"><span>نمونه بالغ ۳ جلسه</span><b id="matured3">۰</b><small id="avgRet3">میانگین بازده: —</small></article>
     <article class="perf-card"><span>بازده مثبت ۳ جلسه</span><b id="positive3">—</b><small>فقط نمونه‌های بالغ</small></article>
-    <article class="perf-card"><span>رسیدن به +۱٪ تا ۳ جلسه</span><b id="plus1_3">—</b><small>بر مبنای High واقعی</small></article>
-    <article class="perf-card"><span>افت تا -۱٪ تا ۳ جلسه</span><b id="minus1_3">—</b><small>بر مبنای Low واقعی</small></article>
+    <article class="perf-card"><span>رسیدن به +۱٪ تا ۳ جلسه</span><b id="plus1_3">—</b><small>بر مبنای بیشینه واقعی قیمت</small></article>
+    <article class="perf-card"><span>افت تا -۱٪ تا ۳ جلسه</span><b id="minus1_3">—</b><small>بر مبنای کمینه واقعی قیمت</small></article>
   </section>
 
   <section class="perf-section">
-    <h2>تفکیک عملکرد بر اساس سناریو، سطح Hunt و Score Bucket</h2>
+    <h2>تفکیک عملکرد بر اساس سناریو، سطح شکار و بازه امتیاز</h2>
     <div class="perf-table-wrap"><table class="perf-table"><thead><tr>
-      <th>سناریو</th><th>وضعیت</th><th>Score</th><th>Event</th><th>بالغ ۱D</th><th>بازده ۱D</th><th>مثبت ۱D</th><th>MFE ۱D</th><th>MAE ۱D</th><th>بالغ ۳D</th><th>بازده ۳D</th><th>مثبت ۳D</th><th>+۱٪ تا ۳D</th><th>-۱٪ تا ۳D</th>
+      <th>سناریو</th><th>وضعیت</th><th>امتیاز</th><th>رخداد</th><th>بالغ ۱ جلسه</th><th>بازده ۱ جلسه</th><th>مثبت ۱ جلسه</th><th>MFE ۱ جلسه</th><th>MAE ۱ جلسه</th><th>بالغ ۳ جلسه</th><th>بازده ۳ جلسه</th><th>مثبت ۳ جلسه</th><th>+۱٪ تا ۳ جلسه</th><th>-۱٪ تا ۳ جلسه</th>
     </tr></thead><tbody id="perfBody"></tbody></table></div>
   </section>
 
   <section class="perf-section">
-    <h2>آخرین Eventها و بلوغ Outcome</h2>
+    <h2>آخرین رخدادها و وضعیت بلوغ نتایج</h2>
     <div class="perf-table-wrap"><table class="perf-table"><thead><tr>
-      <th>تاریخ</th><th>نماد</th><th>سناریو</th><th>Hunt</th><th>Score</th><th>قیمت مبنا</th><th>جلسات مشاهده‌شده</th><th>بازده ۱D</th><th>MFE ۱D</th><th>MAE ۱D</th><th>بازده ۳D</th><th>MFE ۳D</th><th>MAE ۳D</th>
+      <th>تاریخ</th><th>نماد</th><th>سناریو</th><th>وضعیت شکار</th><th>امتیاز</th><th>قیمت مبنا</th><th>جلسات مشاهده‌شده</th><th>بازده ۱ جلسه</th><th>MFE ۱ جلسه</th><th>MAE ۱ جلسه</th><th>بازده ۳ جلسه</th><th>MFE ۳ جلسه</th><th>MAE ۳ جلسه</th>
     </tr></thead><tbody id="recentBody"></tbody></table></div>
   </section>
 </main>
 <script src="config.js?v=4.1.6"></script>
-<script src="performance-v416.js?v=4.1.6"></script>
+<script src="performance-v416.js?v=4.1.6-fa1"></script>
 </body>
 </html>
