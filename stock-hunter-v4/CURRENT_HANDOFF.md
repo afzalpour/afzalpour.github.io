@@ -916,3 +916,8 @@ Real v4.5.4 confirmed daily reference is valid (2294 rows), but its Trade cache 
 Package SHA-256: `39cdedc894b1003311b4e603d252674a6c4b6b3d55839dda8e96cf9b49f66f27`.
 
 Do not interpret prior historical verdicts as Hunt-model quality. Require positive TradeHistory precheck first.
+
+
+## v4.5.5 real validation findings — 2026-09-25
+
+G0 mechanical validation PASS. Historical evidence reader is now working on real caches. Real run: eligible 948, BestLimits 948, TradeParsed 684, DailyReference 684, temporal-reliable 114, unreliable 570, missing raw trade cache 209, parse-fail 55, ground truth 1316. Verdict HISTORICAL_DATA_INADEQUATE is evidence-quality only, not a Hunt quality verdict. Across six polling phases robustTP/robustFP/robustSignals are zero because historical PIT envelopes are too wide; phase-local hardMiss counts are ~17–22 per objective and require cross-phase intersection + binding-gate diagnosis before any production rollout resumes. Do not tune Frozen thresholds from this day.
