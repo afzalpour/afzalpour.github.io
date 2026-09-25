@@ -1000,7 +1000,7 @@ Primary operational package:
 `Stock_Hunter_Eco_Desktop_v4.1.0.zip`
 
 Package SHA-256:
-`0799b882dd04231e9da21ad5dff03da1ef6da5c950ec2c20c93b67393a38f533`
+`5fb211eac296d46148edbddcf461a6e221ed63894527ea11a3bc1d0ba6b9f7dc`
 
 Controller:
 - `Stock_Hunter_Eco_Desktop_v4.1.0.exe`;
