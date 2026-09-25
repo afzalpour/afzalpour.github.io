@@ -1138,3 +1138,16 @@ Changes:
 The batch aggregate reports mean/median APE, direction accuracy, raw/display interval coverage, and baseline-beat percentage on CLEAN cases only.
 
 Execution remains on the user's Windows network because the assistant runtime cannot resolve TSETMC. CI proves compilation/tests/package integrity, not live TSETMC outcomes.
+
+
+### Forecast Audit v4.2.1 final Windows artifact identity
+
+PR #287 merged to main at `bdfded9228abccbe152b9014f417e48ea6f5bbd0`.
+
+CI run `Stock Hunter Forecast Audit v4.2.1 #2` passed unit tests, vet, no-lookahead self-test, Windows amd64 cross-compile, 90-row contract verification, packaging and artifact upload.
+
+Final delivery hashes:
+- EXE SHA-256: `8b373bd08fa89906aa2a2de7bbb05838bce574462a0bf8c0214f51beb4823e4e`
+- ZIP SHA-256: `13f9c6a01091d51f81a7a41deb792b82e839e5755e09bc7667113de6fbbc2d30`
+
+The ZIP contains the EXE, one-click Shpaksa runner, one-click 30x3 batch runner, 90-case CSV, README and SHA256 manifest.
