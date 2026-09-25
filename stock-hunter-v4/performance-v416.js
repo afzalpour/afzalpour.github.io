@@ -8,6 +8,14 @@ const perfPct=(v,d=2)=>perfN(v)==null?'—':`${perfFa(v,d)}٪`;
 const perfEsc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const perfMode=v=>v==='reversal'?'برگشت منفی به مثبت':v==='acceleration'?'شتاب مثبت اولیه':String(v||'—');
 const perfClass=v=>perfN(v)==null?'muted':Number(v)>0?'pos':Number(v)<0?'neg':'muted';
+function perfJalaliDateV416(value){
+  const raw=String(value||'').trim();if(!raw)return '—';
+  const d=/^\d{4}-\d{2}-\d{2}$/.test(raw)?new Date(raw+'T12:00:00Z'):new Date(raw);
+  if(!Number.isFinite(d.getTime()))return raw;
+  const parts=new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn',{calendar:'persian',numberingSystem:'latn',timeZone:'Asia/Tehran',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d);
+  const get=t=>parts.find(p=>p.type===t)?.value||'';
+  return `${get('year')}/${get('month')}/${get('day')}`;
+}
 let performanceRowsV416=[],recentOutcomeRowsV416=[];
 
 function perfHeadersV416(){
@@ -53,7 +61,7 @@ function renderPerformanceTableV416(){
 function renderRecentV416(){
   const rows=perfFilteredV416(recentOutcomeRowsV416);
   perf$('recentBody').innerHTML=rows.length?rows.map(r=>`<tr>
-    <td>${perfEsc(r.trade_date||'—')}</td><td><b>${perfEsc(r.symbol)}</b></td><td>${perfEsc(perfMode(r.hunt_mode))}</td><td>${perfEsc(r.hunt_state)}</td><td>${perfFa(r.max_hunt_score,1)}</td><td>${perfFa(r.first_price,0)}</td><td>${perfFa(r.future_sessions_observed,0)}</td>
+    <td>${perfEsc(perfJalaliDateV416(r.trade_date))}</td><td><b>${perfEsc(r.symbol)}</b></td><td>${perfEsc(perfMode(r.hunt_mode))}</td><td>${perfEsc(r.hunt_state)}</td><td>${perfFa(r.max_hunt_score,1)}</td><td>${perfFa(r.first_price,0)}</td><td>${perfFa(r.future_sessions_observed,0)}</td>
     <td class="${perfClass(r.return_1d_pct)}">${perfPct(r.return_1d_pct,2)}</td><td class="${perfClass(r.mfe_1d_pct)}">${perfPct(r.mfe_1d_pct,2)}</td><td class="${perfClass(r.mae_1d_pct)}">${perfPct(r.mae_1d_pct,2)}</td>
     <td class="${perfClass(r.return_3d_pct)}">${perfPct(r.return_3d_pct,2)}</td><td class="${perfClass(r.mfe_3d_pct)}">${perfPct(r.mfe_3d_pct,2)}</td><td class="${perfClass(r.mae_3d_pct)}">${perfPct(r.mae_3d_pct,2)}</td>
   </tr>`).join(''):'<tr><td colspan="13" class="perf-empty">دفتر ثبت رسمی هنوز رخداد قابل ارزیابی ندارد؛ ثبت نتیجه از جلسه معاملاتی بعد به‌صورت خودکار آغاز می‌شود.</td></tr>';

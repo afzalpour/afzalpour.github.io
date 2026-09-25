@@ -52,7 +52,7 @@ function historicalDetailHTMLV409(x){
   const pct=latest&&prev?.close?((latest.close-prev.close)/prev.close*100):null;
   const date=latest?.t?new Date(latest.t*1000).toLocaleDateString('fa-IR',{timeZone:'Asia/Tehran'}):'—';
   return `<div class="detail-grid">
-    <div class="alert-box"><b>نمایش کم‌مصرف اطلاعات روزانه</b><br>این نماد در Universe بازار وجود دارد، اما در آخرین Feed لحظه‌ای رکورد تحلیلی فعال نداشته است. بنابراین داده‌های روزانه واقعی و سناریوهای نمایشی نشان داده می‌شوند و هیچ Hunt Score لحظه‌ای جعل نمی‌شود.</div>
+    <div class="alert-box"><b>اطلاعات روزانه این نماد</b><br>داده لحظه‌ای تحلیلی این نماد فعلاً در دسترس نیست. اطلاعات روزانه واقعی و سناریوهای ۱۰روزه بر پایه همان داده‌ها نمایش داده می‌شوند.</div>
     <div class="section-title">آخرین داده روزانه معتبر</div>
     ${metricExplainV416('تاریخ آخرین داده',esc(date),'','این تاریخ مربوط به آخرین کندل روزانه دریافت‌شده است.')}
     ${metricExplainV416('قیمت پایانی',latest?fa(latest.close,0):'—','','آخرین قیمت پایانی موجود در سابقه روزانه.')}
@@ -63,7 +63,7 @@ function historicalDetailHTMLV409(x){
     <div class="section-title">مقایسه ۶ سناریوی عددی برای ۱۰ روز کاری آینده</div>
     ${models.map(modelBox).join('')}
     ${forecastTable(models)}
-    <div class="forecast-note"><b>محدودیت:</b> چون رکورد لحظه‌ای این نماد در Feed فعال موجود نیست، شاخص‌های دفتر سفارش، QI/OFI، شتاب لحظه‌ای، ورود، حد ضرر و Hunt Score نمایش داده نمی‌شوند. این شش مدل فقط نمایشی‌اند و وارد امتیاز شکار نمی‌شوند.</div>
+    <div class="forecast-note"><b>توجه:</b> در این حالت شاخص‌های لحظه‌ای دفتر سفارش، ورود و حد ضرر در دسترس نیستند. شش سناریوی ۱۰روزه فقط برای مشاهده و مقایسه نمایش داده می‌شوند.</div>
   </div>`;
 }
 async function openHistoricalUniverseDetailV409(seed){
@@ -72,13 +72,14 @@ async function openHistoricalUniverseDetailV409(seed){
   $('dSymbol').textContent=x.symbol||'نماد';
   $('dCompany').textContent=x.company||'';
   $('detailBody').innerHTML='<div class="history-loading">در حال دریافت فقط سابقه روزانه همین نماد…</div>';
-  if($('printDetailBtn')){$('printDetailBtn').disabled=true;$('printDetailBtn').title='چاپ گزارش کامل نیازمند رکورد تحلیلی لحظه‌ای است';}
+  if($('printDetailBtn')){$('printDetailBtn').disabled=false;$('printDetailBtn').title='چاپ / ذخیره PDF گزارش روزانه';}
   if(!$('detailDialog').open)$('detailDialog').showModal();
   await fetchDailyHistory(x);
   if(currentDetail?.id!==x.id)return;
   const c=dailyCandles(x);
   if(!c.length){
-    $('detailBody').innerHTML='<div class="alert-box">نماد در فهرست کامل بازار وجود دارد، اما در حال حاضر حتی سابقه روزانه آن از منبع بازار قابل دریافت نیست. هیچ داده مصنوعی ساخته نشد.</div>';
+    if($('printDetailBtn')){$('printDetailBtn').disabled=true;$('printDetailBtn').title='داده روزانه‌ای برای چاپ موجود نیست';}
+    $('detailBody').innerHTML='<div class="alert-box">برای این نماد در حال حاضر سابقه روزانه قابل‌نمایش وجود ندارد.</div>';
     return;
   }
   const latest=c[c.length-1],prev=c[c.length-2];
@@ -122,7 +123,7 @@ openDetail=async function(id){
     const seed=findUniverseSeedV409(id);
     if(seed)return openHistoricalUniverseDetailV409(seed);
     $('dSymbol').textContent='جزئیات در دسترس نیست';
-    $('dCompany').textContent='این شناسه نه در Feed زنده و نه در Universe محلی پیدا نشد.';
+    $('dCompany').textContent='اطلاعات این نماد در داده‌های فعلی پیدا نشد.';
     $('detailBody').innerHTML='<div class="alert-box">رکورد این نماد در حافظه محلی بازار پیدا نشد. هیچ داده مصنوعی نمایش داده نمی‌شود.</div>';
     if(!$('detailDialog').open)$('detailDialog').showModal();
     return;

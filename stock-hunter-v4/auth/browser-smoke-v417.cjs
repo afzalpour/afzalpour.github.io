@@ -81,17 +81,60 @@ async function main(){
   try{
     await page.setViewportSize({width:1280,height:600});
     await assertStandaloneScroll(page,'performance.html');
+    const performanceContract=await page.evaluate(()=>({
+      jalali:typeof perfJalaliDateV416==='function'?perfJalaliDateV416('2026-09-25'):null,
+      background:getComputedStyle(document.body).backgroundColor,
+      neutralTheme:!!document.querySelector('link[href*="neutral-theme-v416.css"]')
+    }));
+    assert.equal(performanceContract.jalali,'1405/07/03','performance trade date must render in Jalali calendar');
+    assert.equal(performanceContract.neutralTheme,true,'performance must load neutral gray theme');
+    assert.equal(performanceContract.background,'rgb(17, 19, 21)','performance background must be neutral gray');
+
     await assertStandaloneScroll(page,'calibration.html');
+    const calibrationTheme=await page.evaluate(()=>({
+      background:getComputedStyle(document.body).backgroundColor,
+      neutralTheme:!!document.querySelector('link[href*="neutral-theme-v416.css"]')
+    }));
+    assert.equal(calibrationTheme.neutralTheme,true,'calibration must load neutral gray theme');
+    assert.equal(calibrationTheme.background,'rgb(17, 19, 21)','calibration background must be neutral gray');
     await page.setViewportSize({width:1440,height:1000});
 
     await page.goto(BASE_URL+'/index.html',{waitUntil:'domcontentloaded',timeout:30000});
-    await page.waitForFunction(()=>typeof forecastFibonacci==='function'&&typeof forecastModels==='function',null,{timeout:10000});
+    await page.waitForFunction(()=>typeof forecastFibonacci==='function'&&typeof forecastModels==='function'&&typeof marketFaDateTimeV416==='function',null,{timeout:10000});
     const forecastContract=await page.evaluate(()=>({
       fibonacciType:typeof forecastFibonacci,
-      keys:forecastModels({candles:[],last:0}).map(m=>m.key)
+      keys:forecastModels({candles:[],last:0}).map(m=>m.key),
+      marketDateTime:marketFaDateTimeV416('2026-09-25T04:45:23Z'),
+      neutralTheme:!!document.querySelector('link[href*="neutral-theme-v416.css"]'),
+      background:getComputedStyle(document.body).backgroundColor
     }));
     assert.equal(forecastContract.fibonacciType,'function','Fibonacci model must be loaded');
     assert.deepEqual(forecastContract.keys,['ichi','gann','fib','boll','macd','obv'],'forecastModels must expose exactly six diagnostic models');
+    assert.equal(forecastContract.marketDateTime,'1405/07/03 ساعت 08:15:23','market status timestamp must use Jalali date and Tehran time');
+    assert.equal(forecastContract.neutralTheme,true,'main page must load neutral gray theme');
+    assert.equal(forecastContract.background,'rgb(17, 19, 21)','main background must be neutral gray');
+
+    const printContract=await page.evaluate(()=>{
+      const candles=Array.from({length:60},(_,i)=>({t:Math.floor(Date.UTC(2026,6,1+i)/1000),open:1000+i*3,high:1020+i*3,low:980+i*3,close:1005+i*3,volume:100000+i*1000}));
+      let captured='';
+      const oldOpen=window.open;
+      window.open=()=>({document:{write:s=>{captured+=String(s)},close:()=>{}}});
+      try{
+        currentDetail={id:'print-smoke',symbol:'TEST',company:'نماد آزمایشی',analyzed:false,last:1182,close:1182,yesterday:1179,candles,snapshots:[]};
+        printDetail();
+      }finally{
+        window.open=oldOpen;
+        currentDetail=null;
+      }
+      return {
+        hasDailyReport:captured.includes('گزارش روزانه'),
+        hasPdfLabel:captured.includes('چاپ / ذخیره PDF'),
+        hasSixModels:captured.includes('شش سناریوی تشخیصی ۱۰ روز کاری')
+      };
+    });
+    assert.equal(printContract.hasDailyReport,true,'daily-only detail must generate printable report');
+    assert.equal(printContract.hasPdfLabel,true,'print report must expose PDF save label');
+    assert.equal(printContract.hasSixModels,true,'daily-only PDF must include six diagnostic models');
     const accountLink=page.locator('a.top-link[href="profile-v417.html"]');
     await accountLink.waitFor({state:'visible',timeout:10000});
     await Promise.all([
@@ -248,6 +291,9 @@ async function main(){
       result:'stock-hunter-v417-authenticated-browser-smoke: PASS',
       password_confirmation_and_eye_controls:true,
       malformed_recovery_email_guard:true,
+      jalali_dates_and_market_timestamp:true,
+      neutral_gray_theme:true,
+      daily_pdf_print:true,
       public_account_to_own_profile:true,
       profile_to_personal_market:true,
       preference_persistence:true,
