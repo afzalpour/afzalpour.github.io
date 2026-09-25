@@ -4,6 +4,13 @@ function headers(){
   const k=cfg.SUPABASE_PUBLISHABLE_KEY||cfg.publishableKey||'';
   return {apikey:k,Accept:'application/json'};
 }
+function marketFaDateTimeV416(value){
+  const d=value instanceof Date?value:new Date(value);
+  if(!Number.isFinite(d.getTime()))return '—';
+  const parts=new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn',{calendar:'persian',numberingSystem:'latn',timeZone:'Asia/Tehran',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(d);
+  const get=t=>parts.find(p=>p.type===t)?.value||'';
+  return `${get('year')}/${get('month')}/${get('day')} ساعت ${get('hour')}:${get('minute')}:${get('second')}`;
+}
 function marketSessionTehran(){
   const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Tehran',weekday:'short',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date()),get=t=>parts.find(p=>p.type===t)?.value||'',wd=get('weekday'),hm=Number(get('hour'))*60+Number(get('minute'));
   if(!['Sat','Sun','Mon','Tue','Wed'].includes(wd)||hm<8*60+25||hm>17*60)return{open:false,label:'بازار بورس در این لحظه تعطیل است',detail:'ساعات فعالیت بازار سرمایه در روزهای معاملاتی از ۸:۲۵ تا ۱۷:۰۰ است.'};
@@ -98,7 +105,7 @@ function marketOutageDetailV416(e,cache){
   const status=Number(e?.status||0);
   const infra=status===522||status===503||status===504;
   const code=status?`HTTP ${status}`:(e?.name==='AbortError'?'timeout':'network');
-  const source=cache?.savedAt?new Date(cache.savedAt).toLocaleString('fa-IR',{timeZone:'Asia/Tehran'}):'ناموجود';
+  const source=cache?.savedAt?marketFaDateTimeV416(cache.savedAt):'ناموجود';
   return infra
     ? `اختلال موقت زیرساخت داده (${code}). آخرین snapshot معتبر: ${source}. داده قدیمی به‌عنوان شکار فعال استفاده نمی‌شود.`
     : `ارتباط زنده بازار برقرار نشد (${code}). آخرین snapshot معتبر: ${source}. داده قدیمی به‌عنوان شکار فعال استفاده نمی‌شود.`;
@@ -125,12 +132,12 @@ async function load(force=false){
     const h=health[0],age=h?.last_feed_at?Date.now()-Date.parse(h.last_feed_at):Infinity;
     const route=source==='local'?'مسیر محلی':'مسیر ابری پشتیبان';
     if(!session.open){
-      showFeed('closed',session.label,h?.last_feed_at?`آخرین اطلاعات ثبت‌شده: ${new Date(h.last_feed_at).toLocaleTimeString('fa-IR',{timeZone:'Asia/Tehran'})} — ${route}`:session.detail);
+      showFeed('closed',session.label,h?.last_feed_at?`آخرین اطلاعات ثبت‌شده: ${marketFaDateTimeV416(h.last_feed_at)} — ${route}`:session.detail);
     }else if(h&&h.status==='ok'&&age<60000){
-      const when=new Date(h.last_feed_at).toLocaleTimeString('fa-IR',{timeZone:'Asia/Tehran'}),count=Number(h.symbols||0).toLocaleString('fa-IR');
+      const when=marketFaDateTimeV416(h.last_feed_at),count=Number(h.symbols||0).toLocaleString('fa-IR');
       showFeed('ok',session.label,`${session.detail} — آخرین دریافت: ${when} — ${count} نماد — ${route}`);
     }else if(h&&age<180000){
-      showFeed('warn','اطلاعات بازار با تأخیر دریافت می‌شود',`آخرین ارتباط ${new Date(h.last_feed_at).toLocaleTimeString('fa-IR',{timeZone:'Asia/Tehran'})} — ${route}`);
+      showFeed('warn','اطلاعات بازار با تأخیر دریافت می‌شود',`آخرین ارتباط ${marketFaDateTimeV416(h.last_feed_at)} — ${route}`);
     }else if(!hr.ok){
       showFeed('warn','داده بازار دریافت شد؛ وضعیت Feed در دسترس نیست',`اطلاعات نمادها بارگذاری شد اما endpoint سلامت Feed پاسخ HTTP ${hr.status} داد — ${route}.`);
     }else{
@@ -154,7 +161,7 @@ async function load(force=false){
       try{marketRenderAfterDataV416();}catch{}
     }
     if(!session.open){
-      const extra=cached?.savedAt?`آخرین snapshot ذخیره‌شده: ${new Date(cached.savedAt).toLocaleString('fa-IR',{timeZone:'Asia/Tehran'})}`:session.detail;
+      const extra=cached?.savedAt?`آخرین اطلاعات ذخیره‌شده: ${marketFaDateTimeV416(cached.savedAt)}`:session.detail;
       showFeed('closed',session.label,extra);
     }else if(rows.length||cached?.signals?.length){
       showFeed('warn','ارتباط زنده بازار موقتاً قطع است',marketOutageDetailV416(e,cached));
