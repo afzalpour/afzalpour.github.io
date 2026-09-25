@@ -1151,3 +1151,25 @@ Final delivery hashes:
 - ZIP SHA-256: `13f9c6a01091d51f81a7a41deb792b82e839e5755e09bc7667113de6fbbc2d30`
 
 The ZIP contains the EXE, one-click Shpaksa runner, one-click 30x3 batch runner, 90-case CSV, README and SHA256 manifest.
+
+
+## Forecast Final v4.3.0 — evidence-gated conclusion — 2026-09-25
+
+Input evidence: Forecast Audit v4.2.1 batch JSON supplied by the user.
+
+Observed evidence:
+- requested 90, completed 88;
+- clean after discontinuity quarantine: 70;
+- clean with at least one forecast: 68;
+- 3 independent anchor windows;
+- best individual mean APE: MACD/EMA ≈ 3.212%;
+- no individual model shows one-sided paired superiority over no-change baseline at p<0.05;
+- after Holm correction across five models, all adjusted p-values exceed 0.63;
+- research ensembles improved some full-sample metrics but failed the latest-window walk-forward stress test;
+- latest-window baseline mean APE ≈ 3.209%, while best individual model mean APE ≈ 3.279%.
+
+Decision:
+- five technical model outputs remain diagnostic;
+- production combined forecast price/direction is gated OFF;
+- final verdict: `NO_STATISTICALLY_CONFIRMED_EDGE`;
+- Frozen Hunt `4.1.6-hunt-v2` remains unchanged.
