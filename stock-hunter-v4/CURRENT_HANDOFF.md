@@ -1030,3 +1030,35 @@ Frozen Hunt 4.1.6 remains unchanged. Cloudflare/Iran-egress is parked as an opti
 
 Next operational action is only the first real Windows launch of the delivered package; no new infrastructure bootstrap is required.
 
+## Primary production feed pivot — PC Eco v4.1.0 — 2026-09-25
+
+Canonical architecture is now:
+`SHIKAR-PC-ECO-GITHUB-V1`.
+
+The persistent Iran-VPS/fixed-egress requirement is removed from the primary path.
+
+Merged PR #282:
+`6008fa6cd577cea8dc2301197dcafd722d83a84a`.
+
+Implemented:
+- Windows `Stock_Hunter_PC_Eco_Bridge_v4.1.0.exe`;
+- MarketWatch bulk every 30 seconds;
+- ClientType bulk every 120 seconds;
+- no whole-market per-symbol enrichment fan-out;
+- gzip upload capped at 220 rows;
+- Supabase Edge Function `stock-hunter-pc-ingest-v410` ACTIVE v1;
+- raw client credential injected only into the delivered binary; repository stores only its SHA-256 digest;
+- existing GitHub Pages + Supabase tables remain the public data path;
+- Frozen Hunt 4.1.6 remains browser-side and unchanged.
+
+Delivery identities:
+- EXE SHA-256: `ff1e2531c3420ab064dcd3df626c353c4e552e0048d6fdcb3db1c28c0afe1ecc`;
+- ZIP SHA-256: `b161de190f2f004bb54706b3d5961da6939541b3ca7246d5161c0933f9388e1e`.
+
+The old `SHIKAR-CLOUD-IRAN-EGRESS-V1` architecture is optional future redundancy only and is no longer a blocker.
+
+Remaining acceptance is only the genuine Windows client run:
+TSETMC fetch -> gzip upload -> feed-health advance -> fresh GitHub Pages display.
+
+Read `PC_ECO_PRODUCTION_ARCHITECTURE_CANONICAL.md` before making new feed-architecture changes.
+
