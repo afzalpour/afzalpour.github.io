@@ -1085,3 +1085,35 @@ Operational acceptance remains a real Windows market-hours run. A successful cyc
 `OK rows=<TOTAL> batches=<N> gzip=<KB> server=...`
 
 Do not reintroduce a top-N transport cutoff ahead of Frozen Hunt.
+
+
+## Forecast Audit v4.2.0 — exact symbol/date validation — 2026-09-25
+
+A dedicated point-in-time five-model audit tool is now part of the project.
+
+Purpose:
+- validate Ichimoku, Gann, Bollinger, MACD/EMA and OBV numerical scenarios against actual future closes;
+- reproduce the current `app-forecast.js` equations without changing Frozen Hunt 4.1.6;
+- prevent lookahead by truncating the 120-candle TSETMC history at the anchor date;
+- explicitly handle non-trading requested dates instead of silently pretending a candle exists;
+- report center APE, interval coverage, direction match and the no-change baseline.
+
+Default case is Shpaksa:
+- symbol `شپاکسا`;
+- ins code `11622051128546106`;
+- anchor `20260921` = 1405/06/30;
+- requested target `20260924` = 1405/07/02;
+- default non-trading policy: previous real session.
+
+Local verification before commit:
+- `go test ./...`: PASS;
+- `go vet ./...`: PASS;
+- built-in self-test: `SELFTEST PASS 4.2.0-forecast-audit models=5 no-lookahead=PASS`;
+- Windows amd64 cross-compile: PASS.
+
+Delivery:
+- `Stock_Hunter_Forecast_Audit_v4.2.0.exe`
+- EXE SHA-256: `62f6f38dd4d7ab311b0da23d6ecc5b5dbb1f1031f4c578b449af20edebd4e75c`
+- ZIP SHA-256: `de33a97f18e1771325a2140b337efd8fee4f3b96c0f07ce96ded5736d66b1945`
+
+The execution environment used to build this package cannot currently resolve `cdn.tsetmc.com`, so the real Shpaksa HTTP run must execute on the user's Windows network. Do not fabricate the real five-model result before that run.
