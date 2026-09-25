@@ -38,7 +38,12 @@ on:
       - 'stock-hunter-v4/config.js'
       - 'stock-hunter-v4/index.html'
       - 'stock-hunter-v4/index-v417.html'
+      - 'stock-hunter-v4/profile-v417.html'
+      - 'stock-hunter-v4/auth-v417.html'
+      - 'stock-hunter-v4/app-auth-v417.js'
+      - 'stock-hunter-v4/auth-v417.css'
       - 'stock-hunter-v4/styles.css'
+      - 'stock-hunter-v4/search-neutral-v416.css'
       - 'stock-hunter-v4/extra.css'
       - 'stock-hunter-v4/forecast-v415.css'
       - 'stock-hunter-v4/methodology.html'
@@ -100,6 +105,18 @@ jobs:
           grep -q 'app-session-v413.js?v=4.1.6' stock-hunter-v4/index.html
           grep -q 'app-forecast-validation-v430.js?v=4.3.0' stock-hunter-v4/index.html
           grep -q 'app-forecast-validation-v430.js?v=4.3.0' stock-hunter-v4/index-v417.html
+          grep -q 'search-neutral-v416.css?v=1' stock-hunter-v4/index.html
+          grep -q 'search-neutral-v416.css?v=1' stock-hunter-v4/index-v417.html
+          grep -q 'href="profile-v417.html">حساب من</a>' stock-hunter-v4/index.html
+          grep -q 'id="profileDisplayTitle"' stock-hunter-v4/profile-v417.html
+          grep -q 'app-auth-v417.js?v=2' stock-hunter-v4/profile-v417.html
+          grep -q "SAFE_NEXT=new Set(\['profile-v417.html','index-v417.html','admin-v417.html'\])" stock-hunter-v4/app-auth-v417.js
+          grep -q 'background:#131519' stock-hunter-v4/search-neutral-v416.css
+          grep -q 'background:#191c21' stock-hunter-v4/search-neutral-v416.css
+          if grep -q '#10243a' stock-hunter-v4/search-neutral-v416.css; then
+            echo "::error::Neutral search override must not reintroduce the old blue active background"
+            exit 1
+          fi
           grep -q 'NO_STATISTICALLY_CONFIRMED_EDGE' stock-hunter-v4/app-forecast-validation-v430.js
           grep -q 'finalForecastEnabled:false' stock-hunter-v4/app-forecast-validation-v430.js
           grep -q 'Final Gate: NO_EDGE' stock-hunter-v4/app-forecast-validation-v430.js

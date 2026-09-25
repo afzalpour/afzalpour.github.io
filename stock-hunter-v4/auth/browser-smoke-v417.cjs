@@ -29,6 +29,18 @@ async function waitPersonalReady(page){
   await page.locator('#personalSaveStateV417').waitFor({state:'visible'});
 }
 
+async function waitProfileReady(page){
+  await page.waitForURL(/profile-v417\.html(?:$|[?#])/, {timeout:30000});
+  await page.locator('#profilePage').waitFor({state:'visible',timeout:10000});
+  await page.waitForFunction(()=>{
+    const title=document.getElementById('profileDisplayTitle');
+    const role=document.getElementById('profileRole');
+    const status=document.getElementById('profileStatus');
+    return title && title.textContent && title.textContent!=='کاربر شکارچی سهم' &&
+      role && role.textContent && status && status.textContent==='active';
+  },null,{timeout:20000});
+}
+
 async function waitSynced(page){
   await page.waitForFunction(()=>{
     const el=document.getElementById('personalSaveStateV417');
@@ -51,14 +63,31 @@ async function main(){
   });
 
   try{
-    await page.goto(BASE_URL+'/index-v417.html',{waitUntil:'domcontentloaded',timeout:30000});
-    await page.waitForURL(/auth-v417\.html\?next=index-v417\.html/, {timeout:20000});
+    await page.goto(BASE_URL+'/index.html',{waitUntil:'domcontentloaded',timeout:30000});
+    const accountLink=page.locator('a.top-link[href="profile-v417.html"]');
+    await accountLink.waitFor({state:'visible',timeout:10000});
+    await Promise.all([
+      page.waitForURL(/auth-v417\.html\?next=profile-v417\.html/, {timeout:20000}),
+      accountLink.click()
+    ]);
 
     await page.fill('#email',EMAIL);
     await page.fill('#password',PASSWORD);
     await Promise.all([
-      page.waitForURL(/index-v417\.html(?:$|[?#])/, {timeout:30000}),
+      page.waitForURL(/profile-v417\.html(?:$|[?#])/, {timeout:30000}),
       page.click('#authSubmit')
+    ]);
+    await waitProfileReady(page);
+
+    assert.equal((await page.locator('#profileDisplayTitle').textContent()).trim(),'CI Browser Smoke');
+    assert.equal((await page.locator('#profileRole').textContent()).trim(),'user');
+    assert.equal((await page.locator('#profileStatus').textContent()).trim(),'active');
+    assert.equal(await page.locator('#adminConsoleLink').isHidden(),true,'normal user profile must hide admin link');
+    assert.match((await page.locator('#profileEmail').textContent())||'',/@example\.invalid$/);
+
+    await Promise.all([
+      page.waitForURL(/index-v417\.html(?:$|[?#])/, {timeout:30000}),
+      page.click('a.profile-primary-link[href="index-v417.html"]')
     ]);
     await waitPersonalReady(page);
 
@@ -144,6 +173,8 @@ async function main(){
 
     console.log(JSON.stringify({
       result:'stock-hunter-v417-authenticated-browser-smoke: PASS',
+      public_account_to_own_profile:true,
+      profile_to_personal_market:true,
       preference_persistence:true,
       watchlist_create_add_reload_remove:true,
       admin_isolation:true,
