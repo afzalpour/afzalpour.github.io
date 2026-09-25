@@ -75,6 +75,10 @@ jobs:
           grep -q "key:'fib'" stock-hunter-v4/app-forecast.js
           grep -q 'مقایسه ۶ سناریوی عددی' stock-hunter-v4/app-forecast.js
           grep -q 'فیبوناچی' stock-hunter-v4/app-forecast-validation-v430.js
+          grep -q 'detailHTML = function(...args)' stock-hunter-v4/app-integrated-v410.js
+          grep -q 'detailHTML=function(...args)' stock-hunter-v4/app-explain-v411.js
+          grep -q 'detailHTML(x,...models.map(m=>m.data))' stock-hunter-v4/app-hotfix-v410.js
+          grep -q 'این شش مدل فقط نمایشی‌اند' stock-hunter-v4/app-hotfix-v410.js
           node --check stock-hunter-v4/app-theme-v412.js
           node --check stock-hunter-v4/app-session-v413.js
           node --check stock-hunter-v4/app-hunt-v416.js
