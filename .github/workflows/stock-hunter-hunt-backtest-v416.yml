@@ -1,0 +1,124 @@
+name: Stock Hunter Frozen Hunt 4.1.6 Real Backtest
+
+on:
+  push:
+    branches: [main, 'stock-hunter-hunt-backtest-v416']
+    paths:
+      - 'stock-hunter-v4/cloud-v1/historical/hunt-backtest-v416.ts'
+      - '.github/workflows/stock-hunter-hunt-backtest-v416.yml'
+      - 'stock-hunter-v4/research/HUNT_BACKTEST_V416_README.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stock-hunter-hunt-backtest-v416
+  cancel-in-progress: false
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    environment: stock-hunter-cloud-production
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      BUCKET: stock-hunter-market-v1
+      STOCK_HUNTER_RAW_PACK_MAX_BYTES: '200000000'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pinned replay tooling
+        working-directory: stock-hunter-v4/cloud-v1/cloudflare
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Self-test backtest harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./stock-hunter-v4/cloud-v1/cloudflare/node_modules/.bin/tsx             stock-hunter-v4/cloud-v1/historical/hunt-backtest-v416.ts --self-test
+
+      - name: Require R2 credentials
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$AWS_ACCESS_KEY_ID"
+          test -n "$AWS_SECRET_ACCESS_KEY"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+
+      - name: Discover prospective R2 dates
+        if: github.ref == 'refs/heads/main'
+        id: dates
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint="https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com"
+          mkdir -p backtest-input
+          {
+            aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "packs/raw-v1/" --delimiter "/"               --endpoint-url "$endpoint" --query 'CommonPrefixes[].Prefix' --output text || true
+            aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "raw/v1/" --delimiter "/"               --endpoint-url "$endpoint" --query 'CommonPrefixes[].Prefix' --output text || true
+          } | tr '\t' '\n' | sed -nE 's#^(packs/raw-v1/|raw/v1/)([0-9]{4}-[0-9]{2}-[0-9]{2})/$#\2#p' | sort -u > dates.txt
+          echo "Discovered dates:"
+          cat dates.txt
+          test -s dates.txt
+
+      - name: Materialize daily packs
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint="https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com"
+          while IFS= read -r date; do
+            [ -n "$date" ] || continue
+            pack="packs/raw-v1/$date/market-facts.ndjson.gz"
+            if aws s3api head-object --bucket "$BUCKET" --key "$pack" --endpoint-url "$endpoint" >/dev/null 2>&1; then
+              echo "$date: existing pack"
+              aws s3 cp "s3://$BUCKET/$pack" "backtest-input/$date.ndjson.gz"                 --endpoint-url "$endpoint" --only-show-errors
+              continue
+            fi
+
+            count="$(aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "raw/v1/$date/"               --max-items 1 --endpoint-url "$endpoint" --query 'KeyCount' --output text)"
+            if [ "$count" = "0" ]; then
+              echo "$date: no raw data"
+              continue
+            fi
+            echo "$date: compacting prospective raw snapshots"
+            rm -rf raw-day local-pack
+            mkdir -p raw-day local-pack
+            aws s3 cp "s3://$BUCKET/raw/v1/$date/" raw-day/ --recursive               --endpoint-url "$endpoint" --only-show-errors
+            node stock-hunter-v4/cloud-v1/historical/compact-r2-day-v1.mjs               --input raw-day --output local-pack --date "$date"
+            cp local-pack/market-facts.ndjson.gz "backtest-input/$date.ndjson.gz"
+          done < dates.txt
+          ls -lh backtest-input
+          test -n "$(find backtest-input -maxdepth 1 -name '*.ndjson.gz' -print -quit)"
+
+      - name: Run exact Frozen Hunt 4.1.6 backtest
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./stock-hunter-v4/cloud-v1/cloudflare/node_modules/.bin/tsx             stock-hunter-v4/cloud-v1/historical/hunt-backtest-v416.ts             --input-dir backtest-input --output-dir backtest-out
+
+      - name: Show report
+        if: github.ref == 'refs/heads/main'
+        run: cat backtest-out/HUNT_BACKTEST_REPORT_V416.md
+
+      - name: Upload backtest artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: stock-hunter-hunt-backtest-v416-real
+          path: |
+            backtest-out/hunt-backtest-v416.json
+            backtest-out/hunt-backtest-alerts-v416.csv
+            backtest-out/HUNT_BACKTEST_REPORT_V416.md
+            dates.txt
+          retention-days: 30
+          if-no-files-found: error
