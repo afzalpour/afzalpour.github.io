@@ -891,3 +891,10 @@ v4.5.1 mechanical checks all PASS, but its historical verdict is NOT a model res
 Package SHA-256: `dcd0ae9e844fc6bf098a7b59f60f6a0bc83d3d70356cb656b2e2420f2d7a2f99`
 
 Next primary action: run v4.5.2 and require nonzero `TradeParsed` and `DailyReference` before interpreting any Hunt quality verdict.
+
+
+## Model Validation v4.5.3 fast precheck — 2026-09-25
+
+Use v4.5.3 instead of v4.5.1/v4.5.2. It repairs canonical TradeHistory/daily cache names and adds a fast precheck so unreadable historical evidence exits quickly instead of running the full replay. Package SHA-256: `1ba10a6bdd487671cbcfed8270ce95d52dcf6b9bff04bff92d3a745e5844a88c`.
+
+Do not interpret v4.5.1's `HISTORICAL_DATA_INADEQUATE` as a Hunt-model result because `TradeParsed=0` and `DailyReference=0`.
