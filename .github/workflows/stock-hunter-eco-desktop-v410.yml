@@ -1,0 +1,47 @@
+name: Stock Hunter Eco Desktop v4.1.0
+
+on:
+  pull_request:
+    paths:
+      - 'stock-hunter-v4/local-first/eco-desktop-v410/**'
+      - '.github/workflows/stock-hunter-eco-desktop-v410.yml'
+      - 'stock-hunter-v4/PROJECT_CANONICAL_ARCHITECTURE.md'
+      - 'stock-hunter-v4/CURRENT_HANDOFF.md'
+  push:
+    branches: [main]
+    paths:
+      - 'stock-hunter-v4/local-first/eco-desktop-v410/**'
+      - '.github/workflows/stock-hunter-eco-desktop-v410.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  controller:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: stock-hunter-v4/local-first/eco-desktop-v410
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+      - name: Reconstruct exact source
+        run: bash ./reconstruct-main.sh
+      - name: Unit tests
+        run: go test ./...
+      - name: Vet
+        run: go vet ./...
+      - name: Cross-compile Windows x64
+        env:
+          GOOS: windows
+          GOARCH: amd64
+          CGO_ENABLED: '0'
+        run: go build -trimpath -ldflags='-s -w' -o Stock_Hunter_Eco_Desktop_v4.1.0.exe .
+      - name: Verify frozen child pins remain exact
+        run: |
+          grep -F '0b80d20a349ca5d92acb7c61f4f23ab6a4dd747f33b1509f2fdf3d6f40abb8b4' main.go
+          grep -F '12c286f9dfc4908aa495e9227594d7b4ac15a3ee34235f48010df452ebf6ebf1' main.go
+          grep -F '4.1.6-hunt-v2' main.go
