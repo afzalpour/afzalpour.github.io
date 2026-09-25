@@ -183,7 +183,7 @@ jobs:
           html=Path('stock-hunter-v4/performance.html').read_text(encoding='utf-8')
           js=Path('stock-hunter-v4/performance-v416.js').read_text(encoding='utf-8')
           assert 'این صفحه احتمال موفقیت مدل را نمایش نمی‌دهد.' in html
-          assert 'قیمت اولین Alert' in html
+          assert 'قیمت نخستین هشدار' in html
           assert 'stock_hunter_hunt_performance_v416' in js
           assert 'stock_hunter_hunt_outcomes_v416' in js
           assert 'positive_rate_1d_pct' in js
