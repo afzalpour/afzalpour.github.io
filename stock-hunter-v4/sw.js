@@ -2,7 +2,7 @@
 // Recovery/Re-entry release gate: all CI workflows validate this same service-worker head.
 const CACHE='shikar-sahm-v4.1.6-r13';
 const STATIC=[
-  './','./index.html','./styles.css','./extra.css','./forecast-v415.css',
+  './','./index.html','./styles.css','./extra.css','./forecast-v415.css','./neutral-theme-v416.css',
   './app-core.js','./app-forecast.js','./app-runtime.js','./app-universe.js',
   './app-hotfix-v410.js','./app-integrated-v410.js','./app-integrated-summary-v410.js',
   './app-explain-v411.js','./app-forecast-bridge-v414.js','./app-forecast-trend-v415.js','./app-forecast-validation-v430.js',
