@@ -1211,3 +1211,57 @@ Delivery integration:
 - loaded by both `index.html` and `index-v417.html` after `app-forecast-trend-v415.js`;
 - precached by service worker cache `shikar-sahm-v4.1.6-r13`;
 - UI CI checks JS syntax, load order, gate semantics and service-worker presence.
+
+
+## Frozen Hunt 4.1.6 prospective effectiveness tracker — 2026-09-25
+
+The primary Hunt-model backtest path is now live in Supabase. This supersedes the five-model forecast track as the main validation priority.
+
+Live prospective start: **2026-09-26**.
+
+New internal objects:
+- `stock_hunter_hunt_effectiveness_control_v416`
+- `stock_hunter_hunt_market_tape_v416`
+- `stock_hunter_hunt_effectiveness_v416`
+- `stock_hunter_hunt_effectiveness_summary_v416`
+- `private.capture_stock_hunter_hunt_market_tape_v416()`
+- `private.refresh_stock_hunter_hunt_effectiveness_v416()`
+
+Tracked outcome contract:
+- ACTION_NOW and RADAR separately;
+- first alert per symbol/day/channel;
+- same-day cross zero, +1/+2/+3, mode target, buy queue any/close;
+- next observed session D+1 positive close, +1/+2/+3, buy queue any/close;
+- same-day and D+1 MFE/MAE/return;
+- no synthetic historical D+1 or queue backfill.
+
+Tape retention is 30 days; permanent effectiveness rows are retained.
+
+Five live cron jobs are active:
+- tape open: `30-59 5 * * 0-3,6`
+- tape mid: `* 6-8 * * 0-3,6`
+- tape close: `0-30 9 * * 0-3,6`
+- effectiveness close A: `35 9 * * 0-3,6`
+- effectiveness close B: `25 14 * * 0-3,6`
+
+Rollback-only probe PASS:
+- synthetic -1% Reversal crossed zero same day;
+- D+1 resolved to next observed session;
+- D+1 +1, positive close and buy queue any/close all PASS;
+- transaction rolled back;
+- residue counts all zero.
+
+Security:
+- all three new public tables have RLS enabled;
+- anon/authenticated table grants revoked;
+- mutation functions live in private schema, SECURITY INVOKER, empty search_path;
+- anon/authenticated function execution revoked;
+- Security Advisor shows only intentional fail-closed RLS-with-no-policy INFO for the new tables.
+
+Historical R2 replay remains manual-only because the current GitHub environment has no R2 credentials. No historical queue evidence is fabricated.
+
+NEXT LIVE ACCEPTANCE:
+1. On the first real market session on/after 2026-09-26, confirm tape rows accumulate only for real Hunt-alert symbols.
+2. After close, confirm same-day effectiveness rows mature.
+3. On the next observed market session, confirm D+1 rows mature and buy-queue fields populate.
+4. Only after multiple genuine sessions accumulate, compute statistically meaningful primary Hunt success rates.

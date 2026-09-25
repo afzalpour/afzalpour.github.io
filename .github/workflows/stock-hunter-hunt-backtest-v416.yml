@@ -1,12 +1,6 @@
 name: Stock Hunter Frozen Hunt 4.1.6 Real Backtest
 
 on:
-  push:
-    branches: [main, 'stock-hunter-hunt-backtest-v416']
-    paths:
-      - 'stock-hunter-v4/cloud-v1/historical/hunt-backtest-v416.ts'
-      - '.github/workflows/stock-hunter-hunt-backtest-v416.yml'
-      - 'stock-hunter-v4/research/HUNT_BACKTEST_V416_README.md'
   workflow_dispatch:
 
 permissions:

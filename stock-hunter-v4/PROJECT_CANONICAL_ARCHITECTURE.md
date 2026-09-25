@@ -234,3 +234,37 @@ The deployed 4.1.7 browser/login/personal/Admin-isolation smoke is PASS, but fin
 - Leaked Password Protection when the project plan supports the Pro-only feature;
 - password-recovery/public redirect smoke after URL configuration is corrected.
 These platform blockers must not be bypassed with browser-side redirect weakening or fake HIBP logic.
+
+
+## 13. Frozen Hunt 4.1.6 prospective effectiveness tracking
+Primary model validation is outcome-based and prospective.
+
+Canonical tracker objects:
+- `stock_hunter_hunt_market_tape_v416`: bounded narrow market tape only for symbols with a real Hunt alert;
+- `stock_hunter_hunt_effectiveness_v416`: permanent deduplicated alert-outcome ledger;
+- `stock_hunter_hunt_effectiveness_summary_v416`: aggregate effectiveness view;
+- `stock_hunter_hunt_effectiveness_control_v416`: prospective boundary and operational status.
+
+Prospective D+1 tracking begins on **2026-09-26**. Older missing sessions or queue state must never be synthetically backfilled from later market state.
+
+Two channels are measured independently:
+- **ACTION_NOW**: first actual `شکار ویژه` / `هشدار فوری` event per symbol/day;
+- **RADAR**: first non-quarantined `شکار زودهنگام` Shadow Sample per symbol/day.
+
+Permanent outcomes include:
+- same-day cross of 0%;
+- same-day +1/+2/+3 reach;
+- same-day mode target reach/close;
+- same-day canonical buy queue any-time / close;
+- next observed market-session (D+1) positive close;
+- D+1 +1/+2/+3 reach;
+- D+1 canonical buy queue any-time / close;
+- MFE/MAE and return from the original alert price.
+
+Canonical buy queue is the existing feed `buy_queue` feature (level-1 best bid approximately equals `max_allowed` with positive bid quantity). The effectiveness layer must not substitute a price-change proxy for queue state.
+
+The narrow tape has 30-day retention; permanent alert outcomes remain after tape cleanup.
+
+Missing/unmatured D+1 evidence is excluded from denominators and is never counted as failure.
+
+This tracking layer is observational only. It does **not** modify Frozen Hunt `4.1.6-hunt-v2` formulas, thresholds, state classification, Action Now/Radar visibility, calibration gates, or production routing.
