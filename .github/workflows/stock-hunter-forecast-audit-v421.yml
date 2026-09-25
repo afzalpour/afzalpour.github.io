@@ -1,0 +1,62 @@
+name: Stock Hunter Forecast Audit v4.2.1
+
+on:
+  pull_request:
+    paths:
+      - 'stock-hunter-v4/forecast-audit-v421/**'
+      - '.github/workflows/stock-hunter-forecast-audit-v421.yml'
+      - 'stock-hunter-v4/CURRENT_HANDOFF.md'
+  push:
+    branches: [main]
+    paths:
+      - 'stock-hunter-v4/forecast-audit-v421/**'
+      - '.github/workflows/stock-hunter-forecast-audit-v421.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  forecast-audit-v421:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: stock-hunter-v4/forecast-audit-v421
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+      - name: Unit tests
+        run: go test ./...
+      - name: Vet
+        run: go vet ./...
+      - name: Built-in no-lookahead self-test
+        run: go run . --self-test
+      - name: Cross-compile Windows x64
+        env:
+          GOOS: windows
+          GOARCH: amd64
+          CGO_ENABLED: '0'
+        run: go build -trimpath -ldflags='-s -w' -o Stock_Hunter_Forecast_Audit_v4.2.1.exe .
+      - name: Verify v4.2.1 contract
+        run: |
+          grep -F '4.2.1-forecast-audit' main.go
+          grep -F 'EXCLUDED_CORPORATE_ACTION' main.go
+          grep -F 'range_covered_display_rounded' main.go
+          grep -F 'func runBatch' main.go
+          test "$(tail -n +2 BATCH_SAMPLE_30X3.csv | wc -l)" -eq 90
+      - name: Package Windows delivery
+        run: |
+          sha256sum Stock_Hunter_Forecast_Audit_v4.2.1.exe > SHA256.txt
+          zip -j Stock_Hunter_Forecast_Audit_v4.2.1.zip             Stock_Hunter_Forecast_Audit_v4.2.1.exe             RUN_SHPAKSA_BACKTEST.cmd             RUN_BATCH_30X3.cmd             BATCH_SAMPLE_30X3.csv             README.md             SHA256.txt
+          sha256sum Stock_Hunter_Forecast_Audit_v4.2.1.zip >> SHA256.txt
+      - name: Upload Windows delivery
+        uses: actions/upload-artifact@v4
+        with:
+          name: Stock_Hunter_Forecast_Audit_v4.2.1
+          path: |
+            stock-hunter-v4/forecast-audit-v421/Stock_Hunter_Forecast_Audit_v4.2.1.exe
+            stock-hunter-v4/forecast-audit-v421/Stock_Hunter_Forecast_Audit_v4.2.1.zip
+            stock-hunter-v4/forecast-audit-v421/SHA256.txt
+          if-no-files-found: error
