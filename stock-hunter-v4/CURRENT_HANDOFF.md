@@ -992,3 +992,41 @@ deploy -> Iran `--source-probe` -> signed `--once` -> `/v1/health` + `/v1/latest
 
 Production actionable Hunt remains fail-closed until that real operational/prospective evidence exists.
 
+## Eco Desktop primary-path replacement — 2026-09-25
+
+The owner explicitly replaced the fixed-Iran-IP / persistent Iran VPS prerequisite with the PC-local Eco path.
+
+Primary operational package:
+`Stock_Hunter_Eco_Desktop_v4.1.0.zip`
+
+Package SHA-256:
+`0799b882dd04231e9da21ad5dff03da1ef6da5c950ec2c20c93b67393a38f533`
+
+Controller:
+- `Stock_Hunter_Eco_Desktop_v4.1.0.exe`;
+- SHA-256 `3a9dbc52f9732a2d6aa57b61e945bceeaa6850a9f80a422ded429a50f729ac6b`;
+- supervises exact active Eco v4.0.8 during the Tehran market window and exact passive v4.0.9 off-hours;
+- serves controller status on `127.0.0.1:41717`;
+- live market REST remains `127.0.0.1:41716`;
+- GitHub Pages remains the public UI;
+- no fixed Iran IP, VPS, Cloudflare credential, GitHub token, or rolling live-data commit is required for normal use.
+
+Resource hardening:
+- child `GOMAXPROCS=2`;
+- BelowNormal Windows priority;
+- health check every 15 seconds;
+- restart after 3 consecutive failures with bounded 5-60 second backoff;
+- bounded log rotation;
+- old Feed Agent / Local Bridge processes are removed before transitions.
+
+Verification before delivery:
+- controller Go unit tests PASS;
+- controller self-test PASS;
+- Windows amd64 cross-compile PASS;
+- child SHA pin validation PASS;
+- shutdown double-Wait race repaired before final package hash.
+
+Frozen Hunt 4.1.6 remains unchanged. Cloudflare/Iran-egress is parked as an optional future path and must not be treated as the next mandatory blocker.
+
+Next operational action is only the first real Windows launch of the delivered package; no new infrastructure bootstrap is required.
+
