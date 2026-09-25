@@ -1,0 +1,126 @@
+name: Stock Hunter Cloud Live Shadow v4.1.6
+
+on:
+  workflow_dispatch:
+    inputs:
+      tehran_date:
+        description: 'Tehran market date YYYY-MM-DD (blank = today in Tehran)'
+        required: false
+        type: string
+  schedule:
+    - cron: '5 15 * * 0-3,6'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stock-hunter-cloud-shadow-v416-${{ github.event.inputs.tehran_date || 'scheduled' }}
+  cancel-in-progress: false
+
+jobs:
+  shadow:
+    runs-on: ubuntu-latest
+    environment: stock-hunter-cloud-production
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      BUCKET: stock-hunter-market-v1
+      STOCK_HUNTER_RAW_PACK_MAX_BYTES: '200000000'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Require bounded R2 credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$AWS_ACCESS_KEY_ID"
+          test -n "$AWS_SECRET_ACCESS_KEY"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+
+      - name: Install pinned replay tooling
+        working-directory: stock-hunter-v4/cloud-v1/cloudflare
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Resolve Tehran date
+        id: date
+        shell: bash
+        env:
+          INPUT_DATE: ${{ github.event.inputs.tehran_date || '' }}
+        run: |
+          set -euo pipefail
+          d="$INPUT_DATE"
+          if [ -z "$d" ]; then d="$(TZ=Asia/Tehran date +%F)"; fi
+          [[ "$d" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]
+          echo "value=$d" >> "$GITHUB_OUTPUT"
+
+      - name: Locate prospective market pack or raw snapshots
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint="https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com"
+          date="${{ steps.date.outputs.value }}"
+          pack="packs/raw-v1/$date/market-facts.ndjson.gz"
+          if aws s3api head-object --bucket "$BUCKET" --key "$pack" --endpoint-url "$endpoint" >/dev/null 2>&1; then
+            echo "pack=1" >> "$GITHUB_OUTPUT"
+            echo "raw=0" >> "$GITHUB_OUTPUT"
+          else
+            count="$(aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "raw/v1/$date/" --max-items 1 --endpoint-url "$endpoint" --query 'KeyCount' --output text)"
+            echo "pack=0" >> "$GITHUB_OUTPUT"
+            echo "raw=$count" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download existing daily pack
+        if: steps.source.outputs.pack == '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint="https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com"
+          mkdir -p shadow-input
+          aws s3 cp "s3://$BUCKET/packs/raw-v1/${{ steps.date.outputs.value }}/market-facts.ndjson.gz"             shadow-input/market-facts.ndjson.gz --endpoint-url "$endpoint" --only-show-errors
+
+      - name: Build pack from prospective raw snapshots when needed
+        if: steps.source.outputs.pack != '1' && steps.source.outputs.raw != '0'
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint="https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com"
+          mkdir -p raw-day shadow-input
+          aws s3 cp "s3://$BUCKET/raw/v1/${{ steps.date.outputs.value }}/" raw-day/             --recursive --endpoint-url "$endpoint" --only-show-errors
+          node stock-hunter-v4/cloud-v1/historical/compact-r2-day-v1.mjs             --input raw-day --output local-pack --date "${{ steps.date.outputs.value }}"
+          cp local-pack/market-facts.ndjson.gz shadow-input/market-facts.ndjson.gz
+
+      - name: Replay exact Frozen Hunt Shadow
+        if: steps.source.outputs.pack == '1' || steps.source.outputs.raw != '0'
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./stock-hunter-v4/cloud-v1/cloudflare/node_modules/.bin/tsx             stock-hunter-v4/cloud-v1/historical/shadow-replay-v416.ts             --input shadow-input/market-facts.ndjson.gz             --output shadow-out/shadow-v416-report.json             --date "${{ steps.date.outputs.value }}"
+
+      - name: Persist bounded Shadow report
+        if: steps.source.outputs.pack == '1' || steps.source.outputs.raw != '0'
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint="https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com"
+          key="packs/raw-v1/${{ steps.date.outputs.value }}/shadow-v416-report.json"
+          aws s3 cp shadow-out/shadow-v416-report.json "s3://$BUCKET/$key"             --endpoint-url "$endpoint" --only-show-errors
+          aws s3api head-object --bucket "$BUCKET" --key "$key" --endpoint-url "$endpoint" >/dev/null
+
+      - uses: actions/upload-artifact@v4
+        if: steps.source.outputs.pack == '1' || steps.source.outputs.raw != '0'
+        with:
+          name: stock-hunter-shadow-v416-${{ steps.date.outputs.value }}
+          path: shadow-out/shadow-v416-report.json
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: No prospective data notice
+        if: steps.source.outputs.pack != '1' && steps.source.outputs.raw == '0'
+        run: echo "No prospective cloud snapshots for ${{ steps.date.outputs.value }}; no Shadow evidence fabricated."

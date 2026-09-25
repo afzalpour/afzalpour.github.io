@@ -106,6 +106,10 @@ jobs:
         working-directory: stock-hunter-v4/cloud-v1/cloudflare
         run: npm run test:compactor
 
+      - name: Prospective R2 Shadow replay contract
+        working-directory: stock-hunter-v4/cloud-v1/cloudflare
+        run: npm run test:shadow
+
       - name: Staging cloud client fail-closed contract
         working-directory: stock-hunter-v4/cloud-v1/cloudflare
         run: npm run test:client
