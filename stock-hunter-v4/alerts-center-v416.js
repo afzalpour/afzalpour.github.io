@@ -2,50 +2,69 @@
 const R=StockHunterResearchV416;const $=id=>document.getElementById(id);let alertRows=[],firstLoad=true,timer=null;
 const kindFa={detect:'کشف شکار',zero:'عبور از صفر',plus1:'رسیدن به +۱٪',plus2:'رسیدن به +۲٪',plus3:'رسیدن به +۳٪'};
 const kindIcon={detect:'◎',zero:'↗',plus1:'✓',plus2:'✓✓',plus3:'★'};
+const levelFa={early:'شکار زودهنگام',special:'شکار ویژه',success:'عبور موفق'};
 function soundEnabled(){return localStorage.getItem('stockHunterAlertSoundV416')==='1';}
 function renderSound(){$('soundToggle').textContent='صدای هشدار: '+(soundEnabled()?'روشن':'خاموش');$('soundToggle').classList.toggle('active',soundEnabled());}
-function beep(level=1){
- if(!soundEnabled())return;try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=new C(),o=c.createOscillator(),g=c.createGain();o.frequency.value=level>=3?880:level===2?660:520;g.gain.value=.035;o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+.13);o.onended=()=>c.close();}catch(_){}
+function tone(ctx,freq,start,dur,gain=.032){const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=freq;g.gain.setValueAtTime(gain,ctx.currentTime+start);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+start+dur);o.connect(g);g.connect(ctx.destination);o.start(ctx.currentTime+start);o.stop(ctx.currentTime+start+dur);}
+function beep(levelKey,force=false){
+ if(!force&&!soundEnabled())return;
+ try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=new C();
+   if(levelKey==='early')tone(c,520,0,.13);
+   else if(levelKey==='special'){tone(c,700,0,.12);tone(c,820,.16,.14);}
+   else{tone(c,760,0,.10);tone(c,920,.12,.11);tone(c,1080,.25,.16);}
+   setTimeout(()=>c.close().catch(()=>{}),700);
+ }catch(_){}
 }
 function notificationAllowed(){return 'Notification'in window&&Notification.permission==='granted';}
 async function requestNotify(){
  if(!('Notification'in window)){R.setStatus('این مرورگر از اعلان پشتیبانی نمی‌کند.','bad');return;}
- const p=await Notification.requestPermission();$('notifyBtn').textContent=p==='granted'?'اعلان مرورگر: فعال':'اعلان مرورگر: غیرفعال';$('notifyBtn').classList.toggle('active',p==='granted');
+ const p=await Notification.requestPermission();$('notifyBtn').textContent=p==='granted'?'اعلان برنامه: فعال':'اعلان برنامه: غیرفعال';$('notifyBtn').classList.toggle('active',p==='granted');
+ if(p==='granted')R.setStatus('اعلان برنامه فعال شد. رخداد تازه فقط یک‌بار اعلان می‌شود.','ok');
 }
-function notify(a){
+async function notify(a){
  if(!notificationAllowed())return;
- const body=a.symbol+' — '+kindFa[a.kind]+(a.dayChange!=null?' — '+R.pct(a.dayChange):'');
- try{new Notification('شکارچی سهم: '+kindFa[a.kind],{body,icon:'icon.svg',tag:a.key,renotify:false});}catch(_){}
+ const title='شکارچی سهم — '+levelFa[a.levelKey],body=a.symbol+' — '+kindFa[a.kind]+(a.dayChange!=null?' — '+R.pct(a.dayChange):'');
+ const options={body,icon:'icon.svg',badge:'icon.svg',tag:a.key,renotify:false,data:{url:'alerts-center-v416.html'}};
+ try{
+   if('serviceWorker'in navigator){const reg=await navigator.serviceWorker.ready;await reg.showNotification(title,options);return;}
+   new Notification(title,options);
+ }catch(_){}
+}
+function alertLevel(x,kind){
+ if(kind!=='detect')return'success';
+ return x.channel==='RADAR'?'early':'special';
 }
 function buildAlerts(rows){
  const out=[];for(const x of rows){
-   out.push({key:x.channel+'|'+x.trade_date+'|'+x.symbol_id+'|detect|'+x.detected_at,kind:'detect',at:x.detected_at,symbol:x.symbol,company:x.company_name,dayChange:x.detected_day_change,score:x.hunt_score,state:x.hunt_state,level:x.hunt_state==='شکار ویژه'?3:x.hunt_state==='هشدار فوری'?2:1});
-   if(x.crossed_zero_at)out.push({key:x.channel+'|'+x.trade_date+'|'+x.symbol_id+'|zero|'+x.crossed_zero_at,kind:'zero',at:x.crossed_zero_at,symbol:x.symbol,company:x.company_name,dayChange:0,score:x.hunt_score,state:x.hunt_state,level:1});
-   if(x.crossed_plus1_at)out.push({key:x.channel+'|'+x.trade_date+'|'+x.symbol_id+'|plus1|'+x.crossed_plus1_at,kind:'plus1',at:x.crossed_plus1_at,symbol:x.symbol,company:x.company_name,dayChange:1,score:x.hunt_score,state:x.hunt_state,level:2});
-   if(x.crossed_plus2_at)out.push({key:x.channel+'|'+x.trade_date+'|'+x.symbol_id+'|plus2|'+x.crossed_plus2_at,kind:'plus2',at:x.crossed_plus2_at,symbol:x.symbol,company:x.company_name,dayChange:2,score:x.hunt_score,state:x.hunt_state,level:2});
-   if(x.crossed_plus3_at)out.push({key:x.channel+'|'+x.trade_date+'|'+x.symbol_id+'|plus3|'+x.crossed_plus3_at,kind:'plus3',at:x.crossed_plus3_at,symbol:x.symbol,company:x.company_name,dayChange:3,score:x.hunt_score,state:x.hunt_state,level:3});
+   const add=(kind,at,dayChange)=>{
+     if(!at)return;const levelKey=alertLevel(x,kind),key=x.channel+'|'+x.trade_date+'|'+x.symbol_id+'|'+kind+'|'+at;
+     out.push({key,kind,levelKey,at,symbol:x.symbol,company:x.company_name,dayChange,score:x.hunt_score,state:x.hunt_state,channel:x.channel});
+   };
+   add('detect',x.detected_at,x.detected_day_change);add('zero',x.crossed_zero_at,0);add('plus1',x.crossed_plus1_at,1);add('plus2',x.crossed_plus2_at,2);add('plus3',x.crossed_plus3_at,3);
  }
  return out.sort((a,b)=>new Date(b.at)-new Date(a.at));
 }
-function filteredAlerts(){const k=$('alertKind').value;return alertRows.filter(x=>!k||x.kind===k);}
+function filteredAlerts(){const k=$('alertKind').value,l=$('alertLevel').value;return alertRows.filter(x=>(!k||x.kind===k)&&(!l||x.levelKey===l));}
 function renderAlerts(){
- const a=filteredAlerts();$('aTotal').textContent=R.fa(alertRows.length);for(const k of ['detect','zero','plus1','plus2','plus3'])$('a'+(k==='detect'?'Detect':k==='zero'?'Zero':k==='plus1'?'Plus1':k==='plus2'?'Plus2':'Plus3')).textContent=R.fa(alertRows.filter(x=>x.kind===k).length);
- $('alertList').innerHTML=a.length?a.map(x=>`<article class="alert-item level-${x.level}"><div class="alert-icon">${kindIcon[x.kind]}</div><div><div class="alert-title">${R.esc(x.symbol)} — ${kindFa[x.kind]}</div><div class="alert-meta">${R.esc(x.company||'')} · ${R.esc(x.state||'')} · امتیاز شکار ${R.fa(x.score,1)}${x.dayChange!=null?' · '+R.pct(x.dayChange):''}</div></div><div class="alert-time">${R.jalaliDate(x.at)}<br>${R.time(x.at)}</div></article>`).join(''):'<div class="empty">هشداری برای این فیلتر وجود ندارد.</div>';
+ const a=filteredAlerts();$('aTotal').textContent=R.fa(alertRows.length);$('aEarly').textContent=R.fa(alertRows.filter(x=>x.levelKey==='early').length);$('aSpecial').textContent=R.fa(alertRows.filter(x=>x.levelKey==='special').length);$('aSuccess').textContent=R.fa(alertRows.filter(x=>x.levelKey==='success').length);$('aPlus1').textContent=R.fa(alertRows.filter(x=>x.kind==='plus1').length);$('aPlus3').textContent=R.fa(alertRows.filter(x=>x.kind==='plus3').length);
+ $('alertList').innerHTML=a.length?a.map(x=>`<article class="alert-item level-${x.levelKey}"><div class="alert-icon">${kindIcon[x.kind]}</div><div><div class="alert-title">${R.esc(x.symbol)} — ${kindFa[x.kind]} <span class="badge">${levelFa[x.levelKey]}</span></div><div class="alert-meta">${R.esc(x.company||'')} · ${R.esc(x.state||'')} · امتیاز شکار ${R.fa(x.score,1)}${x.dayChange!=null?' · '+R.pct(x.dayChange):''}</div></div><div class="alert-time">${R.jalaliDate(x.at)}<br>${R.time(x.at)}</div></article>`).join(''):'<div class="empty">هشداری برای این فیلتر وجود ندارد.</div>';
 }
-function processFresh(next,date){
- const storageKey='stockHunterAlertsSeenV416:'+date;const previous=new Set(JSON.parse(localStorage.getItem(storageKey)||'[]'));const keys=next.map(x=>x.key);
- if(firstLoad){localStorage.setItem(storageKey,JSON.stringify(keys.slice(0,3000)));firstLoad=false;return;}
- const fresh=next.filter(x=>!previous.has(x.key));if(fresh.length){const top=[...fresh].sort((a,b)=>b.level-a.level)[0];notify(top);beep(top.level);}
- localStorage.setItem(storageKey,JSON.stringify([...new Set([...keys,...previous])].slice(0,3000)));
+async function processFresh(next,date){
+ const storageKey='stockHunterAlertsSeenV416:'+date;let old=[];try{old=JSON.parse(localStorage.getItem(storageKey)||'[]')}catch{}const previous=new Set(old),keys=next.map(x=>x.key);
+ if(firstLoad){localStorage.setItem(storageKey,JSON.stringify(keys.slice(0,5000)));firstLoad=false;return;}
+ const fresh=next.filter(x=>!previous.has(x.key));
+ for(const a of fresh.slice().reverse().slice(0,8)){await notify(a);beep(a.levelKey);}
+ localStorage.setItem(storageKey,JSON.stringify([...new Set([...keys,...old])].slice(0,5000)));
 }
 async function loadAlerts(){
  const d=R.readJalaliInput($('alertDate'),R.todayIso());R.setStatus('در حال دریافت هشدارهای '+R.jalaliDate(d)+'…','warn');
  try{
    const rows=await R.api('stock_hunter_hunt_journey_v416','select=channel,trade_date,symbol_id,symbol,company_name,hunt_state,detected_at,detected_day_change,hunt_score,crossed_zero_at,crossed_plus1_at,crossed_plus2_at,crossed_plus3_at&trade_date=eq.'+encodeURIComponent(d)+'&order=detected_at.desc&limit=1500');
-   const next=buildAlerts(rows);if(d===R.todayIso())processFresh(next,d);alertRows=next;renderAlerts();R.setStatus('مرکز هشدار '+R.jalaliDate(d)+' — '+R.fa(alertRows.length)+' رخداد مهم','ok');
+   const next=buildAlerts(rows);if(d===R.todayIso())await processFresh(next,d);alertRows=next;renderAlerts();R.setStatus('مرکز هشدار '+R.jalaliDate(d)+' — '+R.fa(alertRows.length)+' رخداد مهم','ok');
  }catch(e){alertRows=[];renderAlerts();R.setStatus('دریافت هشدارها ناموفق بود: '+e.message,'bad');}
  clearTimeout(timer);if(d===R.todayIso())timer=setTimeout(loadAlerts,15000);
 }
-R.setJalaliInput($('alertDate'),R.todayIso());$('alertDate').addEventListener('change',()=>{firstLoad=true;loadAlerts();});$('alertKind').onchange=renderAlerts;$('alertRefresh').onclick=loadAlerts;$('notifyBtn').onclick=requestNotify;
-$('soundToggle').onclick=()=>{localStorage.setItem('stockHunterAlertSoundV416',soundEnabled()?'0':'1');renderSound();if(soundEnabled())beep(1);};
-$('notifyBtn').textContent=notificationAllowed()?'اعلان مرورگر: فعال':'فعال‌سازی اعلان مرورگر';$('notifyBtn').classList.toggle('active',notificationAllowed());renderSound();loadAlerts();
+async function testSounds(){beep('early',true);setTimeout(()=>beep('special',true),500);setTimeout(()=>beep('success',true),1100);}
+R.setJalaliInput($('alertDate'),R.todayIso());$('alertDate').addEventListener('change',()=>{firstLoad=true;loadAlerts();});$('alertLevel').onchange=renderAlerts;$('alertKind').onchange=renderAlerts;$('alertRefresh').onclick=loadAlerts;$('notifyBtn').onclick=requestNotify;$('soundTest').onclick=testSounds;
+$('soundToggle').onclick=()=>{localStorage.setItem('stockHunterAlertSoundV416',soundEnabled()?'0':'1');renderSound();if(soundEnabled())beep('early');};
+$('notifyBtn').textContent=notificationAllowed()?'اعلان برنامه: فعال':'فعال‌سازی اعلان برنامه';$('notifyBtn').classList.toggle('active',notificationAllowed());renderSound();loadAlerts();
