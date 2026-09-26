@@ -29,7 +29,15 @@
  async function disable(){
   if(!session)return;const reg=await registration(),sub=await reg.pushManager.getSubscription();if(sub){await sb.from('stock_hunter_push_subscriptions_v420').update({enabled:false,updated_at:new Date().toISOString()}).eq('user_id',session.user.id).eq('endpoint',sub.endpoint);await sub.unsubscribe().catch(()=>{});}currentSub=null;await refresh();R.setStatus('هشدار ابری این دستگاه غیرفعال شد.','ok');
  }
+ async function syncLevels(){
+  if(!session||!currentSub)return;
+  const levels=[...panel.querySelectorAll('[data-cloud-level]:checked')].map(x=>x.dataset.cloudLevel);
+  if(!levels.length){R.setStatus('حداقل یک سطح هشدار ابری باید فعال بماند.','warn');return;}
+  const {error}=await sb.from('stock_hunter_push_subscriptions_v420').update({levels,updated_at:new Date().toISOString()}).eq('user_id',session.user.id).eq('endpoint',currentSub.endpoint);
+  if(error)R.setStatus('ذخیره سطح‌های هشدار ابری ناموفق بود.','bad');else R.setStatus('سطح‌های هشدار ابری همگام شد.','ok');
+ }
  btn.onclick=async()=>{btn.disabled=true;try{if(currentSub)await disable();else await enable();}catch(e){R.setStatus('فعال‌سازی هشدار ابری ناموفق بود: '+(e?.message||e),'bad');}finally{btn.disabled=false;}};
  document.getElementById('cloudPushTestState').onclick=async()=>{const h=await health().catch(()=>null);if(h)R.setStatus('سرویس Push فعال است؛ '+R.fa(h.active_subscriptions||0)+' اشتراک فعال ثبت شده است.','ok');};
+ panel.querySelectorAll('[data-cloud-level]').forEach(x=>x.addEventListener('change',syncLevels));
  await refresh();
 })();
