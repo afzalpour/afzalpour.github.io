@@ -88,6 +88,6 @@ jobs:
           assert "killSwitch:true" in router
           assert "HUNT_V416_VERSION='4.1.6-hunt-v2'" in hunt
           assert './canary-admission-v417.js' in sw and './canary-expansion-v417.js' in sw and './canary-hold-rollback-v417.js' in sw and './canary-recovery-v417.js' in sw
-          assert "shikar-sahm-v4.1.6-r13" in sw
+          assert "shikar-sahm-v4.1.6-r14" in sw
           print('canary-admission-expansion-hold-recovery-semantics: PASS')
           PY
