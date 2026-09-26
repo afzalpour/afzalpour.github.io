@@ -168,7 +168,7 @@ jobs:
         run: python -m json.tool stock-hunter-v4/manifest.webmanifest >/dev/null
       - name: Check goal-aligned hunt UI and runtime assets
         run: |
-          grep -q '۴.۱.۶' stock-hunter-v4/index.html
+          grep -q '<h1>شکارچی سهم</h1>' stock-hunter-v4/index.html
           grep -q 'طراح: دکتر نیما افضل پور' stock-hunter-v4/index.html
           grep -q 'performance.html' stock-hunter-v4/index.html
           grep -q 'hunt-journey-v416.html' stock-hunter-v4/index.html
