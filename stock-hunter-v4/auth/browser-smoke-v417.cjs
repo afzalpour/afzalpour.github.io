@@ -146,6 +146,9 @@ async function main(){
       const journeyResponse=await caches.match('./hunt-journey-v416.html');
       const backtestResponse=await caches.match('./backtest-lab-v416.html');
       const missedResponse=await caches.match('./missed-opportunities-v416.html');
+      const alertsResponse=await caches.match('./alerts-center-v416.html');
+      const replayResponse=await caches.match('./market-replay-v416.html');
+      const reliabilityResponse=await caches.match('./reliability-v416.html');
       return {
         manifestLink,
         display:manifest.display,
@@ -158,7 +161,10 @@ async function main(){
         carryCached:Boolean(carryResponse),
         journeyCached:Boolean(journeyResponse),
         backtestCached:Boolean(backtestResponse),
-        missedCached:Boolean(missedResponse)
+        missedCached:Boolean(missedResponse),
+        alertsCached:Boolean(alertsResponse),
+        replayCached:Boolean(replayResponse),
+        reliabilityCached:Boolean(reliabilityResponse)
       };
     });
     assert.match(pwaContract.manifestLink,/manifest\.webmanifest\?v=4\.1\.6-pwa-r15$/,'PWA manifest must be cache-busted for carry release');
@@ -168,19 +174,26 @@ async function main(){
     assert.equal(pwaContract.scope,'./','PWA scope must remain stock-hunter-v4');
     assert.equal(pwaContract.startUrl,'./','PWA start URL must open the carry-enabled main app');
     assert.match(pwaContract.swScript,/sw\.js\?v=4\.1\.6-r16/,'PWA must activate service worker r16');
-    assert.ok(pwaContract.cacheKeys.includes('shikar-sahm-v4.1.6-r16'),'PWA cache r16 must exist');
+    assert.ok(pwaContract.cacheKeys.includes('shikar-sahm-v4.1.6-r17'),'PWA cache r16 must exist');
     assert.equal(pwaContract.carryCached,true,'carry-forward runtime must be available from the PWA offline cache');
     assert.equal(pwaContract.journeyCached,true,'Hunt Journey must be available from the PWA offline cache');
     assert.equal(pwaContract.backtestCached,true,'Backtest Lab must be available from the PWA offline cache');
     assert.equal(pwaContract.missedCached,true,'Missed Opportunities Audit must be available from the PWA offline cache');
+    assert.equal(pwaContract.alertsCached,true,'Alert Center must be available from the PWA offline cache');
+    assert.equal(pwaContract.replayCached,true,'Market Replay must be available from the PWA offline cache');
+    assert.equal(pwaContract.reliabilityCached,true,'Reliability dashboard must be available from the PWA offline cache');
 
     assert.equal(await page.locator('a.top-link[href="hunt-journey-v416.html"]').count(),1,'main page must link to Hunt Journey');
 
     await page.goto(BASE_URL+'/hunt-journey-v416.html',{waitUntil:'domcontentloaded',timeout:30000});
-    await page.waitForFunction(()=>window.StockHunterResearchV416?.version==='4.1.6-research-v1',null,{timeout:10000});
+    await page.waitForFunction(()=>window.StockHunterResearchV416?.version==='4.1.6-research-v2',null,{timeout:10000});
     await page.waitForFunction(()=>document.getElementById('researchStatus')?.dataset.state!=='warn',null,{timeout:20000});
     const journeyCount=await page.locator('#jTotal').textContent();
     assert.ok(journeyCount&&journeyCount.trim().length>0,'Hunt Journey must render summary count');
+    const journeyDateValue=(await page.locator('#journeyDate').inputValue()).trim();
+    assert.match(journeyDateValue,/^14\d{2}\/\d{2}\/\d{2}$/,'Hunt Journey date filter must be Jalali');
+    assert.equal(await page.locator('#journeyStage option').filter({hasText:'رسیدن به +۱٪'}).count(),1,'Journey must expose +1 milestone filter');
+    assert.equal(await page.locator('.filter-card[data-stage="plus2"]').count(),1,'Journey must expose clickable +2 milestone card');
 
     await page.goto(BASE_URL+'/backtest-lab-v416.html',{waitUntil:'domcontentloaded',timeout:30000});
     await page.waitForFunction(()=>document.getElementById('researchStatus')?.dataset.state!=='warn',null,{timeout:20000});
@@ -192,6 +205,23 @@ async function main(){
     await page.waitForFunction(()=>document.getElementById('researchStatus')?.dataset.state!=='warn',null,{timeout:20000});
     const missedCount=await page.locator('#mTotal').textContent();
     assert.ok(missedCount&&missedCount.trim().length>0,'Missed Opportunities Audit must render count even when zero');
+    assert.match((await page.locator('#missDate').inputValue()).trim(),/^14\d{2}\/\d{2}\/\d{2}$/,'Missed Opportunities date must be Jalali');
+
+    await page.goto(BASE_URL+'/alerts-center-v416.html',{waitUntil:'domcontentloaded',timeout:30000});
+    await page.waitForFunction(()=>document.getElementById('researchStatus')?.dataset.state!=='warn',null,{timeout:20000});
+    assert.ok(((await page.locator('#aTotal').textContent())||'').trim().length>0,'Alert Center must render event count');
+    assert.match((await page.locator('#alertDate').inputValue()).trim(),/^14\d{2}\/\d{2}\/\d{2}$/,'Alert Center date must be Jalali');
+
+    await page.goto(BASE_URL+'/market-replay-v416.html',{waitUntil:'domcontentloaded',timeout:30000});
+    await page.waitForFunction(()=>document.getElementById('researchStatus')?.dataset.state!=='warn',null,{timeout:30000});
+    assert.ok(await page.locator('#replaySymbol option').count()>=1,'Market Replay must render symbol options');
+    assert.match((await page.locator('#replayDate').inputValue()).trim(),/^14\d{2}\/\d{2}\/\d{2}$/,'Market Replay date must be Jalali');
+    assert.ok(((await page.locator('#rpCount').textContent())||'').trim().length>0,'Market Replay must render snapshot count');
+
+    await page.goto(BASE_URL+'/reliability-v416.html',{waitUntil:'domcontentloaded',timeout:30000});
+    await page.waitForFunction(()=>document.getElementById('researchStatus')?.dataset.state!=='warn',null,{timeout:20000});
+    assert.ok(((await page.locator('#hState').textContent())||'').trim().length>0,'Reliability dashboard must render overall state');
+    assert.match((await page.locator('#healthDate').inputValue()).trim(),/^14\d{2}\/\d{2}\/\d{2}$/,'Reliability date must be Jalali');
 
     await page.goto(BASE_URL+'/index.html',{waitUntil:'domcontentloaded',timeout:30000});
     await page.waitForFunction(()=>typeof detailHTML==='function',null,{timeout:10000});
