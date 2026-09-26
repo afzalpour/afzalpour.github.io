@@ -353,7 +353,7 @@ filtered=function(){
     if(h){
       if(x.hunt!==h)return false;
       if(['شکار ویژه','هشدار فوری','شکار زودهنگام'].includes(h)&&(!isActionFreshV416(x)||!isActionSessionV416(x)))return false;
-    }else if(!isActionNowV416(x))return false;
+    }else if(!(isActionNowV416(x)||isRadarEarlyV416(x)))return false;
     if(d&&x.decision!==d)return false;
     return true;
   }).sort((a,b)=>b.huntScoreV416-a.huntScoreV416||b.todayOpportunityV416-a.todayOpportunityV416||b.fast-a.fast||String(a.symbol||'').localeCompare(String(b.symbol||''),'fa'));
