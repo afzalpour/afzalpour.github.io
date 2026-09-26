@@ -136,6 +136,35 @@ async function main(){
     assert.equal(carryContract.option,true,'hunt filter must expose successful-crossing carry rows');
     assert.equal(carryContract.panelHook,true,'symbol details must include carry-forward diagnostics when available');
 
+    const pwaContract=await page.evaluate(async()=>{
+      const manifestLink=document.querySelector('link[rel="manifest"]')?.getAttribute('href')||'';
+      const manifest=await fetch(manifestLink,{cache:'no-store'}).then(r=>r.json());
+      const reg=await navigator.serviceWorker.ready;
+      await new Promise(resolve=>setTimeout(resolve,250));
+      const cacheKeys=await caches.keys();
+      const carryResponse=await caches.match('./app-hunt-carry-v416.js');
+      return {
+        manifestLink,
+        display:manifest.display,
+        themeColor:manifest.theme_color,
+        backgroundColor:manifest.background_color,
+        scope:manifest.scope,
+        startUrl:manifest.start_url,
+        swScript:reg.active?.scriptURL||'',
+        cacheKeys,
+        carryCached:Boolean(carryResponse)
+      };
+    });
+    assert.match(pwaContract.manifestLink,/manifest\.webmanifest\?v=4\.1\.6-pwa-r15$/,'PWA manifest must be cache-busted for carry release');
+    assert.equal(pwaContract.display,'standalone','PWA must remain standalone');
+    assert.equal(pwaContract.themeColor,'#15181b','PWA theme must match neutral main UI');
+    assert.equal(pwaContract.backgroundColor,'#111315','PWA background must match neutral main UI');
+    assert.equal(pwaContract.scope,'./','PWA scope must remain stock-hunter-v4');
+    assert.equal(pwaContract.startUrl,'./','PWA start URL must open the carry-enabled main app');
+    assert.match(pwaContract.swScript,/sw\.js\?v=4\.1\.6-r15/,'PWA must activate service worker r15');
+    assert.ok(pwaContract.cacheKeys.includes('shikar-sahm-v4.1.6-r15'),'PWA cache r15 must exist');
+    assert.equal(pwaContract.carryCached,true,'carry-forward runtime must be available from the PWA offline cache');
+
     await page.setViewportSize({width:1280,height:640});
     const mainLayout=await page.evaluate(()=>({
       bodyOverflowY:getComputedStyle(document.body).overflowY,
