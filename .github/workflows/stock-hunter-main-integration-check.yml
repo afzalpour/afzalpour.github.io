@@ -55,7 +55,7 @@ jobs:
           grep -q "routingMode:'CHAMPION_ONLY'" stock-hunter-v4/app-runtime-router-v417.js
           grep -q "trafficPercent:0" stock-hunter-v4/app-runtime-router-v417.js
           grep -q "killSwitch:true" stock-hunter-v4/app-runtime-router-v417.js
-          grep -q "shikar-sahm-v4.1.6-r13" stock-hunter-v4/sw.js
+          grep -q "shikar-sahm-v4.1.6-r14" stock-hunter-v4/sw.js
           grep -q "canary-recovery-v417.js" stock-hunter-v4/sw.js
           grep -q "stock-hunter-capture-v417" stock-hunter-v4/release/CAPTURE_V417_DARK_DEPLOY_AUDIT_2026-09-18.md
           echo 'production-defaults: PASS'
@@ -95,7 +95,7 @@ jobs:
               'app-forecast-validation-v430.js',
           ]:
               assert token in sw, token
-          assert "shikar-sahm-v4.1.6-r13" in sw
+          assert "shikar-sahm-v4.1.6-r14" in sw
           print('service-worker-load-order: PASS')
           PY
 
