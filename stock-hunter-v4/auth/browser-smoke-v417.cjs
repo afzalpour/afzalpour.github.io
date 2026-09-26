@@ -173,7 +173,7 @@ async function main(){
     assert.equal(pwaContract.backgroundColor,'#111315','PWA background must match neutral main UI');
     assert.equal(pwaContract.scope,'./','PWA scope must remain stock-hunter-v4');
     assert.equal(pwaContract.startUrl,'./','PWA start URL must open the carry-enabled main app');
-    assert.match(pwaContract.swScript,/sw\.js\?v=4\.1\.6-r17/,'PWA must activate service worker r18');
+    assert.match(pwaContract.swScript,/sw\.js\?v=4\.1\.6-r18/,'PWA must activate service worker r18');
     assert.ok(pwaContract.cacheKeys.includes('shikar-sahm-v4.1.6-r18'),'PWA cache r18 must exist');
     assert.equal(pwaContract.carryCached,true,'carry-forward runtime must be available from the PWA offline cache');
     assert.equal(pwaContract.journeyCached,true,'Hunt Journey must be available from the PWA offline cache');
@@ -186,7 +186,7 @@ async function main(){
     assert.equal(await page.locator('a.top-link[href="hunt-journey-v416.html"]').count(),1,'main page must link to Hunt Journey');
 
     await page.goto(BASE_URL+'/hunt-journey-v416.html',{waitUntil:'domcontentloaded',timeout:30000});
-    await page.waitForFunction(()=>window.StockHunterResearchV416?.version==='4.1.6-research-v2',null,{timeout:10000});
+    await page.waitForFunction(()=>window.StockHunterResearchV416?.version==='4.1.6-research-v3',null,{timeout:10000});
     await page.waitForFunction(()=>document.getElementById('researchStatus')?.dataset.state!=='warn',null,{timeout:20000});
     const journeyCount=await page.locator('#jTotal').textContent();
     assert.ok(journeyCount&&journeyCount.trim().length>0,'Hunt Journey must render summary count');
