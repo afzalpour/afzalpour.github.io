@@ -121,7 +121,7 @@
     if(error)throw error;
     watchlists=(data||[]).slice().sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'fa',{sensitivity:'base',numeric:false}));
     const sel=byId('personalWatchlistV417');
-    sel.innerHTML='<option value="">واچ‌لیست شخصی</option>'+watchlists.map(w=>'<option value="'+esc(w.watchlist_id)+'">'+esc(w.name)+'</option>').join('');
+    sel.innerHTML='<option value="">دیده‌بان شخصی</option>'+watchlists.map(w=>'<option value="'+esc(w.watchlist_id)+'">'+esc(w.name)+'</option>').join('');
     activeWatchlistId=preferred&&watchlists.some(w=>w.watchlist_id===preferred)?preferred:(activeWatchlistId&&watchlists.some(w=>w.watchlist_id===activeWatchlistId)?activeWatchlistId:(watchlists[0]?.watchlist_id||''));
     sel.value=activeWatchlistId;
     await loadWatchlistItems();
@@ -129,7 +129,7 @@
   async function ensureWatchlist(){
     if(activeWatchlistId)return activeWatchlistId;
     const {data,error}=await supabase.from('stock_hunter_watchlists_v417')
-      .insert({user_id:user.id,name:'واچ‌لیست من'}).select('watchlist_id,name,created_at').single();
+      .insert({user_id:user.id,name:'دیده‌بان من'}).select('watchlist_id,name,created_at').single();
     if(error)throw error;
     await loadWatchlists(data.watchlist_id);
     return data.watchlist_id;
@@ -150,7 +150,7 @@
     byId('watchlistCountV417').textContent=watchlistIds.size.toLocaleString('fa-IR')+' نماد';
     const btn=byId('watchlistOnlyV417');
     btn.setAttribute('aria-pressed',watchlistOnly?'true':'false');
-    btn.textContent=(watchlistOnly?'★':'☆')+' فقط واچ‌لیست';
+    btn.textContent=(watchlistOnly?'★':'☆')+' فقط دیده‌بان';
     btn.disabled=!activeWatchlistId;
   }
   async function toggleSavedSymbol(id,symbol){
@@ -183,7 +183,7 @@
     if(k!=='symbol')return base;
     const saved=watchlistIds.has(String(x.id));
     return '<div class="personal-symbol-row-v417">'+
-      '<button type="button" class="personal-star-v417'+(saved?' saved':'')+'" data-watch-id="'+esc(x.id)+'" data-watch-symbol="'+esc(x.symbol)+'" title="'+(saved?'حذف از واچ‌لیست':'افزودن به واچ‌لیست')+'" aria-label="'+(saved?'حذف از واچ‌لیست':'افزودن به واچ‌لیست')+'">'+(saved?'★':'☆')+'</button>'+
+      '<button type="button" class="personal-star-v417'+(saved?' saved':'')+'" data-watch-id="'+esc(x.id)+'" data-watch-symbol="'+esc(x.symbol)+'" title="'+(saved?'حذف از دیده‌بان':'افزودن به دیده‌بان')+'" aria-label="'+(saved?'حذف از دیده‌بان':'افزودن به دیده‌بان')+'">'+(saved?'★':'☆')+'</button>'+
       '<div>'+base+'</div></div>';
   };
 
@@ -200,7 +200,7 @@
       star.dataset.watchId=String(id);
       star.dataset.watchSymbol=row?.symbol||'';
       star.textContent=watchlistIds.has(String(id))?'★':'☆';
-      star.title=watchlistIds.has(String(id))?'حذف از واچ‌لیست':'افزودن به واچ‌لیست';
+      star.title=watchlistIds.has(String(id))?'حذف از دیده‌بان':'افزودن به دیده‌بان';
       card.querySelector('.mobile-foot')?.prepend(star);
     });
   }
@@ -219,25 +219,25 @@
     star.disabled=true;
     try{
       await toggleSavedSymbol(star.dataset.watchId,star.dataset.watchSymbol);
-      saveState('واچ‌لیست همگام شد','ok');
+      saveState('دیده‌بان همگام شد','ok');
     }catch(err){
-      saveState(err?.message||'خطا در واچ‌لیست','bad');
+      saveState(err?.message||'خطا در دیده‌بان','bad');
     }finally{star.disabled=false;}
   },true);
 
   byId('personalWatchlistV417').addEventListener('change',async()=>{
     activeWatchlistId=byId('personalWatchlistV417').value;
     watchlistOnly=false;
-    await loadWatchlistItems().catch(err=>saveState(err?.message||'خطا در واچ‌لیست','bad'));
+    await loadWatchlistItems().catch(err=>saveState(err?.message||'خطا در دیده‌بان','bad'));
   });
   byId('createWatchlistV417').addEventListener('click',async()=>{
-    const name=prompt('نام واچ‌لیست جدید:','واچ‌لیست جدید');
+    const name=prompt('نام دیده‌بان جدید:','دیده‌بان جدید');
     if(!name||!name.trim())return;
     const {data,error}=await supabase.from('stock_hunter_watchlists_v417')
       .insert({user_id:user.id,name:name.trim().slice(0,80)}).select('watchlist_id').single();
     if(error){saveState(error.message,'bad');return;}
     await loadWatchlists(data.watchlist_id);
-    saveState('واچ‌لیست ساخته شد','ok');
+    saveState('دیده‌بان ساخته شد','ok');
   });
   byId('watchlistOnlyV417').addEventListener('click',()=>{
     if(!activeWatchlistId)return;
