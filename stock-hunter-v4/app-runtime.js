@@ -61,10 +61,10 @@ async function marketReadBaseV416(base,source){
 }
 function marketBaseCandidatesV416(){
   const out=[];
-  if(MARKET_LOCAL_BASE_V416)out.push({base:MARKET_LOCAL_BASE_V416,source:'local'});
   const cloud=String(cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,'');
   const key=cfg.SUPABASE_PUBLISHABLE_KEY||cfg.publishableKey||'';
   if(cloud&&key)out.push({base:cloud,source:'supabase'});
+  if(MARKET_LOCAL_BASE_V416)out.push({base:MARKET_LOCAL_BASE_V416,source:'local'});
   return out;
 }
 if(typeof window!=='undefined'){
@@ -130,7 +130,7 @@ async function load(force=false){
     marketRetryNotBeforeV416=0;
     marketCacheWriteV416(signalRows,health);
     const h=health[0],age=h?.last_feed_at?Date.now()-Date.parse(h.last_feed_at):Infinity;
-    const route=source==='local'?'مسیر محلی':'مسیر ابری پشتیبان';
+    const route=source==='local'?'مسیر محلی پشتیبان':'مسیر اصلی';
     if(!session.open){
       showFeed('closed',session.label,h?.last_feed_at?`آخرین اطلاعات ثبت‌شده: ${marketFaDateTimeV416(h.last_feed_at)} — ${route}`:session.detail);
     }else if(h&&h.status==='ok'&&age<60000){
@@ -139,9 +139,11 @@ async function load(force=false){
     }else if(h&&age<180000){
       showFeed('warn','اطلاعات بازار با تأخیر دریافت می‌شود',`آخرین ارتباط ${marketFaDateTimeV416(h.last_feed_at)} — ${route}`);
     }else if(!hr.ok){
-      showFeed('warn','داده بازار دریافت شد؛ وضعیت Feed در دسترس نیست',`اطلاعات نمادها بارگذاری شد اما endpoint سلامت Feed پاسخ HTTP ${hr.status} داد — ${route}.`);
+      const last=h?.last_feed_at?marketFaDateTimeV416(h.last_feed_at):'ناموجود';
+      showFeed('warn','داده بازار دریافت شد؛ وضعیت Feed در دسترس نیست',`آخرین اطلاعات ثبت‌شده: ${last} — اطلاعات نمادها بارگذاری شد اما وضعیت سلامت Feed پاسخ HTTP ${hr.status} داد — ${route}.`);
     }else{
-      showFeed('bad','اطلاعات لحظه‌ای معاملات در دسترس نیست',`در ساعات رسمی بازار داده تازه دریافت نشده است؛ احتمال تعطیلی رسمی بازار یا قطع مسیر دریافت داده وجود دارد — ${route}.`);
+      const last=h?.last_feed_at?marketFaDateTimeV416(h.last_feed_at):'ناموجود';
+      showFeed('bad','اطلاعات لحظه‌ای معاملات در دسترس نیست',`آخرین اطلاعات ثبت‌شده: ${last} — در ساعات رسمی بازار داده تازه دریافت نشده است؛ احتمال وقفه در مسیر دریافت داده وجود دارد — ${route}.`);
     }
     marketRenderAfterDataV416();
     const urgent=rows.filter(x=>x.hunt==='شکار ویژه'||x.hunt==='هشدار فوری');
