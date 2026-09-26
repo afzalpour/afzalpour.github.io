@@ -15,7 +15,7 @@ function beep(levelKey,force=false){
    setTimeout(()=>c.close().catch(()=>{}),700);
  }catch(_){}
 }
-async function ensureServiceWorker(){if(!('serviceWorker'in navigator))return null;try{return await navigator.serviceWorker.register('./sw.js?v=4.1.6-r17');}catch(_){return null;}}
+async function ensureServiceWorker(){if(!('serviceWorker'in navigator))return null;try{return await navigator.serviceWorker.register('./sw.js?v=4.1.6-r18');}catch(_){return null;}}
 function notificationAllowed(){return 'Notification'in window&&Notification.permission==='granted';}
 async function requestNotify(){
  if(!('Notification'in window)){R.setStatus('این مرورگر از اعلان پشتیبانی نمی‌کند.','bad');return;}
