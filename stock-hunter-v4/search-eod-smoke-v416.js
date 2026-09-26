@@ -45,15 +45,16 @@ assert.equal(__eodV416.hadActivity9to17V416(rows[0]),true);
 assert.equal(__eodV416.hadActivity9to17V416(rows[3]),false);
 assert.equal(minutesLeftV416(rows[0]),30,'after close, feasibility clock should use last valid equity-session activity');
 const fallback=filtered();
-assert.deepEqual(fallback.map(x=>x.symbol),['A','B']);
+assert.deepEqual(fallback.map(x=>x.symbol),['A','B','C']);
 
 const events=[
   {symbol_id:'1',hunt_state:'هشدار فوری',hunt_mode:'acceleration',max_hunt_score:79,max_today_opportunity:82,day_change:.3,evidence_count:3,dynamic_evidence_count:2,first_seen_at:'2026-09-16T07:00:00Z',last_seen_at:'2026-09-16T07:10:00Z'},
   {symbol_id:'1',hunt_state:'شکار ویژه',hunt_mode:'acceleration',max_hunt_score:88,max_today_opportunity:90,day_change:.5,evidence_count:5,dynamic_evidence_count:3,first_seen_at:'2026-09-16T08:00:00Z',last_seen_at:'2026-09-16T08:05:00Z'},
-  {symbol_id:'2',hunt_state:'هشدار فوری',hunt_mode:'reversal',max_hunt_score:74,max_today_opportunity:78,day_change:-.4,evidence_count:4,dynamic_evidence_count:2,first_seen_at:'2026-09-16T08:10:00Z',last_seen_at:'2026-09-16T08:20:00Z'}
+  {symbol_id:'2',hunt_state:'هشدار فوری',hunt_mode:'reversal',max_hunt_score:74,max_today_opportunity:78,day_change:-.4,evidence_count:4,dynamic_evidence_count:2,first_seen_at:'2026-09-16T08:10:00Z',last_seen_at:'2026-09-16T08:20:00Z'},
+  {symbol_id:'3',hunt_state:'شکار زودهنگام',hunt_mode:'acceleration',max_hunt_score:64,max_today_opportunity:69,day_change:.2,evidence_count:4,dynamic_evidence_count:2,first_seen_at:'2026-09-16T08:15:00Z',last_seen_at:'2026-09-16T08:25:00Z'}
 ];
 const merged=__eodV416.mergeEodLedgerV416(events,rows);
-assert.deepEqual(merged.map(x=>[x.symbol,x.hunt]),[['A','شکار ویژه'],['B','هشدار فوری']]);
+assert.deepEqual(merged.map(x=>[x.symbol,x.hunt]),[['A','شکار ویژه'],['B','هشدار فوری'],['C','شکار زودهنگام']]);
 assert.equal(merged[0].eodArchivedV416,true);
 assert.equal(applyHuntV416(merged[0]).hunt,'شکار ویژه','archived status must not be recomputed away after close');
 console.log('search-eod-v416 smoke: PASS');
