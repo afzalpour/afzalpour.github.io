@@ -8,6 +8,65 @@ alter table public.stock_hunter_hunt_events_v416
   add constraint stock_hunter_hunt_events_v416_hunt_state_check
   check (hunt_state = any (array['شکار ویژه'::text,'هشدار فوری'::text,'شکار زودهنگام'::text]));
 
+create or replace function public.record_stock_hunter_hunt_events_v416(p_events jsonb)
+returns integer
+language plpgsql
+security definer
+set search_path to 'pg_catalog'
+as $function$
+declare
+  e jsonb;
+  n integer := 0;
+begin
+  if jsonb_typeof(p_events) <> 'array' then
+    raise exception 'p_events must be a JSON array';
+  end if;
+  for e in select value from jsonb_array_elements(p_events)
+  loop
+    if (e->>'hunt_state') not in ('شکار ویژه','هشدار فوری','شکار زودهنگام') then continue; end if;
+    if (e->>'hunt_mode') not in ('reversal','acceleration') then continue; end if;
+    insert into public.stock_hunter_hunt_events_v416(
+      trade_date,symbol_id,symbol,company_name,hunt_state,hunt_mode,
+      first_seen_at,last_seen_at,max_hunt_score,max_today_opportunity,
+      day_change,evidence_count,dynamic_evidence_count,source_version,
+      first_price,last_price,max_score_price,
+      first_hunt_score,first_today_opportunity,first_order_pressure,first_impulse,
+      first_feasibility,first_flow_volume,first_market_context,first_continuation12,
+      first_risk_score,first_cancellation_ratio,feature_vector_complete,
+      reference_yesterday_price
+    ) values (
+      (e->>'trade_date')::date,e->>'symbol_id',e->>'symbol',nullif(e->>'company_name',''),
+      e->>'hunt_state',e->>'hunt_mode',(e->>'observed_at')::timestamptz,(e->>'observed_at')::timestamptz,
+      coalesce((e->>'hunt_score')::numeric,0),coalesce((e->>'today_opportunity')::numeric,0),
+      nullif(e->>'day_change','')::numeric,nullif(e->>'evidence_count','')::integer,
+      nullif(e->>'dynamic_evidence_count','')::integer,coalesce(nullif(e->>'source_version',''),'4.1.6-server-v5-carry'),
+      nullif(e->>'price','')::numeric,nullif(e->>'price','')::numeric,nullif(e->>'price','')::numeric,
+      nullif(e->>'hunt_score','')::numeric,nullif(e->>'today_opportunity','')::numeric,
+      nullif(e->>'order_pressure','')::numeric,nullif(e->>'impulse','')::numeric,
+      nullif(e->>'feasibility','')::numeric,nullif(e->>'flow_volume','')::numeric,
+      nullif(e->>'market_context','')::numeric,nullif(e->>'continuation12','')::numeric,
+      nullif(e->>'risk_score','')::numeric,nullif(e->>'cancellation_ratio','')::numeric,
+      (e ? 'order_pressure') and (e ? 'impulse') and (e ? 'feasibility') and (e ? 'flow_volume')
+        and (e ? 'market_context') and (e ? 'continuation12') and (e ? 'risk_score') and (e ? 'cancellation_ratio'),
+      nullif(e->>'reference_yesterday_price','')::numeric
+    )
+    on conflict (trade_date,symbol_id,hunt_state) do update set
+      last_seen_at=greatest(public.stock_hunter_hunt_events_v416.last_seen_at,excluded.last_seen_at),
+      max_hunt_score=greatest(public.stock_hunter_hunt_events_v416.max_hunt_score,excluded.max_hunt_score),
+      max_today_opportunity=greatest(public.stock_hunter_hunt_events_v416.max_today_opportunity,excluded.max_today_opportunity),
+      last_price=coalesce(excluded.last_price,public.stock_hunter_hunt_events_v416.last_price),
+      max_score_price=case when excluded.max_hunt_score>=public.stock_hunter_hunt_events_v416.max_hunt_score then excluded.max_score_price else public.stock_hunter_hunt_events_v416.max_score_price end,
+      day_change=case when excluded.max_hunt_score>=public.stock_hunter_hunt_events_v416.max_hunt_score then excluded.day_change else public.stock_hunter_hunt_events_v416.day_change end,
+      evidence_count=greatest(coalesce(public.stock_hunter_hunt_events_v416.evidence_count,0),coalesce(excluded.evidence_count,0)),
+      dynamic_evidence_count=greatest(coalesce(public.stock_hunter_hunt_events_v416.dynamic_evidence_count,0),coalesce(excluded.dynamic_evidence_count,0)),
+      reference_yesterday_price=coalesce(public.stock_hunter_hunt_events_v416.reference_yesterday_price,excluded.reference_yesterday_price),
+      updated_at=now();
+    n:=n+1;
+  end loop;
+  return n;
+end;
+$function$;
+
 create table if not exists public.stock_hunter_hunt_carry_v416(
   source_event_id bigint primary key references public.stock_hunter_hunt_events_v416(event_id) on delete cascade,
   trade_date date not null,
