@@ -233,12 +233,13 @@ function renderSaved(){
     <div><button class="load-strategy" type="button">بارگذاری</button><button class="delete-strategy" type="button">حذف</button></div>
   </article>`).join(''):'<div class="empty">هنوز راهبردی ذخیره نشده است.</div>';
 }
+async function ensureServiceWorker(){if(!('serviceWorker'in navigator))return null;try{return await navigator.serviceWorker.register('./sw.js?v=4.1.6-r17');}catch(_){return null;}}
 async function showNotification(row){
   if(!('Notification'in window)||Notification.permission!=='granted')return;
   const title='راهبرد شما منطبق شد';
   const body=`${row.symbol} — ${modeFa(row.hunt_mode)} — امتیاز ${R.fa(row.baseline_hunt_score,1)}`;
   try{
-    if('serviceWorker'in navigator){const reg=await navigator.serviceWorker.ready;await reg.showNotification(title,{body,icon:'icon.svg',tag:'strategy-'+strategyId+'-'+row.symbol_id,data:{url:'strategy-builder-v417.html'}});return;}
+    if('serviceWorker'in navigator){const reg=await ensureServiceWorker();if(reg){await reg.showNotification(title,{body,icon:'icon.svg',tag:'strategy-'+strategyId+'-'+row.symbol_id,data:{url:'strategy-builder-v417.html'}});return;}}
     new Notification(title,{body,icon:'icon.svg'});
   }catch(_){}
 }
@@ -252,7 +253,7 @@ function notifyFresh(rows){
 }
 async function ensurePermission(){
   if(!$('strategyAlert').checked||!('Notification'in window))return;
-  if(Notification.permission==='default')await Notification.requestPermission();
+  await ensureServiceWorker();if(Notification.permission==='default')await Notification.requestPermission();
 }
 function syncAlertTimer(){
   clearInterval(alertTimer);alertTimer=null;
