@@ -335,7 +335,7 @@ jobs:
           from pathlib import Path
           eod=Path('stock-hunter-v4/app-eod-v416.js').read_text(encoding='utf-8')
           assert 'hm>=9*60&&hm<=17*60' in eod
-          assert "['شکار ویژه','هشدار فوری']" in eod
+          assert "['شکار ویژه','هشدار فوری','شکار زودهنگام']" in eod
           assert "now.hm>17*60" in eod
           assert 'minutesLeftV416=function' in eod
           print('eod-retention: PASS')
