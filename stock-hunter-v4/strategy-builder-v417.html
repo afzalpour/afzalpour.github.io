@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#15181b">
+  <title>سازنده راهبرد — شکارچی سهم</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="research-lab-v416.css?v=4">
+</head>
+<body>
+<main class="research-shell">
+<header class="research-head">
+  <div>
+    <h1>سازنده راهبرد بدون کدنویسی</h1>
+    <p>شرط‌های دلخواه را روی همان مؤلفه‌های ثبت‌شده موتور شکار بسازید، بازار امروز را پویش کنید و همان تعریف را روی داده تاریخی بیازمایید. این ابزار پژوهشی مستقل است و وزن‌ها یا آستانه‌های موتور ثابت ۴.۱.۶ را تغییر نمی‌دهد.</p>
+  </div>
+  <nav class="research-nav">
+    <a href="index.html">صفحه اصلی</a>
+    <a href="hunt-journey-v416.html">سفر شکار</a>
+    <a href="market-replay-v416.html">بازپخش بازار</a>
+    <a href="backtest-lab-v416.html">آزمایشگاه آزمون تاریخی</a>
+    <a href="missed-opportunities-v416.html">فرصت‌های از دست‌رفته</a>
+    <a href="alerts-center-v416.html">مرکز هشدار</a>
+    <a href="reliability-v416.html">پایداری سامانه</a>
+    <a href="strategy-builder-v417.html" aria-current="page">سازنده راهبرد</a>
+  </nav>
+</header>
+
+<div id="researchStatus" class="research-status" data-state="warn">در حال آماده‌سازی سازنده راهبرد…</div>
+
+<section class="panel">
+  <h2>تعریف راهبرد</h2>
+  <div class="strategy-head">
+    <label>نام راهبرد <input id="strategyName" maxlength="80" value="راهبرد شخصی من" autocomplete="off"></label>
+    <label>از تاریخ شمسی <input id="strategyFrom" class="jalali-input" type="text" inputmode="numeric"></label>
+    <label>تا تاریخ شمسی <input id="strategyTo" class="jalali-input" type="text" inputmode="numeric"></label>
+    <label class="toggle-line"><input id="strategyAlert" type="checkbox"> هشدار برای تطبیق تازه</label>
+  </div>
+  <div class="strategy-presets">
+    <button type="button" data-preset="reversal">نمونه برگشت منفی</button>
+    <button type="button" data-preset="acceleration">نمونه شتاب اولیه</button>
+    <button type="button" data-preset="clear">پاک‌کردن شرط‌ها</button>
+  </div>
+  <div id="ruleList" class="rule-list"></div>
+  <div class="strategy-actions">
+    <button id="addRule" type="button">＋ افزودن شرط</button>
+    <button id="runScan" type="button">پویش بازار امروز</button>
+    <button id="runBacktest" type="button">آزمون تاریخی همین راهبرد</button>
+    <button id="saveStrategy" type="button">ذخیره راهبرد</button>
+  </div>
+  <p class="footnote">تمام شرط‌ها با رابطه «و» اجرا می‌شوند؛ یعنی یک نماد باید همه شرط‌ها را هم‌زمان داشته باشد. نتیجه این صفحه توصیه خرید یا فروش نیست و موتور اصلی شکار را تغییر نمی‌دهد.</p>
+</section>
+
+<section class="panel">
+  <div class="saved-head"><h2>راهبردهای ذخیره‌شده</h2><span id="accountState" class="badge">در حال بررسی حساب…</span></div>
+  <div id="savedStrategies" class="saved-strategies"><div class="empty">در حال دریافت…</div></div>
+</section>
+
+<section class="cards">
+  <article class="card"><span>نمونه‌های بررسی‌شده امروز</span><b id="sScanned">۰</b></article>
+  <article class="card teal-card"><span>نمادهای منطبق امروز</span><b id="sMatched">۰</b></article>
+  <article class="card"><span>رخدادهای تاریخی منطبق</span><b id="sHistorical">۰</b></article>
+  <article class="card good-card"><span>دقت هدف همان مسیر</span><b id="sPrecision">—</b></article>
+  <article class="card good-card"><span>میانه بیشترین پیشروی</span><b id="sMfe">—</b></article>
+  <article class="card bad-card"><span>میانه بیشترین افت</span><b id="sMae">—</b></article>
+</section>
+
+<section class="panel">
+  <h2>نتیجه پویش امروز</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>زمان</th><th>نماد</th><th>مسیر</th><th>تغییر</th><th>امتیاز شکار</th><th>قدرت امروز</th><th>شواهد</th><th>ریسک</th><th>وضعیت ثبت‌شده</th></tr></thead>
+      <tbody id="strategyScanBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>خلاصه آزمون تاریخی</h2>
+  <div id="strategyBacktestNote" class="section-note">برای سنجش همین تعریف روی داده تاریخی، «آزمون تاریخی همین راهبرد» را بزنید.</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>تاریخ</th><th>نماد</th><th>مسیر</th><th>امتیاز</th><th>نتیجه هدف</th><th>بیشترین پیشروی</th><th>بیشترین افت</th><th>بازده یک‌روزه</th></tr></thead>
+      <tbody id="strategyBacktestBody"></tbody>
+    </table>
+  </div>
+</section>
+</main>
+<script src="config.js?v=4.1.6-cloud-primary1"></script>
+<script src="research-common-v416.js?v=3"></script>
+<script type="module" src="strategy-builder-v417.js?v=1"></script>
+</body>
+</html>
