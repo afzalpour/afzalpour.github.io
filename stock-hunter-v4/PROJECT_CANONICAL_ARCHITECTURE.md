@@ -315,3 +315,21 @@ Date selection contract:
 Research export contract:
 - every page under the Hunt Analysis research family exposes `چاپ / ذخیره PDF`;
 - print styling removes interactive controls and expands tables for browser Print / Save as PDF.
+
+
+## 16. Universal numeric export and visual presentation contract — 2026-09-26
+User-visible analytical/numeric outputs must provide reusable data export without changing Hunt logic.
+
+Export contract:
+- the shared browser exporter is `data-export-v418.js`;
+- numerical sections expose XLSX, CSV and XML exports from the current rendered/filtered view;
+- XLSX may contain multiple worksheets when the visible section has multiple tables/metric groups;
+- CSV serializes the visible datasets with section separators;
+- XML is the canonical structured third format. XLM is intentionally not used because it is the legacy Excel macro-sheet format rather than a neutral data interchange format;
+- export collection includes visible tables, metric/summary cards and numeric analytical text where applicable;
+- export controls are presentation-only and MUST NOT mutate source data, scoring, filters or persistence.
+
+Visual contract:
+- AI answers use larger typography and distinct visual treatments for Hunt explanation, end-of-market report and reliability diagnosis;
+- principal summary cards at the top of analytical pages are centered;
+- summary cards use restrained accent color coding and remain readable in dark/light layouts.

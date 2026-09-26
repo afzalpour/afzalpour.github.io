@@ -1313,3 +1313,20 @@ Live AI boundary probes:
 Therefore deterministic data-grounded analysis is active; optional generative enrichment becomes active only after `OPENAI_API_KEY` is configured as a Supabase Edge Function secret. No secret is exposed in browser code.
 
 Frozen Hunt `4.1.6-hunt-v2` formulas, thresholds, capture provenance, routing and lifecycle remain unchanged.
+
+
+## Universal exports + AI/card visual refinement — 2026-09-26
+Implemented on branch `stock-hunter/export-ai-visual-v418-20260926`.
+
+Scope:
+- AI answer typography increased and differentiated by answer/report/diagnostic color treatment;
+- symbol-detail AI output enlarged and visually separated;
+- main summary cards and analytical-page top cards are center-aligned with restrained accent styling;
+- shared `data-export-v418.js` is loaded across all Stock Hunter HTML surfaces and injects export controls only where numeric/tabular content exists;
+- supported data outputs: XLSX, CSV and XML;
+- XLSX uses a client-side SheetJS loader and can create multiple sheets from one visible section;
+- CSV/XML remain available independently if XLSX library loading is unavailable;
+- exporter reads the currently rendered/filtered data and performs no mutations;
+- service worker r18 now pre-caches the shared exporter without changing the Frozen Hunt engine or runtime-routing state.
+
+XLM was not used as a data format because it is Excel's legacy macro-sheet format; XML is the safe structured interchange output.
