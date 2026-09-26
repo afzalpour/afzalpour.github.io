@@ -1,6 +1,6 @@
-// Canary admission + expansion + hold/rollback + recovery dashboard assets are pinned to cache r16.
+// Canary admission + expansion + hold/rollback + recovery dashboard assets are pinned to cache r17.
 // Recovery/Re-entry release gate: all CI workflows validate this same service-worker head.
-const CACHE='shikar-sahm-v4.1.6-r16';
+const CACHE='shikar-sahm-v4.1.6-r17';
 const STATIC=[
   './','./index.html','./styles.css','./extra.css','./forecast-v415.css','./neutral-theme-v416.css',
   './app-core.js','./app-forecast.js','./app-runtime.js','./app-universe.js',
@@ -8,7 +8,7 @@ const STATIC=[
   './app-explain-v411.js','./app-forecast-bridge-v414.js','./app-forecast-trend-v415.js','./app-forecast-validation-v430.js',
   './app-theme-v412.js','./app-session-v413.js','./app-hunt-v416.js','./hunt-runtime-core-v417.js','./app-runtime-router-v417.js','./app-hunt-hierarchy-v416.js',
   './app-universal-search-v416.js','./app-eod-v416.js','./app-hunt-carry-v416.js','./performance.html','./performance-v416.js','./calibration.html','./calibration-v416.js','./candidate-evaluator-v416.js','./robustness-gate-v416.js','./promotion-decision-v416.js','./rollout-v417.html','./rollout-v417.js','./canary-admission-v417.js','./canary-expansion-v417.js','./canary-hold-rollback-v417.js','./canary-recovery-v417.js',
-  './config.js','./manifest.webmanifest','./icon.svg','./methodology.html','./hunt-methodology-v416.html','./research-lab-v416.css','./research-common-v416.js','./hunt-journey-v416.html','./hunt-journey-v416.js','./backtest-lab-v416.html','./backtest-lab-v416.js','./missed-opportunities-v416.html','./missed-opportunities-v416.js'
+  './config.js','./manifest.webmanifest','./icon.svg','./methodology.html','./hunt-methodology-v416.html','./research-lab-v416.css','./research-common-v416.js','./hunt-journey-v416.html','./hunt-journey-v416.js','./market-replay-v416.html','./market-replay-v416.js','./backtest-lab-v416.html','./backtest-lab-v416.js','./missed-opportunities-v416.html','./missed-opportunities-v416.js','./alerts-center-v416.html','./alerts-center-v416.js','./reliability-v416.html','./reliability-v416.js'
 ];
 self.addEventListener('install',e=>{
   self.skipWaiting();
