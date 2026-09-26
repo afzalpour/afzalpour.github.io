@@ -333,3 +333,19 @@ Visual contract:
 - AI answers use larger typography and distinct visual treatments for Hunt explanation, end-of-market report and reliability diagnosis;
 - principal summary cards at the top of analytical pages are centered;
 - summary cards use restrained accent color coding and remain readable in dark/light layouts.
+
+
+## 17. Persian display, alphabetical collation and extended export contract — 2026-09-26
+Presentation rules:
+- all user-visible ASCII digits are localized to Persian digits by `locale-ui-v419.js`;
+- localization applies after dynamic DOM updates and does not mutate internal IDs, API values, URLs, calculation inputs or source records;
+- the public and authenticated main header title is displayed simply as `شکارچی سهم` without an inline version suffix;
+- name/symbol selectors that are semantically alphabetical use Persian collation (`Intl.Collator('fa-IR')` with normalized Persian ی/ک);
+- chronological, score-ranked, outcome-ranked and operational-priority lists MUST NOT be replaced by alphabetical sorting.
+
+Export rules:
+- numeric/data sections expose XLSX, CSV, XML, DOCX and PDF;
+- DOCX is a real OOXML Word document generated from visible datasets;
+- PDF is a direct rendered export of the selected visible section and is distinct from browser printing;
+- the legacy research action is named only `چاپ`; PDF saving belongs to the data-export toolbar;
+- the main Action Now summary row (شکار ویژه / هشدار فوری / کاندید شکار / ...) does not receive a separate export toolbar; the main market table remains exportable.
