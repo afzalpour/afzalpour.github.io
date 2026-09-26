@@ -23,6 +23,8 @@ Windows PC
   -> Frozen Hunt 4.1.6 browser engine
 ```
 
+Public production pages read the live feed from Supabase only. The legacy browser localhost bridge (`127.0.0.1:41716`) is disabled in public configuration and is not a production fallback for PC Eco v4.1.1.
+
 ## Resource contract
 
 - one bulk MarketWatch stream at 30-second cadence;
