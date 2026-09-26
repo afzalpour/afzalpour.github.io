@@ -36,7 +36,8 @@ async function loadHuntCarryV416(force=false){
     const p=new URLSearchParams();
     p.set('select','source_event_id,trade_date,symbol_id,symbol,company_name,hunt_mode,detected_at,detected_price,detected_day_change,detected_hunt_score,detected_today_opportunity,evidence_count,dynamic_evidence_count,reference_yesterday_price,crossed_plus1_at,crossed_plus1_price,carry_until,status,last_observed_at,last_price_15m,peak_price_15m,trough_price_15m,peak_day_change_15m,end_day_change_15m,mfe_from_detect_15m,mae_from_detect_15m,mfe_from_cross_15m,mae_from_cross_15m,hit_plus2_15m,hit_plus3_15m,completed_at');
     p.set('trade_date',`eq.${today}`);p.set('order','detected_at.desc');p.set('limit','2000');
-    const r=await fetch(`${base}/rest/v1/stock_hunter_hunt_carry_v416?${p.toString()}`,{headers:headers(),cache:'no-store'});
+    const url=`${base}/rest/v1/stock_hunter_hunt_carry_v416?${p.toString()}`;
+    const r=typeof marketFetchV416==='function'?await marketFetchV416(url,base,12000):await fetch(url,{headers:headers(),cache:'no-store'});
     if(!r.ok)throw new Error(`carry ${r.status}`);
     huntCarryRowsV416=await r.json();
     huntCarryBySymbolV416=new Map(huntCarryRowsV416.map(c=>[String(c.symbol_id),c]));
