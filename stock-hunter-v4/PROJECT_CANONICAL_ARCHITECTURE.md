@@ -349,3 +349,18 @@ Export rules:
 - PDF is a direct rendered export of the selected visible section and is distinct from browser printing;
 - the legacy research action is named only `چاپ`; PDF saving belongs to the data-export toolbar;
 - the main Action Now summary row (شکار ویژه / هشدار فوری / کاندید شکار / ...) does not receive a separate export toolbar; the main market table remains exportable.
+
+
+## 17. Persian presentation and alphabetical ordering contract — 2026-09-27
+User-facing numerical text is Persian-digit presentation across Stock Hunter HTML surfaces through the shared `locale-ui-v419.js` layer. Machine values used for calculations, API transport and spreadsheet numeric cells may remain numeric/Latin internally; this must never leak as Latin digits into ordinary rendered UI text.
+
+Persian alphabetical ordering contract:
+- symbol/company selectors are sorted with `Intl.Collator('fa-IR')`;
+- the shared locale layer automatically recognizes symbol/company selects even when a future page forgets to add `data-sort-fa`;
+- textual universal-search result ordering uses a Persian collator rather than numeric identifiers or codepoint order;
+- exact/relevance search grouping may remain primary, but ties and alphabetic result views use Persian collation.
+
+Export/print clarification:
+- XLSX, CSV, XML, DOCX and PDF are data-export choices;
+- the separate Hunt Analysis navigation action is labeled only `چاپ`;
+- the primary market summary cards do not receive an export toolbar; table/detail numerical sections do.

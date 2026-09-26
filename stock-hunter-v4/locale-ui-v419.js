@@ -1,6 +1,6 @@
 'use strict';
 (function(){
-  const VERSION='4.1.9-fa-ui-v1';
+  const VERSION='4.1.9-fa-ui-v2';
   const DIGITS='۰۱۲۳۴۵۶۷۸۹';
   const collator=new Intl.Collator('fa-IR',{usage:'sort',sensitivity:'base',ignorePunctuation:true,numeric:false});
 
@@ -37,21 +37,27 @@
     let n;while((n=walker.nextNode()))localizeText(n);
     if(root.querySelectorAll)root.querySelectorAll('[title],[aria-label],[placeholder]').forEach(localizeAttrs);
   }
+  function shouldSortFa(select){
+    if(!(select instanceof HTMLSelectElement))return false;
+    if(select.matches('[data-sort-fa]'))return true;
+    const hint=[select.id,select.name,select.getAttribute('aria-label'),select.closest('label')?.textContent].filter(Boolean).join(' ');
+    return /(symbol|company|نماد|شرکت)/i.test(hint);
+  }
   function sortSelect(select){
-    if(!(select instanceof HTMLSelectElement)||select.dataset.sortFaReady==='1')return;
-    select.dataset.sortFaReady='1';
-    const options=[...select.options],first=options[0],rest=options.slice(first&&(!first.value||first.disabled)?1:0);
+    if(!(select instanceof HTMLSelectElement)||!shouldSortFa(select))return;
+    const selected=select.value,options=[...select.options],first=options[0],hasPlaceholder=!!(first&&(!first.value||first.disabled));
+    const fixed=hasPlaceholder?[first]:[],rest=options.slice(hasPlaceholder?1:0);
     rest.sort((a,b)=>compare(a.textContent,b.textContent));
-    if(first&&(!first.value||first.disabled)){
-      select.replaceChildren(first,...rest);
-    }else{
-      select.replaceChildren(...rest.sort((a,b)=>compare(a.textContent,b.textContent)));
-    }
+    select.replaceChildren(...fixed,...rest);
+    if([...select.options].some(o=>o.value===selected))select.value=selected;
+    select.dataset.sortFaReady='1';
   }
   function wireSort(root=document){
-    root.querySelectorAll?.('select[data-sort-fa]').forEach(sortSelect);
+    root.querySelectorAll?.('select').forEach(s=>{if(shouldSortFa(s))sortSelect(s);});
   }
 
+  document.documentElement.lang='fa';
+  document.body?.setAttribute('lang','fa-IR');
   document.title=faDigits(document.title);
   localizeTree(document.body);wireSort();
   let scheduled=false;
@@ -63,5 +69,5 @@
     if(!scheduled){scheduled=true;requestAnimationFrame(()=>{scheduled=false;wireSort();});}
   }).observe(document.body,{subtree:true,childList:true,characterData:true});
 
-  window.StockHunterLocaleV419={version:VERSION,faDigits,normalizeFa,compare,sortSelect};
+  window.StockHunterLocaleV419={version:VERSION,faDigits,normalizeFa,compare,sortSelect,shouldSortFa};
 })();
