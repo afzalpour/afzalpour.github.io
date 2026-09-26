@@ -49,7 +49,7 @@ async function loadSymbols(){
  }catch(e){$('replaySymbol').innerHTML='<option value="">خطا در دریافت نمادها</option>';R.setStatus('دریافت فهرست بازپخش ناموفق بود: '+e.message,'bad');}
 }
 async function loadReplay(){
- stopPlay();const d=R.readJalaliInput($('replayDate'),R.todayIso()),sid=$('replaySymbol').value;if(!sid){replayRows=[];journey=null;renderTable();renderCurrent();renderMilestones();return;}
+ stopPlay();const d=R.readJalaliInput($('replayDate'),R.todayIso()),sid=$('replaySymbol').value;if(!sid){replayRows=[];journey=null;renderTable();renderCurrent();renderMilestones();R.setStatus('برای '+R.jalaliDate(d)+' هنوز نمادی برای بازپخش ثبت نشده است.','ok');return;}
  R.setStatus('در حال دریافت بازپخش '+R.jalaliDate(d)+'…','warn');
  try{
    replayRows=await R.api('stock_hunter_market_replay_v416','select=*&trade_date=eq.'+encodeURIComponent(d)+'&symbol_id=eq.'+encodeURIComponent(sid)+'&order=bucket_at.asc&limit=2500');
