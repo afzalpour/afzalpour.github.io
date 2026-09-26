@@ -47,6 +47,12 @@ jobs:
             "stock-hunter-v4/backtest-lab-v416.js|https://afzalpour.github.io/stock-hunter-v4/backtest-lab-v416.js|backtest-lab-v416.js"
             "stock-hunter-v4/missed-opportunities-v416.html|https://afzalpour.github.io/stock-hunter-v4/missed-opportunities-v416.html|missed-opportunities-v416.html"
             "stock-hunter-v4/missed-opportunities-v416.js|https://afzalpour.github.io/stock-hunter-v4/missed-opportunities-v416.js|missed-opportunities-v416.js"
+            "stock-hunter-v4/alerts-center-v416.html|https://afzalpour.github.io/stock-hunter-v4/alerts-center-v416.html|alerts-center-v416.html"
+            "stock-hunter-v4/alerts-center-v416.js|https://afzalpour.github.io/stock-hunter-v4/alerts-center-v416.js|alerts-center-v416.js"
+            "stock-hunter-v4/market-replay-v416.html|https://afzalpour.github.io/stock-hunter-v4/market-replay-v416.html|market-replay-v416.html"
+            "stock-hunter-v4/market-replay-v416.js|https://afzalpour.github.io/stock-hunter-v4/market-replay-v416.js|market-replay-v416.js"
+            "stock-hunter-v4/reliability-v416.html|https://afzalpour.github.io/stock-hunter-v4/reliability-v416.html|reliability-v416.html"
+            "stock-hunter-v4/reliability-v416.js|https://afzalpour.github.io/stock-hunter-v4/reliability-v416.js|reliability-v416.js"
             "stock-hunter-v4/hunt-runtime-core-v417.js|https://afzalpour.github.io/stock-hunter-v4/hunt-runtime-core-v417.js|hunt-runtime-core-v417.js"
             "stock-hunter-v4/app-runtime-router-v417.js|https://afzalpour.github.io/stock-hunter-v4/app-runtime-router-v417.js|app-runtime-router-v417.js"
             "stock-hunter-v4/app-runtime.js|https://afzalpour.github.io/stock-hunter-v4/app-runtime.js|app-runtime.js"
@@ -104,6 +110,12 @@ jobs:
           cmp stock-hunter-v4/backtest-lab-v416.js /tmp/stock-hunter-public-smoke/backtest-lab-v416.js
           cmp stock-hunter-v4/missed-opportunities-v416.html /tmp/stock-hunter-public-smoke/missed-opportunities-v416.html
           cmp stock-hunter-v4/missed-opportunities-v416.js /tmp/stock-hunter-public-smoke/missed-opportunities-v416.js
+          cmp stock-hunter-v4/alerts-center-v416.html /tmp/stock-hunter-public-smoke/alerts-center-v416.html
+          cmp stock-hunter-v4/alerts-center-v416.js /tmp/stock-hunter-public-smoke/alerts-center-v416.js
+          cmp stock-hunter-v4/market-replay-v416.html /tmp/stock-hunter-public-smoke/market-replay-v416.html
+          cmp stock-hunter-v4/market-replay-v416.js /tmp/stock-hunter-public-smoke/market-replay-v416.js
+          cmp stock-hunter-v4/reliability-v416.html /tmp/stock-hunter-public-smoke/reliability-v416.html
+          cmp stock-hunter-v4/reliability-v416.js /tmp/stock-hunter-public-smoke/reliability-v416.js
           cmp stock-hunter-v4/hunt-runtime-core-v417.js /tmp/stock-hunter-public-smoke/hunt-runtime-core-v417.js
           cmp stock-hunter-v4/app-runtime-router-v417.js /tmp/stock-hunter-public-smoke/app-runtime-router-v417.js
           cmp stock-hunter-v4/app-runtime.js /tmp/stock-hunter-public-smoke/app-runtime.js
@@ -147,6 +159,12 @@ jobs:
           BACKTEST_JS=/tmp/stock-hunter-public-smoke/backtest-lab-v416.js
           MISSED=/tmp/stock-hunter-public-smoke/missed-opportunities-v416.html
           MISSED_JS=/tmp/stock-hunter-public-smoke/missed-opportunities-v416.js
+          ALERTS=/tmp/stock-hunter-public-smoke/alerts-center-v416.html
+          ALERTS_JS=/tmp/stock-hunter-public-smoke/alerts-center-v416.js
+          REPLAY=/tmp/stock-hunter-public-smoke/market-replay-v416.html
+          REPLAY_JS=/tmp/stock-hunter-public-smoke/market-replay-v416.js
+          RELIABILITY=/tmp/stock-hunter-public-smoke/reliability-v416.html
+          RELIABILITY_JS=/tmp/stock-hunter-public-smoke/reliability-v416.js
 
           grep -q 'hunt-runtime-core-v417.js' "$APP"
           grep -q 'app-runtime-router-v417.js' "$APP"
@@ -164,10 +182,19 @@ jobs:
           grep -q "HUNT_CARRY_V416_VERSION='4.1.6-carry-v1'" "$CARRY"
           grep -q 'سفر شکار' "$JOURNEY"
           grep -q 'stock_hunter_hunt_journey_v416' "$JOURNEY_JS"
-          grep -q 'آزمایشگاه بک‌تست' "$BACKTEST"
+          grep -q 'آزمایشگاه آزمون تاریخی' "$BACKTEST"
           grep -q 'stock_hunter_backtest_daily_v416' "$BACKTEST_JS"
           grep -q 'ممیزی فرصت‌های از دست‌رفته' "$MISSED"
           grep -q 'stock_hunter_missed_opportunities_v416' "$MISSED_JS"
+          grep -q 'مرکز هشدار شکار' "$ALERTS"
+          grep -q 'stock_hunter_hunt_journey_v416' "$ALERTS_JS"
+          grep -q 'بازپخش بازار' "$REPLAY"
+          grep -q 'stock_hunter_market_replay_v416' "$REPLAY_JS"
+          grep -q 'پایداری سامانه' "$RELIABILITY"
+          grep -q 'stock_hunter_reliability_v416' "$RELIABILITY_JS"
+          grep -q 'alerts-center-v416.html' "$SW"
+          grep -q 'market-replay-v416.html' "$SW"
+          grep -q 'reliability-v416.html' "$SW"
           grep -q 'hunt-journey-v416.html' "$SW"
           grep -q 'backtest-lab-v416.html' "$SW"
           grep -q 'missed-opportunities-v416.html' "$SW"
