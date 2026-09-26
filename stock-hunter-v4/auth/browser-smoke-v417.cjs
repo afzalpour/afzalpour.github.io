@@ -112,7 +112,7 @@ async function main(){
     assert.equal(forecastContract.fibonacciType,'function','Fibonacci model must be loaded');
     assert.deepEqual(forecastContract.keys,['ichi','gann','fib','boll','macd','obv'],'forecastModels must expose exactly six diagnostic models');
     assert.equal(forecastContract.marketDateTime,'1405/07/03 ساعت 08:15:23','market status timestamp must use Jalali date and Tehran time');
-    assert.deepEqual(forecastContract.feedSources,['supabase','local'],'production feed must prefer Supabase and keep localhost only as fallback');
+    assert.deepEqual(forecastContract.feedSources,['supabase'],'public production feed must use Supabase only; stale localhost fallback is disabled');
     await page.waitForFunction(()=>{
       const s=document.getElementById('scanTimes');
       return s && /مسیر اصلی/.test(s.textContent||'') && /14\d{2}\/\d{2}\/\d{2}/.test(s.textContent||'');
