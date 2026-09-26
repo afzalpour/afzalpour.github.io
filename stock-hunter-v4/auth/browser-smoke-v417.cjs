@@ -173,8 +173,8 @@ async function main(){
     assert.equal(pwaContract.backgroundColor,'#111315','PWA background must match neutral main UI');
     assert.equal(pwaContract.scope,'./','PWA scope must remain stock-hunter-v4');
     assert.equal(pwaContract.startUrl,'./','PWA start URL must open the carry-enabled main app');
-    assert.match(pwaContract.swScript,/sw\.js\?v=4\.1\.6-r16/,'PWA must activate service worker r16');
-    assert.ok(pwaContract.cacheKeys.includes('shikar-sahm-v4.1.6-r17'),'PWA cache r16 must exist');
+    assert.match(pwaContract.swScript,/sw\.js\?v=4\.1\.6-r17/,'PWA must activate service worker r17');
+    assert.ok(pwaContract.cacheKeys.includes('shikar-sahm-v4.1.6-r17'),'PWA cache r17 must exist');
     assert.equal(pwaContract.carryCached,true,'carry-forward runtime must be available from the PWA offline cache');
     assert.equal(pwaContract.journeyCached,true,'Hunt Journey must be available from the PWA offline cache');
     assert.equal(pwaContract.backtestCached,true,'Backtest Lab must be available from the PWA offline cache');
