@@ -88,10 +88,10 @@ button,input,select,textarea,table{font:inherit}*{box-sizing:border-box}.researc
 
 
 /* AI Center compact header + clearer inner data tables — v4.1.9 */
-.ai-center-page-v417 .research-head{padding:12px 14px;min-height:auto;box-shadow:0 8px 24px rgba(0,0,0,.20)}
-.ai-center-page-v417 .research-head h1{font-size:20px!important;margin-bottom:4px}
-.ai-center-page-v417 .research-head p{font-size:11px!important;line-height:1.85;max-width:820px}
+.ai-center-page-v417 .research-head{padding:10px 12px;min-height:auto;box-shadow:0 6px 18px rgba(0,0,0,.16)}
+.ai-center-page-v417 .research-head h1{font-size:18px!important;margin-bottom:3px}
+.ai-center-page-v417 .research-head p{font-size:10px!important;line-height:1.75;max-width:800px}
 .ai-center-page-v417 .panel h2{font-size:15px}
 .ai-center-page-v417 table{font-size:12px}
 .ai-center-page-v417 th,.ai-center-page-v417 td{padding:9px 8px}
-@media(max-width:760px){.ai-center-page-v417 .research-head h1{font-size:18px!important}.ai-center-page-v417 table{font-size:11px}}
+@media(max-width:760px){.ai-center-page-v417 .research-head h1{font-size:17px!important}.ai-center-page-v417 .research-head p{font-size:9.5px!important}.ai-center-page-v417 table{font-size:11px}}
