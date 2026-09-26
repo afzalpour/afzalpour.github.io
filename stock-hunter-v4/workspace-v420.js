@@ -6,9 +6,14 @@
  const read=()=>{try{return JSON.parse(localStorage.getItem('stockHunterWorkspaceV420')||'{}')}catch{return{}}};
  let layout=read();
  function apply(x){
-   summary.hidden=x.summary===false;if(radar)radar.dataset.workspaceHidden=x.radar===false?'1':'0';if(x.radar===false&&radar)radar.hidden=true;table.hidden=x.table===false;document.body.classList.toggle('workspace-compact-v420',!!x.compact);
-   const map={summary,radar,table},order=[x.first||'summary',...['summary','radar','table'].filter(k=>k!==(x.first||'summary'))].filter(k=>map[k]);
-   let anchor=alertBox||toolbar;for(const k of order){const el=map[k];if(el){anchor.insertAdjacentElement('afterend',el);anchor=el;}}
+   summary.hidden=x.summary===false;
+   if(radar){radar.dataset.workspaceHidden=x.radar===false?'1':'0';if(x.radar===false)radar.hidden=true;}
+   table.hidden=x.table===false;
+   document.body.classList.toggle('workspace-compact-v420',!!x.compact);
+   const first=['summary','radar','table'].includes(x.first)?x.first:'summary';
+   if(first==='summary'){if(summary.nextElementSibling!==toolbar)toolbar.insertAdjacentElement('beforebegin',summary);}
+   else if(first==='radar'&&radar){summary.insertAdjacentElement('beforebegin',radar);}
+   else if(first==='table'){summary.insertAdjacentElement('beforebegin',table);}
  }
  async function cloudLoad(){
   if(!base||!key)return;try{const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/+esm'),sb=createClient(base,key,{auth:{persistSession:true,autoRefreshToken:true}}),{data:{session}}=await sb.auth.getSession();if(!session)return;const {data}=await sb.from('stock_hunter_workspace_v420').select('layout').eq('user_id',session.user.id).maybeSingle();if(data?.layout){layout=data.layout;localStorage.setItem('stockHunterWorkspaceV420',JSON.stringify(layout));apply(layout);}}catch{}
