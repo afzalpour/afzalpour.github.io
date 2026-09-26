@@ -65,6 +65,9 @@ jobs:
           node --check stock-hunter-v4/app-forecast.js
           node --check stock-hunter-v4/app-runtime.js
           grep -q 'function marketFaDateTimeV416' stock-hunter-v4/app-runtime.js
+          grep -q 'marketTransientHttpV416' stock-hunter-v4/app-runtime.js
+          grep -q 'marketScheduleRecoveryV416' stock-hunter-v4/app-runtime.js
+          grep -q 'Feed بازار تازه است؛ دریافت جدول نمادها با تأخیر مواجه شد' stock-hunter-v4/app-runtime.js
           grep -q "LOCAL_BRIDGE_URL: ''" stock-hunter-v4/config.js
           grep -q "sw.js?v=4.1.6-r14" stock-hunter-v4/app-runtime.js
           grep -q "if(cloud&&key)out.push({base:cloud,source:'supabase'});" stock-hunter-v4/app-runtime.js
@@ -134,7 +137,7 @@ jobs:
           grep -q 'search-neutral-v416.css?v=1' stock-hunter-v4/index-v417.html
           grep -q 'neutral-theme-v416.css?v=1' stock-hunter-v4/index.html
           grep -q 'neutral-theme-v416.css?v=1' stock-hunter-v4/index-v417.html
-          grep -q 'app-runtime.js?v=4.1.6-feed-primary5' stock-hunter-v4/index.html
+          grep -q 'app-runtime.js?v=4.1.6-feed-primary6' stock-hunter-v4/index.html
           grep -q 'app-hotfix-v410.js?v=4.1.6-print1' stock-hunter-v4/index.html
           grep -q 'app-integrated-v410.js?v=4.1.6-print1' stock-hunter-v4/index.html
           grep -q 'href="profile-v417.html">حساب من</a>' stock-hunter-v4/index.html
