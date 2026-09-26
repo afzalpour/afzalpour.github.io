@@ -59,7 +59,7 @@ create table if not exists public.stock_hunter_research_retention_v416(
 );
 insert into public.stock_hunter_research_retention_v416(dataset,retention_days,tier,purpose) values
  ('RAW_MARKET_TAPE',14,'RAW','بازپخش کوتاه‌مدت، ساخت Journey و ممیزی فرصت‌های از دست‌رفته'),
- ('SHADOW_SAMPLES',30,'RAW','تحلیل علت شکار/عدم شکار و کنترل کیفیت کوتاه‌مدت'),
+ ('SHADOW_SAMPLES',30,'RAW','تحلیل علت شکار/عدم شکار و کنترل کیفیت کوتاه‌مدت؛ نمونه‌های quarantine کیفی immutable مستثنا هستند'),
  ('OUTCOME_OBSERVATIONS',30,'RAW','ورودی موقت برای محاسبه خروجی‌های خلاصه‌شده'),
  ('HUNT_EVENTS',180,'COMPACT','رخدادهای رسمی شکار برای تحلیل جزئی'),
  ('HUNT_EFFECTIVENESS',180,'COMPACT','MFE/MAE و نتیجه همان‌روز/روز بعد'),
@@ -93,6 +93,6 @@ grant select on public.stock_hunter_hunt_journey_v416,public.stock_hunter_backte
 -- They are EXECUTE-revoked from PUBLIC/anon/authenticated and are invoked only by pg_cron/admin.
 --
 -- Retention contract:
--- RAW tape 14d; Shadow/outcome raw 30d; detailed compact event/effectiveness/carry/journey/missed 180d;
+-- RAW tape 14d; ordinary Shadow/outcome raw 30d (immutable quality-quarantine samples are preserved); detailed compact event/effectiveness/carry/journey/missed 180d;
 -- daily aggregate backtest 1095d. Refresh cron runs every 5m during market hours;
 -- missed-opportunity audit runs after close with a safety rerun; cleanup runs daily.
