@@ -25,6 +25,8 @@ on:
       - 'stock-hunter-v4/app-hunt-hierarchy-v416.js'
       - 'stock-hunter-v4/app-universal-search-v416.js'
       - 'stock-hunter-v4/app-eod-v416.js'
+      - 'stock-hunter-v4/app-hunt-carry-v416.js'
+      - 'stock-hunter-v4/carry-forward-v416.sql'
       - 'stock-hunter-v4/performance-v416.js'
       - 'stock-hunter-v4/performance.html'
       - 'stock-hunter-v4/calibration-v416.js'
@@ -105,6 +107,7 @@ jobs:
           node --check stock-hunter-v4/app-hunt-hierarchy-v416.js
           node --check stock-hunter-v4/app-universal-search-v416.js
           node --check stock-hunter-v4/app-eod-v416.js
+          node --check stock-hunter-v4/app-hunt-carry-v416.js
           node --check stock-hunter-v4/performance-v416.js
           grep -q 'function perfJalaliDateV416' stock-hunter-v4/performance-v416.js
           node --check stock-hunter-v4/calibration-v416.js
@@ -172,7 +175,9 @@ jobs:
           grep -q 'app-runtime-router-v417.js?v=4.1.7' stock-hunter-v4/index.html
           grep -q 'app-hunt-hierarchy-v416.js?v=4.1.6' stock-hunter-v4/index.html
           grep -q 'app-universal-search-v416.js?v=4.1.6-local-first1' stock-hunter-v4/index.html
-          grep -q 'app-eod-v416.js?v=4.1.6' stock-hunter-v4/index.html
+          grep -q 'app-eod-v416.js?v=4.1.6-early1' stock-hunter-v4/index.html
+          grep -q 'app-hunt-carry-v416.js?v=4.1.6-carry1' stock-hunter-v4/index.html
+          grep -q 'app-hunt-carry-v416.js?v=4.1.6-carry1' stock-hunter-v4/index-v417.html
           grep -q 'hunt-methodology-v416.html' stock-hunter-v4/index.html
           grep -q 'کاندید شکار' stock-hunter-v4/index.html
           grep -q "HUNT_V416_VERSION='4.1.6-hunt-v2'" stock-hunter-v4/app-hunt-v416.js
@@ -188,8 +193,18 @@ jobs:
           grep -q 'stockHunterMarketBaseV416' stock-hunter-v4/app-hotfix-v410.js
           grep -q 'marketFetchV416' stock-hunter-v4/app-hotfix-v410.js
           grep -q 'if(q)return universalRowsV416(q)' stock-hunter-v4/app-universal-search-v416.js
-          grep -q "defaultStates=new Set(\['شکار ویژه','هشدار فوری'\])" stock-hunter-v4/app-eod-v416.js
+          grep -q "defaultStates=new Set(\['شکار ویژه','هشدار فوری','شکار زودهنگام'\])" stock-hunter-v4/app-eod-v416.js
           grep -q 'hadActivity9to17V416' stock-hunter-v4/app-eod-v416.js
+          grep -q "HUNT_CARRY_V416_VERSION='4.1.6-carry-v1'" stock-hunter-v4/app-hunt-carry-v416.js
+          grep -q "p.set('trade_date',\`eq.\${today}\`)" stock-hunter-v4/app-hunt-carry-v416.js
+          grep -q "o.value='__carry__'" stock-hunter-v4/app-hunt-carry-v416.js
+          grep -q 'عبور موفق' stock-hunter-v4/app-hunt-carry-v416.js
+          grep -q 'mfe_from_detect_15m' stock-hunter-v4/app-hunt-carry-v416.js
+          grep -q 'stock_hunter_hunt_carry_v416' stock-hunter-v4/carry-forward-v416.sql
+          grep -q "interval '15 minutes'" stock-hunter-v4/carry-forward-v416.sql
+          grep -q "baseline_state='شکار زودهنگام'" stock-hunter-v4/carry-forward-v416.sql
+          grep -q "stock-hunter-hunt-carry-v416" stock-hunter-v4/carry-forward-v416.sql
+          grep -q "h==='شکار ویژه'||h==='هشدار فوری'||h==='شکار زودهنگام'" stock-hunter-v4/capture-security/stock-hunter-capture-v416/index.ts
           grep -q 'تأیید تکمیلی ۱–۳ روزه' stock-hunter-v4/app-hunt-hierarchy-v416.js
           grep -q 'موتور شکار درون‌روزی' stock-hunter-v4/methodology.html
           grep -q 'شش مدل ۱۰روزه' stock-hunter-v4/methodology.html
@@ -210,6 +225,7 @@ jobs:
           grep -q 'app-hunt-hierarchy-v416.js' stock-hunter-v4/sw.js
           grep -q 'app-universal-search-v416.js' stock-hunter-v4/sw.js
           grep -q 'app-eod-v416.js' stock-hunter-v4/sw.js
+          grep -q 'app-hunt-carry-v416.js' stock-hunter-v4/sw.js
           grep -q 'canary-hold-rollback-v417.js' stock-hunter-v4/sw.js
           grep -q 'canary-recovery-v417.js' stock-hunter-v4/sw.js
           grep -q '>A<' stock-hunter-v4/icon.svg
@@ -272,7 +288,7 @@ jobs:
           from pathlib import Path
           html=Path('stock-hunter-v4/index.html').read_text(encoding='utf-8')
           assert html.index('app-forecast-trend-v415.js') < html.index('app-forecast-validation-v430.js') < html.index('app-theme-v412.js')
-          assert html.index('app-session-v413.js') < html.index('app-hunt-v416.js') < html.index('hunt-runtime-core-v417.js') < html.index('app-runtime-router-v417.js') < html.index('app-hunt-hierarchy-v416.js') < html.index('app-universal-search-v416.js') < html.index('app-eod-v416.js')
+          assert html.index('app-session-v413.js') < html.index('app-hunt-v416.js') < html.index('hunt-runtime-core-v417.js') < html.index('app-runtime-router-v417.js') < html.index('app-hunt-hierarchy-v416.js') < html.index('app-universal-search-v416.js') < html.index('app-eod-v416.js') < html.index('app-hunt-carry-v416.js')
           assert 'مستعد تداوم</option>' not in html
           print('load-order: PASS')
           PY
