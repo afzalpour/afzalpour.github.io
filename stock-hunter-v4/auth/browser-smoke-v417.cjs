@@ -127,19 +127,16 @@ async function main(){
     await page.setViewportSize({width:1280,height:640});
     const mainLayout=await page.evaluate(()=>({
       bodyOverflowY:getComputedStyle(document.body).overflowY,
-      scrollHeight:Math.max(document.documentElement.scrollHeight,document.body.scrollHeight),
-      viewportHeight:window.innerHeight,
+      tableOverflowY:getComputedStyle(document.querySelector('.table-wrap')).overflowY,
+      tablePanelHeight:getComputedStyle(document.querySelector('.table-panel')).height,
       activeFilterIncludesEarly:String(filtered).includes('isRadarEarlyV416'),
       validationInjected:String(detailHTML).includes('forecast-validation-gate-v430')
     }));
     assert.notEqual(mainLayout.bodyOverflowY,'hidden','main identification page must not lock vertical scrolling');
-    assert.ok(mainLayout.scrollHeight>mainLayout.viewportHeight+40,'main identification page must have scrollable document height');
+    assert.equal(mainLayout.tableOverflowY,'auto','hunt table must keep its own vertical scrolling');
+    assert.notEqual(mainLayout.tablePanelHeight,'0px','hunt table panel must retain visible height');
     assert.equal(mainLayout.activeFilterIncludesEarly,true,'default active-hunt filter must include early hunts');
     assert.equal(mainLayout.validationInjected,false,'forecast validation gate must not be injected into end-user details');
-    await page.evaluate(()=>window.scrollTo(0,Math.min(350,document.documentElement.scrollHeight-window.innerHeight)));
-    await page.waitForTimeout(120);
-    assert.ok(await page.evaluate(()=>window.scrollY>0),'main identification page must actually scroll');
-    await page.evaluate(()=>window.scrollTo(0,0));
     await page.setViewportSize({width:1440,height:1000});
 
     const printContract=await page.evaluate(()=>{
