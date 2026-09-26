@@ -65,7 +65,7 @@
     OUTCOME_OBSERVATIONS:'مشاهدات نتیجه',HUNT_EVENTS:'رخدادهای شکار',
     HUNT_EFFECTIVENESS:'سنجش اثربخشی شکار',HUNT_CARRY:'پیگیری عبور موفق',
     HUNT_JOURNEY:'سفر شکار',MISSED_OPPORTUNITIES:'فرصت‌های از دست‌رفته',
-    BACKTEST_DAILY:'خلاصه روزانه آزمون تاریخی',RELIABILITY_SNAPSHOTS:'نماهای پایداری سامانه'
+    BACKTEST_DAILY:'خلاصه روزانه آزمون تاریخی',MARKET_REPLAY_5MIN:'بازپخش فشرده بازار',RELIABILITY_SNAPSHOTS:'نماهای پایداری سامانه'
   };
   const tierFa={RAW:'خام و کوتاه‌مدت',COMPACT:'فشرده و تحلیلی',SUMMARY:'خلاصه بلندمدت'};
   const carryFa={WAITING_CROSS:'در انتظار عبور +۱٪',ACTIVE:'پیگیری ۱۵ دقیقه‌ای فعال',COMPLETED:'پیگیری تکمیل شده',EXPIRED_NO_CROSS:'بدون عبور +۱٪'};
