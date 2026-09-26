@@ -7,8 +7,8 @@ const STATIC=[
   './app-hotfix-v410.js','./app-integrated-v410.js','./app-integrated-summary-v410.js',
   './app-explain-v411.js','./app-forecast-bridge-v414.js','./app-forecast-trend-v415.js','./app-forecast-validation-v430.js',
   './app-theme-v412.js','./app-session-v413.js','./app-hunt-v416.js','./hunt-runtime-core-v417.js','./app-runtime-router-v417.js','./app-hunt-hierarchy-v416.js',
-  './app-universal-search-v416.js','./app-eod-v416.js','./app-hunt-carry-v416.js','./performance.html','./performance-v416.js','./calibration.html','./calibration-v416.js','./candidate-evaluator-v416.js','./robustness-gate-v416.js','./promotion-decision-v416.js','./rollout-v417.html','./rollout-v417.js','./canary-admission-v417.js','./canary-expansion-v417.js','./canary-hold-rollback-v417.js','./canary-recovery-v417.js',
-  './config.js','./manifest.webmanifest','./icon.svg','./methodology.html','./hunt-methodology-v416.html','./research-lab-v416.css','./research-common-v416.js','./hunt-journey-v416.html','./hunt-journey-v416.js','./market-replay-v416.html','./market-replay-v416.js','./backtest-lab-v416.html','./backtest-lab-v416.js','./missed-opportunities-v416.html','./missed-opportunities-v416.js','./alerts-center-v416.html','./alerts-center-v416.js','./reliability-v416.html','./reliability-v416.js'
+  './app-universal-search-v416.js','./app-eod-v416.js','./app-hunt-carry-v416.js','./app-hunt-timeline-v416.js','./performance.html','./performance-v416.js','./calibration.html','./calibration-v416.js','./candidate-evaluator-v416.js','./robustness-gate-v416.js','./promotion-decision-v416.js','./rollout-v417.html','./rollout-v417.js','./canary-admission-v417.js','./canary-expansion-v417.js','./canary-hold-rollback-v417.js','./canary-recovery-v417.js',
+  './config.js','./manifest.webmanifest','./icon.svg','./methodology.html','./hunt-methodology-v416.html','./research-lab-v416.css','./research-common-v416.js','./hunt-journey-v416.html','./hunt-journey-v416.js','./market-replay-v416.html','./market-replay-v416.js','./backtest-lab-v416.html','./backtest-lab-v416.js','./missed-opportunities-v416.html','./missed-opportunities-v416.js','./alerts-center-v416.html','./alerts-center-v416.js','./reliability-v416.html','./reliability-v416.js','./strategy-builder-v417.html','./strategy-builder-v417.js'
 ];
 self.addEventListener('install',e=>{
   self.skipWaiting();
@@ -30,4 +30,13 @@ self.addEventListener('fetch',e=>{
       return r;
     }).catch(()=>caches.match(e.request))
   );
+});
+self.addEventListener('notificationclick',e=>{
+  e.notification.close();
+  const target=new URL(e.notification?.data?.url||'alerts-center-v416.html',self.location.href).href;
+  e.waitUntil((async()=>{
+    const list=await self.clients.matchAll({type:'window',includeUncontrolled:true});
+    for(const client of list){if(client.url===target||client.url.startsWith(target.split('?')[0])){await client.focus();return;}}
+    if(self.clients.openWindow)await self.clients.openWindow(target);
+  })());
 });
