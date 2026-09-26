@@ -372,3 +372,6 @@ html[data-theme="light"] .perf-cards .perf-card,html[data-theme="light"] .cards 
 .workspace-compact-v420 .summary-row article{min-height:64px!important;padding:7px 9px!important}.workspace-compact-v420 .summary-row article b{font-size:17px!important}.workspace-compact-v420 .table-wrap td,.workspace-compact-v420 .table-wrap th{padding-top:5px!important;padding-bottom:5px!important}
 @media(max-width:720px){.detail-prof-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
+
+/* Personal workspace visibility contract — v4.2.0 */
+#huntRadarV416[data-workspace-hidden="1"]{display:none!important}
