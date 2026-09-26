@@ -174,8 +174,12 @@
   }
   function wire(){
     document.querySelectorAll('.panel').forEach(x=>addToolbar(x));
-    document.querySelectorAll('.cards,.summary-row,.health-grid,.retention-grid').forEach(x=>{
+    document.querySelectorAll('.cards,.perf-cards,.summary-row,.health-grid,.retention-grid').forEach(x=>{
       if(!x.closest('.panel'))addToolbar(x,'summary');
+    });
+    document.querySelectorAll('section').forEach(x=>{
+      if(x.classList.contains('panel')||x.classList.contains('table-panel'))return;
+      if(x.querySelector('table'))addToolbar(x);
     });
     const tablePanel=document.querySelector('.table-panel');if(tablePanel)addToolbar(tablePanel,'before');
     const detail=document.getElementById('detailDialog');if(detail&&visible(detail))addToolbar(detail,'detail');
