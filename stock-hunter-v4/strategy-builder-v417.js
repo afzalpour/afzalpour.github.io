@@ -38,10 +38,11 @@ let lastScanRows=[];
 function uid(){return crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random().toString(16).slice(2);}
 function fieldOptions(selected){return Object.entries(FIELD_DEFS).map(([k,d])=>`<option value="${R.esc(k)}" ${k===selected?'selected':''}>${R.esc(d.label)}</option>`).join('');}
 function opOptions(def,selected){const ops=def.type==='choice'?TEXT_OPS:NUM_OPS;return ops.map(([v,l])=>`<option value="${v}" ${v===selected?'selected':''}>${l}</option>`).join('');}
+const faDigitsStrategy=v=>String(v??'').replace(/[0-9]/g,d=>'۰۱۲۳۴۵۶۷۸۹'[Number(d)]);
 function valueControl(rule){
   const d=FIELD_DEFS[rule.field]||FIELD_DEFS.baseline_hunt_score;
   if(d.type==='choice')return `<select class="rule-value">${d.values.map(([v,l])=>`<option value="${R.esc(v)}" ${String(rule.value)===String(v)?'selected':''}>${R.esc(l)}</option>`).join('')}</select>`;
-  return `<input class="rule-value" type="number" step="${d.step||'1'}" value="${R.esc(rule.value??'')}">`;
+  return `<input class="rule-value" type="text" inputmode="decimal" data-fa-number value="${R.esc(faDigitsStrategy(rule.value??''))}">`;
 }
 function normalizeRule(rule){
   const d=FIELD_DEFS[rule.field]||FIELD_DEFS.baseline_hunt_score;
@@ -67,7 +68,7 @@ function syncRulesFromDom(){
     r.field=row.querySelector('.rule-field').value;
     r.op=row.querySelector('.rule-op').value;
     const d=FIELD_DEFS[r.field],raw=row.querySelector('.rule-value')?.value;
-    r.value=d.type==='number'?(raw===''?null:Number(raw)):raw;
+    r.value=d.type==='number'?(raw===''?null:Number(R.latinDigits(raw).replace(/٫/g,'.'))):raw;
   });
 }
 function onRuleChange(e){

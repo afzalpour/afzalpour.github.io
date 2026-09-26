@@ -1357,3 +1357,12 @@ Implemented after PR #325 on branch `stock-hunter/fa-docx-pdf-sort-v419-20260926
 - shared locale logic automatically Persian-sorts future symbol/company selects.
 - universal textual search results now use an explicit `fa-IR` collator; numeric instrument IDs never determine alphabetic search order.
 - Frozen Hunt 4.1.6 scoring and runtime routing remain unchanged.
+
+
+### Persian digit visible-input completion — 2026-09-27
+- shared locale layer advanced to `4.1.9-fa-ui-v3`;
+- all 18 HTML pages load `locale-ui-v419.js?v=3`;
+- Jalali calendar/date fields now visibly use Persian digits;
+- Strategy Builder numeric rule fields visibly use Persian digits and normalize safely before calculations;
+- browser authenticated smoke was updated from Latin DOM-date regexes to Persian-digit regexes;
+- release metadata remains nonvisual; visible site heading stays `شکارچی سهم`.

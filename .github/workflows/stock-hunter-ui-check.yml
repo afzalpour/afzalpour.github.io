@@ -229,7 +229,7 @@ jobs:
           for token in ['exportXlsx','exportCsv','exportXml','exportDocx','exportPdf','xlsx.full.min.js','index.umd.js','html2canvas.min.js','jspdf.umd.min.js','data-export-toolbar-v418']:
               assert token in export, token
           html_files=list(Path('stock-hunter-v4').glob('*.html'))
-          missing=[p.name for p in html_files if 'data-export-v418.js?v=2' not in p.read_text(encoding='utf-8') or 'locale-ui-v419.js?v=2' not in p.read_text(encoding='utf-8')]
+          missing=[p.name for p in html_files if 'data-export-v418.js?v=2' not in p.read_text(encoding='utf-8') or 'locale-ui-v419.js?v=3' not in p.read_text(encoding='utf-8')]
           assert not missing, missing
           research=Path('stock-hunter-v4/research-lab-v416.css').read_text(encoding='utf-8')
           extra=Path('stock-hunter-v4/extra.css').read_text(encoding='utf-8')
@@ -244,8 +244,9 @@ jobs:
           index=Path('stock-hunter-v4/index.html').read_text(encoding='utf-8')
           index417=Path('stock-hunter-v4/index-v417.html').read_text(encoding='utf-8')
           assert "Intl.Collator('fa-IR'" in locale and 'faDigits' in locale
-          assert "4.1.9-fa-ui-v2" in locale
+          assert "4.1.9-fa-ui-v3" in locale
           assert 'shouldSortFa' in locale and '(symbol|company|نماد|شرکت)' in locale
+          assert 'localizeControlValue' in locale
           assert "b.textContent='چاپ'" in tools and 'چاپ / ذخیره PDF' not in tools
           assert 'exportDocx' in export and 'exportPdf' in export
           assert "document.querySelectorAll('.cards,.perf-cards,.health-grid,.retention-grid')" in export

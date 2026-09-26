@@ -115,11 +115,11 @@ async function main(){
     assert.deepEqual(forecastContract.feedSources,['supabase'],'public production feed must use Supabase only; stale localhost fallback is disabled');
     await page.waitForFunction(()=>{
       const s=document.getElementById('scanTimes');
-      return s && /مسیر اصلی/.test(s.textContent||'') && /14\d{2}\/\d{2}\/\d{2}/.test(s.textContent||'');
+      return s && /مسیر اصلی/.test(s.textContent||'') && /[۱][۴][۰-۹]{2}\/[۰-۹]{2}\/[۰-۹]{2}/.test(s.textContent||'');
     },null,{timeout:30000});
     const liveFeedText=((await page.locator('#scanTimes').textContent())||'').trim();
     assert.match(liveFeedText,/مسیر اصلی/,'published page must use primary Supabase feed');
-    assert.match(liveFeedText,/14\d{2}\/\d{2}\/\d{2} ساعت \d{2}:\d{2}:\d{2}/,'published market status must show Jalali date and HH:MM:SS');
+    assert.match(liveFeedText,/[۱][۴][۰-۹]{2}\/[۰-۹]{2}\/[۰-۹]{2} ساعت [۰-۹]{2}:[۰-۹]{2}:[۰-۹]{2}/,'published market status must show Jalali date and HH:MM:SS');
     assert.doesNotMatch(liveFeedText,/بازارهای فعال:/,'market status copy must remain compact');
     assert.equal(forecastContract.neutralTheme,true,'main page must load neutral gray theme');
     assert.equal(forecastContract.background,'rgb(17, 19, 21)','main background must be neutral gray');
@@ -191,7 +191,7 @@ async function main(){
     const journeyCount=await page.locator('#jTotal').textContent();
     assert.ok(journeyCount&&journeyCount.trim().length>0,'Hunt Journey must render summary count');
     const journeyDateValue=(await page.locator('#journeyDate').inputValue()).trim();
-    assert.match(journeyDateValue,/^14\d{2}\/\d{2}\/\d{2}$/,'Hunt Journey date filter must be Jalali');
+    assert.match(journeyDateValue,/^[۱][۴][۰-۹]{2}\/[۰-۹]{2}\/[۰-۹]{2}$/,'Hunt Journey date filter must be Jalali');
     assert.equal(await page.locator('#journeyStage option').filter({hasText:'رسیدن به +۱٪'}).count(),1,'Journey must expose +1 milestone filter');
     assert.equal(await page.locator('.filter-card[data-stage="plus2"]').count(),1,'Journey must expose clickable +2 milestone card');
 
@@ -205,23 +205,23 @@ async function main(){
     await page.waitForFunction(()=>document.getElementById('researchStatus')?.dataset.state!=='warn',null,{timeout:20000});
     const missedCount=await page.locator('#mTotal').textContent();
     assert.ok(missedCount&&missedCount.trim().length>0,'Missed Opportunities Audit must render count even when zero');
-    assert.match((await page.locator('#missDate').inputValue()).trim(),/^14\d{2}\/\d{2}\/\d{2}$/,'Missed Opportunities date must be Jalali');
+    assert.match((await page.locator('#missDate').inputValue()).trim(),/^[۱][۴][۰-۹]{2}\/[۰-۹]{2}\/[۰-۹]{2}$/,'Missed Opportunities date must be Jalali');
 
     await page.goto(BASE_URL+'/alerts-center-v416.html',{waitUntil:'domcontentloaded',timeout:30000});
     await page.waitForFunction(()=>document.getElementById('researchStatus')?.dataset.state!=='warn',null,{timeout:20000});
     assert.ok(((await page.locator('#aTotal').textContent())||'').trim().length>0,'Alert Center must render event count');
-    assert.match((await page.locator('#alertDate').inputValue()).trim(),/^14\d{2}\/\d{2}\/\d{2}$/,'Alert Center date must be Jalali');
+    assert.match((await page.locator('#alertDate').inputValue()).trim(),/^[۱][۴][۰-۹]{2}\/[۰-۹]{2}\/[۰-۹]{2}$/,'Alert Center date must be Jalali');
 
     await page.goto(BASE_URL+'/market-replay-v416.html',{waitUntil:'domcontentloaded',timeout:30000});
     await page.waitForFunction(()=>document.getElementById('researchStatus')?.dataset.state!=='warn',null,{timeout:30000});
     assert.ok(await page.locator('#replaySymbol option').count()>=1,'Market Replay must render symbol options');
-    assert.match((await page.locator('#replayDate').inputValue()).trim(),/^14\d{2}\/\d{2}\/\d{2}$/,'Market Replay date must be Jalali');
+    assert.match((await page.locator('#replayDate').inputValue()).trim(),/^[۱][۴][۰-۹]{2}\/[۰-۹]{2}\/[۰-۹]{2}$/,'Market Replay date must be Jalali');
     assert.ok(((await page.locator('#rpCount').textContent())||'').trim().length>0,'Market Replay must render snapshot count');
 
     await page.goto(BASE_URL+'/reliability-v416.html',{waitUntil:'domcontentloaded',timeout:30000});
     await page.waitForFunction(()=>document.getElementById('researchStatus')?.dataset.state!=='warn',null,{timeout:20000});
     assert.ok(((await page.locator('#hState').textContent())||'').trim().length>0,'Reliability dashboard must render overall state');
-    assert.match((await page.locator('#healthDate').inputValue()).trim(),/^14\d{2}\/\d{2}\/\d{2}$/,'Reliability date must be Jalali');
+    assert.match((await page.locator('#healthDate').inputValue()).trim(),/^[۱][۴][۰-۹]{2}\/[۰-۹]{2}\/[۰-۹]{2}$/,'Reliability date must be Jalali');
 
     await page.goto(BASE_URL+'/index.html',{waitUntil:'domcontentloaded',timeout:30000});
     await page.waitForFunction(()=>typeof detailHTML==='function',null,{timeout:10000});
