@@ -105,12 +105,21 @@ async function main(){
       fibonacciType:typeof forecastFibonacci,
       keys:forecastModels({candles:[],last:0}).map(m=>m.key),
       marketDateTime:marketFaDateTimeV416('2026-09-25T04:45:23Z'),
+      feedSources:marketBaseCandidatesV416().map(x=>x.source),
       neutralTheme:!!document.querySelector('link[href*="neutral-theme-v416.css"]'),
       background:getComputedStyle(document.body).backgroundColor
     }));
     assert.equal(forecastContract.fibonacciType,'function','Fibonacci model must be loaded');
     assert.deepEqual(forecastContract.keys,['ichi','gann','fib','boll','macd','obv'],'forecastModels must expose exactly six diagnostic models');
     assert.equal(forecastContract.marketDateTime,'1405/07/03 ساعت 08:15:23','market status timestamp must use Jalali date and Tehran time');
+    assert.deepEqual(forecastContract.feedSources,['supabase','local'],'production feed must prefer Supabase and keep localhost only as fallback');
+    await page.waitForFunction(()=>{
+      const s=document.getElementById('scanTimes');
+      return s && /مسیر اصلی/.test(s.textContent||'') && /14\d{2}\/\d{2}\/\d{2}/.test(s.textContent||'');
+    },null,{timeout:30000});
+    const liveFeedText=((await page.locator('#scanTimes').textContent())||'').trim();
+    assert.match(liveFeedText,/مسیر اصلی/,'published page must use primary Supabase feed');
+    assert.match(liveFeedText,/14\d{2}\/\d{2}\/\d{2} ساعت \d{2}:\d{2}:\d{2}/,'published market status must show Jalali date and HH:MM:SS');
     assert.equal(forecastContract.neutralTheme,true,'main page must load neutral gray theme');
     assert.equal(forecastContract.background,'rgb(17, 19, 21)','main background must be neutral gray');
 
@@ -292,6 +301,7 @@ async function main(){
       password_confirmation_and_eye_controls:true,
       malformed_recovery_email_guard:true,
       jalali_dates_and_market_timestamp:true,
+      supabase_primary_feed:true,
       neutral_gray_theme:true,
       daily_pdf_print:true,
       public_account_to_own_profile:true,
