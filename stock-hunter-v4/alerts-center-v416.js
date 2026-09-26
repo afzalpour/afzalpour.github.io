@@ -15,10 +15,11 @@ function beep(levelKey,force=false){
    setTimeout(()=>c.close().catch(()=>{}),700);
  }catch(_){}
 }
+async function ensureServiceWorker(){if(!('serviceWorker'in navigator))return null;try{return await navigator.serviceWorker.register('./sw.js?v=4.1.6-r17');}catch(_){return null;}}
 function notificationAllowed(){return 'Notification'in window&&Notification.permission==='granted';}
 async function requestNotify(){
  if(!('Notification'in window)){R.setStatus('این مرورگر از اعلان پشتیبانی نمی‌کند.','bad');return;}
- const p=await Notification.requestPermission();$('notifyBtn').textContent=p==='granted'?'اعلان برنامه: فعال':'اعلان برنامه: غیرفعال';$('notifyBtn').classList.toggle('active',p==='granted');
+ await ensureServiceWorker();const p=await Notification.requestPermission();$('notifyBtn').textContent=p==='granted'?'اعلان برنامه: فعال':'اعلان برنامه: غیرفعال';$('notifyBtn').classList.toggle('active',p==='granted');
  if(p==='granted')R.setStatus('اعلان برنامه فعال شد. رخداد تازه فقط یک‌بار اعلان می‌شود.','ok');
 }
 async function notify(a){
@@ -26,7 +27,7 @@ async function notify(a){
  const title='شکارچی سهم — '+levelFa[a.levelKey],body=a.symbol+' — '+kindFa[a.kind]+(a.dayChange!=null?' — '+R.pct(a.dayChange):'');
  const options={body,icon:'icon.svg',badge:'icon.svg',tag:a.key,renotify:false,data:{url:'alerts-center-v416.html'}};
  try{
-   if('serviceWorker'in navigator){const reg=await navigator.serviceWorker.ready;await reg.showNotification(title,options);return;}
+   if('serviceWorker'in navigator){const reg=await ensureServiceWorker();if(reg){await reg.showNotification(title,options);return;}}
    new Notification(title,options);
  }catch(_){}
 }
