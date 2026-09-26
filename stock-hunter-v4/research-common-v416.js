@@ -43,7 +43,7 @@
     const iso=String(gy).padStart(4,'0')+'-'+String(gm).padStart(2,'0')+'-'+String(gd).padStart(2,'0');
     return jalaliDate(iso)===String(m[1]).padStart(4,'0')+'/'+String(jm).padStart(2,'0')+'/'+String(jd).padStart(2,'0')?iso:null;
   }
-  function setJalaliInput(el,iso){if(el){el.dataset.iso=iso;el.value=jalaliDate(iso);}}
+  function setJalaliInput(el,iso){if(el){el.dataset.iso=iso;el.value=jalaliDate(iso).replace(/[0-9]/g,d=>'۰۱۲۳۴۵۶۷۸۹'[Number(d)]);}}
   function readJalaliInput(el,fallback){
     const iso=jalaliToIso(el?.value);if(iso){if(el)el.dataset.iso=iso;return iso;}
     const fb=el?.dataset.iso||fallback||todayIso();setJalaliInput(el,fb);return fb;
