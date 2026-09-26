@@ -288,3 +288,30 @@ Allowed post-auth destinations are restricted to the internal allow-list:
 An inactive or missing profile must never be treated as active by browser fallback logic.
 
 This UX contract is independent from Frozen Hunt scoring and does not gate the public 4.1.6 Champion.
+
+
+## 15. AI assistance, Jalali calendar and research export contract — 2026-09-26
+User-approved AI capabilities are an explanatory/research layer only and MUST NOT mutate Frozen Hunt `4.1.6-hunt-v2` formulas, thresholds, lifecycle gates, routing, capture provenance or activation state.
+
+Approved AI surfaces:
+- symbol-detail Hunt assistant grounded only in the current signal/journey data;
+- Persian natural-language strategy translation into visible, editable Strategy Builder rules;
+- end-of-market daily report built from Hunt Journey, missed opportunities, backtest summaries and reliability evidence;
+- historical similar-Hunt retrieval based on recorded feature distance and observed outcomes;
+- reliability diagnostic assistant that distinguishes feed/capture issues from model-outcome evidence.
+
+Security and reliability rules:
+- browser code never contains an OpenAI secret;
+- optional generative enhancement runs only through the Supabase Edge Function `stock-hunter-ai-v417`, which validates the Supabase user session in server code;
+- the external model secret is read only from Edge Function environment variables;
+- if generative inference is unavailable, deterministic local data-grounded analysis remains functional;
+- AI output must not invent missing observations, promise returns, issue a definitive buy/sell instruction, or change Frozen Hunt scoring.
+
+Date selection contract:
+- every current user-selectable date in Stock Hunter uses the shared Persian/Jalali calendar grid;
+- date fields are read-only and are selected from the calendar rather than typed manually;
+- future date-selection UI must reuse the same calendar contract.
+
+Research export contract:
+- every page under the Hunt Analysis research family exposes `چاپ / ذخیره PDF`;
+- print styling removes interactive controls and expands tables for browser Print / Save as PDF.
