@@ -65,12 +65,12 @@
     OUTCOME_OBSERVATIONS:'مشاهدات نتیجه',HUNT_EVENTS:'رخدادهای شکار',
     HUNT_EFFECTIVENESS:'سنجش اثربخشی شکار',HUNT_CARRY:'پیگیری عبور موفق',
     HUNT_JOURNEY:'سفر شکار',MISSED_OPPORTUNITIES:'فرصت‌های از دست‌رفته',
-    BACKTEST_DAILY:'خلاصه روزانه آزمون تاریخی',MARKET_REPLAY_5MIN:'بازپخش فشرده بازار',RELIABILITY_SNAPSHOTS:'نماهای پایداری سامانه'
+    BACKTEST_DAILY:'خلاصه روزانه آزمون تاریخی',BACKTEST_SLICES:'برش‌های تحلیلی آزمون تاریخی',MARKET_REPLAY_30SEC:'بازپخش ۳۰ثانیه‌ای بازار',RELIABILITY_SNAPSHOTS:'نماهای پایداری سامانه'
   };
   const tierFa={RAW:'خام و کوتاه‌مدت',COMPACT:'فشرده و تحلیلی',SUMMARY:'خلاصه بلندمدت'};
   const carryFa={WAITING_CROSS:'در انتظار عبور +۱٪',ACTIVE:'پیگیری ۱۵ دقیقه‌ای فعال',COMPLETED:'پیگیری تکمیل شده',EXPIRED_NO_CROSS:'بدون عبور +۱٪'};
   window.StockHunterResearchV416={
-    version:'4.1.6-research-v2',api,esc,fa,pct,latinDigits,jalaliDate,jalaliToIso,setJalaliInput,readJalaliInput,
+    version:'4.1.6-research-v3',api,esc,fa,pct,latinDigits,jalaliDate,jalaliToIso,setJalaliInput,readJalaliInput,
     time,dateTime,todayIso,daysAgoIso,addDaysIso,setStatus,datasetFa,tierFa,carryFa
   };
 })();
