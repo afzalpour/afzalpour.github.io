@@ -35,7 +35,7 @@
     <label>نام راهبرد <input id="strategyName" maxlength="80" value="راهبرد شخصی من" autocomplete="off"></label>
     <label>از تاریخ شمسی <input id="strategyFrom" class="jalali-input" type="text" inputmode="numeric"></label>
     <label>تا تاریخ شمسی <input id="strategyTo" class="jalali-input" type="text" inputmode="numeric"></label>
-    <label class="toggle-line"><input id="strategyAlert" type="checkbox"> هشدار برای تطبیق تازه</label>
+    <label>رابطه شرط‌ها <select id="strategyMatchMode"><option value="ALL">همه شرط‌ها (و)</option><option value="ANY">حداقل یک شرط (یا)</option></select></label><label class="toggle-line"><input id="strategyAlert" type="checkbox"> هشدار برای تطبیق تازه</label>
   </div>
   <div class="strategy-presets">
     <button type="button" data-preset="reversal">نمونه برگشت منفی</button>
@@ -49,7 +49,7 @@
     <button id="runBacktest" type="button">آزمون تاریخی همین راهبرد</button>
     <button id="saveStrategy" type="button">ذخیره راهبرد</button>
   </div>
-  <p class="footnote">تمام شرط‌ها با رابطه «و» اجرا می‌شوند؛ یعنی یک نماد باید همه شرط‌ها را هم‌زمان داشته باشد. نتیجه این صفحه توصیه خرید یا فروش نیست و موتور اصلی شکار را تغییر نمی‌دهد.</p>
+  <p class="footnote">رابطه شرط‌ها را می‌توانید بین «همه شرط‌ها» و «حداقل یک شرط» تغییر دهید؛ همان تعریف برای پویش زنده، آزمون تاریخی و هشدار استفاده می‌شود. نتیجه این صفحه توصیه خرید یا فروش نیست و موتور اصلی شکار را تغییر نمی‌دهد.</p>
 </section>
 
 <section class="panel">
