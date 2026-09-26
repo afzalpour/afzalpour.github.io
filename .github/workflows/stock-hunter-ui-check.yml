@@ -229,7 +229,7 @@ jobs:
           for token in ['exportXlsx','exportCsv','exportXml','exportDocx','exportPdf','xlsx.full.min.js','index.umd.js','html2canvas.min.js','jspdf.umd.min.js','data-export-toolbar-v418']:
               assert token in export, token
           html_files=list(Path('stock-hunter-v4').glob('*.html'))
-          missing=[p.name for p in html_files if 'data-export-v418.js?v=2' not in p.read_text(encoding='utf-8') or 'locale-ui-v419.js?v=1' not in p.read_text(encoding='utf-8')]
+          missing=[p.name for p in html_files if 'data-export-v418.js?v=2' not in p.read_text(encoding='utf-8') or 'locale-ui-v419.js?v=2' not in p.read_text(encoding='utf-8')]
           assert not missing, missing
           research=Path('stock-hunter-v4/research-lab-v416.css').read_text(encoding='utf-8')
           extra=Path('stock-hunter-v4/extra.css').read_text(encoding='utf-8')
@@ -244,11 +244,16 @@ jobs:
           index=Path('stock-hunter-v4/index.html').read_text(encoding='utf-8')
           index417=Path('stock-hunter-v4/index-v417.html').read_text(encoding='utf-8')
           assert "Intl.Collator('fa-IR'" in locale and 'faDigits' in locale
+          assert "version:'4.1.9-fa-ui-v2'" in locale
+          assert 'shouldSortFa' in locale and '(symbol|company|نماد|شرکت)' in locale
           assert "b.textContent='چاپ'" in tools and 'چاپ / ذخیره PDF' not in tools
           assert 'exportDocx' in export and 'exportPdf' in export
           assert "document.querySelectorAll('.cards,.perf-cards,.health-grid,.retention-grid')" in export
           assert '<h1>شکارچی سهم</h1>' in index and '<h1>شکارچی سهم</h1>' in index417
+          assert 'summary-row' not in export.split('function wire(){',1)[1].split('window.StockHunterExportV418',1)[0]
           assert 'faCollator.compare' in ai and 'faCollator.compare' in replay
+          search=Path('stock-hunter-v4/app-universal-search-v416.js').read_text(encoding='utf-8')
+          assert "Intl.Collator('fa-IR'" in search and 'faSearchCompareV416' in search
           assert "localeCompare(String(b.name||''),'fa'" in personal
           print('persian-ui-export-v419: PASS')
           PY
