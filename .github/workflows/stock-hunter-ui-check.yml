@@ -27,6 +27,15 @@ on:
       - 'stock-hunter-v4/app-eod-v416.js'
       - 'stock-hunter-v4/app-hunt-carry-v416.js'
       - 'stock-hunter-v4/carry-forward-v416.sql'
+      - 'stock-hunter-v4/research-common-v416.js'
+      - 'stock-hunter-v4/research-lab-v416.css'
+      - 'stock-hunter-v4/research-lab-v416.sql'
+      - 'stock-hunter-v4/hunt-journey-v416.html'
+      - 'stock-hunter-v4/hunt-journey-v416.js'
+      - 'stock-hunter-v4/backtest-lab-v416.html'
+      - 'stock-hunter-v4/backtest-lab-v416.js'
+      - 'stock-hunter-v4/missed-opportunities-v416.html'
+      - 'stock-hunter-v4/missed-opportunities-v416.js'
       - 'stock-hunter-v4/performance-v416.js'
       - 'stock-hunter-v4/performance.html'
       - 'stock-hunter-v4/calibration-v416.js'
@@ -108,6 +117,10 @@ jobs:
           node --check stock-hunter-v4/app-universal-search-v416.js
           node --check stock-hunter-v4/app-eod-v416.js
           node --check stock-hunter-v4/app-hunt-carry-v416.js
+          node --check stock-hunter-v4/research-common-v416.js
+          node --check stock-hunter-v4/hunt-journey-v416.js
+          node --check stock-hunter-v4/backtest-lab-v416.js
+          node --check stock-hunter-v4/missed-opportunities-v416.js
           node --check stock-hunter-v4/performance-v416.js
           grep -q 'function perfJalaliDateV416' stock-hunter-v4/performance-v416.js
           node --check stock-hunter-v4/calibration-v416.js
@@ -132,6 +145,13 @@ jobs:
           grep -q '۴.۱.۶' stock-hunter-v4/index.html
           grep -q 'طراح: دکتر نیما افضل پور' stock-hunter-v4/index.html
           grep -q 'performance.html' stock-hunter-v4/index.html
+          grep -q 'hunt-journey-v416.html' stock-hunter-v4/index.html
+          grep -q 'hunt-journey-v416.html' stock-hunter-v4/index-v417.html
+          grep -q 'stock_hunter_hunt_journey_v416' stock-hunter-v4/hunt-journey-v416.js
+          grep -q 'stock_hunter_backtest_daily_v416' stock-hunter-v4/backtest-lab-v416.js
+          grep -q 'stock_hunter_missed_opportunities_v416' stock-hunter-v4/missed-opportunities-v416.js
+          grep -q 'RAW_MARKET_TAPE' stock-hunter-v4/research-lab-v416.sql
+          grep -q "('BACKTEST_DAILY',1095" stock-hunter-v4/research-lab-v416.sql
           grep -q 'calibration.html' stock-hunter-v4/index.html
           grep -q 'app-session-v413.js?v=4.1.6' stock-hunter-v4/index.html
           grep -q 'app-forecast-validation-v430.js?v=4.3.0-evidence1' stock-hunter-v4/index.html
@@ -226,6 +246,11 @@ jobs:
           grep -q 'app-universal-search-v416.js' stock-hunter-v4/sw.js
           grep -q 'app-eod-v416.js' stock-hunter-v4/sw.js
           grep -q 'app-hunt-carry-v416.js' stock-hunter-v4/sw.js
+          grep -q 'hunt-journey-v416.html' stock-hunter-v4/sw.js
+          grep -q 'backtest-lab-v416.html' stock-hunter-v4/sw.js
+          grep -q 'missed-opportunities-v416.html' stock-hunter-v4/sw.js
+          grep -q 'research-common-v416.js' stock-hunter-v4/sw.js
+          grep -q 'research-lab-v416.css' stock-hunter-v4/sw.js
           grep -q 'canary-hold-rollback-v417.js' stock-hunter-v4/sw.js
           grep -q 'canary-recovery-v417.js' stock-hunter-v4/sw.js
           grep -q '>A<' stock-hunter-v4/icon.svg
