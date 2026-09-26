@@ -80,7 +80,7 @@ async function loadConfidenceDay(){
  catch(e){status('دریافت پرونده حرفه‌ای ناموفق بود: '+e.message,'bad');}
 }
 const fieldMap={baseline_hunt_score:'hunt_score',baseline_today_opportunity:'today_opportunity',baseline_state:'hunt_state'};
-function testRule(row,r,factor=1){const k=fieldMap[r.field]||r.field,a=row[k],op=r.op||'>=',raw=r.value;if(typeof raw==='number'||Number.isFinite(Number(raw))){const b=Number(raw)*factor,x=Number(a);if(!Number.isFinite(x))return false;if(op==='>=')return x>=b;if(op==='<=')return x<=b;if(op==='>')return x>b;if(op==='<')return x<b;if(op==='==')return x===b;if(op==='!=')return x!==b;}const x=String(a??''),b=String(raw??'');return op==='!='?x!==b:x===b;}
+function testRule(row,r,factor=1){const k=fieldMap[r.field]||r.field,a=row[k],op=r.op||'>=',raw=r.value;if(typeof raw==='number'||Number.isFinite(Number(raw))){const base=Number(raw),b=factor===1?base:((op==='>='||op==='>')?base*factor:(op==='<='||op==='<')?base/factor:base),x=Number(a);if(!Number.isFinite(x))return false;if(op==='>=')return x>=b;if(op==='<=')return x<=b;if(op==='>')return x>b;if(op==='<')return x<b;if(op==='==')return x===b;if(op==='!=')return x!==b;}const x=String(a??''),b=String(raw??'');return op==='!='?x!==b:x===b;}
 function applyStrategy(row,s,factor=1){if(!s||s.strategy_id==='__hunt__')return true;const rules=Array.isArray(s.rules)?s.rules:[];if(!rules.length)return true;const v=rules.map(r=>testRule(row,r,factor));return s.match_mode==='ANY'?v.some(Boolean):v.every(Boolean);}
 async function loadStrategies(){
  if(!sb||!user)return;const {data}=await sb.from('stock_hunter_user_strategies_v417').select('strategy_id,name,match_mode,rules').eq('user_id',user.id).order('created_at',{ascending:true});
