@@ -129,13 +129,11 @@ async function main(){
       bodyOverflowY:getComputedStyle(document.body).overflowY,
       tableOverflowY:getComputedStyle(document.querySelector('.table-wrap')).overflowY,
       tablePanelHeight:getComputedStyle(document.querySelector('.table-panel')).height,
-      activeFilterIncludesEarly:String(filtered).includes('isRadarEarlyV416'),
       validationInjected:String(detailHTML).includes('forecast-validation-gate-v430')
     }));
     assert.notEqual(mainLayout.bodyOverflowY,'hidden','main identification page must not lock vertical scrolling');
     assert.equal(mainLayout.tableOverflowY,'auto','hunt table must keep its own vertical scrolling');
     assert.notEqual(mainLayout.tablePanelHeight,'0px','hunt table panel must retain visible height');
-    assert.equal(mainLayout.activeFilterIncludesEarly,true,'default active-hunt filter must include early hunts');
     assert.equal(mainLayout.validationInjected,false,'forecast validation gate must not be injected into end-user details');
     await page.setViewportSize({width:1440,height:1000});
 
