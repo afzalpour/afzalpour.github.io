@@ -72,6 +72,7 @@ jobs:
           grep -q 'password_confirmation_and_eye_controls:true' stock-hunter-v4/auth/browser-smoke-v417.cjs
           grep -q 'malformed_recovery_email_guard:true' stock-hunter-v4/auth/browser-smoke-v417.cjs
           grep -q 'jalali_dates_and_market_timestamp:true' stock-hunter-v4/auth/browser-smoke-v417.cjs
+          grep -q 'supabase_primary_feed:true' stock-hunter-v4/auth/browser-smoke-v417.cjs
           grep -q 'neutral_gray_theme:true' stock-hunter-v4/auth/browser-smoke-v417.cjs
           grep -q 'daily_pdf_print:true' stock-hunter-v4/auth/browser-smoke-v417.cjs
           grep -q 'auth-v417.css?v=4' stock-hunter-v4/auth-v417.html
