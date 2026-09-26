@@ -49,7 +49,7 @@ function fallbackEndOfDayPoolV416(){
 }
 
 function strongestLedgerEventsV416(events){
-  const rank={'شکار ویژه':2,'هشدار فوری':1},best=new Map();
+  const rank={'شکار ویژه':3,'هشدار فوری':2,'شکار زودهنگام':1},best=new Map();
   for(const e of Array.isArray(events)?events:[]){
     const id=String(e.symbol_id||'');if(!id)continue;
     const cur=best.get(id),er=rank[e.hunt_state]||0,cr=rank[cur?.hunt_state]||0;
@@ -78,7 +78,7 @@ function mergeEodLedgerV416(events,liveRows=rows){
       huntEvidenceV416:Number(e.evidence_count||0),
       huntDynamicEvidenceV416:Number(e.dynamic_evidence_count||0),
       huntGate:'',
-      huntDecisionV416:e.hunt_state==='شکار ویژه'?'شکار فعال — ثبت‌شده در طول روز':'تأیید سریع — ثبت‌شده در طول روز'
+      huntDecisionV416:e.hunt_state==='شکار ویژه'?'شکار فعال — ثبت‌شده در طول روز':e.hunt_state==='هشدار فوری'?'تأیید سریع — ثبت‌شده در طول روز':'رصد نزدیک — ثبت‌شده در طول روز'
     };
   }).filter(Boolean).sort((a,b)=>b.huntScoreV416-a.huntScoreV416||b.todayOpportunityV416-a.todayOpportunityV416||b.fast-a.fast);
 }
@@ -124,7 +124,7 @@ const filteredBeforeEodV416=filtered;
 filtered=function(){
   const q=$('search').value.trim();if(q)return filteredBeforeEodV416();
   if(!isEndOfDayV416())return filteredBeforeEodV416();
-  const h=$('hunt').value,d=$('decision').value,defaultStates=new Set(['شکار ویژه','هشدار فوری']);
+  const h=$('hunt').value,d=$('decision').value,defaultStates=new Set(['شکار ویژه','هشدار فوری','شکار زودهنگام']);
   return endOfDayPoolV416().filter(x=>{
     if(h?x.hunt!==h:!defaultStates.has(x.hunt))return false;
     if(d&&x.decision!==d)return false;
@@ -135,13 +135,13 @@ filtered=function(){
 const updateSummaryBeforeEodV416=updateSummary;
 updateSummary=function(){
   if(!isEndOfDayV416())return updateSummaryBeforeEodV416();
-  const pool=endOfDayPoolV416(),special=pool.filter(x=>x.hunt==='شکار ویژه'),urgent=pool.filter(x=>x.hunt==='هشدار فوری'),strong=[...special,...urgent].sort((a,b)=>b.huntScoreV416-a.huntScoreV416),t=strong[0];
+  const pool=endOfDayPoolV416(),special=pool.filter(x=>x.hunt==='شکار ویژه'),urgent=pool.filter(x=>x.hunt==='هشدار فوری'),early=pool.filter(x=>x.hunt==='شکار زودهنگام'),strong=[...special,...urgent,...early].sort((a,b)=>b.huntScoreV416-a.huntScoreV416),t=strong[0];
   $('specialCount').textContent=special.length.toLocaleString('fa-IR');
   $('urgentCount').textContent=urgent.length.toLocaleString('fa-IR');
   $('buyCount').textContent=strong.length.toLocaleString('fa-IR');
   $('topSymbol').textContent=t?.symbol||'—';
   const source=eodLedgerAvailableV416?'آرشیو پایدار رویدادهای روز':'آخرین وضعیت معتبر روز (Fallback)';
-  $('topMeta').textContent=t?`${source} — ${t.huntModeLabelV416} — امتیاز شکار ${fa(t.huntScoreV416,0)}`:`جمع‌بندی پایان روز: ${source} — شکار ویژه/هشدار فوری ثبت نشده است`;
+  $('topMeta').textContent=t?`${source} — ${t.huntModeLabelV416} — امتیاز شکار ${fa(t.huntScoreV416,0)}`:`جمع‌بندی پایان روز: ${source} — شکار فعال ثبت نشده است`;
 };
 
 setTimeout(()=>{try{loadEodLedgerV416();}catch{}},0);
