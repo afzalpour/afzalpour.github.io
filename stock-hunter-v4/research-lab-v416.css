@@ -95,3 +95,11 @@ button,input,select,textarea,table{font:inherit}*{box-sizing:border-box}.researc
 .ai-center-page-v417 table{font-size:12px}
 .ai-center-page-v417 th,.ai-center-page-v417 td{padding:9px 8px}
 @media(max-width:760px){.ai-center-page-v417 .research-head h1{font-size:17px!important}.ai-center-page-v417 .research-head p{font-size:9.5px!important}.ai-center-page-v417 table{font-size:11px}}
+
+
+/* Cloud push + evidence source chips — v4.2.0 */
+.cloud-alert-v420{border-color:#406861;background:linear-gradient(145deg,#19302e,#171b1f)}
+.cloud-levels-v420{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0}.cloud-levels-v420 label{display:flex;align-items:center;gap:5px;border:1px solid #3c474d;background:#171c20;border-radius:9px;padding:7px 9px;font-size:9px;color:#c6cdd1}.cloud-levels-v420 input{accent-color:#78d49a}
+.pro-source{display:inline-flex;align-items:center;gap:4px;border:1px solid #49605d;background:#192926;color:#a9dfd8;border-radius:999px;padding:3px 7px;font-size:8px;margin:3px 2px}
+.ai-evidence-agent-v420{border-color:#4d5f68;background:linear-gradient(145deg,#1b2529,#171b1f)}
+
