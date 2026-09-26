@@ -124,6 +124,18 @@ async function main(){
     assert.equal(forecastContract.neutralTheme,true,'main page must load neutral gray theme');
     assert.equal(forecastContract.background,'rgb(17, 19, 21)','main background must be neutral gray');
 
+    await page.waitForFunction(()=>window.STOCK_HUNTER_HUNT_CARRY_V416?.version==='4.1.6-carry-v1',null,{timeout:20000});
+    const carryContract=await page.evaluate(()=>({
+      version:window.STOCK_HUNTER_HUNT_CARRY_V416?.version,
+      rowCount:Array.isArray(window.STOCK_HUNTER_HUNT_CARRY_V416?.rows)?window.STOCK_HUNTER_HUNT_CARRY_V416.rows.length:-1,
+      option:[...document.getElementById('hunt').options].some(o=>o.value==='__carry__'&&o.textContent.includes('عبور موفق')),
+      panelHook:String(detailHTML).includes('huntCarryPanelV416')
+    }));
+    assert.equal(carryContract.version,'4.1.6-carry-v1','carry-forward UI must load');
+    assert.ok(carryContract.rowCount>=0,'carry-forward ledger must be readable from production');
+    assert.equal(carryContract.option,true,'hunt filter must expose successful-crossing carry rows');
+    assert.equal(carryContract.panelHook,true,'symbol details must include carry-forward diagnostics when available');
+
     await page.setViewportSize({width:1280,height:640});
     const mainLayout=await page.evaluate(()=>({
       bodyOverflowY:getComputedStyle(document.body).overflowY,
