@@ -168,7 +168,7 @@ async function runAgent(){
    R.api('stock_hunter_backtest_daily_v416','select=*&trade_date=eq.'+d+'&limit=100').catch(()=>[]),
    loadReliability(d)
   ]);
-  const rows=await loadDate(d),failed=rows.filter(x=>!success(x)),rate=successRate(rows),mfe=med(rows.map(x=>x.same_day_mfe_pct)),mae=med(rows.map(x=>x.same_day_mae_pct));
+  const rows=await loadDate(d),observedRows=rows.filter(observed),failed=observedRows.filter(x=>!success(x)),rate=successRate(observedRows),mfe=med(observedRows.map(x=>x.same_day_mfe_pct)),mae=med(observedRows.map(x=>x.same_day_mae_pct));
   let lines=['ماموریت عامل: '+$('agentMission').selectedOptions[0].textContent,'۱) سفر شکار: '+R.fa(rows.length)+' رخداد؛ موفقیت ثبت‌شده '+faPct(rate,1)+'.','۲) نتیجه حرکت: پیشروی میانه '+R.pct(mfe)+' و افت میانه '+R.pct(mae)+'.','۳) فرصت‌های از دست‌رفته: '+R.fa(miss.length)+' مورد.','۴) آزمون تاریخی: '+R.fa(bt.length)+' گروه خلاصه ثبت‌شده.','۵) سلامت سامانه: '+String(rel?.overall_state||'نمونه‌ای ثبت نشده است')+'.'];
   if(mission==='failed')lines.push('تمرکز ماموریت: '+R.fa(failed.length)+' شکار به هدف مسیر نرسیده‌اند؛ ریسک میانگین آن‌ها '+R.fa(avg(failed.map(x=>x.risk_score)),1)+' و لغو سفارش '+R.fa(avg(failed.map(x=>x.cancellation_ratio)),1)+'.');
   if(mission==='symbol'&&j)lines.push('پرونده نماد '+j.symbol+': وضعیت '+j.hunt_state+'، امتیاز '+R.fa(j.hunt_score,1)+'، پیشروی '+R.pct(j.same_day_mfe_pct)+'، افت '+R.pct(j.same_day_mae_pct)+'.');
