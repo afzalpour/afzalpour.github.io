@@ -1,6 +1,6 @@
 // Canary admission + expansion + hold/rollback + recovery dashboard assets are pinned to cache r18.
 // Recovery/Re-entry release gate: all CI workflows validate this same service-worker head.
-const CACHE='shikar-sahm-v4.1.6-r17';
+const CACHE='shikar-sahm-v4.1.6-r18';
 const STATIC=[
   './','./index.html','./styles.css','./extra.css','./forecast-v415.css','./neutral-theme-v416.css',
   './app-core.js','./app-forecast.js','./app-runtime.js','./app-universe.js',
