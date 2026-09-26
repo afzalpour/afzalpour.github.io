@@ -1,6 +1,6 @@
 'use strict';
 (function(){
-  const VERSION='4.1.9-fa-ui-v2';
+  const VERSION='4.1.9-fa-ui-v3';
   const DIGITS='۰۱۲۳۴۵۶۷۸۹';
   const collator=new Intl.Collator('fa-IR',{usage:'sort',sensitivity:'base',ignorePunctuation:true,numeric:false});
 
@@ -22,11 +22,22 @@
     if(!node||node.nodeType!==Node.TEXT_NODE||skipText(node)||!/[0-9]/.test(node.nodeValue||''))return;
     node.nodeValue=faDigits(node.nodeValue);
   }
+  function localizeControlValue(el){
+    if(!(el instanceof HTMLInputElement)||el.matches('[data-no-fa-digits]'))return;
+    const type=(el.type||'text').toLowerCase();
+    if(!['text','search','tel','url'].includes(type))return;
+    if(/[0-9]/.test(el.value||'')){
+      const start=el.selectionStart,end=el.selectionEnd;
+      el.value=faDigits(el.value);
+      try{if(start!=null&&end!=null)el.setSelectionRange(start,end);}catch{}
+    }
+  }
   function localizeAttrs(el){
     if(!(el instanceof Element)||el.matches('[data-no-fa-digits]'))return;
     for(const a of ['title','aria-label','placeholder']){
       const v=el.getAttribute(a);if(v&&/[0-9]/.test(v))el.setAttribute(a,faDigits(v));
     }
+    localizeControlValue(el);
   }
   function localizeTree(root){
     if(!root)return;
@@ -60,6 +71,8 @@
   document.body?.setAttribute('lang','fa-IR');
   document.title=faDigits(document.title);
   localizeTree(document.body);wireSort();
+  document.addEventListener('change',e=>localizeControlValue(e.target),true);
+  document.addEventListener('blur',e=>localizeControlValue(e.target),true);
   let scheduled=false;
   new MutationObserver(muts=>{
     for(const m of muts){
@@ -69,5 +82,5 @@
     if(!scheduled){scheduled=true;requestAnimationFrame(()=>{scheduled=false;wireSort();});}
   }).observe(document.body,{subtree:true,childList:true,characterData:true});
 
-  window.StockHunterLocaleV419={version:VERSION,faDigits,normalizeFa,compare,sortSelect,shouldSortFa};
+  window.StockHunterLocaleV419={version:VERSION,faDigits,normalizeFa,compare,sortSelect,shouldSortFa,localizeControlValue};
 })();
