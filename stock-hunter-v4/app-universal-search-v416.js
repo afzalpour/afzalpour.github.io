@@ -10,6 +10,8 @@ let catalogV416=[],catalogIndexV416=[],catalogLoadingV416=false,catalogLoadedAtV
 let searchRenderTimerV416=null,searchSuggestRafV416=0,searchSuggestTimerV416=null;
 let searchComposingV416=false,searchActiveIndexV416=-1,lastSearchInputAtV416=0;
 const SEARCH_RENDER_DEBOUNCE_V416=110,SEARCH_SUGGEST_LIMIT_V416=10;
+const SEARCH_FA_COLLATOR_V416=new Intl.Collator('fa-IR',{usage:'sort',sensitivity:'base',ignorePunctuation:true,numeric:false});
+function faSearchCompareV416(a,b){return SEARCH_FA_COLLATOR_V416.compare(normalizeSearchV416(a),normalizeSearchV416(b));}
 
 function normalizeSearchV416(v){
   return String(v??'').toLowerCase()
@@ -47,10 +49,10 @@ function universalRowsV416(q){
     return catalogIndexV416.filter(i=>matchesUniversalSearchV416(i.raw,q)).map(i=>{
       const r=i.raw,x=typeof normUniverse==='function'?normUniverse(r,liveMap):(liveMap.get(String(r.ins_code||''))||r);
       x.universeLastSeenV416=r.last_seen_at||r.updated_at||x.updated||'';x.universeListedV416=true;return x;
-    }).sort((a,b)=>(Number(b.analyzed===true)-Number(a.analyzed===true))||String(a.symbol||'').localeCompare(String(b.symbol||''),'fa')||String(a.company||'').localeCompare(String(b.company||''),'fa'));
+    }).sort((a,b)=>q?faSearchCompareV416(a.symbol,b.symbol)||faSearchCompareV416(a.company,b.company):(Number(b.analyzed===true)-Number(a.analyzed===true))||faSearchCompareV416(a.symbol,b.symbol)||faSearchCompareV416(a.company,b.company));
   }
   if(typeof universeRows!=='undefined'&&Array.isArray(universeRows)&&universeRows.length){
-    return universeRows.filter(r=>matchesUniversalSearchV416(r,q)).slice().sort((a,b)=>(Number(b.analyzed===true)-Number(a.analyzed===true))||String(a.symbol||'').localeCompare(String(b.symbol||''),'fa'));
+    return universeRows.filter(r=>matchesUniversalSearchV416(r,q)).slice().sort((a,b)=>q?faSearchCompareV416(a.symbol,b.symbol)||faSearchCompareV416(a.company,b.company):(Number(b.analyzed===true)-Number(a.analyzed===true))||faSearchCompareV416(a.symbol,b.symbol)||faSearchCompareV416(a.company,b.company));
   }
   return fallbackCatalogV416().filter(r=>matchesUniversalSearchV416(r,q)).map(r=>liveMap.get(String(r.ins_code||''))||r);
 }
@@ -72,7 +74,7 @@ function suggestionsForV416(q){
     const score=suggestionScoreV416(i,qNorm,qCompact);
     if(score<99)found.push({i,score});
   }
-  found.sort((a,b)=>a.score-b.score||a.i.symbol.length-b.i.symbol.length||a.i.symbol.localeCompare(b.i.symbol,'fa')||a.i.company.localeCompare(b.i.company,'fa'));
+  found.sort((a,b)=>a.score-b.score||faSearchCompareV416(a.i.symbol,b.i.symbol)||faSearchCompareV416(a.i.company,b.i.company));
   const seen=new Set(),out=[];
   for(const m of found){
     const key=String(m.i.raw.ins_code||m.i.raw.id||`${m.i.symbol}|${m.i.company}`);
