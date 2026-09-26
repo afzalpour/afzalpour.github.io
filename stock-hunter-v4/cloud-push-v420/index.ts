@@ -17,6 +17,11 @@ function tehranDate(){
   const g=(t:string)=>p.find(x=>x.type===t)?.value||"";
   return g("year")+"-"+g("month")+"-"+g("day");
 }
+function tehranClock(){
+  const p=new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Tehran",weekday:"short",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(new Date());
+  const g=(t:string)=>p.find(x=>x.type===t)?.value||"";
+  return {wd:g("weekday"),hm:Number(g("hour"))*60+Number(g("minute"))};
+}
 function events(rows:any[]){
   const out:any[]=[];
   for(const x of rows||[]){
@@ -59,7 +64,11 @@ Deno.serve(async(req)=>{
     if(privErr||pubErr||!priv||!pub)return json({error:"PUSH_CONFIG_MISSING"},503);
     if(!token||await sha256Hex(token)!==priv.cron_token_sha256)return json({error:"UNAUTHORIZED"},401);
 
-    const today=tehranDate();
+    const today=tehranDate(),clock=tehranClock();
+    if(["Thu","Fri"].includes(clock.wd)||clock.hm<9*60||clock.hm>17*60){
+      await sb.from("stock_hunter_push_private_v420").update({last_dispatch_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",1);
+      return json({ok:true,skipped:"خارج از بازه کاری بازار",trade_date:today});
+    }
     const {data:journey,error:jErr}=await sb.from("stock_hunter_hunt_journey_v416")
       .select("channel,trade_date,symbol_id,symbol,company_name,hunt_state,detected_at,detected_day_change,hunt_score,crossed_zero_at,crossed_plus1_at,crossed_plus2_at,crossed_plus3_at")
       .eq("trade_date",today).order("detected_at",{ascending:false}).limit(600);
