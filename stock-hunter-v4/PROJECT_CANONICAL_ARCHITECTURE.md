@@ -364,3 +364,12 @@ Export/print clarification:
 - XLSX, CSV, XML, DOCX and PDF are data-export choices;
 - the separate Hunt Analysis navigation action is labeled only `چاپ`;
 - the primary market summary cards do not receive an export toolbar; table/detail numerical sections do.
+
+
+### Persian digit completion — 2026-09-27
+The Persian presentation contract also applies to user-visible editable research dates and strategy numeric rule values.
+- Jalali date inputs store ISO in `dataset.iso` but display Persian digits.
+- parsing always normalizes Persian/Arabic digits back to Latin numeric form before calculations.
+- Strategy Builder numeric rule editors render as Persian-digit text with decimal input mode, then normalize through `R.latinDigits` before numeric comparison.
+- authentication/password fields are excluded from digit rewriting.
+- browser smoke assertions for visible DOM dates/times must expect Persian digits; internal JS calculation fixtures may remain Latin.
