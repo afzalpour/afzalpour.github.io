@@ -1344,3 +1344,16 @@ Implemented after PR #325 on branch `stock-hunter/fa-docx-pdf-sort-v419-20260926
 - AI symbol selector and Market Replay symbol selector are explicitly sorted using Persian collation.
 - personal watchlists are sorted by Persian name rather than creation order.
 - relevance/time/score ordered views remain ordered by their semantic ranking rather than being incorrectly alphabetized.
+
+
+## Persian UI / sorting / export polish — 2026-09-27
+- AI Center outer header was reduced back to a compact header; internal AI tables/output remain enlarged for readability.
+- XLSX / CSV / XML / DOCX / PDF remain the universal data-export formats.
+- Hunt Analysis navigation action is `چاپ` only; PDF is handled by the data exporter.
+- Main page summary cards intentionally have no `خروجی داده` toolbar.
+- Visible site heading is `شکارچی سهم` without a version suffix.
+- Every current HTML surface loads the shared Persian digit layer.
+- AI Center and Market Replay symbol selectors are Persian-alphabetical.
+- shared locale logic automatically Persian-sorts future symbol/company selects.
+- universal textual search results now use an explicit `fa-IR` collator; numeric instrument IDs never determine alphabetic search order.
+- Frozen Hunt 4.1.6 scoring and runtime routing remain unchanged.
