@@ -78,6 +78,7 @@ create table if not exists public.stock_hunter_push_private_v420 (
 alter table public.stock_hunter_push_private_v420 enable row level security;
 revoke all on public.stock_hunter_push_private_v420 from anon,authenticated;
 grant select,update on public.stock_hunter_push_private_v420 to service_role;
+create policy "push_private_deny_clients_v420" on public.stock_hunter_push_private_v420 for all to anon, authenticated using (false) with check (false);
 
 create table if not exists public.stock_hunter_push_subscriptions_v420 (
   subscription_id uuid primary key default gen_random_uuid(),
@@ -115,6 +116,7 @@ create table if not exists public.stock_hunter_push_delivery_v420 (
 alter table public.stock_hunter_push_delivery_v420 enable row level security;
 revoke all on public.stock_hunter_push_delivery_v420 from anon,authenticated;
 grant select,insert,update,delete on public.stock_hunter_push_delivery_v420 to service_role;
+create policy "push_delivery_deny_clients_v420" on public.stock_hunter_push_delivery_v420 for all to anon, authenticated using (false) with check (false);
 create index if not exists stock_hunter_push_delivery_created_v420 on public.stock_hunter_push_delivery_v420(created_at desc);
 
 -- Operational setup after migration:
