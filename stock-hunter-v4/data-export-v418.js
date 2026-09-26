@@ -1,6 +1,6 @@
 'use strict';
 (function(){
-  const VERSION='4.1.9-export-v2';
+  const VERSION='4.2.0-export-v3';
   const FA='۰۱۲۳۴۵۶۷۸۹',AR='٠١٢٣٤٥٦٧٨٩';
   const latin=s=>String(s??'').replace(/[۰-۹]/g,d=>String(FA.indexOf(d))).replace(/[٠-٩]/g,d=>String(AR.indexOf(d))).replace(/٬/g,',').replace(/٫/g,'.');
   const clean=s=>String(s??'').replace(/\u200c/g,'‌').replace(/\s+/g,' ').trim();
@@ -31,7 +31,7 @@
     return {name:clean(table.dataset.exportName||table.getAttribute('aria-label')||'جدول '+index),rows:[head,...rows]};
   }
   function cardDatasets(root){
-    const selectors=['.summary-row article','.card','.health-item','.retention-item','.metric','.detail-hunt-metrics span','.integrated-banner>div','.expert-grid>div','.forecast-box','.mobile-metrics>div'];
+    const selectors=['.summary-row article','.card','.health-item','.retention-item','.metric','.pro-metric','.pro-passport>div','.pro-replay-data>div','.detail-hunt-metrics span','.integrated-banner>div','.expert-grid>div','.forecast-box','.mobile-metrics>div'];
     const nodes=[...root.querySelectorAll(selectors.join(','))].filter(visible);
     const seen=new Set(),rows=[['عنوان','مقدار','توضیح']];
     for(const el of nodes){
@@ -48,7 +48,7 @@
     return rows.length>1?{name:'شاخص‌ها',rows}:null;
   }
   function textDataset(root){
-    const nodes=[...root.querySelectorAll('.ai-output-v417,.detail-ai-output,.detail-ai-similar,.section-note,.research-status,.footnote')].filter(visible);
+    const nodes=[...root.querySelectorAll('.ai-output-v417,.detail-ai-output,.detail-ai-similar,.pro-ai-output,.pro-evidence,.pro-note,.section-note,.research-status,.footnote')].filter(visible);
     const rows=[['بخش','متن']];
     for(const el of nodes){
       const txt=clean(el.textContent);if(!txt||!hasDigit(txt))continue;
@@ -258,8 +258,8 @@
     }
   }
   function wire(){
-    document.querySelectorAll('.panel').forEach(x=>addToolbar(x));
-    document.querySelectorAll('.cards,.perf-cards,.health-grid,.retention-grid').forEach(x=>{
+    document.querySelectorAll('.panel,.pro-panel').forEach(x=>addToolbar(x));
+    document.querySelectorAll('.cards,.perf-cards,.health-grid,.retention-grid,.pro-metrics').forEach(x=>{
       if(!x.closest('.panel'))addToolbar(x,'summary');
     });
     document.querySelectorAll('section').forEach(x=>{

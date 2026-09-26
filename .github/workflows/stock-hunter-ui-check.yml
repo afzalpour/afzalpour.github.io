@@ -28,6 +28,15 @@ on:
       - 'stock-hunter-v4/app-hunt-carry-v416.js'
       - 'stock-hunter-v4/app-hunt-timeline-v416.js'
       - 'stock-hunter-v4/app-ai-assistant-v417.js'
+      - 'stock-hunter-v4/app-professional-detail-v420.js'
+      - 'stock-hunter-v4/workspace-v420.js'
+      - 'stock-hunter-v4/professional-center-v420.html'
+      - 'stock-hunter-v4/professional-center-v420.js'
+      - 'stock-hunter-v4/professional-v420.css'
+      - 'stock-hunter-v4/alerts-cloud-v420.js'
+      - 'stock-hunter-v4/ai-evidence-agent-v420.js'
+      - 'stock-hunter-v4/professional-suite-v420.sql'
+      - 'stock-hunter-v4/cloud-push-v420/**'
       - 'stock-hunter-v4/carry-forward-v416.sql'
       - 'stock-hunter-v4/research-common-v416.js'
       - 'stock-hunter-v4/research-tools-v417.js'
@@ -135,6 +144,11 @@ jobs:
           node --check stock-hunter-v4/app-hunt-carry-v416.js
           node --check stock-hunter-v4/app-hunt-timeline-v416.js
           node --check stock-hunter-v4/app-ai-assistant-v417.js
+          node --check stock-hunter-v4/app-professional-detail-v420.js
+          node --check stock-hunter-v4/workspace-v420.js
+          node --check stock-hunter-v4/professional-center-v420.js
+          node --check stock-hunter-v4/alerts-cloud-v420.js
+          node --check stock-hunter-v4/ai-evidence-agent-v420.js
           node --check stock-hunter-v4/research-tools-v417.js
           node --check stock-hunter-v4/data-export-v418.js
           node --check stock-hunter-v4/locale-ui-v419.js
@@ -219,6 +233,43 @@ jobs:
           grep -q 'app-hunt-timeline-v416.js?v=1' stock-hunter-v4/index-v417.html
           grep -q 'app-ai-assistant-v417.js?v=1' stock-hunter-v4/index.html
           grep -q 'app-ai-assistant-v417.js?v=1' stock-hunter-v4/index-v417.html
+          grep -q 'professional-center-v420.html' stock-hunter-v4/index.html
+          grep -q 'app-professional-detail-v420.js?v=1' stock-hunter-v4/index.html
+          grep -q 'workspace-v420.js?v=1' stock-hunter-v4/index.html
+          grep -q 'ai-evidence-agent-v420.js?v=1' stock-hunter-v4/ai-center-v417.html
+          grep -q 'alerts-cloud-v420.js?v=1' stock-hunter-v4/alerts-center-v416.html
+          grep -q "self.addEventListener('push'" stock-hunter-v4/sw.js
+          python - <<'PY'
+          from pathlib import Path
+          html=Path('stock-hunter-v4/professional-center-v420.html').read_text(encoding='utf-8')
+          js=Path('stock-hunter-v4/professional-center-v420.js').read_text(encoding='utf-8')
+          sql=Path('stock-hunter-v4/professional-suite-v420.sql').read_text(encoding='utf-8')
+          edge=Path('stock-hunter-v4/cloud-push-v420/index.ts').read_text(encoding='utf-8')
+          sw=Path('stock-hunter-v4/sw.js').read_text(encoding='utf-8')
+          detail=Path('stock-hunter-v4/app-professional-detail-v420.js').read_text(encoding='utf-8')
+          workspace=Path('stock-hunter-v4/workspace-v420.js').read_text(encoding='utf-8')
+          ai_agent=Path('stock-hunter-v4/ai-evidence-agent-v420.js').read_text(encoding='utf-8')
+          cloud=Path('stock-hunter-v4/alerts-cloud-v420.js').read_text(encoding='utf-8')
+          labels=['دروازه اطمینان شکار','گذرنامه شکار','آزمایشگاه استحکام راهبرد','آزمون گروهی روی نمادها','شبیه‌ساز اجرای واقعی مخصوص بازار ایران','مرکز رژیم بازار','آشکارساز فرسایش شکار','هشدار ابری واقعی','دیده‌بان هوشمند','هوش مصنوعی همراه با مدرک','گردش‌کار عامل هوشمند','دفترچه تصمیم','بازپخش تصمیم بدون نگاه به آینده','میزکار شخصی']
+          for label in labels: assert label in html, label
+          for token in ['confidence','runRobustness','runExecution','runRegime','scanSmart','askEvidence','runAgent','saveJournal','loadDecisionReplay','saveWorkspace','cloudHealth']:
+              assert token in js, token
+          for table in ['stock_hunter_smart_watchlists_v420','stock_hunter_decision_journal_v420','stock_hunter_workspace_v420','stock_hunter_push_public_v420','stock_hunter_push_private_v420','stock_hunter_push_subscriptions_v420','stock_hunter_push_delivery_v420']:
+              assert table in sql, table
+          assert 'enable row level security' in sql.lower()
+          assert '(select auth.uid())=user_id' in sql
+          assert 'vapid_private_key' in sql and 'Operational setup after migration' in sql
+          assert 'web-push@3.6.7' in edge and 'x-stock-hunter-cron' in edge and 'stock_hunter_push_delivery_v420' in edge
+          assert 'vapid_private_key text' not in edge
+          assert 'professional-center-v420.html' in sw and 'alerts-cloud-v420.js' in sw and 'ai-evidence-agent-v420.js' in sw
+          assert 'کیفیت اطمینان' in detail and 'امتیاز شکار' in detail
+          assert 'stockHunterWorkspaceV420' in workspace
+          assert 'سفر شکار' in ai_agent and 'پایداری سامانه' in ai_agent
+          assert 'PushManager' in cloud and 'stock_hunter_push_subscriptions_v420' in cloud
+          hunt=Path('stock-hunter-v4/app-hunt-v416.js').read_text(encoding='utf-8')
+          assert "HUNT_V416_VERSION='4.1.6-hunt-v2'" in hunt
+          print('professional-suite-v420: PASS')
+          PY
           grep -q 'ai-center-v417.html' stock-hunter-v4/index.html
           grep -q 'ai-center-v417.html' stock-hunter-v4/index-v417.html
           grep -q "b.textContent='چاپ'" stock-hunter-v4/research-tools-v417.js
@@ -229,7 +280,7 @@ jobs:
           for token in ['exportXlsx','exportCsv','exportXml','exportDocx','exportPdf','xlsx.full.min.js','index.umd.js','html2canvas.min.js','jspdf.umd.min.js','data-export-toolbar-v418']:
               assert token in export, token
           html_files=list(Path('stock-hunter-v4').glob('*.html'))
-          missing=[p.name for p in html_files if 'data-export-v418.js?v=2' not in p.read_text(encoding='utf-8') or 'locale-ui-v419.js?v=3' not in p.read_text(encoding='utf-8')]
+          missing=[p.name for p in html_files if 'data-export-v418.js?v=3' not in p.read_text(encoding='utf-8') or 'locale-ui-v419.js?v=3' not in p.read_text(encoding='utf-8')]
           assert not missing, missing
           research=Path('stock-hunter-v4/research-lab-v416.css').read_text(encoding='utf-8')
           extra=Path('stock-hunter-v4/extra.css').read_text(encoding='utf-8')
@@ -249,7 +300,9 @@ jobs:
           assert 'localizeControlValue' in locale
           assert "b.textContent='چاپ'" in tools and 'چاپ / ذخیره PDF' not in tools
           assert 'exportDocx' in export and 'exportPdf' in export
-          assert "document.querySelectorAll('.cards,.perf-cards,.health-grid,.retention-grid')" in export
+          assert ".pro-metric" in export and ".pro-passport>div" in export and ".pro-replay-data>div" in export
+          assert ".pro-panel" in export and ".pro-metrics" in export
+          assert "4.2.0-export-v3" in export
           assert '<h1>شکارچی سهم</h1>' in index and '<h1>شکارچی سهم</h1>' in index417
           assert 'summary-row' not in export.split('function wire(){',1)[1].split('window.StockHunterExportV418',1)[0]
           assert 'faCollator.compare' in ai and 'faCollator.compare' in replay
@@ -265,7 +318,7 @@ jobs:
           python - <<'PY'
           import re
           from pathlib import Path
-          files=['hunt-journey-v416.html','backtest-lab-v416.html','missed-opportunities-v416.html','alerts-center-v416.html','market-replay-v416.html','reliability-v416.html','strategy-builder-v417.html','ai-center-v417.html']
+          files=['hunt-journey-v416.html','backtest-lab-v416.html','missed-opportunities-v416.html','alerts-center-v416.html','market-replay-v416.html','reliability-v416.html','strategy-builder-v417.html','ai-center-v417.html','professional-center-v420.html']
           for name in files:
               text=Path('stock-hunter-v4',name).read_text(encoding='utf-8')
               if 'type="date"' in text:

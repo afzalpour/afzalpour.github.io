@@ -363,3 +363,15 @@ html[data-theme="light"] .detail-ai-similar{background:linear-gradient(145deg,#f
 .perf-cards .perf-card b,.cards .card b{font-size:22px!important}
 html[data-theme="light"] .perf-cards .perf-card,html[data-theme="light"] .cards .card{background:linear-gradient(155deg,#fff,#f2f6f9)!important;border-color:#cbd9e3!important;box-shadow:0 9px 24px rgba(56,83,103,.11)!important}
 @media(max-width:900px){.perf-head>div:first-child,.cal-head>div:first-child,.roll-head>div:first-child{width:100%;text-align:center}}
+
+
+/* Professional detail passport + personal workspace — v4.2.0 */
+.detail-professional-v420{margin-top:14px;padding-top:12px;border-top:1px solid var(--po-line)}
+.detail-prof-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.detail-prof-head b{display:block;font-size:15px;color:var(--po-ink)}.detail-prof-head small{display:block;color:var(--po-dim);font-size:9px;margin-top:3px}.detail-prof-head a{font-size:10px;color:var(--po-brass);text-decoration:none}
+.detail-prof-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:9px}.detail-prof-grid article{text-align:center;border:1px solid var(--po-line);background:var(--po-raised);border-radius:9px;padding:8px}.detail-prof-grid span,.detail-prof-grid small{display:block;color:var(--po-dim);font-size:8px}.detail-prof-grid b{display:block;font-size:11px;margin:4px 0}.detail-prof-line{margin-top:7px;padding:8px;border:1px solid var(--po-line);border-radius:8px;background:var(--po-bg);font-size:9px;line-height:1.9}
+.workspace-compact-v420 .summary-row article{min-height:64px!important;padding:7px 9px!important}.workspace-compact-v420 .summary-row article b{font-size:17px!important}.workspace-compact-v420 .table-wrap td,.workspace-compact-v420 .table-wrap th{padding-top:5px!important;padding-bottom:5px!important}
+@media(max-width:720px){.detail-prof-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Personal workspace visibility contract — v4.2.0 */
+#huntRadarV416[data-workspace-hidden="1"]{display:none!important}

@@ -373,3 +373,48 @@ The Persian presentation contract also applies to user-visible editable research
 - Strategy Builder numeric rule editors render as Persian-digit text with decimal input mode, then normalize through `R.latinDigits` before numeric comparison.
 - authentication/password fields are excluded from digit rewriting.
 - browser smoke assertions for visible DOM dates/times must expect Persian digits; internal JS calculation fixtures may remain Latin.
+
+
+## 18. Professional layer v4.2.0 — 2026-09-27
+
+The professional layer is additive and explanatory. Frozen Hunt remains `4.1.6-hunt-v2`; professional confidence, regime, execution, robustness, AI, journal, replay and workspace outputs MUST NOT feed Hunt Score, Hunt state transitions or thresholds.
+
+### Professional Center contract
+`professional-center-v420.html/js` is the unified surface for fourteen capabilities:
+1. independent confidence gate;
+2. Hunt passport;
+3. strategy robustness / time holdout;
+4. grouped cross-symbol testing;
+5. Iran-market execution approximation;
+6. market-regime analysis;
+7. Hunt performance drift detection;
+8. real server-backed Web Push;
+9. dynamic smart watchlists;
+10. evidence-backed AI;
+11. multi-source agent workflow;
+12. user decision journal;
+13. leakage-safe decision replay;
+14. personal workspace.
+
+Only observed outcomes may enter success/failure statistics. Current or incomplete hunts MUST NOT be counted as failures.
+
+### Storage contract
+No new high-volume raw market history is introduced. Professional analytics reuse compact Journey / Backtest / Replay / Reliability datasets. User-owned smart-watchlist, journal and workspace records are compact. Push delivery history is retained for 90 days.
+
+### Cloud Push contract
+- Edge function: `stock-hunter-cloud-push-v420`.
+- Public VAPID key may be read by clients.
+- VAPID private key is server-only.
+- raw cron token is held in Supabase Vault; only its SHA-256 digest is held in the private config table.
+- client subscription rows are owner-RLS protected.
+- private configuration and delivery ledgers explicitly deny anon/authenticated access.
+- server cron runs once per minute but the function avoids Journey scans outside Saturday-Wednesday 09:00–17:00 Tehran.
+- delivery deduplication is enforced by `(subscription_id,event_key)`.
+- expired browser subscriptions are disabled after 404/410.
+
+### Personal workspace contract
+Default page layout remains unchanged when no preference exists. A hidden radar must remain hidden across later live rerenders. Cloud layout is loaded only for authenticated users and localStorage remains the immediate fallback.
+
+### Export / language contract
+All new numerical surfaces join the shared five-format exporter: XLSX, CSV, XML, DOCX, PDF. Visible dates are Jalali calendar inputs and visible digits are Persian. Symbol/company ordering uses Persian collation. New user-facing terminology uses `دیده‌بان`, not English/transliterated watchlist wording.
+
