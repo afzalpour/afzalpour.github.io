@@ -114,7 +114,7 @@ jobs:
             assert "method:'post'" not in lower and 'method:"post"' not in lower
             assert '/rpc/' not in lower
           assert 'rollout-v417.html' in promo
-          assert "shikar-sahm-v4.1.6-r16" in sw
+          assert "shikar-sahm-v4.1.6-r17" in sw
           assert './hunt-runtime-core-v417.js' in sw and './app-runtime-router-v417.js' in sw
           assert './app-forecast-validation-v430.js' in sw
           assert './canary-admission-v417.js' in sw and './canary-expansion-v417.js' in sw and './canary-hold-rollback-v417.js' in sw and './canary-recovery-v417.js' in sw
