@@ -119,7 +119,7 @@
     const {data,error}=await supabase.from('stock_hunter_watchlists_v417')
       .select('watchlist_id,name,created_at').eq('user_id',user.id).order('created_at',{ascending:true});
     if(error)throw error;
-    watchlists=data||[];
+    watchlists=(data||[]).slice().sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'fa',{sensitivity:'base',numeric:false}));
     const sel=byId('personalWatchlistV417');
     sel.innerHTML='<option value="">واچ‌لیست شخصی</option>'+watchlists.map(w=>'<option value="'+esc(w.watchlist_id)+'">'+esc(w.name)+'</option>').join('');
     activeWatchlistId=preferred&&watchlists.some(w=>w.watchlist_id===preferred)?preferred:(activeWatchlistId&&watchlists.some(w=>w.watchlist_id===activeWatchlistId)?activeWatchlistId:(watchlists[0]?.watchlist_id||''));

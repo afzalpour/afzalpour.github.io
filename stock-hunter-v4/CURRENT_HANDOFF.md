@@ -1330,3 +1330,17 @@ Scope:
 - service worker r18 now pre-caches the shared exporter without changing the Frozen Hunt engine or runtime-routing state.
 
 XLM was not used as a data format because it is Excel's legacy macro-sheet format; XML is the safe structured interchange output.
+
+
+## Persian numbers + DOCX/PDF + Persian alphabetical sorting — 2026-09-26
+Implemented after PR #325 on branch `stock-hunter/fa-docx-pdf-sort-v419-20260926`.
+
+- AI Center header returned to compact sizing; its internal data table typography is enlarged instead.
+- universal data exports now include XLSX / CSV / XML / DOCX / PDF.
+- research print action is renamed to `چاپ`; PDF is generated from the export toolbar.
+- main-page summary row no longer receives its own export toolbar.
+- all user-visible ASCII digits are converted after render to Persian digits without mutating internal data/IDs.
+- main header displays only `شکارچی سهم`.
+- AI symbol selector and Market Replay symbol selector are explicitly sorted using Persian collation.
+- personal watchlists are sorted by Persian name rather than creation order.
+- relevance/time/score ordered views remain ordered by their semantic ranking rather than being incorrectly alphabetized.

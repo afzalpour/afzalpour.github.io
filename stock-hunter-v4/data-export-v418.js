@@ -1,6 +1,6 @@
 'use strict';
 (function(){
-  const VERSION='4.1.8-export-v1';
+  const VERSION='4.1.9-export-v2';
   const FA='۰۱۲۳۴۵۶۷۸۹',AR='٠١٢٣٤٥٦٧٨٩';
   const latin=s=>String(s??'').replace(/[۰-۹]/g,d=>String(FA.indexOf(d))).replace(/[٠-٩]/g,d=>String(AR.indexOf(d))).replace(/٬/g,',').replace(/٫/g,'.');
   const clean=s=>String(s??'').replace(/\u200c/g,'‌').replace(/\s+/g,' ').trim();
@@ -111,6 +111,20 @@
     xml+='\n</stockHunterExport>';
     download(new Blob([xml],{type:'application/xml;charset=utf-8'}),filename(root,'xml'));
   }
+  function loadScript(src,key){
+    if(window[key])return Promise.resolve(window[key]);
+    const cache='__stockHunterLib_'+key;if(window[cache])return window[cache];
+    window[cache]=new Promise((resolve,reject)=>{
+      const s=document.createElement('script');s.src=src;s.async=true;s.crossOrigin='anonymous';
+      s.onload=()=>window[key]?resolve(window[key]):reject(new Error('کتابخانه '+key+' بارگذاری نشد'));
+      s.onerror=()=>reject(new Error('دسترسی به کتابخانه '+key+' برقرار نشد'));
+      document.head.appendChild(s);
+    });
+    return window[cache];
+  }
+  function faDisplay(v){
+    return String(v??'').replace(/[0-9]/g,d=>'۰۱۲۳۴۵۶۷۸۹'[Number(d)]);
+  }
   function ensureXlsx(){
     if(window.XLSX)return Promise.resolve(window.XLSX);
     if(window.__stockHunterXlsxPromise)return window.__stockHunterXlsxPromise;
@@ -133,7 +147,72 @@
       }
       XLSX.writeFile(wb,filename(root,'xlsx'),{compression:true});
     }catch(e){
-      console.error(e);alert('ساخت فایل XLSX ممکن نشد. خروجی CSV و XML همچنان در دسترس است.');
+      console.error(e);alert('ساخت فایل XLSX ممکن نشد. خروجی‌های دیگر همچنان در دسترس هستند.');
+    }
+  }
+  async function ensureDocx(){
+    if(window.docx)return window.docx;
+    return loadScript('https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js','docx');
+  }
+  async function exportDocx(root){
+    const sets=collect(root);if(!sets.length)return;
+    try{
+      const D=await ensureDocx();
+      const children=[];
+      for(const s of sets){
+        children.push(new D.Paragraph({
+          children:[new D.TextRun({text:faDisplay(s.name),bold:true,size:30,rightToLeft:true})],
+          alignment:D.AlignmentType.RIGHT,bidirectional:true,spacing:{before:180,after:100}
+        }));
+        const rows=s.rows.map((row,ri)=>new D.TableRow({children:row.map(v=>new D.TableCell({
+          children:[new D.Paragraph({
+            children:[new D.TextRun({text:faDisplay(v),bold:ri===0,size:ri===0?21:20,rightToLeft:true})],
+            alignment:D.AlignmentType.RIGHT,bidirectional:true
+          })]
+        }))}));
+        children.push(new D.Table({rows}));
+        children.push(new D.Paragraph({text:''}));
+      }
+      const doc=new D.Document({sections:[{properties:{},children}]});
+      const blob=await D.Packer.toBlob(doc);download(blob,filename(root,'docx'));
+    }catch(e){
+      console.error(e);alert('ساخت فایل DOCX ممکن نشد. خروجی‌های دیگر همچنان در دسترس هستند.');
+    }
+  }
+  async function ensurePdf(){
+    await loadScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js','html2canvas');
+    if(!window.jspdf){
+      await new Promise((resolve,reject)=>{
+        const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';s.async=true;s.crossOrigin='anonymous';
+        s.onload=()=>window.jspdf?resolve():reject(new Error('کتابخانه PDF بارگذاری نشد'));
+        s.onerror=()=>reject(new Error('دسترسی به کتابخانه PDF برقرار نشد'));
+        document.head.appendChild(s);
+      });
+    }
+    return {html2canvas:window.html2canvas,jsPDF:window.jspdf.jsPDF};
+  }
+  async function exportPdf(root){
+    if(!root)return;
+    try{
+      const {html2canvas,jsPDF}=await ensurePdf();
+      root.classList.add('export-capturing-v419');
+      const canvas=await html2canvas(root,{scale:1.35,useCORS:true,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:-window.scrollY});
+      root.classList.remove('export-capturing-v419');
+      const portrait=canvas.height>=canvas.width;
+      const pdf=new jsPDF({orientation:portrait?'p':'l',unit:'pt',format:'a4',compress:true});
+      const pageW=pdf.internal.pageSize.getWidth(),pageH=pdf.internal.pageSize.getHeight(),margin=20;
+      const imgW=pageW-margin*2,imgH=canvas.height*imgW/canvas.width,pageContent=pageH-margin*2;
+      const img=canvas.toDataURL('image/jpeg',0.92);
+      let offset=0,page=0;
+      while(offset<imgH){
+        if(page++)pdf.addPage();
+        pdf.addImage(img,'JPEG',margin,margin-offset,imgW,imgH,undefined,'FAST');
+        offset+=pageContent;
+      }
+      pdf.save(filename(root,'pdf'));
+    }catch(e){
+      root?.classList?.remove('export-capturing-v419');
+      console.error(e);alert('ساخت فایل PDF ممکن نشد. خروجی‌های دیگر همچنان در دسترس هستند.');
     }
   }
   function injectStyle(){
@@ -145,6 +224,9 @@
       .data-export-toolbar-v418 button[data-export-xlsx]{border-color:#3b8b62!important;color:#a9efc7!important;background:#153326!important}
       .data-export-toolbar-v418 button[data-export-csv]{border-color:#b18a3e!important;color:#ffe1a0!important;background:#352c18!important}
       .data-export-toolbar-v418 button[data-export-xml]{border-color:#6e62a9!important;color:#d7ceff!important;background:#27223d!important}
+      .data-export-toolbar-v418 button[data-export-docx]{border-color:#4477b5!important;color:#c9e2ff!important;background:#182b43!important}
+      .data-export-toolbar-v418 button[data-export-pdf]{border-color:#a85656!important;color:#ffd0d0!important;background:#3b1d20!important}
+      .export-capturing-v419 .data-export-toolbar-v418{display:none!important}
       .data-export-toolbar-v418 button:hover{transform:translateY(-1px);filter:brightness(1.14)}
       .summary-export-v418{grid-column:1/-1!important}
       .detail-actions>.data-export-toolbar-v418{margin:0;padding:4px 6px;background:transparent;border-color:#35404a}
@@ -158,10 +240,12 @@
     if(!hasDigit(root.innerText||root.textContent||'')&&!root.querySelector('table'))return;
     root.dataset.exportReadyV418='1';
     const bar=document.createElement('div');bar.className='data-export-toolbar-v418 '+(mode==='summary'?'summary-export-v418':'');
-    bar.innerHTML='<span>خروجی داده</span><button type="button" data-export-xlsx>XLSX</button><button type="button" data-export-csv>CSV</button><button type="button" data-export-xml>XML</button>';
+    bar.innerHTML='<span>خروجی داده</span><button type="button" data-export-xlsx>XLSX</button><button type="button" data-export-csv>CSV</button><button type="button" data-export-xml>XML</button><button type="button" data-export-docx>DOCX</button><button type="button" data-export-pdf>PDF</button>';
     bar.querySelector('[data-export-xlsx]').onclick=e=>{e.stopPropagation();exportXlsx(root);};
     bar.querySelector('[data-export-csv]').onclick=e=>{e.stopPropagation();exportCsv(root);};
     bar.querySelector('[data-export-xml]').onclick=e=>{e.stopPropagation();exportXml(root);};
+    bar.querySelector('[data-export-docx]').onclick=e=>{e.stopPropagation();exportDocx(root);};
+    bar.querySelector('[data-export-pdf]').onclick=e=>{e.stopPropagation();exportPdf(root);};
     if(mode==='before'){
       root.insertAdjacentElement('beforebegin',bar);
     }else if(mode==='detail'){
@@ -175,7 +259,7 @@
   }
   function wire(){
     document.querySelectorAll('.panel').forEach(x=>addToolbar(x));
-    document.querySelectorAll('.cards,.perf-cards,.summary-row,.health-grid,.retention-grid').forEach(x=>{
+    document.querySelectorAll('.cards,.perf-cards,.health-grid,.retention-grid').forEach(x=>{
       if(!x.closest('.panel'))addToolbar(x,'summary');
     });
     document.querySelectorAll('section').forEach(x=>{
@@ -185,7 +269,7 @@
     const tablePanel=document.querySelector('.table-panel');if(tablePanel)addToolbar(tablePanel,'before');
     const detail=document.getElementById('detailDialog');if(detail&&visible(detail))addToolbar(detail,'detail');
   }
-  window.StockHunterExportV418={version:VERSION,collect,exportXlsx,exportCsv,exportXml,wire};
+  window.StockHunterExportV418={version:VERSION,collect,exportXlsx,exportCsv,exportXml,exportDocx,exportPdf,wire};
   injectStyle();wire();
   let scheduled=false;
   new MutationObserver(()=>{if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;wire();});}).observe(document.body,{childList:true,subtree:true,characterData:true});

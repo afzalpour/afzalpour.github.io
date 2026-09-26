@@ -32,6 +32,7 @@ on:
       - 'stock-hunter-v4/research-common-v416.js'
       - 'stock-hunter-v4/research-tools-v417.js'
       - 'stock-hunter-v4/data-export-v418.js'
+      - 'stock-hunter-v4/locale-ui-v419.js'
       - 'stock-hunter-v4/ai-center-v417.html'
       - 'stock-hunter-v4/ai-center-v417.js'
       - 'stock-hunter-v4/ai/stock-hunter-ai-v417/index.ts'
@@ -136,6 +137,7 @@ jobs:
           node --check stock-hunter-v4/app-ai-assistant-v417.js
           node --check stock-hunter-v4/research-tools-v417.js
           node --check stock-hunter-v4/data-export-v418.js
+          node --check stock-hunter-v4/locale-ui-v419.js
           node --check stock-hunter-v4/ai-center-v417.js
           node --check stock-hunter-v4/research-common-v416.js
           node --check stock-hunter-v4/hunt-journey-v416.js
@@ -166,7 +168,7 @@ jobs:
         run: python -m json.tool stock-hunter-v4/manifest.webmanifest >/dev/null
       - name: Check goal-aligned hunt UI and runtime assets
         run: |
-          grep -q '۴.۱.۶' stock-hunter-v4/index.html
+          grep -q '<h1>شکارچی سهم</h1>' stock-hunter-v4/index.html
           grep -q 'طراح: دکتر نیما افضل پور' stock-hunter-v4/index.html
           grep -q 'performance.html' stock-hunter-v4/index.html
           grep -q 'hunt-journey-v416.html' stock-hunter-v4/index.html
@@ -219,21 +221,36 @@ jobs:
           grep -q 'app-ai-assistant-v417.js?v=1' stock-hunter-v4/index-v417.html
           grep -q 'ai-center-v417.html' stock-hunter-v4/index.html
           grep -q 'ai-center-v417.html' stock-hunter-v4/index-v417.html
-          grep -q 'چاپ / ذخیره PDF' stock-hunter-v4/research-tools-v417.js
+          grep -q "b.textContent='چاپ'" stock-hunter-v4/research-tools-v417.js
           grep -q 'jalali-cal-grid' stock-hunter-v4/research-tools-v417.js
           python - <<'PY'
           from pathlib import Path
           export=Path('stock-hunter-v4/data-export-v418.js').read_text(encoding='utf-8')
-          for token in ['exportXlsx','exportCsv','exportXml','xlsx.full.min.js','data-export-toolbar-v418']:
+          for token in ['exportXlsx','exportCsv','exportXml','exportDocx','exportPdf','xlsx.full.min.js','index.umd.js','html2canvas.min.js','jspdf.umd.min.js','data-export-toolbar-v418']:
               assert token in export, token
           html_files=list(Path('stock-hunter-v4').glob('*.html'))
-          missing=[p.name for p in html_files if 'data-export-v418.js?v=1' not in p.read_text(encoding='utf-8')]
+          missing=[p.name for p in html_files if 'data-export-v418.js?v=2' not in p.read_text(encoding='utf-8') or 'locale-ui-v419.js?v=1' not in p.read_text(encoding='utf-8')]
           assert not missing, missing
           research=Path('stock-hunter-v4/research-lab-v416.css').read_text(encoding='utf-8')
           extra=Path('stock-hunter-v4/extra.css').read_text(encoding='utf-8')
           assert '#aiAnswer' in research and '#aiDailyOutput' in research and '#aiDiagOutput' in research
           assert 'text-align:center' in research and 'text-align:center' in extra
           print('universal-data-export: PASS')
+          locale=Path('stock-hunter-v4/locale-ui-v419.js').read_text(encoding='utf-8')
+          tools=Path('stock-hunter-v4/research-tools-v417.js').read_text(encoding='utf-8')
+          ai=Path('stock-hunter-v4/ai-center-v417.js').read_text(encoding='utf-8')
+          replay=Path('stock-hunter-v4/market-replay-v416.js').read_text(encoding='utf-8')
+          personal=Path('stock-hunter-v4/app-personal-v417.js').read_text(encoding='utf-8')
+          index=Path('stock-hunter-v4/index.html').read_text(encoding='utf-8')
+          index417=Path('stock-hunter-v4/index-v417.html').read_text(encoding='utf-8')
+          assert "Intl.Collator('fa-IR'" in locale and 'faDigits' in locale
+          assert "b.textContent='چاپ'" in tools and 'چاپ / ذخیره PDF' not in tools
+          assert 'exportDocx' in export and 'exportPdf' in export
+          assert "document.querySelectorAll('.cards,.perf-cards,.health-grid,.retention-grid')" in export
+          assert '<h1>شکارچی سهم</h1>' in index and '<h1>شکارچی سهم</h1>' in index417
+          assert 'faCollator.compare' in ai and 'faCollator.compare' in replay
+          assert "localeCompare(String(b.name||''),'fa'" in personal
+          print('persian-ui-export-v419: PASS')
           PY
           grep -q 'خط زمانی شکار' stock-hunter-v4/app-hunt-timeline-v416.js
           grep -q 'strategy-builder-v417.html' stock-hunter-v4/sw.js
@@ -334,6 +351,7 @@ jobs:
           grep -q "shikar-sahm-v4.1.6-r18" stock-hunter-v4/sw.js
           grep -q 'research-tools-v417.js' stock-hunter-v4/sw.js
           grep -q 'data-export-v418.js' stock-hunter-v4/sw.js
+          grep -q 'locale-ui-v419.js' stock-hunter-v4/sw.js
           grep -q 'ai-center-v417.html' stock-hunter-v4/sw.js
           grep -q 'app-ai-assistant-v417.js' stock-hunter-v4/sw.js
           grep -q 'app-forecast-validation-v430.js' stock-hunter-v4/sw.js

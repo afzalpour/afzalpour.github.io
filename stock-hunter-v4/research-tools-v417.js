@@ -74,7 +74,7 @@
       const a=document.createElement('a');a.href='ai-center-v417.html';a.textContent='مرکز هوش مصنوعی';nav.appendChild(a);
     }
     if(!nav.querySelector('.research-print-btn-v417')){
-      const b=document.createElement('button');b.type='button';b.className='research-print-btn-v417';b.textContent='چاپ / ذخیره PDF';b.onclick=()=>window.print();nav.appendChild(b);
+      const b=document.createElement('button');b.type='button';b.className='research-print-btn-v417';b.textContent='چاپ';b.onclick=()=>window.print();nav.appendChild(b);
     }
   }
   wireInputs();wireNav();

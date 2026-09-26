@@ -3,6 +3,8 @@ const R=window.StockHunterResearchV416,cfg=window.STOCK_HUNTER_CONFIG||{},$=id=>
 const supabase=createClient(String(cfg.SUPABASE_URL||'').replace(/\/$/,''),String(cfg.SUPABASE_PUBLISHABLE_KEY||''),{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}});
 let journeys=[],missed=[],backtest=[],health=[],session=null,aiConfigured=false;
 const modeFa=v=>v==='reversal'?'برگشت از محدوده منفی':v==='acceleration'?'شتاب مثبت اولیه':'—';
+const faCollator=new Intl.Collator('fa-IR',{usage:'sort',sensitivity:'base',ignorePunctuation:true,numeric:false});
+const faName=v=>String(v??'').normalize('NFKC').replace(/ي/g,'ی').replace(/ى/g,'ی').replace(/ك/g,'ک').replace(/\u200c/g,' ').trim();
 const median=a=>{const x=a.map(Number).filter(Number.isFinite).sort((m,n)=>m-n);if(!x.length)return null;const i=Math.floor(x.length/2);return x.length%2?x[i]:(x[i-1]+x[i])/2;};
 
 async function healthAi(){
@@ -20,7 +22,8 @@ async function invoke(mode,payload){
 function selected(){return journeys.find(x=>String(x.symbol_id)===$('aiSymbol').value)||null;}
 function fillSymbols(){
   const map=new Map();for(const x of journeys)if(!map.has(String(x.symbol_id)))map.set(String(x.symbol_id),x);
-  $('aiSymbol').innerHTML=map.size?[...map.values()].map(x=>'<option value="'+R.esc(x.symbol_id)+'">'+R.esc(x.symbol)+' — '+modeFa(x.hunt_mode)+'</option>').join(''):'<option value="">رخدادی وجود ندارد</option>';
+  const items=[...map.values()].sort((a,b)=>faCollator.compare(faName(a.symbol),faName(b.symbol))||faCollator.compare(faName(a.company_name),faName(b.company_name)));
+  $('aiSymbol').innerHTML=items.length?items.map(x=>'<option value="'+R.esc(x.symbol_id)+'">'+R.esc(x.symbol)+' — '+modeFa(x.hunt_mode)+'</option>').join(''):'<option value="">رخدادی وجود ندارد</option>';
 }
 function localAnswer(x,q){
   if(!x)return 'برای این تاریخ رخداد شکار قابل تحلیل وجود ندارد.';

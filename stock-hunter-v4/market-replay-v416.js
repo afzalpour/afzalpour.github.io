@@ -1,5 +1,7 @@
 'use strict';
 const R=StockHunterResearchV416;const $=id=>document.getElementById(id);let replayRows=[],journey=null,playTimer=null,index=0,symbolMeta=[];
+const faCollator=new Intl.Collator('fa-IR',{usage:'sort',sensitivity:'base',ignorePunctuation:true,numeric:false});
+const faName=v=>String(v??'').normalize('NFKC').replace(/ي/g,'ی').replace(/ى/g,'ی').replace(/ك/g,'ک').replace(/\u200c/g,' ').trim();
 function stopPlay(){clearTimeout(playTimer);playTimer=null;$('replayPlay').textContent='▶ شروع بازپخش';$('replayPlay').classList.remove('active');}
 function current(){return replayRows[index]||null;}
 function resolutionFa(v){const n=Number(v);return n===30?'۳۰ ثانیه':n===300?'۵ دقیقه':Number.isFinite(n)?R.fa(n)+' ثانیه':'—';}
@@ -41,7 +43,7 @@ function togglePlay(){if(playTimer){stopPlay();return;}if(!replayRows.length)ret
 async function loadSymbols(){
  stopPlay();const d=R.readJalaliInput($('replayDate'),R.todayIso());R.setStatus('در حال دریافت فهرست نمادهای '+R.jalaliDate(d)+'…','warn');
  try{
-   symbolMeta=await R.api('stock_hunter_market_replay_symbols_v416','select=symbol_id,symbol,bucket_count,resolution_seconds&trade_date=eq.'+encodeURIComponent(d)+'&order=symbol.asc&limit=2000');
+   symbolMeta=await R.api('stock_hunter_market_replay_symbols_v416','select=symbol_id,symbol,bucket_count,resolution_seconds&trade_date=eq.'+encodeURIComponent(d)+'&order=symbol.asc&limit=2000');symbolMeta.sort((a,b)=>faCollator.compare(faName(a.symbol),faName(b.symbol)));
    const old=$('replaySymbol').value;$('replaySymbol').innerHTML=symbolMeta.length?symbolMeta.map(x=>'<option value="'+R.esc(x.symbol_id)+'">'+R.esc(x.symbol)+' — '+R.fa(x.bucket_count)+' نما — '+resolutionFa(x.resolution_seconds)+'</option>').join(''):'<option value="">نمادی برای بازپخش وجود ندارد</option>';
    if(symbolMeta.some(x=>String(x.symbol_id)===old))$('replaySymbol').value=old;else if(qsid&&symbolMeta.some(x=>String(x.symbol_id)===String(qsid)))$('replaySymbol').value=String(qsid);await loadReplay();
  }catch(e){$('replaySymbol').innerHTML='<option value="">خطا در دریافت نمادها</option>';R.setStatus('دریافت فهرست بازپخش ناموفق بود: '+e.message,'bad');}
