@@ -143,6 +143,9 @@ async function main(){
       await new Promise(resolve=>setTimeout(resolve,250));
       const cacheKeys=await caches.keys();
       const carryResponse=await caches.match('./app-hunt-carry-v416.js');
+      const journeyResponse=await caches.match('./hunt-journey-v416.html');
+      const backtestResponse=await caches.match('./backtest-lab-v416.html');
+      const missedResponse=await caches.match('./missed-opportunities-v416.html');
       return {
         manifestLink,
         display:manifest.display,
@@ -152,7 +155,10 @@ async function main(){
         startUrl:manifest.start_url,
         swScript:reg.active?.scriptURL||'',
         cacheKeys,
-        carryCached:Boolean(carryResponse)
+        carryCached:Boolean(carryResponse),
+        journeyCached:Boolean(journeyResponse),
+        backtestCached:Boolean(backtestResponse),
+        missedCached:Boolean(missedResponse)
       };
     });
     assert.match(pwaContract.manifestLink,/manifest\.webmanifest\?v=4\.1\.6-pwa-r15$/,'PWA manifest must be cache-busted for carry release');
@@ -162,8 +168,33 @@ async function main(){
     assert.equal(pwaContract.scope,'./','PWA scope must remain stock-hunter-v4');
     assert.equal(pwaContract.startUrl,'./','PWA start URL must open the carry-enabled main app');
     assert.match(pwaContract.swScript,/sw\.js\?v=4\.1\.6-r15/,'PWA must activate service worker r15');
-    assert.ok(pwaContract.cacheKeys.includes('shikar-sahm-v4.1.6-r15'),'PWA cache r15 must exist');
+    assert.ok(pwaContract.cacheKeys.includes('shikar-sahm-v4.1.6-r16'),'PWA cache r15 must exist');
     assert.equal(pwaContract.carryCached,true,'carry-forward runtime must be available from the PWA offline cache');
+    assert.equal(pwaContract.journeyCached,true,'Hunt Journey must be available from the PWA offline cache');
+    assert.equal(pwaContract.backtestCached,true,'Backtest Lab must be available from the PWA offline cache');
+    assert.equal(pwaContract.missedCached,true,'Missed Opportunities Audit must be available from the PWA offline cache');
+
+    assert.equal(await page.locator('a.top-link[href="hunt-journey-v416.html"]').count(),1,'main page must link to Hunt Journey');
+
+    await page.goto(BASE_URL+'/hunt-journey-v416.html',{waitUntil:'domcontentloaded',timeout:30000});
+    await page.waitForFunction(()=>window.StockHunterResearchV416?.version==='4.1.6-research-v1',null,{timeout:10000});
+    await page.waitForFunction(()=>document.getElementById('researchStatus')?.dataset.state!=='warn',null,{timeout:20000});
+    const journeyCount=await page.locator('#jTotal').textContent();
+    assert.ok(journeyCount&&journeyCount.trim().length>0,'Hunt Journey must render summary count');
+
+    await page.goto(BASE_URL+'/backtest-lab-v416.html',{waitUntil:'domcontentloaded',timeout:30000});
+    await page.waitForFunction(()=>document.getElementById('researchStatus')?.dataset.state!=='warn',null,{timeout:20000});
+    const backtestSignals=await page.locator('#btSignals').textContent();
+    assert.ok(backtestSignals&&backtestSignals.trim().length>0,'Backtest Lab must render signal count');
+    assert.ok(await page.locator('#retentionGrid .retention-item').count()>=4,'Backtest Lab must render retention tiers');
+
+    await page.goto(BASE_URL+'/missed-opportunities-v416.html',{waitUntil:'domcontentloaded',timeout:30000});
+    await page.waitForFunction(()=>document.getElementById('researchStatus')?.dataset.state!=='warn',null,{timeout:20000});
+    const missedCount=await page.locator('#mTotal').textContent();
+    assert.ok(missedCount&&missedCount.trim().length>0,'Missed Opportunities Audit must render count even when zero');
+
+    await page.goto(BASE_URL+'/index.html',{waitUntil:'domcontentloaded',timeout:30000});
+    await page.waitForFunction(()=>typeof detailHTML==='function',null,{timeout:10000});
 
     await page.setViewportSize({width:1280,height:640});
     const mainLayout=await page.evaluate(()=>({
