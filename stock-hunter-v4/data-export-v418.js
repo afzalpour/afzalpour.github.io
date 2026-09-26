@@ -1,6 +1,6 @@
 'use strict';
 (function(){
-  const VERSION='4.1.9-export-v2';
+  const VERSION='4.2.0-export-v3';
   const FA='۰۱۲۳۴۵۶۷۸۹',AR='٠١٢٣٤٥٦٧٨٩';
   const latin=s=>String(s??'').replace(/[۰-۹]/g,d=>String(FA.indexOf(d))).replace(/[٠-٩]/g,d=>String(AR.indexOf(d))).replace(/٬/g,',').replace(/٫/g,'.');
   const clean=s=>String(s??'').replace(/\u200c/g,'‌').replace(/\s+/g,' ').trim();
