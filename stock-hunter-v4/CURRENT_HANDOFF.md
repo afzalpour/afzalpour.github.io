@@ -1366,3 +1366,43 @@ Implemented after PR #325 on branch `stock-hunter/fa-docx-pdf-sort-v419-20260926
 - Strategy Builder numeric rule fields visibly use Persian digits and normalize safely before calculations;
 - browser authenticated smoke was updated from Latin DOM-date regexes to Persian-digit regexes;
 - release metadata remains nonvisual; visible site heading stays `شکارچی سهم`.
+
+
+## Professional Suite v4.2.0 — 2026-09-27
+
+Branch: `stock-hunter/professional-suite-v420-20260927`.
+
+Delivered as one additive professional layer:
+- independent confidence gate + Hunt passport in Professional Center and symbol details;
+- time-holdout robustness and grouped cross-symbol testing;
+- execution approximation using best-resolution Market Replay;
+- regime and 7-day vs prior-baseline drift analysis;
+- dynamic user smart watchlists;
+- evidence-backed AI + multi-source agent workflows;
+- user decision journal;
+- future-masked decision replay;
+- cloud/local personal workspace;
+- real server-backed Web Push.
+
+Live recovery Supabase additions:
+`stock_hunter_smart_watchlists_v420`, `stock_hunter_decision_journal_v420`, `stock_hunter_workspace_v420`, `stock_hunter_push_public_v420`, `stock_hunter_push_private_v420`, `stock_hunter_push_subscriptions_v420`, `stock_hunter_push_delivery_v420`.
+
+Live cloud Push:
+- `stock-hunter-cloud-push-v420` ACTIVE v3;
+- pg_cron job id 38, every minute;
+- raw cron token stored in Vault, never in repo/browser;
+- latest cron verification returned HTTP 200;
+- server scan skips Thu/Fri and outside 09:00–17:00 Tehran;
+- push delivery retention: 90 days.
+
+Security advisor after hardening shows no new v4.2.0 RLS-no-policy finding. Remaining RLS-no-policy findings are pre-existing v4.1.6/v4.1.7 tables; leaked-password protection warning is also pre-existing account configuration.
+
+Visual/language:
+- Professional Center follows current neutral dark visual language, responsive layout, centered metric cards, IRAN/Vazirmatn inheritance;
+- all new date fields use Jalali grid calendar;
+- Persian digits and fa-IR sorting remain global;
+- universal exporter v4.2.0-export-v3 includes professional metrics, passports, replay metrics and evidence text;
+- five outputs remain XLSX / CSV / XML / DOCX / PDF.
+
+Frozen Hunt engine/scoring/thresholds remain unchanged.
+
