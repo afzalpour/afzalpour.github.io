@@ -32,7 +32,7 @@ jobs:
           assert '/rpc/' not in js
           assert 'fetch(' in js and 'method:' not in js
           assert 'promotion-decision-v416.js' in sw
-          assert "shikar-sahm-v4.1.6-r14" in sw
+          assert "shikar-sahm-v4.1.6-r15" in sw
           assert 'hunt-runtime-core-v417.js' in sw and 'app-runtime-router-v417.js' in sw
           assert 'canary-admission-v417.js' in sw and 'canary-expansion-v417.js' in sw and 'canary-hold-rollback-v417.js' in sw and 'canary-recovery-v417.js' in sw
           print('promotion-protocol: PASS')

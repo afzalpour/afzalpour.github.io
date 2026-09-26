@@ -90,7 +90,7 @@ jobs:
 
           assert "HUNT_V416_VERSION='4.1.6-hunt-v2'" in hunt
           assert '۴.۱.۶' in index
-          assert "const CACHE='shikar-sahm-v4.1.6-r14'" in sw
+          assert "const CACHE='shikar-sahm-v4.1.6-r15'" in sw
           assert 'stock_hunter_validate_capture_request_v416' in edge
           assert "authMode!=='hmac-sha256-v2'" in edge
           assert 'stock_hunter_validate_capture_token_v416' not in edge
