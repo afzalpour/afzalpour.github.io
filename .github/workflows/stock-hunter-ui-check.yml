@@ -137,7 +137,7 @@ jobs:
           grep -q 'search-neutral-v416.css?v=1' stock-hunter-v4/index-v417.html
           grep -q 'neutral-theme-v416.css?v=1' stock-hunter-v4/index.html
           grep -q 'neutral-theme-v416.css?v=1' stock-hunter-v4/index-v417.html
-          grep -q 'app-runtime.js?v=4.1.6-feed-primary7' stock-hunter-v4/index.html
+          grep -q 'app-runtime.js?v=4.1.6-feed-primary8' stock-hunter-v4/index.html
           grep -q 'app-hotfix-v410.js?v=4.1.6-print1' stock-hunter-v4/index.html
           grep -q 'app-integrated-v410.js?v=4.1.6-print1' stock-hunter-v4/index.html
           grep -q 'href="profile-v417.html">حساب من</a>' stock-hunter-v4/index.html
@@ -166,6 +166,7 @@ jobs:
           grep -q 'height:min(62vh,760px)' stock-hunter-v4/styles.css
           grep -q 'overflow-y:auto' stock-hunter-v4/styles.css
           grep -q 'بازار سهام و صندوق‌ها فعال است' stock-hunter-v4/app-runtime.js
+          grep -q 'marketShowHealthFirstV416' stock-hunter-v4/app-runtime.js
           grep -q 'app-hunt-v416.js?v=4.1.6-eco2' stock-hunter-v4/index.html
           grep -q 'hunt-runtime-core-v417.js?v=4.1.7' stock-hunter-v4/index.html
           grep -q 'app-runtime-router-v417.js?v=4.1.7' stock-hunter-v4/index.html
