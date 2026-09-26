@@ -46,6 +46,8 @@ create table if not exists public.stock_hunter_backtest_daily_v416(
   median_mfe_pct numeric,avg_mae_pct numeric,median_mae_pct numeric,avg_time_to_zero_min numeric,
   avg_time_to_plus1_min numeric,avg_time_to_plus2_min numeric,d1_observed_count integer not null default 0,
   d1_positive_close_rate numeric,d1_hit_plus1_rate numeric,d1_hit_plus2_rate numeric,d1_hit_plus3_rate numeric,
+  precision_count integer not null default 0,precision_rate numeric,
+  median_time_to_zero_min numeric,median_time_to_plus1_min numeric,median_time_to_plus2_min numeric,
   updated_at timestamptz not null default now(),
   primary key(trade_date,channel,hunt_mode,hunt_state)
 );
@@ -70,7 +72,7 @@ create table if not exists public.stock_hunter_market_replay_v416(
   open_price numeric,high_price numeric,low_price numeric,close_price numeric,yesterday_price numeric,
   open_change_pct numeric,high_change_pct numeric,low_change_pct numeric,close_change_pct numeric,
   max_buy_queue numeric,max_sell_queue numeric,last_volume numeric,sample_count integer not null default 0,
-  updated_at timestamptz not null default now(),primary key(trade_date,symbol_id,bucket_at)
+  bucket_seconds integer not null default 30,updated_at timestamptz not null default now(),primary key(trade_date,symbol_id,bucket_at)
 );
 create index if not exists stock_hunter_market_replay_v416_date_idx on public.stock_hunter_market_replay_v416(trade_date desc,bucket_at,symbol_id);
 create index if not exists stock_hunter_market_replay_v416_symbol_idx on public.stock_hunter_market_replay_v416(symbol,trade_date desc,bucket_at);
@@ -82,7 +84,7 @@ grant select on public.stock_hunter_market_replay_v416 to anon,authenticated;
 
 create or replace view public.stock_hunter_market_replay_symbols_v416
 with (security_invoker=true) as
-select trade_date,symbol_id,max(symbol) symbol,count(*)::integer bucket_count
+select trade_date,symbol_id,max(symbol) symbol,count(*)::integer bucket_count,min(bucket_seconds)::integer resolution_seconds
 from public.stock_hunter_market_replay_v416
 group by trade_date,symbol_id;
 grant select on public.stock_hunter_market_replay_symbols_v416 to anon,authenticated;
@@ -110,7 +112,8 @@ insert into public.stock_hunter_research_retention_v416(dataset,retention_days,t
  ('HUNT_JOURNEY',180,'COMPACT','خط زمانی فشرده سفر شکار همراه با مؤلفه‌های توضیح‌پذیری'),
  ('MISSED_OPPORTUNITIES',180,'COMPACT','ممیزی فرصت‌های از دست‌رفته و علت آن'),
  ('BACKTEST_DAILY',1095,'SUMMARY','خلاصه روزانه سبک برای آزمون تاریخی بلندمدت'),
- ('MARKET_REPLAY_5MIN',30,'COMPACT','بازپخش فشرده پنج‌دقیقه‌ای فقط برای نمادهای شکارشده'),
+ ('BACKTEST_SLICES',1095,'SUMMARY','خلاصه سبک آزمون تاریخی به تفکیک ساعت، بازار، نقدشوندگی و رژیم'),
+ ('MARKET_REPLAY_30SEC',30,'COMPACT','بازپخش فشرده سی‌ثانیه‌ای فقط برای نمادهای مرتبط با شکار'),
  ('RELIABILITY_SNAPSHOTS',30,'SUMMARY','نماهای سبک پایداری داده بازار، ثبت شکار و پژوهش')
 on conflict(dataset) do update set retention_days=excluded.retention_days,tier=excluded.tier,purpose=excluded.purpose,updated_at=now();
 
@@ -146,7 +149,71 @@ grant select on public.stock_hunter_hunt_journey_v416,public.stock_hunter_backte
 -- They are EXECUTE-revoked from PUBLIC/anon/authenticated and are invoked only by pg_cron/admin.
 --
 -- Retention contract:
--- Raw market tape 14d; ordinary shadow/outcome 30d; compact five-minute replay 30d;
+-- Raw market tape 14d; ordinary shadow/outcome 30d; compact thirty-second replay 30d;
 -- detailed event/effectiveness/carry/journey/missed 180d; daily backtest summary 1095d.
 -- Immutable quality-quarantine samples are preserved. Refresh cron runs every 5m during market hours;
 -- missed-opportunity audit runs after close with a safety rerun; cleanup runs daily.
+
+
+-- Completion layer: breakdowns for the Backtest Lab.
+create table if not exists public.stock_hunter_backtest_slices_v416(
+  trade_date date not null,
+  slice_type text not null check(slice_type in ('ساعت','بازار','نقدشوندگی','رژیم')),
+  slice_value text not null,
+  channel text not null check(channel in ('ACTION_NOW','RADAR')),
+  hunt_mode text not null check(hunt_mode in ('reversal','acceleration')),
+  hunt_state text not null,
+  signal_count integer not null default 0,observed_count integer not null default 0,
+  precision_count integer not null default 0,precision_rate numeric,
+  crossed_zero_count integer not null default 0,crossed_zero_rate numeric,
+  hit_plus1_count integer not null default 0,hit_plus1_rate numeric,
+  hit_plus2_count integer not null default 0,hit_plus2_rate numeric,
+  hit_plus3_count integer not null default 0,hit_plus3_rate numeric,
+  median_mfe_pct numeric,median_mae_pct numeric,median_time_to_zero_min numeric,
+  median_time_to_plus1_min numeric,avg_hunt_score numeric,updated_at timestamptz not null default now(),
+  primary key(trade_date,slice_type,slice_value,channel,hunt_mode,hunt_state)
+);
+create index if not exists stock_hunter_backtest_slices_v416_date_idx
+  on public.stock_hunter_backtest_slices_v416(trade_date desc,slice_type,hunt_mode);
+alter table public.stock_hunter_backtest_slices_v416 enable row level security;
+drop policy if exists "stock hunter backtest slices public read" on public.stock_hunter_backtest_slices_v416;
+create policy "stock hunter backtest slices public read" on public.stock_hunter_backtest_slices_v416
+  for select to anon,authenticated using(true);
+revoke all on public.stock_hunter_backtest_slices_v416 from anon,authenticated;
+grant select on public.stock_hunter_backtest_slices_v416 to anon,authenticated;
+
+-- No-code Strategy Builder persistence. Strategies are private per authenticated user.
+create table if not exists public.stock_hunter_user_strategies_v417(
+  strategy_id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null check(char_length(name) between 1 and 80),
+  match_mode text not null default 'ALL' check(match_mode in ('ALL')),
+  rules jsonb not null default '[]'::jsonb check(jsonb_typeof(rules)='array'),
+  alert_enabled boolean not null default false,
+  created_at timestamptz not null default now(),updated_at timestamptz not null default now()
+);
+create unique index if not exists stock_hunter_user_strategies_v417_user_name_idx
+  on public.stock_hunter_user_strategies_v417(user_id,lower(name));
+create index if not exists stock_hunter_user_strategies_v417_user_updated_idx
+  on public.stock_hunter_user_strategies_v417(user_id,updated_at desc);
+alter table public.stock_hunter_user_strategies_v417 enable row level security;
+revoke all on public.stock_hunter_user_strategies_v417 from anon,authenticated;
+grant select,insert,update,delete on public.stock_hunter_user_strategies_v417 to authenticated;
+drop policy if exists "stock hunter user strategies select own" on public.stock_hunter_user_strategies_v417;
+drop policy if exists "stock hunter user strategies insert own" on public.stock_hunter_user_strategies_v417;
+drop policy if exists "stock hunter user strategies update own" on public.stock_hunter_user_strategies_v417;
+drop policy if exists "stock hunter user strategies delete own" on public.stock_hunter_user_strategies_v417;
+create policy "stock hunter user strategies select own" on public.stock_hunter_user_strategies_v417
+  for select to authenticated using((select auth.uid()) is not null and (select auth.uid())=user_id);
+create policy "stock hunter user strategies insert own" on public.stock_hunter_user_strategies_v417
+  for insert to authenticated with check((select auth.uid()) is not null and (select auth.uid())=user_id);
+create policy "stock hunter user strategies update own" on public.stock_hunter_user_strategies_v417
+  for update to authenticated using((select auth.uid()) is not null and (select auth.uid())=user_id)
+  with check((select auth.uid()) is not null and (select auth.uid())=user_id);
+create policy "stock hunter user strategies delete own" on public.stock_hunter_user_strategies_v417
+  for delete to authenticated using((select auth.uid()) is not null and (select auth.uid())=user_id);
+
+-- Live private refresh functions additionally maintain:
+-- private.refresh_stock_hunter_backtest_slices_v416(integer)
+-- Replay aggregation uses 30-second buckets. Tracked-symbol tape capture is scheduled every 30 seconds,
+-- while compact replay refresh is scheduled every two minutes during market hours.
