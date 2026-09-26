@@ -73,6 +73,9 @@
     if(!nav.querySelector('a[href="ai-center-v417.html"]')){
       const a=document.createElement('a');a.href='ai-center-v417.html';a.textContent='مرکز هوش مصنوعی';nav.appendChild(a);
     }
+    if(!nav.querySelector('a[href="professional-center-v420.html"]')){
+      const a=document.createElement('a');a.href='professional-center-v420.html';a.textContent='مرکز حرفه‌ای';nav.appendChild(a);
+    }
     if(!nav.querySelector('.research-print-btn-v417')){
       const b=document.createElement('button');b.type='button';b.className='research-print-btn-v417';b.textContent='چاپ';b.title='چاپ صفحه';b.onclick=()=>window.print();nav.appendChild(b);
     }
