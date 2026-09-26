@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#15181b">
   <title>سازنده راهبرد — شکارچی سهم</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="research-lab-v416.css?v=4">
+  <link rel="stylesheet" href="research-lab-v416.css?v=5">
 </head>
 <body>
 <main class="research-shell">
@@ -33,8 +33,8 @@
   <h2>تعریف راهبرد</h2>
   <div class="strategy-head">
     <label>نام راهبرد <input id="strategyName" maxlength="80" value="راهبرد شخصی من" autocomplete="off"></label>
-    <label>از تاریخ شمسی <input id="strategyFrom" class="jalali-input" type="text" inputmode="numeric"></label>
-    <label>تا تاریخ شمسی <input id="strategyTo" class="jalali-input" type="text" inputmode="numeric"></label>
+    <label>از تاریخ شمسی <input id="strategyFrom" class="jalali-input" type="text" readonly inputmode="numeric"></label>
+    <label>تا تاریخ شمسی <input id="strategyTo" class="jalali-input" type="text" readonly inputmode="numeric"></label>
     <label>رابطه شرط‌ها <select id="strategyMatchMode"><option value="ALL">همه شرط‌ها (و)</option><option value="ANY">حداقل یک شرط (یا)</option></select></label><label class="toggle-line"><input id="strategyAlert" type="checkbox"> هشدار برای تطبیق تازه</label>
   </div>
   <div class="strategy-presets">
@@ -42,7 +42,7 @@
     <button type="button" data-preset="acceleration">نمونه شتاب اولیه</button>
     <button type="button" data-preset="clear">پاک‌کردن شرط‌ها</button>
   </div>
-  <div id="ruleList" class="rule-list"></div>
+  <div class="strategy-ai-builder-v417"><label>راهبرد را با زبان فارسی بنویسید<textarea id="strategyNaturalLanguage" rows="3" placeholder="مثلاً: نمادهای برگشتی با امتیاز شکار حداقل ۶۵، ریسک حداکثر ۵۵ و حداقل ۵ شاهد را پیدا کن"></textarea></label><div class="strategy-ai-actions-v417"><button id="translateStrategy" type="button">تبدیل متن به شرط‌ها</button><span id="strategyAiState" class="strategy-ai-state-v417">متن شما ابتدا به قواعد قابل مشاهده تبدیل می‌شود و سپس اجرا خواهد شد.</span></div></div><div id="ruleList" class="rule-list"></div>
   <div class="strategy-actions">
     <button id="addRule" type="button">＋ افزودن شرط</button>
     <button id="runScan" type="button">پویش بازار امروز</button>
@@ -88,7 +88,7 @@
 </section>
 </main>
 <script src="config.js?v=4.1.6-cloud-primary1"></script>
-<script src="research-common-v416.js?v=3"></script>
+<script src="research-common-v416.js?v=4"></script>
 <script type="module" src="strategy-builder-v417.js?v=1"></script>
 </body>
 </html>

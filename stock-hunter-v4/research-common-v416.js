@@ -73,4 +73,7 @@
     version:'4.1.6-research-v3',api,esc,fa,pct,latinDigits,jalaliDate,jalaliToIso,setJalaliInput,readJalaliInput,
     time,dateTime,todayIso,daysAgoIso,addDaysIso,setStatus,datasetFa,tierFa,carryFa
   };
+  if(!document.querySelector('script[data-research-tools-v417]')){
+    const s=document.createElement('script');s.src='research-tools-v417.js?v=1';s.defer=true;s.dataset.researchToolsV417='1';document.head.appendChild(s);
+  }
 })();
