@@ -1,6 +1,8 @@
 const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, apikey, content-type","Access-Control-Allow-Methods":"GET,POST,OPTIONS"};
 const OPENAI_KEY=Deno.env.get('OPENAI_API_KEY')||Deno.env.get('OPENAI_API_TOKEN')||'';
 const SUPABASE_URL=Deno.env.get('SUPABASE_URL')||'';
+const RATE=new Map<string,{start:number,count:number}>();
+function rateAllowed(id:string){const now=Date.now(),old=RATE.get(id);if(!old||now-old.start>=60000){RATE.set(id,{start:now,count:1});return true;}if(old.count>=30)return false;old.count++;return true;}
 function publishable(){try{const j=JSON.parse(Deno.env.get('SUPABASE_PUBLISHABLE_KEYS')||'{}');return j.default||'';}catch{return Deno.env.get('SUPABASE_ANON_KEY')||'';}}
 async function user(req:Request){const a=req.headers.get('authorization')||'';if(!a.startsWith('Bearer '))return null;try{const r=await fetch(SUPABASE_URL+'/auth/v1/user',{headers:{Authorization:a,apikey:publishable()}});return r.ok?await r.json():null;}catch{return null;}}
 function response(data:unknown,status=200){return new Response(JSON.stringify(data),{status,headers:{...cors,'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}});}
@@ -20,7 +22,7 @@ Deno.serve(async(req:Request)=>{
   if(req.method==='OPTIONS')return new Response('ok',{headers:cors});
   const u=new URL(req.url);if(req.method==='GET'&&u.searchParams.get('health')==='1')return response({ok:true,configured:!!OPENAI_KEY,model:'gpt-5.6-luna'});
   if(req.method!=='POST')return response({error:'METHOD_NOT_ALLOWED'},405);
-  const who=await user(req);if(!who?.id)return response({error:'AUTH_REQUIRED'},401);
+  const who=await user(req);if(!who?.id)return response({error:'AUTH_REQUIRED'},401);if(!rateAllowed(String(who.id)))return response({error:'RATE_LIMITED'},429);
   let body:any;try{body=await req.json();}catch{return response({error:'INVALID_JSON'},400);}
   const raw=JSON.stringify(body);if(raw.length>60000)return response({error:'PAYLOAD_TOO_LARGE'},413);
   const mode=String(body?.mode||''),payload=body?.payload||{};
