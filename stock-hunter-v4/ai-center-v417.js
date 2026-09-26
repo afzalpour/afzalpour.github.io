@@ -41,18 +41,18 @@ async function ask(){
 function dist(a,b){
   const keys=['order_pressure','impulse','feasibility','flow_volume','market_context','continuation12','risk_score','cancellation_ratio'];let s=0,n=0;
   for(const k of keys){const x=Number(a[k]),y=Number(b[k]);if(Number.isFinite(x)&&Number.isFinite(y)){s+=Math.abs(x-y)/100;n++;}}
-  const dc=Math.abs(Number(a.detected_day_change??a.day_change)-Number(b.day_change));if(Number.isFinite(dc)){s+=Math.min(1,dc/5);n++;}
-  const hs=Math.abs(Number(a.hunt_score)-Number(b.baseline_hunt_score));if(Number.isFinite(hs)){s+=Math.min(1,hs/100);n++;}
+  const dc=Math.abs(Number(a.detected_day_change??a.day_change)-Number(b.detected_day_change??b.day_change));if(Number.isFinite(dc)){s+=Math.min(1,dc/5);n++;}
+  const hs=Math.abs(Number(a.hunt_score??a.baseline_hunt_score)-Number(b.hunt_score??b.baseline_hunt_score));if(Number.isFinite(hs)){s+=Math.min(1,hs/100);n++;}
   return n?s/n:1;
 }
 async function similar(){
   const x=selected();if(!x){$('aiSimilarBody').innerHTML='<tr><td colspan="8"><div class="empty">رخدادی انتخاب نشده است.</div></td></tr>';return;}
   R.setStatus('در حال یافتن نمونه‌های تاریخی مشابه…','warn');
   try{
-    const from=R.daysAgoIso(180),sel='sample_id,trade_date,symbol_id,symbol,company_name,hunt_mode,day_change,order_pressure,impulse,feasibility,flow_volume,market_context,continuation12,risk_score,cancellation_ratio,baseline_hunt_score,mfe_1d_pct,mae_1d_pct,hit_plus_1pct_1d,reversal_crossed_reference_same_day';
-    const all=await R.api('stock_hunter_shadow_outcomes_v416','select='+encodeURIComponent(sel)+'&trade_date=gte.'+from+'&hunt_mode=eq.'+encodeURIComponent(x.hunt_mode)+'&order=trade_date.desc&limit=2000');
-    const a=all.filter(z=>String(z.symbol_id)!==String(x.symbol_id)||z.trade_date!==x.trade_date).map(z=>({...z,_d:dist(x,z)})).sort((m,n)=>m._d-n._d).slice(0,10);
-    $('aiSimilarBody').innerHTML=a.length?a.map(z=>{const hit=z.hunt_mode==='reversal'?z.reversal_crossed_reference_same_day:z.hit_plus_1pct_1d;return '<tr><td>'+R.jalaliDate(z.trade_date)+'</td><td><b>'+R.esc(z.symbol)+'</b></td><td>'+modeFa(z.hunt_mode)+'</td><td>'+R.fa(Math.max(0,100*(1-z._d)),1)+'٪</td><td>'+R.fa(z.baseline_hunt_score,1)+'</td><td class="'+(hit===true?'good':hit===false?'bad':'')+'">'+(hit===true?'موفق':hit===false?'ناموفق':'نامشخص')+'</td><td class="good">'+R.pct(z.mfe_1d_pct)+'</td><td class="bad">'+R.pct(z.mae_1d_pct)+'</td></tr>';}).join(''):'<tr><td colspan="8"><div class="empty">نمونه تاریخی کافی برای مقایسه وجود ندارد.</div></td></tr>';
+    const from=R.daysAgoIso(180),sel='channel,trade_date,symbol_id,symbol,company_name,hunt_mode,detected_day_change,order_pressure,impulse,feasibility,flow_volume,market_context,continuation12,risk_score,cancellation_ratio,hunt_score,same_day_mfe_pct,same_day_mae_pct,crossed_zero_at,crossed_plus1_at';
+    const all=await R.api('stock_hunter_hunt_journey_v416','select='+encodeURIComponent(sel)+'&trade_date=gte.'+from+'&hunt_mode=eq.'+encodeURIComponent(x.hunt_mode)+'&order=trade_date.desc&limit=3000');
+    const a=all.filter(z=>(String(z.symbol_id)!==String(x.symbol_id)||z.trade_date!==x.trade_date)&&z.channel===x.channel).map(z=>({...z,_d:dist(x,z)})).sort((m,n)=>m._d-n._d).slice(0,10);
+    $('aiSimilarBody').innerHTML=a.length?a.map(z=>{const hit=z.hunt_mode==='reversal'?!!z.crossed_zero_at:!!z.crossed_plus1_at;return '<tr><td>'+R.jalaliDate(z.trade_date)+'</td><td><b>'+R.esc(z.symbol)+'</b></td><td>'+modeFa(z.hunt_mode)+'</td><td>'+R.fa(Math.max(0,100*(1-z._d)),1)+'٪</td><td>'+R.fa(z.hunt_score,1)+'</td><td class="'+(hit?'good':'bad')+'">'+(hit?'موفق':'ناموفق')+'</td><td class="good">'+R.pct(z.same_day_mfe_pct)+'</td><td class="bad">'+R.pct(z.same_day_mae_pct)+'</td></tr>';}).join(''):'<tr><td colspan="8"><div class="empty">نمونه تاریخی کافی برای مقایسه وجود ندارد.</div></td></tr>';
     R.setStatus('نمونه‌های مشابه بر اساس فاصله مؤلفه‌های ثبت‌شده مرتب شدند.','ok');
   }catch(e){R.setStatus('یافتن نمونه‌های مشابه ناموفق بود: '+e.message,'bad');}
 }
@@ -82,7 +82,7 @@ async function load(){
       R.api('stock_hunter_missed_opportunities_v416','select=*&trade_date=eq.'+d+'&limit=1500'),
       R.api('stock_hunter_backtest_daily_v416','select=*&trade_date=eq.'+d+'&limit=1000'),
       R.api('stock_hunter_reliability_v416','select=*&trade_date=eq.'+d+'&order=observed_at.desc&limit=300')
-    ]);fillSymbols();R.setStatus('داده هوشمند '+R.jalaliDate(d)+' آماده است — '+R.fa(journeys.length)+' رخداد شکار.','ok');
+    ]);fillSymbols();$('aiDailyOutput').textContent=localDaily();$('aiDiagOutput').textContent=localDiag();R.setStatus('داده هوشمند '+R.jalaliDate(d)+' آماده است — '+R.fa(journeys.length)+' رخداد شکار.','ok');
   }catch(e){journeys=[];missed=[];backtest=[];health=[];fillSymbols();R.setStatus('دریافت داده مرکز هوش مصنوعی ناموفق بود: '+e.message,'bad');}
 }
 const {data}=await supabase.auth.getSession();session=data.session||null;supabase.auth.onAuthStateChange((_e,s)=>session=s);
