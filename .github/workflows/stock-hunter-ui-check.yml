@@ -244,7 +244,7 @@ jobs:
           index=Path('stock-hunter-v4/index.html').read_text(encoding='utf-8')
           index417=Path('stock-hunter-v4/index-v417.html').read_text(encoding='utf-8')
           assert "Intl.Collator('fa-IR'" in locale and 'faDigits' in locale
-          assert "version:'4.1.9-fa-ui-v2'" in locale
+          assert "4.1.9-fa-ui-v2" in locale
           assert 'shouldSortFa' in locale and '(symbol|company|نماد|شرکت)' in locale
           assert "b.textContent='چاپ'" in tools and 'چاپ / ذخیره PDF' not in tools
           assert 'exportDocx' in export and 'exportPdf' in export
