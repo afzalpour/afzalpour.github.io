@@ -21,7 +21,8 @@ function marketSessionTehran(){
   if(hm>=9*60&&hm<=15*60)active.push('املاک، تسهیلات مسکن و بدهی');
   if(hm>=10*60+45&&hm<=15*60)active.push('سپرده کالایی انرژی');
   if(hm>=11*60+45&&hm<=17*60)active.push('طلا، نقره، زعفران و گواهی کالایی');
-  return{open:true,label:'اطلاعات لحظه‌ای بازار دریافت شد',detail:active.length?`بازارهای فعال: ${active.join('، ')}`:'بخشی از بازار در مرحله پیش‌گشایش است'};
+  const concise=active.some(x=>x.includes('سهام'))?'بازار سهام و صندوق‌ها فعال است':active.length?'بخش‌هایی از بازار در حال معامله است':'بخشی از بازار در مرحله پیش‌گشایش است';
+  return{open:true,label:'اطلاعات لحظه‌ای بازار دریافت شد',detail:concise};
 }
 const MARKET_CACHE_V416='stock-hunter-market-v416-last-good';
 const MARKET_CACHE_SIGNALS_V416='./__market-cache__/signals-v416.json';

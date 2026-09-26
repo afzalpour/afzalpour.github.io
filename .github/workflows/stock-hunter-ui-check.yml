@@ -91,7 +91,7 @@ jobs:
           grep -q 'function forecastFibonacci' stock-hunter-v4/app-forecast.js
           grep -q "key:'fib'" stock-hunter-v4/app-forecast.js
           grep -q 'مقایسه ۶ سناریوی عددی' stock-hunter-v4/app-forecast.js
-          grep -q 'فیبوناچی' stock-hunter-v4/app-forecast-validation-v430.js
+          grep -q 'fibonacciValidationStatus' stock-hunter-v4/app-forecast-validation-v430.js
           grep -q 'detailHTML = function(...args)' stock-hunter-v4/app-integrated-v410.js
           grep -q 'detailHTML=function(...args)' stock-hunter-v4/app-explain-v411.js
           grep -q 'detailHTML(x,...models.map(m=>m.data))' stock-hunter-v4/app-hotfix-v410.js
@@ -131,13 +131,13 @@ jobs:
           grep -q 'performance.html' stock-hunter-v4/index.html
           grep -q 'calibration.html' stock-hunter-v4/index.html
           grep -q 'app-session-v413.js?v=4.1.6' stock-hunter-v4/index.html
-          grep -q 'app-forecast-validation-v430.js?v=4.3.0' stock-hunter-v4/index.html
-          grep -q 'app-forecast-validation-v430.js?v=4.3.0' stock-hunter-v4/index-v417.html
+          grep -q 'app-forecast-validation-v430.js?v=4.3.0-evidence1' stock-hunter-v4/index.html
+          grep -q 'app-forecast-validation-v430.js?v=4.3.0-evidence1' stock-hunter-v4/index-v417.html
           grep -q 'search-neutral-v416.css?v=1' stock-hunter-v4/index.html
           grep -q 'search-neutral-v416.css?v=1' stock-hunter-v4/index-v417.html
           grep -q 'neutral-theme-v416.css?v=1' stock-hunter-v4/index.html
           grep -q 'neutral-theme-v416.css?v=1' stock-hunter-v4/index-v417.html
-          grep -q 'app-runtime.js?v=4.1.6-feed-primary6' stock-hunter-v4/index.html
+          grep -q 'app-runtime.js?v=4.1.6-feed-primary7' stock-hunter-v4/index.html
           grep -q 'app-hotfix-v410.js?v=4.1.6-print1' stock-hunter-v4/index.html
           grep -q 'app-integrated-v410.js?v=4.1.6-print1' stock-hunter-v4/index.html
           grep -q 'href="profile-v417.html">حساب من</a>' stock-hunter-v4/index.html
@@ -161,8 +161,12 @@ jobs:
           fi
           grep -q 'NO_STATISTICALLY_CONFIRMED_EDGE' stock-hunter-v4/app-forecast-validation-v430.js
           grep -q 'finalForecastEnabled:false' stock-hunter-v4/app-forecast-validation-v430.js
-          grep -q 'Final Gate: NO_EDGE' stock-hunter-v4/app-forecast-validation-v430.js
-          grep -q 'app-hunt-v416.js?v=4.1.6' stock-hunter-v4/index.html
+          if grep -q 'Final Gate: NO_EDGE' stock-hunter-v4/app-forecast-validation-v430.js; then echo '::error::Validation gate copy must not be injected into user details'; exit 1; fi
+          grep -q "isActionNowV416(x)||isRadarEarlyV416(x)" stock-hunter-v4/app-hunt-v416.js
+          grep -q 'height:min(62vh,760px)' stock-hunter-v4/styles.css
+          grep -q 'overflow-y:auto' stock-hunter-v4/styles.css
+          grep -q 'بازار سهام و صندوق‌ها فعال است' stock-hunter-v4/app-runtime.js
+          grep -q 'app-hunt-v416.js?v=4.1.6-eco2' stock-hunter-v4/index.html
           grep -q 'hunt-runtime-core-v417.js?v=4.1.7' stock-hunter-v4/index.html
           grep -q 'app-runtime-router-v417.js?v=4.1.7' stock-hunter-v4/index.html
           grep -q 'app-hunt-hierarchy-v416.js?v=4.1.6' stock-hunter-v4/index.html
@@ -287,8 +291,8 @@ jobs:
           assert 'search-combobox-v416' in search
           styles=Path('stock-hunter-v4/styles.css').read_text(encoding='utf-8')
           assert '.search-combobox-v416>input{display:block;width:100%;background:#131519;border-color:#2a2d33;color:#efece5}' in styles
-          assert 'styles.css?v=4.1.6-search2' in index416
-          assert 'styles.css?v=4.1.6-search2' in index417
+          assert 'styles.css?v=4.1.6-layout3' in index416
+          assert 'styles.css?v=4.1.6-layout3' in index417
           assert 'searchSuggestionsV416' in search
           assert "e.key==='ArrowDown'" in search and "e.key==='ArrowUp'" in search and "e.key==='Enter'" in search
           assert 'SEARCH_RENDER_DEBOUNCE_V416=110' in search

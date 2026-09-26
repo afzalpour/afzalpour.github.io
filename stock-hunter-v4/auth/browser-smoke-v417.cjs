@@ -120,8 +120,27 @@ async function main(){
     const liveFeedText=((await page.locator('#scanTimes').textContent())||'').trim();
     assert.match(liveFeedText,/مسیر اصلی/,'published page must use primary Supabase feed');
     assert.match(liveFeedText,/14\d{2}\/\d{2}\/\d{2} ساعت \d{2}:\d{2}:\d{2}/,'published market status must show Jalali date and HH:MM:SS');
+    assert.doesNotMatch(liveFeedText,/بازارهای فعال:/,'market status copy must remain compact');
     assert.equal(forecastContract.neutralTheme,true,'main page must load neutral gray theme');
     assert.equal(forecastContract.background,'rgb(17, 19, 21)','main background must be neutral gray');
+
+    await page.setViewportSize({width:1280,height:640});
+    const mainLayout=await page.evaluate(()=>({
+      bodyOverflowY:getComputedStyle(document.body).overflowY,
+      scrollHeight:Math.max(document.documentElement.scrollHeight,document.body.scrollHeight),
+      viewportHeight:window.innerHeight,
+      activeFilterIncludesEarly:String(filtered).includes('isRadarEarlyV416'),
+      validationInjected:String(detailHTML).includes('forecast-validation-gate-v430')
+    }));
+    assert.notEqual(mainLayout.bodyOverflowY,'hidden','main identification page must not lock vertical scrolling');
+    assert.ok(mainLayout.scrollHeight>mainLayout.viewportHeight+40,'main identification page must have scrollable document height');
+    assert.equal(mainLayout.activeFilterIncludesEarly,true,'default active-hunt filter must include early hunts');
+    assert.equal(mainLayout.validationInjected,false,'forecast validation gate must not be injected into end-user details');
+    await page.evaluate(()=>window.scrollTo(0,Math.min(350,document.documentElement.scrollHeight-window.innerHeight)));
+    await page.waitForTimeout(120);
+    assert.ok(await page.evaluate(()=>window.scrollY>0),'main identification page must actually scroll');
+    await page.evaluate(()=>window.scrollTo(0,0));
+    await page.setViewportSize({width:1440,height:1000});
 
     const printContract=await page.evaluate(()=>{
       const candles=Array.from({length:60},(_,i)=>({t:Math.floor(Date.UTC(2026,6,1+i)/1000),open:1000+i*3,high:1020+i*3,low:980+i*3,close:1005+i*3,volume:100000+i*1000}));
