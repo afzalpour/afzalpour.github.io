@@ -135,6 +135,23 @@
       console.error(e);alert('ساخت فایل XLSX ممکن نشد. خروجی CSV و XML همچنان در دسترس است.');
     }
   }
+  function injectStyle(){
+    if(document.getElementById('stockHunterExportStyleV418'))return;
+    const s=document.createElement('style');s.id='stockHunterExportStyleV418';s.textContent=`
+      .data-export-toolbar-v418{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap;margin:8px 0;padding:7px 9px;border:1px solid #3b4651;border-radius:10px;background:linear-gradient(135deg,rgba(45,58,70,.78),rgba(24,29,34,.78));direction:rtl}
+      .data-export-toolbar-v418>span{margin-left:auto;font-size:10px;font-weight:800;color:#d6dde4}
+      .data-export-toolbar-v418 button{min-width:54px;border:1px solid #536879!important;border-radius:8px!important;background:#1d2c38!important;color:#eef7ff!important;padding:6px 9px!important;font-size:10px!important;font-weight:800!important;cursor:pointer!important;box-shadow:0 3px 12px rgba(0,0,0,.16)}
+      .data-export-toolbar-v418 button[data-export-xlsx]{border-color:#3b8b62!important;color:#a9efc7!important;background:#153326!important}
+      .data-export-toolbar-v418 button[data-export-csv]{border-color:#b18a3e!important;color:#ffe1a0!important;background:#352c18!important}
+      .data-export-toolbar-v418 button[data-export-xml]{border-color:#6e62a9!important;color:#d7ceff!important;background:#27223d!important}
+      .data-export-toolbar-v418 button:hover{transform:translateY(-1px);filter:brightness(1.14)}
+      .summary-export-v418{grid-column:1/-1!important}
+      .detail-actions>.data-export-toolbar-v418{margin:0;padding:4px 6px;background:transparent;border-color:#35404a}
+      .detail-actions>.data-export-toolbar-v418>span{display:none}.detail-actions>.data-export-toolbar-v418 button{min-width:45px;padding:5px 7px!important}
+      @media(max-width:760px){.data-export-toolbar-v418{justify-content:center}.data-export-toolbar-v418>span{width:100%;margin:0;text-align:center}.data-export-toolbar-v418 button{flex:1 1 72px}}
+      @media print{.data-export-toolbar-v418{display:none!important}}
+    `;document.head.appendChild(s);
+  }
   function addToolbar(root,mode='section'){
     if(!root||root.dataset.exportReadyV418==='1')return;
     if(!hasDigit(root.innerText||root.textContent||'')&&!root.querySelector('table'))return;
@@ -144,7 +161,9 @@
     bar.querySelector('[data-export-xlsx]').onclick=e=>{e.stopPropagation();exportXlsx(root);};
     bar.querySelector('[data-export-csv]').onclick=e=>{e.stopPropagation();exportCsv(root);};
     bar.querySelector('[data-export-xml]').onclick=e=>{e.stopPropagation();exportXml(root);};
-    if(mode==='detail'){
+    if(mode==='before'){
+      root.insertAdjacentElement('beforebegin',bar);
+    }else if(mode==='detail'){
       const head=root.querySelector('.detail-actions');if(head)head.prepend(bar);else root.prepend(bar);
     }else if(mode==='summary'){
       root.prepend(bar);
@@ -158,10 +177,11 @@
     document.querySelectorAll('.cards,.summary-row,.health-grid,.retention-grid').forEach(x=>{
       if(!x.closest('.panel'))addToolbar(x,'summary');
     });
-    const tablePanel=document.querySelector('.table-panel');if(tablePanel)addToolbar(tablePanel);
+    const tablePanel=document.querySelector('.table-panel');if(tablePanel)addToolbar(tablePanel,'before');
     const detail=document.getElementById('detailDialog');if(detail&&visible(detail))addToolbar(detail,'detail');
   }
   window.StockHunterExportV418={version:VERSION,collect,exportXlsx,exportCsv,exportXml,wire};
-  wire();
-  new MutationObserver(()=>wire()).observe(document.body,{childList:true,subtree:true,characterData:true});
+  injectStyle();wire();
+  let scheduled=false;
+  new MutationObserver(()=>{if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;wire();});}).observe(document.body,{childList:true,subtree:true,characterData:true});
 })();
