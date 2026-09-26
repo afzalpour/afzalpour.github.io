@@ -23,6 +23,18 @@ create table if not exists public.stock_hunter_hunt_journey_v416(
 create index if not exists stock_hunter_hunt_journey_v416_date_idx on public.stock_hunter_hunt_journey_v416(trade_date desc,channel,hunt_mode);
 create index if not exists stock_hunter_hunt_journey_v416_symbol_idx on public.stock_hunter_hunt_journey_v416(symbol,trade_date desc);
 
+alter table public.stock_hunter_hunt_journey_v416
+  add column if not exists order_pressure numeric,
+  add column if not exists impulse numeric,
+  add column if not exists feasibility numeric,
+  add column if not exists flow_volume numeric,
+  add column if not exists market_context numeric,
+  add column if not exists continuation12 numeric,
+  add column if not exists risk_score numeric,
+  add column if not exists cancellation_ratio numeric,
+  add column if not exists gate_reason text;
+
+
 create table if not exists public.stock_hunter_backtest_daily_v416(
   trade_date date not null,channel text not null,hunt_mode text not null,hunt_state text not null,
   signal_count integer not null default 0,observed_count integer not null default 0,
@@ -53,26 +65,64 @@ create table if not exists public.stock_hunter_missed_opportunities_v416(
 create index if not exists stock_hunter_missed_opportunities_v416_date_idx on public.stock_hunter_missed_opportunities_v416(trade_date desc,severity,peak_change_pct desc);
 create index if not exists stock_hunter_missed_opportunities_v416_symbol_idx on public.stock_hunter_missed_opportunities_v416(symbol,trade_date desc);
 
+create table if not exists public.stock_hunter_market_replay_v416(
+  trade_date date not null,symbol_id text not null,symbol text not null,bucket_at timestamptz not null,
+  open_price numeric,high_price numeric,low_price numeric,close_price numeric,yesterday_price numeric,
+  open_change_pct numeric,high_change_pct numeric,low_change_pct numeric,close_change_pct numeric,
+  max_buy_queue numeric,max_sell_queue numeric,last_volume numeric,sample_count integer not null default 0,
+  updated_at timestamptz not null default now(),primary key(trade_date,symbol_id,bucket_at)
+);
+create index if not exists stock_hunter_market_replay_v416_date_idx on public.stock_hunter_market_replay_v416(trade_date desc,bucket_at,symbol_id);
+create index if not exists stock_hunter_market_replay_v416_symbol_idx on public.stock_hunter_market_replay_v416(symbol,trade_date desc,bucket_at);
+alter table public.stock_hunter_market_replay_v416 enable row level security;
+drop policy if exists "stock hunter replay public read" on public.stock_hunter_market_replay_v416;
+create policy "stock hunter replay public read" on public.stock_hunter_market_replay_v416 for select to anon,authenticated using(true);
+revoke all on public.stock_hunter_market_replay_v416 from anon,authenticated;
+grant select on public.stock_hunter_market_replay_v416 to anon,authenticated;
+
+create or replace view public.stock_hunter_market_replay_symbols_v416
+with (security_invoker=true) as
+select trade_date,symbol_id,max(symbol) symbol,count(*)::integer bucket_count
+from public.stock_hunter_market_replay_v416
+group by trade_date,symbol_id;
+grant select on public.stock_hunter_market_replay_symbols_v416 to anon,authenticated;
+
+create table if not exists public.stock_hunter_reliability_v416(
+  observed_at timestamptz primary key,trade_date date not null,market_session boolean not null default false,
+  feed_status text,feed_source text,feed_symbols integer,agent_version text,feed_last_at timestamptz,feed_age_seconds integer,
+  capture_last_success_at timestamptz,capture_age_seconds integer,capture_event_count integer,capture_has_error boolean,
+  tape_last_capture_at timestamptz,tape_capture_count integer,effectiveness_last_refresh_at timestamptz,effectiveness_refresh_count integer,
+  journey_count_today integer,backtest_group_count_today integer,carry_active_count integer,missed_count_today integer,
+  overall_state text check(overall_state in ('سالم','نیازمند توجه','خارج از ساعت بازار'))
+);
+
 create table if not exists public.stock_hunter_research_retention_v416(
   dataset text primary key,retention_days integer not null check(retention_days>0),tier text not null,
   purpose text not null,updated_at timestamptz not null default now()
 );
 insert into public.stock_hunter_research_retention_v416(dataset,retention_days,tier,purpose) values
- ('RAW_MARKET_TAPE',14,'RAW','بازپخش کوتاه‌مدت، ساخت Journey و ممیزی فرصت‌های از دست‌رفته'),
- ('SHADOW_SAMPLES',30,'RAW','تحلیل علت شکار/عدم شکار و کنترل کیفیت کوتاه‌مدت؛ نمونه‌های quarantine کیفی immutable مستثنا هستند'),
+ ('RAW_MARKET_TAPE',14,'RAW','داده خام کوتاه‌مدت برای ساخت سفر شکار و ممیزی فرصت‌های از دست‌رفته'),
+ ('SHADOW_SAMPLES',30,'RAW','نمونه‌های پایش برای تحلیل علت شکار یا عدم شکار؛ نمونه‌های قرنطینه کیفی نگه داشته می‌شوند'),
  ('OUTCOME_OBSERVATIONS',30,'RAW','ورودی موقت برای محاسبه خروجی‌های خلاصه‌شده'),
  ('HUNT_EVENTS',180,'COMPACT','رخدادهای رسمی شکار برای تحلیل جزئی'),
- ('HUNT_EFFECTIVENESS',180,'COMPACT','MFE/MAE و نتیجه همان‌روز/روز بعد'),
+ ('HUNT_EFFECTIVENESS',180,'COMPACT','بیشترین پیشروی و افت و نتیجه همان‌روز و روز کاری بعد'),
  ('HUNT_CARRY',180,'COMPACT','پیگیری ۱۵ دقیقه‌ای عبور موفق'),
- ('HUNT_JOURNEY',180,'COMPACT','خط زمانی فشرده هر شکار'),
+ ('HUNT_JOURNEY',180,'COMPACT','خط زمانی فشرده سفر شکار همراه با مؤلفه‌های توضیح‌پذیری'),
  ('MISSED_OPPORTUNITIES',180,'COMPACT','ممیزی فرصت‌های از دست‌رفته و علت آن'),
- ('BACKTEST_DAILY',1095,'SUMMARY','خلاصه روزانه سبک برای بک‌تست بلندمدت')
+ ('BACKTEST_DAILY',1095,'SUMMARY','خلاصه روزانه سبک برای آزمون تاریخی بلندمدت'),
+ ('MARKET_REPLAY_5MIN',30,'COMPACT','بازپخش فشرده پنج‌دقیقه‌ای فقط برای نمادهای شکارشده'),
+ ('RELIABILITY_SNAPSHOTS',30,'SUMMARY','نماهای سبک پایداری داده بازار، ثبت شکار و پژوهش')
 on conflict(dataset) do update set retention_days=excluded.retention_days,tier=excluded.tier,purpose=excluded.purpose,updated_at=now();
 
 alter table public.stock_hunter_hunt_journey_v416 enable row level security;
 alter table public.stock_hunter_backtest_daily_v416 enable row level security;
 alter table public.stock_hunter_missed_opportunities_v416 enable row level security;
 alter table public.stock_hunter_research_retention_v416 enable row level security;
+alter table public.stock_hunter_reliability_v416 enable row level security;
+drop policy if exists "stock hunter reliability public read" on public.stock_hunter_reliability_v416;
+create policy "stock hunter reliability public read" on public.stock_hunter_reliability_v416 for select to anon,authenticated using(true);
+revoke all on public.stock_hunter_reliability_v416 from anon,authenticated;
+grant select on public.stock_hunter_reliability_v416 to anon,authenticated;
 drop policy if exists "stock hunter journey public read" on public.stock_hunter_hunt_journey_v416;
 create policy "stock hunter journey public read" on public.stock_hunter_hunt_journey_v416 for select to anon,authenticated using(true);
 drop policy if exists "stock hunter backtest public read" on public.stock_hunter_backtest_daily_v416;
@@ -90,9 +140,13 @@ grant select on public.stock_hunter_hunt_journey_v416,public.stock_hunter_backte
 -- private.refresh_stock_hunter_missed_opportunities_v416(date)
 -- private.refresh_stock_hunter_research_v416()
 -- private.cleanup_stock_hunter_research_v416()
+-- private.refresh_stock_hunter_market_replay_v416(date)
+-- private.cleanup_stock_hunter_market_replay_v416()
+-- private.capture_stock_hunter_reliability_v416()
 -- They are EXECUTE-revoked from PUBLIC/anon/authenticated and are invoked only by pg_cron/admin.
 --
 -- Retention contract:
--- RAW tape 14d; ordinary Shadow/outcome raw 30d (immutable quality-quarantine samples are preserved); detailed compact event/effectiveness/carry/journey/missed 180d;
--- daily aggregate backtest 1095d. Refresh cron runs every 5m during market hours;
+-- Raw market tape 14d; ordinary shadow/outcome 30d; compact five-minute replay 30d;
+-- detailed event/effectiveness/carry/journey/missed 180d; daily backtest summary 1095d.
+-- Immutable quality-quarantine samples are preserved. Refresh cron runs every 5m during market hours;
 -- missed-opportunity audit runs after close with a safety rerun; cleanup runs daily.
