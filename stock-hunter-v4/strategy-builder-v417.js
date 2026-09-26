@@ -155,6 +155,64 @@ function renderBacktest(rows,total){
     <td class="good">${R.pct(x.mfe_1d_pct)}</td><td class="bad">${R.pct(x.mae_1d_pct)}</td><td>${R.pct(x.return_1d_pct)}</td>
   </tr>`).join(''):'<tr><td colspan="8"><div class="empty">رخداد تاریخی منطبقی پیدا نشد.</div></td></tr>';
 }
+
+const NL_DEFS=[
+  {field:'baseline_hunt_score',re:/امتیاز(?:\s+)?شکار/},
+  {field:'baseline_today_opportunity',re:/قدرت(?:\s+)?(?:فرصت|امروز)/},
+  {field:'order_pressure',re:/فشار(?:\s+)?سفارش/},
+  {field:'impulse',re:/شتاب(?:\s+)?(?:حرکت|سیگنال)?/},
+  {field:'feasibility',re:/امکان(?:\s+)?(?:رسیدن|هدف)/},
+  {field:'flow_volume',re:/جریان(?:\s+)?و(?:\s+)?حجم/},
+  {field:'market_context',re:/شرایط(?:\s+)?بازار/},
+  {field:'continuation12',re:/تداوم/},
+  {field:'risk_score',re:/ریسک/},
+  {field:'cancellation_ratio',re:/لغو(?:\s+)?سفارش/},
+  {field:'evidence_count',re:/شاهد(?:های)?(?:\s+)?هم(?:‌|\s|-)?زمان|شواهد(?:\s+)?هم(?:‌|\s|-)?زمان/},
+  {field:'dynamic_evidence_count',re:/شاهد(?:های)?(?:\s+)?پویا|شواهد(?:\s+)?پویا/},
+  {field:'day_change',re:/تغییر(?:\s+)?(?:قیمت|روزانه)/}
+];
+function nlOp(segment){
+  if(/کمتر|زیر|حداکثر|بیشینه|نهایت/.test(segment))return '<=';
+  if(/بیشتر|بالای|حداقل|کمینه|از\s+/.test(segment))return '>=';
+  return '>=';
+}
+function localRulesFromText(text){
+  const s=R.latinDigits(String(text||'')).replace(/٫/g,'.').replace(/−/g,'-'),out=[];
+  if(/برگشت|منفی/.test(s))out.push({field:'hunt_mode',op:'=',value:'reversal'});
+  else if(/شتاب/.test(s))out.push({field:'hunt_mode',op:'=',value:'acceleration'});
+  for(const d of NL_DEFS){
+    const m=d.re.exec(s);if(!m)continue;const tail=s.slice(m.index,m.index+90),num=tail.match(/-?\d+(?:\.\d+)?/);if(!num)continue;
+    out.push({field:d.field,op:nlOp(tail.slice(0,num.index)),value:Number(num[0])});
+  }
+  for(const state of ['شکار ویژه','هشدار فوری','شکار زودهنگام','رصد','عادی'])if(s.includes(state)){out.push({field:'baseline_state',op:'=',value:state});break;}
+  return sanitizeParsedRules(out);
+}
+function sanitizeParsedRules(a){
+  if(!Array.isArray(a))return[];
+  const okOps=new Set(['>=','>','<=','<','=','!=']),out=[];
+  for(const r of a){
+    if(!FIELD_DEFS[r?.field]||!okOps.has(String(r?.op)))continue;const d=FIELD_DEFS[r.field];
+    let value=r.value;if(d.type==='number'){value=Number(value);if(!Number.isFinite(value))continue;}
+    else if(!d.values.some(([v])=>String(v)===String(value)))continue;
+    out.push(normalizeRule({field:r.field,op:String(r.op),value}));
+  }
+  return out.slice(0,20);
+}
+async function aiRulesFromText(text){
+  if(!session)return null;
+  try{
+    const r=await fetch(String(cfg.SUPABASE_URL||'').replace(/\/$/,'')+'/functions/v1/stock-hunter-ai-v417',{method:'POST',headers:{'Content-Type':'application/json',apikey:String(cfg.SUPABASE_PUBLISHABLE_KEY||''),Authorization:'Bearer '+session.access_token},body:JSON.stringify({mode:'strategy_parse',payload:{text}})});
+    if(!r.ok)return null;const j=await r.json();return sanitizeParsedRules(j.rules);
+  }catch{return null;}
+}
+async function translateNaturalStrategy(){
+  const text=$('strategyNaturalLanguage').value.trim();if(!text){$('strategyAiState').textContent='ابتدا راهبرد را به فارسی بنویسید.';return;}
+  $('strategyAiState').textContent='در حال تبدیل متن به شرط‌های قابل مشاهده…';
+  let parsed=await aiRulesFromText(text);if(!parsed?.length)parsed=localRulesFromText(text);
+  if(!parsed.length){$('strategyAiState').textContent='از این متن شرط قابل اتکایی استخراج نشد؛ عبارت را با نام شاخص و عدد روشن‌تر بنویسید.';return;}
+  rules=parsed;$('strategyMatchMode').value=/\sیا\s|یا،|یا\./.test(text)?'ANY':'ALL';renderRules();
+  $('strategyAiState').textContent=R.fa(rules.length)+' شرط ساخته شد. قبل از اجرا می‌توانید همه شرط‌ها را ببینید و ویرایش کنید.';
+}
 function validate(){
   syncRulesFromDom();
   if(!rules.length){R.setStatus('حداقل یک شرط به راهبرد اضافه کنید.','bad');return false;}
@@ -271,6 +329,7 @@ $('ruleList').addEventListener('input',e=>{if(e.target.classList.contains('rule-
 $('ruleList').addEventListener('click',e=>{const b=e.target.closest('.rule-remove');if(!b)return;const row=b.closest('.rule-row');rules=rules.filter(x=>x.id!==row.dataset.ruleId);renderRules();});
 $('addRule').onclick=()=>addRule();
 document.querySelectorAll('[data-preset]').forEach(b=>b.onclick=()=>preset(b.dataset.preset));
+$('translateStrategy').onclick=translateNaturalStrategy;
 $('runScan').onclick=()=>runScan();
 $('runBacktest').onclick=runBacktest;
 $('saveStrategy').onclick=save;
