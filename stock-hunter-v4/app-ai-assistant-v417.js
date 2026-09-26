@@ -24,15 +24,15 @@
   function distance(a,b){
     const ks=['order_pressure','impulse','feasibility','flow_volume','market_context','continuation12','risk_score','cancellation_ratio'];let s=0,n=0;
     for(const k of ks){const x=Number(a?.[k]),y=Number(b?.[k]);if(Number.isFinite(x)&&Number.isFinite(y)){s+=Math.abs(x-y)/100;n++;}}
-    const d=Math.abs(Number(a?.detected_day_change)-Number(b?.day_change));if(Number.isFinite(d)){s+=Math.min(1,d/5);n++;}return n?s/n:1;
+    const d=Math.abs(Number(a?.detected_day_change)-Number(b?.detected_day_change??b?.day_change));if(Number.isFinite(d)){s+=Math.min(1,d/5);n++;}return n?s/n:1;
   }
   async function similar(j,out){
     if(!j){out.innerHTML='<div class="muted">برای این نماد سفر شکار کافی ثبت نشده است.</div>';return;}out.textContent='در حال یافتن نمونه‌های مشابه…';
     try{
-      const from=new Date(Date.now()-180*86400000).toISOString().slice(0,10),sel='trade_date,symbol_id,symbol,hunt_mode,day_change,order_pressure,impulse,feasibility,flow_volume,market_context,continuation12,risk_score,cancellation_ratio,baseline_hunt_score,mfe_1d_pct,mae_1d_pct,hit_plus_1pct_1d,reversal_crossed_reference_same_day';
-      const all=await api('stock_hunter_shadow_outcomes_v416','select='+encodeURIComponent(sel)+'&trade_date=gte.'+from+'&hunt_mode=eq.'+encodeURIComponent(j.hunt_mode)+'&order=trade_date.desc&limit=1500');
+      const from=new Date(Date.now()-180*86400000).toISOString().slice(0,10),sel='channel,trade_date,symbol_id,symbol,hunt_mode,detected_day_change,order_pressure,impulse,feasibility,flow_volume,market_context,continuation12,risk_score,cancellation_ratio,hunt_score,same_day_mfe_pct,same_day_mae_pct,crossed_zero_at,crossed_plus1_at';
+      const all=await api('stock_hunter_hunt_journey_v416','select='+encodeURIComponent(sel)+'&trade_date=gte.'+from+'&hunt_mode=eq.'+encodeURIComponent(j.hunt_mode)+'&channel=eq.'+encodeURIComponent(j.channel)+'&order=trade_date.desc&limit=2000');
       const a=all.filter(z=>String(z.symbol_id)!==String(j.symbol_id)||z.trade_date!==j.trade_date).map(z=>({...z,_d:distance(j,z)})).sort((m,n)=>m._d-n._d).slice(0,5);
-      out.innerHTML=a.length?'<div class="detail-ai-similar-grid">'+a.map(z=>{const hit=z.hunt_mode==='reversal'?z.reversal_crossed_reference_same_day:z.hit_plus_1pct_1d;return '<article><b>'+escA(z.symbol)+'</b><span>'+dateFa(z.trade_date)+' · شباهت '+faA(Math.max(0,100*(1-z._d)),1)+'٪</span><small>هدف '+(hit===true?'موفق':hit===false?'ناموفق':'نامشخص')+' · پیشروی '+pctA(z.mfe_1d_pct)+' · افت '+pctA(z.mae_1d_pct)+'</small></article>';}).join('')+'</div>':'<div class="muted">نمونه تاریخی کافی وجود ندارد.</div>';
+      out.innerHTML=a.length?'<div class="detail-ai-similar-grid">'+a.map(z=>{const hit=z.hunt_mode==='reversal'?!!z.crossed_zero_at:!!z.crossed_plus1_at;return '<article><b>'+escA(z.symbol)+'</b><span>'+dateFa(z.trade_date)+' · شباهت '+faA(Math.max(0,100*(1-z._d)),1)+'٪</span><small>هدف '+(hit?'موفق':'ناموفق')+' · پیشروی '+pctA(z.same_day_mfe_pct)+' · افت '+pctA(z.same_day_mae_pct)+'</small></article>';}).join('')+'</div>':'<div class="muted">نمونه تاریخی کافی وجود ندارد.</div>';
     }catch{out.innerHTML='<div class="muted">دریافت نمونه‌های مشابه ممکن نشد.</div>';}
   }
   openDetail=async function(id){
