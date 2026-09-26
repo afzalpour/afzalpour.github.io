@@ -535,6 +535,7 @@ jobs:
           assert "x.hunt_mode==='reversal'?!!x.crossed_zero_at:!!x.crossed_plus1_at" in bt
           assert "stock_hunter_backtest_slices_v416" in bt
           assert "limit=2500" in rp and "bucket_seconds" in rp
+          assert "هنوز نمادی برای بازپخش ثبت نشده است" in rp
           assert "levelFa={early:'شکار زودهنگام',special:'شکار ویژه',success:'عبور موفق'}" in al
           assert "reg.showNotification" in al and "stockHunterAlertsSeenV416" in al
           assert "rules.every" in st and "stock_hunter_shadow_samples_v416" in st and "stock_hunter_shadow_outcomes_v416" in st
