@@ -20,7 +20,7 @@
   function valueOf(text){
     const raw=clean(text),x=latin(raw).replace(/,/g,'');
     if(/^[-+]?\d+(?:\.\d+)?$/.test(x))return Number(x);
-    if(/^[-+]?\d+(?:\.\d+)?%$/.test(x))return Number(x.slice(0,-1))/100;
+    if(/^[-+]?\d+(?:\.\d+)?%$/.test(x))return Number(x.slice(0,-1));
     return raw;
   }
   function tableDataset(table,index){
@@ -85,6 +85,7 @@
   }
   function csvCell(v){
     let s=typeof v==='number'?String(v):String(v??'');
+    if(typeof v!=='number'&&/^[=+\-@]/.test(s))s="'"+s;
     if(/[",\r\n]/.test(s))s='"'+s.replace(/"/g,'""')+'"';return s;
   }
   function exportCsv(root){
