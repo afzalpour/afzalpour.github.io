@@ -26,6 +26,7 @@ on:
       - 'stock-hunter-v4/app-universal-search-v416.js'
       - 'stock-hunter-v4/app-eod-v416.js'
       - 'stock-hunter-v4/app-hunt-carry-v416.js'
+      - 'stock-hunter-v4/app-hunt-timeline-v416.js'
       - 'stock-hunter-v4/carry-forward-v416.sql'
       - 'stock-hunter-v4/research-common-v416.js'
       - 'stock-hunter-v4/research-lab-v416.css'
@@ -42,6 +43,8 @@ on:
       - 'stock-hunter-v4/market-replay-v416.js'
       - 'stock-hunter-v4/reliability-v416.html'
       - 'stock-hunter-v4/reliability-v416.js'
+      - 'stock-hunter-v4/strategy-builder-v417.html'
+      - 'stock-hunter-v4/strategy-builder-v417.js'
       - 'stock-hunter-v4/performance-v416.js'
       - 'stock-hunter-v4/performance.html'
       - 'stock-hunter-v4/calibration-v416.js'
@@ -123,6 +126,7 @@ jobs:
           node --check stock-hunter-v4/app-universal-search-v416.js
           node --check stock-hunter-v4/app-eod-v416.js
           node --check stock-hunter-v4/app-hunt-carry-v416.js
+          node --check stock-hunter-v4/app-hunt-timeline-v416.js
           node --check stock-hunter-v4/research-common-v416.js
           node --check stock-hunter-v4/hunt-journey-v416.js
           node --check stock-hunter-v4/backtest-lab-v416.js
@@ -130,6 +134,7 @@ jobs:
           node --check stock-hunter-v4/alerts-center-v416.js
           node --check stock-hunter-v4/market-replay-v416.js
           node --check stock-hunter-v4/reliability-v416.js
+          node --check stock-hunter-v4/strategy-builder-v417.js
           node --check stock-hunter-v4/performance-v416.js
           grep -q 'function perfJalaliDateV416' stock-hunter-v4/performance-v416.js
           node --check stock-hunter-v4/calibration-v416.js
@@ -168,7 +173,22 @@ jobs:
           grep -q 'مرکز هشدار شکار' stock-hunter-v4/alerts-center-v416.html
           grep -q 'stock_hunter_reliability_v416' stock-hunter-v4/reliability-v416.js
           grep -q 'پایداری سامانه' stock-hunter-v4/reliability-v416.html
-          grep -q 'MARKET_REPLAY_5MIN' stock-hunter-v4/research-lab-v416.sql
+          grep -q 'MARKET_REPLAY_30SEC' stock-hunter-v4/research-lab-v416.sql
+          grep -q 'BACKTEST_SLICES' stock-hunter-v4/research-lab-v416.sql
+          grep -q 'stock_hunter_backtest_slices_v416' stock-hunter-v4/backtest-lab-v416.js
+          grep -q 'دقت هدف مسیر' stock-hunter-v4/backtest-lab-v416.html
+          grep -q 'bucket_seconds' stock-hunter-v4/market-replay-v416.js
+          grep -q '۳۰ثانیه' stock-hunter-v4/market-replay-v416.html
+          grep -q 'reg.showNotification' stock-hunter-v4/alerts-center-v416.js
+          grep -q 'شکار زودهنگام' stock-hunter-v4/alerts-center-v416.html
+          grep -q 'سازنده راهبرد بدون کدنویسی' stock-hunter-v4/strategy-builder-v417.html
+          grep -q 'stock_hunter_user_strategies_v417' stock-hunter-v4/strategy-builder-v417.js
+          grep -q 'stock_hunter_shadow_outcomes_v416' stock-hunter-v4/strategy-builder-v417.js
+          grep -q 'app-hunt-timeline-v416.js?v=1' stock-hunter-v4/index.html
+          grep -q 'app-hunt-timeline-v416.js?v=1' stock-hunter-v4/index-v417.html
+          grep -q 'خط زمانی شکار' stock-hunter-v4/app-hunt-timeline-v416.js
+          grep -q 'strategy-builder-v417.html' stock-hunter-v4/sw.js
+          grep -q 'notificationclick' stock-hunter-v4/sw.js
           grep -q 'Vazirmatn' stock-hunter-v4/research-lab-v416.css
           if grep -q 'type="date"' stock-hunter-v4/hunt-journey-v416.html stock-hunter-v4/backtest-lab-v416.html stock-hunter-v4/missed-opportunities-v416.html stock-hunter-v4/alerts-center-v416.html stock-hunter-v4/market-replay-v416.html stock-hunter-v4/reliability-v416.html; then echo '::error::Research dates must be Jalali text inputs'; exit 1; fi
           grep -q 'RAW_MARKET_TAPE' stock-hunter-v4/research-lab-v416.sql
@@ -412,4 +432,27 @@ jobs:
           print('registrations:', matches)
           assert sum(n for _,n in matches) == 1, matches
           assert matches == [('app-runtime.js',1)], matches
+          PY
+
+      - name: Research completion semantic gate
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          bt=Path('stock-hunter-v4/backtest-lab-v416.js').read_text(encoding='utf-8')
+          rp=Path('stock-hunter-v4/market-replay-v416.js').read_text(encoding='utf-8')
+          al=Path('stock-hunter-v4/alerts-center-v416.js').read_text(encoding='utf-8')
+          st=Path('stock-hunter-v4/strategy-builder-v417.js').read_text(encoding='utf-8')
+          tl=Path('stock-hunter-v4/app-hunt-timeline-v416.js').read_text(encoding='utf-8')
+          sql=Path('stock-hunter-v4/research-lab-v416.sql').read_text(encoding='utf-8')
+          assert "x.hunt_mode==='reversal'?!!x.crossed_zero_at:!!x.crossed_plus1_at" in bt
+          assert "stock_hunter_backtest_slices_v416" in bt
+          assert "limit=2500" in rp and "bucket_seconds" in rp
+          assert "levelFa={early:'شکار زودهنگام',special:'شکار ویژه',success:'عبور موفق'}" in al
+          assert "reg.showNotification" in al and "stockHunterAlertsSeenV416" in al
+          assert "rules.every" in st and "stock_hunter_shadow_samples_v416" in st and "stock_hunter_shadow_outcomes_v416" in st
+          assert "stock_hunter_user_strategies_v417" in st
+          assert "stock_hunter_hunt_journey_v416" in tl and "stock_hunter_market_replay_v416" in tl
+          assert "MARKET_REPLAY_30SEC" in sql and "BACKTEST_SLICES" in sql
+          assert "stock_hunter_user_strategies_v417" in sql
+          print('research-completion: PASS')
           PY
