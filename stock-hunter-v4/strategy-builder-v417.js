@@ -106,7 +106,8 @@ function compare(a,op,b,type){
 }
 function matches(row){
   if(!rules.length)return false;
-  return rules.every(r=>compare(row[r.field],r.op,r.value,FIELD_DEFS[r.field].type));
+  const test=r=>compare(row[r.field],r.op,r.value,FIELD_DEFS[r.field].type);
+  return $('strategyMatchMode').value==='ANY'?rules.some(test):rules.every(test);
 }
 async function paged(table,query,maxRows=10000){
   const out=[],pageSize=1000;
@@ -189,7 +190,7 @@ function localList(){
 function writeLocal(list){localStorage.setItem('stockHunterStrategiesV417',JSON.stringify(list.slice(0,50)));}
 function payload(){
   syncRulesFromDom();
-  return {strategy_id:strategyId||uid(),user_id:session?.user?.id||null,name:$('strategyName').value.trim()||'راهبرد بدون نام',match_mode:'ALL',rules:rules.map(({field,op,value})=>({field,op,value})),alert_enabled:$('strategyAlert').checked};
+  return {strategy_id:strategyId||uid(),user_id:session?.user?.id||null,name:$('strategyName').value.trim()||'راهبرد بدون نام',match_mode:$('strategyMatchMode').value==='ANY'?'ANY':'ALL',rules:rules.map(({field,op,value})=>({field,op,value})),alert_enabled:$('strategyAlert').checked};
 }
 async function save(){
   if(!validate())return;
@@ -197,7 +198,7 @@ async function save(){
   const loc=localList().filter(x=>x.strategy_id!==p.strategy_id);loc.unshift({...p,user_id:null,updated_at:new Date().toISOString()});writeLocal(loc);
   if(session){
     const {error}=await supabase.from('stock_hunter_user_strategies_v417').upsert({
-      strategy_id:p.strategy_id,user_id:session.user.id,name:p.name,match_mode:'ALL',rules:p.rules,alert_enabled:p.alert_enabled,updated_at:new Date().toISOString()
+      strategy_id:p.strategy_id,user_id:session.user.id,name:p.name,match_mode:p.match_mode,rules:p.rules,alert_enabled:p.alert_enabled,updated_at:new Date().toISOString()
     },{onConflict:'strategy_id'});
     if(error){R.setStatus('راهبرد روی این دستگاه ذخیره شد، اما همگام‌سازی حساب ناموفق بود: '+error.message,'bad');renderSaved();return;}
   }
@@ -205,7 +206,7 @@ async function save(){
   await loadCloud();renderSaved();syncAlertTimer();
 }
 function loadStrategy(s){
-  strategyId=s.strategy_id||null;$('strategyName').value=s.name||'راهبرد شخصی من';$('strategyAlert').checked=!!s.alert_enabled;
+  strategyId=s.strategy_id||null;$('strategyName').value=s.name||'راهبرد شخصی من';$('strategyMatchMode').value=s.match_mode==='ANY'?'ANY':'ALL';$('strategyAlert').checked=!!s.alert_enabled;
   rules=(Array.isArray(s.rules)?s.rules:[]).map(normalizeRule);renderRules();R.setStatus('راهبرد «'+(s.name||'بدون نام')+'» بارگذاری شد.','ok');syncAlertTimer();
 }
 async function removeStrategy(id,cloud){
@@ -229,7 +230,7 @@ function renderSaved(){
   $('accountState').classList.toggle('success',!!session);
   const a=mergedSaved();
   $('savedStrategies').innerHTML=a.length?a.map(s=>`<article class="saved-strategy" data-id="${R.esc(s.strategy_id)}">
-    <div><b>${R.esc(s.name)}</b><span>${R.fa((s.rules||[]).length)} شرط · ${s.alert_enabled?'هشدار روشن':'هشدار خاموش'} · ${s.cloud?'حساب کاربری':'این دستگاه'}</span></div>
+    <div><b>${R.esc(s.name)}</b><span>${R.fa((s.rules||[]).length)} شرط · ${s.match_mode==='ANY'?'رابطه یا':'رابطه و'} · ${s.alert_enabled?'هشدار روشن':'هشدار خاموش'} · ${s.cloud?'حساب کاربری':'این دستگاه'}</span></div>
     <div><button class="load-strategy" type="button">بارگذاری</button><button class="delete-strategy" type="button">حذف</button></div>
   </article>`).join(''):'<div class="empty">هنوز راهبردی ذخیره نشده است.</div>';
 }
@@ -273,6 +274,7 @@ document.querySelectorAll('[data-preset]').forEach(b=>b.onclick=()=>preset(b.dat
 $('runScan').onclick=()=>runScan();
 $('runBacktest').onclick=runBacktest;
 $('saveStrategy').onclick=save;
+$('strategyMatchMode').onchange=()=>{if(lastScanRows.length)runScan();syncAlertTimer();};
 $('strategyAlert').onchange=()=>{ensurePermission();syncAlertTimer();};
 $('savedStrategies').addEventListener('click',async e=>{
   const card=e.target.closest('.saved-strategy');if(!card)return;const s=mergedSaved().find(x=>x.strategy_id===card.dataset.id);if(!s)return;
