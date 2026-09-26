@@ -43,7 +43,7 @@ async function loadSymbols(){
  try{
    symbolMeta=await R.api('stock_hunter_market_replay_symbols_v416','select=symbol_id,symbol,bucket_count,resolution_seconds&trade_date=eq.'+encodeURIComponent(d)+'&order=symbol.asc&limit=2000');
    const old=$('replaySymbol').value;$('replaySymbol').innerHTML=symbolMeta.length?symbolMeta.map(x=>'<option value="'+R.esc(x.symbol_id)+'">'+R.esc(x.symbol)+' — '+R.fa(x.bucket_count)+' نما — '+resolutionFa(x.resolution_seconds)+'</option>').join(''):'<option value="">نمادی برای بازپخش وجود ندارد</option>';
-   if(symbolMeta.some(x=>String(x.symbol_id)===old))$('replaySymbol').value=old;await loadReplay();
+   if(symbolMeta.some(x=>String(x.symbol_id)===old))$('replaySymbol').value=old;else if(qsid&&symbolMeta.some(x=>String(x.symbol_id)===String(qsid)))$('replaySymbol').value=String(qsid);await loadReplay();
  }catch(e){$('replaySymbol').innerHTML='<option value="">خطا در دریافت نمادها</option>';R.setStatus('دریافت فهرست بازپخش ناموفق بود: '+e.message,'bad');}
 }
 async function loadReplay(){
@@ -51,12 +51,14 @@ async function loadReplay(){
  R.setStatus('در حال دریافت بازپخش '+R.jalaliDate(d)+'…','warn');
  try{
    replayRows=await R.api('stock_hunter_market_replay_v416','select=*&trade_date=eq.'+encodeURIComponent(d)+'&symbol_id=eq.'+encodeURIComponent(sid)+'&order=bucket_at.asc&limit=2500');
+   const available=[...new Set(replayRows.map(x=>Number(x.bucket_seconds)||300))].filter(Number.isFinite).sort((a,b)=>a-b);
+   const best=available[0];if(best)replayRows=replayRows.filter(x=>(Number(x.bucket_seconds)||300)===best);
    const jr=await R.api('stock_hunter_hunt_journey_v416','select=channel,trade_date,symbol_id,symbol,detected_at,crossed_zero_at,crossed_plus1_at,crossed_plus2_at,crossed_plus3_at,hunt_state,hunt_score&trade_date=eq.'+encodeURIComponent(d)+'&symbol_id=eq.'+encodeURIComponent(sid)+'&order=detected_at.asc&limit=4');
    journey=jr.find(x=>x.channel==='ACTION_NOW')||jr[0]||null;index=0;$('replaySlider').max=String(Math.max(0,replayRows.length-1));renderTable();renderCurrent();renderMilestones();
    const name=$('replaySymbol').selectedOptions[0]?.textContent?.split(' — ')[0]||'نماد',res=[...new Set(replayRows.map(x=>Number(x.bucket_seconds)||300))].sort((a,b)=>a-b).map(resolutionFa).join(' / ');
    R.setStatus('بازپخش '+name+' در '+R.jalaliDate(d)+' — '+R.fa(replayRows.length)+' نما با تفکیک '+(res||'نامشخص'),'ok');
  }catch(e){replayRows=[];journey=null;renderTable();renderCurrent();renderMilestones();R.setStatus('دریافت بازپخش ناموفق بود: '+e.message,'bad');}
 }
-R.setJalaliInput($('replayDate'),R.todayIso());$('replayDate').addEventListener('change',loadSymbols);$('replayDate').addEventListener('keydown',e=>{if(e.key==='Enter')loadSymbols();});
+const qp=new URLSearchParams(location.search),qd=qp.get('date'),qsid=qp.get('symbol_id');R.setJalaliInput($('replayDate'),qd||R.todayIso());$('replayDate').addEventListener('change',loadSymbols);$('replayDate').addEventListener('keydown',e=>{if(e.key==='Enter')loadSymbols();});
 $('replaySymbol').onchange=loadReplay;$('replayRefresh').onclick=loadSymbols;$('replayPlay').onclick=togglePlay;$('replayPrev').onclick=()=>{stopPlay();index=Math.max(0,index-1);renderCurrent();};$('replayNext').onclick=()=>{stopPlay();index=Math.min(replayRows.length-1,index+1);renderCurrent();};
 $('replaySlider').oninput=()=>{stopPlay();index=Number($('replaySlider').value)||0;renderCurrent();};loadSymbols();
