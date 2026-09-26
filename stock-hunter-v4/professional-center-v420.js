@@ -12,7 +12,8 @@ function n(v){const x=Number(R.latinDigits(String(v??'')).replace(/,/g,'').repla
 function avg(a){const v=a.map(Number).filter(Number.isFinite);return v.length?v.reduce((x,y)=>x+y,0)/v.length:null;}
 function med(a){const v=a.map(Number).filter(Number.isFinite).sort((x,y)=>x-y);if(!v.length)return null;const m=Math.floor(v.length/2);return v.length%2?v[m]:(v[m-1]+v[m])/2;}
 function success(x){return x?.hunt_mode==='reversal'?!!x.crossed_zero_at:!!x.crossed_plus1_at;}
-function successRate(rows){return rows.length?100*rows.filter(success).length/rows.length:null;}
+function observed(x){return x&&(x.same_day_mfe_pct!=null||x.same_day_close_change_pct!=null||x.result_label!=null||x.crossed_zero_at||x.crossed_plus1_at||x.crossed_plus2_at||x.crossed_plus3_at);}
+function successRate(rows){const obs=(rows||[]).filter(observed);return obs.length?100*obs.filter(success).length/obs.length:null;}
 function faPct(v,d=1){return v==null?'—':R.fa(v,d)+'٪';}
 function setMetric(id,v){$(id).textContent=v;}
 function esc(v){return R.esc(v);}
@@ -86,19 +87,19 @@ async function loadStrategies(){
  if(!sb||!user)return;const {data}=await sb.from('stock_hunter_user_strategies_v417').select('strategy_id,name,match_mode,rules').eq('user_id',user.id).order('created_at',{ascending:true});
  const sel=$('robustStrategy');sel.innerHTML='<option value="__hunt__">موتور ثابت شکار</option>'+(data||[]).sort((a,b)=>collator.compare(a.name,b.name)).map(x=>'<option value="'+esc(x.strategy_id)+'">'+esc(x.name)+'</option>').join('');sel._rows=data||[];
 }
-function stats(rows){return {n:rows.length,rate:successRate(rows),mfe:med(rows.map(x=>x.same_day_mfe_pct))};}
+function stats(rows){const obs=rows.filter(observed);return {n:rows.length,observed:obs.length,success:obs.filter(success).length,rate:successRate(obs),mfe:med(obs.map(x=>x.same_day_mfe_pct))};}
 async function runRobustness(){
  const a=R.readJalaliInput($('robustStart'),R.daysAgoIso(90)),b=R.readJalaliInput($('robustEnd'),R.todayIso());status('در حال اجرای آزمون استحکام…','warn');
  try{
   const rows=await R.api('stock_hunter_hunt_journey_v416','select=*&trade_date=gte.'+a+'&trade_date=lte.'+b+'&order=trade_date.asc,detected_at.asc&limit=5000');
   const sid=$('robustStrategy').value,s=sid==='__hunt__'?{strategy_id:'__hunt__'}:($('robustStrategy')._rows||[]).find(x=>x.strategy_id===sid);
-  const factors=sid==='__hunt__'?[1]:[.95,1,1.05];const baseRows=rows.filter(x=>applyStrategy(x,s,1));
+  const observedRows=rows.filter(observed),factors=sid==='__hunt__'?[1]:[.95,1,1.05];const baseRows=observedRows.filter(x=>applyStrategy(x,s,1));
   const cut=Math.max(1,Math.floor(baseRows.length*.7)),ins=baseRows.slice(0,cut),oos=baseRows.slice(cut),isRate=successRate(ins),oosRate=successRate(oos);
   setMetric('robustCount',R.fa(baseRows.length));setMetric('robustOos',faPct(oosRate,1));setMetric('robustDrop',isRate==null||oosRate==null?'—':R.fa(oosRate-isRate,1)+' واحد درصد');
-  const variants=factors.map(f=>({f,rows:rows.filter(x=>applyStrategy(x,s,f))}));const vr=variants.map(x=>successRate(x.rows)).filter(Number.isFinite);const spread=vr.length?Math.max(...vr)-Math.min(...vr):null;setMetric('robustStability',spread==null?'—':spread<=8?'پایدار':spread<=15?'متوسط':'حساس');
+  const variants=factors.map(f=>({f,rows:observedRows.filter(x=>applyStrategy(x,s,f))}));const vr=variants.map(x=>successRate(x.rows)).filter(Number.isFinite);const spread=vr.length?Math.max(...vr)-Math.min(...vr):null;setMetric('robustStability',spread==null?'—':spread<=8?'پایدار':spread<=15?'متوسط':'حساس');
   $('robustBody').innerHTML=[['درون‌نمونه',ins,isRate,0],['خارج‌ازنمونه',oos,oosRate,oosRate==null||isRate==null?null:oosRate-isRate],...variants.filter(x=>x.f!==1).map(x=>['حساسیت پارامتر '+(x.f<1?'۵٪ آسان‌تر':'۵٪ سخت‌تر'),x.rows,successRate(x.rows),successRate(x.rows)==null||successRate(baseRows)==null?null:successRate(x.rows)-successRate(baseRows)])].map(x=>'<tr><td>'+x[0]+'</td><td>'+R.fa(x[1].length)+'</td><td>'+faPct(x[2],1)+'</td><td>'+faPct(x[3],1)+'</td></tr>').join('');
   const groups=new Map();for(const x of baseRows){const k=x.symbol||x.symbol_id;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(x);}
-  $('groupBody').innerHTML=[...groups.entries()].map(([symbol,a])=>({symbol,...stats(a)})).sort((x,y)=>y.n-x.n||collator.compare(x.symbol,y.symbol)).slice(0,80).map(x=>'<tr><td>'+esc(x.symbol)+'</td><td>'+R.fa(x.n)+'</td><td>'+R.fa(Math.round(x.n*(x.rate||0)/100))+'</td><td>'+faPct(x.rate,1)+'</td><td>'+R.pct(x.mfe)+'</td></tr>').join('');
+  $('groupBody').innerHTML=[...groups.entries()].map(([symbol,a])=>({symbol,...stats(a)})).sort((x,y)=>y.n-x.n||collator.compare(x.symbol,y.symbol)).slice(0,80).map(x=>'<tr><td>'+esc(x.symbol)+'</td><td>'+R.fa(x.n)+'</td><td>'+R.fa(x.success)+'</td><td>'+faPct(x.rate,1)+'</td><td>'+R.pct(x.mfe)+'</td></tr>').join('');
   status('آزمون استحکام و آزمون گروهی تکمیل شد.','ok');
  }catch(e){status('آزمون استحکام ناموفق بود: '+e.message,'bad');}
 }
