@@ -1289,3 +1289,27 @@ Release acceptance requires:
 - Main Integration Gate PASS;
 - authenticated browser smoke PASS for public -> login -> profile -> personal market;
 - GitHub Pages deployment success.
+
+
+## AI + Jalali calendar + Hunt Analysis PDF — 2026-09-26
+
+Approved product layer implemented on branch `stock-hunter/ai-calendar-print-20260926` / PR #321.
+
+Implemented:
+- symbol-detail grounded Hunt assistant;
+- Persian natural-language Strategy Builder conversion into visible/editable rules;
+- AI Center with end-of-market report, historical similar-Hunt retrieval and reliability diagnosis;
+- deterministic local fallback for all AI surfaces;
+- Supabase Edge Function `stock-hunter-ai-v417` deployed as version 2 with explicit server-side Supabase-user validation, payload bound and per-user rate limiting;
+- shared grid-based Persian/Jalali calendar for every current selectable date; date fields are read-only;
+- `چاپ / ذخیره PDF` injected into all Hunt Analysis research pages with print-safe styling;
+- Service Worker research/AI asset cache advanced to r18;
+- canonical architecture and CI invariants updated.
+
+Live AI boundary probes:
+- public health probe PASS;
+- unauthenticated POST denied with HTTP 401 `AUTH_REQUIRED`;
+- no OpenAI/AI-named Vault secret exists and Edge health reports `configured=false`.
+Therefore deterministic data-grounded analysis is active; optional generative enrichment becomes active only after `OPENAI_API_KEY` is configured as a Supabase Edge Function secret. No secret is exposed in browser code.
+
+Frozen Hunt `4.1.6-hunt-v2` formulas, thresholds, capture provenance, routing and lifecycle remain unchanged.
