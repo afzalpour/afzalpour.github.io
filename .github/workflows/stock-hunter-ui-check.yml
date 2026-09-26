@@ -78,6 +78,7 @@ on:
       - 'stock-hunter-v4/profile-v417.html'
       - 'stock-hunter-v4/auth-v417.html'
       - 'stock-hunter-v4/app-auth-v417.js'
+      - 'stock-hunter-v4/app-personal-v417.js'
       - 'stock-hunter-v4/auth-v417.css'
       - 'stock-hunter-v4/styles.css'
       - 'stock-hunter-v4/search-neutral-v416.css'
@@ -152,6 +153,7 @@ jobs:
           node --check stock-hunter-v4/research-tools-v417.js
           node --check stock-hunter-v4/data-export-v418.js
           node --check stock-hunter-v4/locale-ui-v419.js
+          node --check stock-hunter-v4/app-personal-v417.js
           node --check stock-hunter-v4/ai-center-v417.js
           node --check stock-hunter-v4/research-common-v416.js
           node --check stock-hunter-v4/hunt-journey-v416.js

@@ -233,11 +233,16 @@
   byId('createWatchlistV417').addEventListener('click',async()=>{
     const name=prompt('نام دیده‌بان جدید:','دیده‌بان جدید');
     if(!name||!name.trim())return;
+    const cleanName=name.trim().slice(0,80);
     const {data,error}=await supabase.from('stock_hunter_watchlists_v417')
-      .insert({user_id:user.id,name:name.trim().slice(0,80)}).select('watchlist_id').single();
+      .insert({user_id:user.id,name:cleanName}).select('watchlist_id').single();
     if(error){saveState(error.message,'bad');return;}
-    await loadWatchlists(data.watchlist_id);
-    saveState('دیده‌بان ساخته شد','ok');
+    const sel=byId('personalWatchlistV417');
+    let opt=[...sel.options].find(o=>o.value===data.watchlist_id);
+    if(!opt){opt=document.createElement('option');opt.value=data.watchlist_id;opt.textContent=cleanName;sel.appendChild(opt);}
+    activeWatchlistId=data.watchlist_id;sel.value=activeWatchlistId;watchlistIds=new Set();watchlistOnly=false;updateWatchlistControls();render();
+    saveState('دیده‌بان ساخته شد؛ در حال همگام‌سازی…','ok');
+    loadWatchlists(data.watchlist_id).then(()=>saveState('دیده‌بان ساخته و همگام شد','ok')).catch(()=>saveState('دیده‌بان ساخته شد؛ همگام‌سازی مجدد بعداً انجام می‌شود','busy'));
   });
   byId('watchlistOnlyV417').addEventListener('click',()=>{
     if(!activeWatchlistId)return;
