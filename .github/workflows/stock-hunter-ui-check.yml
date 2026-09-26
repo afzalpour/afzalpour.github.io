@@ -184,6 +184,15 @@ jobs:
           grep -q 'سازنده راهبرد بدون کدنویسی' stock-hunter-v4/strategy-builder-v417.html
           grep -q 'stock_hunter_user_strategies_v417' stock-hunter-v4/strategy-builder-v417.js
           grep -q 'stock_hunter_shadow_outcomes_v416' stock-hunter-v4/strategy-builder-v417.js
+          grep -q 'strategyMatchMode' stock-hunter-v4/strategy-builder-v417.html
+          grep -q "match_mode.*ANY" stock-hunter-v4/research-lab-v416.sql
+          grep -q "rules.some(test)" stock-hunter-v4/strategy-builder-v417.js
+          grep -q 'id="btPlus2"' stock-hunter-v4/backtest-lab-v416.html
+          grep -q "hit_plus2_count" stock-hunter-v4/backtest-lab-v416.js
+          grep -q 'bestResolution' stock-hunter-v4/app-hunt-timeline-v416.js
+          grep -q 'available=.*bucket_seconds' stock-hunter-v4/market-replay-v416.js
+          grep -q "URLSearchParams(location.search)" stock-hunter-v4/hunt-journey-v416.js
+          grep -q "symbol_id=" stock-hunter-v4/app-hunt-timeline-v416.js
           grep -q 'app-hunt-timeline-v416.js?v=1' stock-hunter-v4/index.html
           grep -q 'app-hunt-timeline-v416.js?v=1' stock-hunter-v4/index-v417.html
           grep -q 'خط زمانی شکار' stock-hunter-v4/app-hunt-timeline-v416.js
