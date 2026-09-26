@@ -65,6 +65,8 @@ Deno.serve(async(req)=>{
     if(!token||await sha256Hex(token)!==priv.cron_token_sha256)return json({error:"UNAUTHORIZED"},401);
 
     const today=tehranDate(),clock=tehranClock();
+    const retentionCutoff=new Date(Date.now()-90*86400000).toISOString();
+    await sb.from("stock_hunter_push_delivery_v420").delete().lt("created_at",retentionCutoff);
     if(["Thu","Fri"].includes(clock.wd)||clock.hm<9*60||clock.hm>17*60){
       await sb.from("stock_hunter_push_private_v420").update({last_dispatch_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",1);
       return json({ok:true,skipped:"خارج از بازه کاری بازار",trade_date:today});
