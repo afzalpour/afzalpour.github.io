@@ -14,8 +14,8 @@
     }finally{clearTimeout(timer);}
   }
   function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-  function fa(v,d=0){const n=Number(v);return Number.isFinite(n)?n.toLocaleString('fa-IR',{minimumFractionDigits:d,maximumFractionDigits:d}):'—';}
-  function pct(v,d=2){const n=Number(v);return Number.isFinite(n)?((n>0?'+':'')+fa(n,d)+'٪'):'—';}
+  function fa(v,d=0){if(v==null||v==='')return '—';const n=Number(v);return Number.isFinite(n)?n.toLocaleString('fa-IR',{minimumFractionDigits:d,maximumFractionDigits:d}):'—';}
+  function pct(v,d=2){if(v==null||v==='')return '—';const n=Number(v);return Number.isFinite(n)?((n>0?'+':'')+fa(n,d)+'٪'):'—';}
   function jalaliDate(v){
     if(!v)return '—';const d=new Date(/^\d{4}-\d{2}-\d{2}$/.test(String(v))?String(v)+'T12:00:00Z':v);
     if(!Number.isFinite(d.getTime()))return String(v);
