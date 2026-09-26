@@ -47,28 +47,49 @@ async function marketFetchV416(url,base,timeoutMs=30000){
   try{return await fetch(url,opts);}
   finally{clearTimeout(timer);}
 }
-const MARKET_SELECT_V416=[
-  'id','symbol','company_name','hunt_state','decision','fast_score','fast_probability','signal_accel','continuation_score','prob_2d','prob_3d','risk_score',
-  'qi','ofi','bid_stack_15s','ask_pull_15s','daily_rvol','last_price','closing_price','yesterday_price','rsi_5m','ema9_5m','ema21_5m','vwap','atr_5m',
-  'technical_score','microprice','absorption','cancellation_ratio','price_velocity','trade_accel','recovery','depth_ratio','queue_decay','momentum','real_flow_ratio',
-  'entry_price','entry_low','entry_high','stop_loss','target_1','target_2','target_3','risk_reward','reason','updated_at','snapshots','candles','asset_type','market','volume','value',
-  'integrated_eligible','integrated_score_v1','flow_score_v1','trend_score_v1','momentum_score_v1','data_quality_score_v1','direction_agreement_v1','confidence_score_v1',
-  'confidence_label_v1','market_regime_v1','market_breadth_pct_v1','risk_gate_v1','gate_reason_v1','positive_experts_v1','negative_experts_v1','engine_scope_v1','engine_version_v1','final_decision_v1'
+const MARKET_SIGNAL_SELECT_V416=[
+  'id','symbol','company_name','state','last_price','closing_price','yesterday_price','low_price','high_price','min_allowed','max_allowed','volume','value',
+  'buy_depth','sell_depth','best_bid','best_ask','sell_queue','buy_queue','fast_score','fast_probability','signal_accel','continuation_score','prob_2d','prob_3d','risk_score',
+  'qi','ofi','bid_stack_15s','ask_pull_15s','daily_rvol','rsi_5m','ema9_5m','ema21_5m','vwap','atr_5m','technical_score','microprice','absorption',
+  'cancellation_ratio','price_velocity','trade_accel','recovery','depth_ratio','queue_decay','momentum','real_flow_ratio','hunt_state','decision','entry_price','entry_low',
+  'entry_high','stop_loss','target_1','target_2','target_3','risk_reward','reason','snapshots','candles','updated_at'
 ].join(',');
-async function marketReadCloudSignalsV416(base,table,health,timeout){
+const MARKET_INTEGRATED_SELECT_V416=[
+  'id','updated_at','asset_type','market','integrated_eligible','flow_score_v1','trend_score_v1','momentum_score_v1','data_quality_score_v1',
+  'market_regime_v1','market_breadth_pct_v1','integrated_score_v1','positive_experts_v1','negative_experts_v1','direction_agreement_v1',
+  'confidence_score_v1','risk_gate_v1','gate_reason_v1','final_decision_v1','confidence_label_v1','engine_scope_v1','engine_version_v1'
+].join(',');
+function marketFreshFilterV416(health){
   const last=Date.parse(health?.[0]?.last_feed_at||'');
-  const freshFilter=Number.isFinite(last)?`&updated_at=gte.${encodeURIComponent(new Date(last-180000).toISOString())}`:'';
-  const signalRows=[];let sr=null;
+  return Number.isFinite(last)?`&updated_at=gte.${encodeURIComponent(new Date(last-180000).toISOString())}`:'';
+}
+async function marketReadPagedV416(base,table,select,freshFilter,timeout,label){
+  const rows=[];let response=null;
   for(let offset=0;offset<5000;offset+=1000){
-    const url=`${base}/rest/v1/${table}?select=${encodeURIComponent(MARKET_SELECT_V416)}${freshFilter}&offset=${offset}&limit=1000`;
-    sr=await marketFetchV416(url,base,timeout);
-    if(!sr.ok)throw marketHttpErrorV416(sr,'دریافت داده بازار ناموفق بود');
-    const batch=await sr.json();
+    const url=`${base}/rest/v1/${table}?select=${encodeURIComponent(select)}${freshFilter}&offset=${offset}&limit=1000`;
+    response=await marketFetchV416(url,base,timeout);
+    if(!response.ok)throw marketHttpErrorV416(response,label);
+    const batch=await response.json();
     if(!Array.isArray(batch))throw new Error('پاسخ داده بازار نامعتبر است');
-    signalRows.push(...batch);
+    rows.push(...batch);
     if(batch.length<1000)break;
   }
-  return{sr,signalRows};
+  return{response,rows};
+}
+async function marketReadCloudSignalsV416(base,table,health,timeout){
+  const freshFilter=marketFreshFilterV416(health);
+  const primary=await marketReadPagedV416(base,'stock_hunter_signals_v4',MARKET_SIGNAL_SELECT_V416,freshFilter,timeout,'دریافت داده بازار ناموفق بود');
+  let signalRows=primary.rows;
+  if(table&&table!=='stock_hunter_signals_v4'&&signalRows.length){
+    try{
+      const extra=await marketReadPagedV416(base,table,MARKET_INTEGRATED_SELECT_V416,freshFilter,timeout,'دریافت داده تکمیلی بازار ناموفق بود');
+      const byId=new Map(extra.rows.map(r=>[String(r.id),r]));
+      signalRows=signalRows.map(r=>({...r,...(byId.get(String(r.id))||{})}));
+    }catch(e){
+      console.warn('Stock Hunter integrated enrichment unavailable; live signal rows remain active.',e);
+    }
+  }
+  return{sr:primary.response,signalRows};
 }
 async function marketReadBaseV416(base,source){
   const timeout=source==='local'?3000:30000,table=cfg.TABLE||'stock_hunter_signals_v4';
