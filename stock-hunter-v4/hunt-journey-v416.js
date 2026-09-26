@@ -72,7 +72,7 @@ async function loadJourney(){
   try{journeyRows=await R.api('stock_hunter_hunt_journey_v416','select='+encodeURIComponent(select)+'&trade_date=eq.'+encodeURIComponent(d)+'&order=detected_at.asc&limit=1500');renderJourney();R.setStatus('سفر شکار در '+R.jalaliDate(d)+' — '+R.fa(journeyRows.length)+' رخداد','ok');}
   catch(e){journeyRows=[];renderJourney();R.setStatus('دریافت سفر شکار ناموفق بود: '+e.message,'bad');}
 }
-R.setJalaliInput($('journeyDate'),R.todayIso());$('journeyDate').addEventListener('change',loadJourney);$('journeyDate').addEventListener('keydown',e=>{if(e.key==='Enter')loadJourney();});$('journeyRefresh').onclick=loadJourney;
+const qp=new URLSearchParams(location.search),qd=qp.get('date'),qs=qp.get('symbol');R.setJalaliInput($('journeyDate'),qd||R.todayIso());if(qs)$('journeySearch').value=qs;$('journeyDate').addEventListener('change',loadJourney);$('journeyDate').addEventListener('keydown',e=>{if(e.key==='Enter')loadJourney();});$('journeyRefresh').onclick=loadJourney;
 for(const id of ['journeySearch','journeyChannel','journeyMode','journeyStage'])$(id).addEventListener(id==='journeySearch'?'input':'change',renderJourney);
 document.querySelectorAll('.filter-card').forEach(b=>b.onclick=()=>{$('journeyStage').value=b.dataset.stage;renderJourney();});
 loadJourney();

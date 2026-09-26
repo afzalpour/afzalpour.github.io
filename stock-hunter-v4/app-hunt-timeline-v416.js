@@ -41,12 +41,13 @@
     const jr=await api('stock_hunter_hunt_journey_v416','select=*&symbol_id=eq.'+encodeURIComponent(id)+'&order=trade_date.desc,detected_at.asc&limit=4');
     if(!jr.length)return null;
     const latestDate=jr[0].trade_date,dayRows=jr.filter(x=>x.trade_date===latestDate),j=chooseJourney(dayRows);
-    const replay=await api('stock_hunter_market_replay_v416','select=bucket_at,close_change_pct,close_price,bucket_seconds&trade_date=eq.'+encodeURIComponent(latestDate)+'&symbol_id=eq.'+encodeURIComponent(id)+'&order=bucket_at.asc&limit=2500').catch(()=>[]);
+    let replay=await api('stock_hunter_market_replay_v416','select=bucket_at,close_change_pct,close_price,bucket_seconds&trade_date=eq.'+encodeURIComponent(latestDate)+'&symbol_id=eq.'+encodeURIComponent(id)+'&order=bucket_at.asc&limit=2500').catch(()=>[]);
+    const bestResolution=replay.length?Math.min(...replay.map(x=>Number(x.bucket_seconds)||300)):0;if(bestResolution)replay=replay.filter(x=>(Number(x.bucket_seconds)||300)===bestResolution);
     const radar=dayRows.find(x=>x.channel==='RADAR'),action=dayRows.find(x=>x.channel==='ACTION_NOW');
     const first=[...dayRows].sort((a,b)=>new Date(a.detected_at)-new Date(b.detected_at))[0];
-    const res=replay.length?Math.min(...replay.map(x=>Number(x.bucket_seconds)||300)):(j?30:0);
+    const res=replay.length?(Number(replay[0].bucket_seconds)||300):(j?30:0);
     return `<section class="detail-hunt-timeline-v416">
-      <div class="detail-hunt-title"><div><b>خط زمانی شکار</b><small>آخرین رخداد ثبت‌شده: ${dateV(latestDate)}</small></div><div><a href="hunt-journey-v416.html">سفر کامل شکار</a><a href="market-replay-v416.html">بازپخش بازار</a></div></div>
+      <div class="detail-hunt-title"><div><b>خط زمانی شکار</b><small>آخرین رخداد ثبت‌شده: ${dateV(latestDate)}</small></div><div><a href="hunt-journey-v416.html?symbol=${encodeURIComponent(j.symbol||'')}&date=${encodeURIComponent(latestDate)}">سفر کامل شکار</a><a href="market-replay-v416.html?symbol_id=${encodeURIComponent(id)}&date=${encodeURIComponent(latestDate)}">بازپخش بازار</a></div></div>
       <div class="detail-hunt-steps">
         ${step('اولین مشاهده شکار',first?.detected_at,first?pctV(first.detected_day_change):'')}
         ${step('شکار زودهنگام',radar?.detected_at,radar?('امتیاز '+faV(radar.hunt_score,1)):'')}

@@ -11,9 +11,9 @@ function targetHit(x){return x.hunt_mode==='reversal'?!!x.crossed_zero_at:!!x.cr
 function renderCards(){
  const d=filteredDetails(),a=filteredBt();
  if(d.length){
-   const signals=d.length,precision=d.filter(targetHit).length,zero=d.filter(x=>x.crossed_zero_at).length,p1=d.filter(x=>x.crossed_plus1_at).length,p3=d.filter(x=>x.crossed_plus3_at).length;
+   const signals=d.length,precision=d.filter(targetHit).length,zero=d.filter(x=>x.crossed_zero_at).length,p1=d.filter(x=>x.crossed_plus1_at).length,p2=d.filter(x=>x.crossed_plus2_at).length,p3=d.filter(x=>x.crossed_plus3_at).length;
    $('btSignals').textContent=R.fa(signals);$('btPrecision').textContent=R.pct(rate(precision,signals),1);$('btFailures').textContent=R.fa(signals-precision)+' · '+R.pct(rate(signals-precision,signals),1);
-   $('btZero').textContent=R.pct(rate(zero,signals),1);$('btPlus1').textContent=R.pct(rate(p1,signals),1);$('btPlus3').textContent=R.pct(rate(p3,signals),1);
+   $('btZero').textContent=R.pct(rate(zero,signals),1);$('btPlus1').textContent=R.pct(rate(p1,signals),1);$('btPlus2').textContent=R.pct(rate(p2,signals),1);$('btPlus3').textContent=R.pct(rate(p3,signals),1);
    $('btExcursion').textContent=R.pct(median(d.map(x=>x.same_day_mfe_pct)))+' / '+R.pct(median(d.map(x=>x.same_day_mae_pct)));
    const t0=median(d.map(x=>x.time_to_zero_min)),t1=median(d.map(x=>x.time_to_plus1_min));
    $('btT0').textContent=t0==null?'—':R.fa(t0,1)+' دقیقه';$('btT1').textContent=t1==null?'—':R.fa(t1,1)+' دقیقه';
@@ -23,7 +23,7 @@ function renderCards(){
  }
  const signals=sum(a,'signal_count'),precision=sum(a,'precision_count');
  $('btSignals').textContent=R.fa(signals);$('btPrecision').textContent=R.pct(rate(precision,signals),1);$('btFailures').textContent=R.fa(Math.max(0,signals-precision))+' · '+R.pct(rate(Math.max(0,signals-precision),signals),1);
- $('btZero').textContent=R.pct(rate(sum(a,'crossed_zero_count'),signals),1);$('btPlus1').textContent=R.pct(rate(sum(a,'hit_plus1_count'),signals),1);$('btPlus3').textContent=R.pct(rate(sum(a,'hit_plus3_count'),signals),1);
+ $('btZero').textContent=R.pct(rate(sum(a,'crossed_zero_count'),signals),1);$('btPlus1').textContent=R.pct(rate(sum(a,'hit_plus1_count'),signals),1);$('btPlus2').textContent=R.pct(rate(sum(a,'hit_plus2_count'),signals),1);$('btPlus3').textContent=R.pct(rate(sum(a,'hit_plus3_count'),signals),1);
  $('btExcursion').textContent=R.pct(median(a.map(x=>x.median_mfe_pct)))+' / '+R.pct(median(a.map(x=>x.median_mae_pct)));
  $('btT0').textContent=R.fa(median(a.map(x=>x.median_time_to_zero_min)),1)+' دقیقه';$('btT1').textContent=R.fa(median(a.map(x=>x.median_time_to_plus1_min)),1)+' دقیقه';
  $('btPositive').textContent=R.pct(rate(sum(a,'positive_close_count'),signals),1);$('btQueue').textContent=R.pct(rate(sum(a,'buy_queue_count'),signals),1);

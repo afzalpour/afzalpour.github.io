@@ -187,7 +187,7 @@ create table if not exists public.stock_hunter_user_strategies_v417(
   strategy_id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   name text not null check(char_length(name) between 1 and 80),
-  match_mode text not null default 'ALL' check(match_mode in ('ALL')),
+  match_mode text not null default 'ALL' check(match_mode in ('ALL','ANY')),
   rules jsonb not null default '[]'::jsonb check(jsonb_typeof(rules)='array'),
   alert_enabled boolean not null default false,
   created_at timestamptz not null default now(),updated_at timestamptz not null default now()
@@ -217,3 +217,7 @@ create policy "stock hunter user strategies delete own" on public.stock_hunter_u
 -- private.refresh_stock_hunter_backtest_slices_v416(integer)
 -- Replay aggregation uses 30-second buckets. Tracked-symbol tape capture is scheduled every 30 seconds,
 -- while compact replay refresh is scheduled every two minutes during market hours.
+
+
+-- strategy_match_mode_any_v417: deployed 2026-09-26
+-- Cloud strategies accept ALL (و) or ANY (یا); this changes only user-defined research strategies.
