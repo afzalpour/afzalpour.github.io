@@ -211,6 +211,7 @@ async function main(){
     await page.waitForFunction(()=>document.getElementById('researchStatus')?.dataset.state!=='warn',null,{timeout:20000});
     assert.ok(((await page.locator('#aTotal').textContent())||'').trim().length>0,'Alert Center must render event count');
     assert.match((await page.locator('#alertDate').inputValue()).trim(),/^[۱][۴][۰-۹]{2}\/[۰-۹]{2}\/[۰-۹]{2}$/,'Alert Center date must be Jalali');
+    assert.equal(await page.locator('.cloud-alert-v420').count(),1,'Alert Center must expose real cloud push controls');
 
     await page.goto(BASE_URL+'/market-replay-v416.html',{waitUntil:'domcontentloaded',timeout:30000});
     await page.waitForFunction(()=>document.getElementById('researchStatus')?.dataset.state!=='warn',null,{timeout:30000});
@@ -222,6 +223,15 @@ async function main(){
     await page.waitForFunction(()=>document.getElementById('researchStatus')?.dataset.state!=='warn',null,{timeout:20000});
     assert.ok(((await page.locator('#hState').textContent())||'').trim().length>0,'Reliability dashboard must render overall state');
     assert.match((await page.locator('#healthDate').inputValue()).trim(),/^[۱][۴][۰-۹]{2}\/[۰-۹]{2}\/[۰-۹]{2}$/,'Reliability date must be Jalali');
+
+    await page.goto(BASE_URL+'/professional-center-v420.html',{waitUntil:'domcontentloaded',timeout:30000});
+    await page.waitForFunction(()=>document.getElementById('proStatus')?.dataset.state!=='warn',null,{timeout:30000});
+    assert.equal(await page.locator('.feature-strip > span').count(),14,'Professional Center must expose all fourteen capabilities');
+    assert.equal(await page.locator('.pro-tab').count(),10,'Professional Center must group features into ten usable work areas');
+    assert.match((await page.locator('#confidenceDate').inputValue()).trim(),/^[۱][۴][۰-۹]{2}\/[۰-۹]{2}\/[۰-۹]{2}$/,'Professional Center date filters must render Jalali Persian digits');
+    assert.equal(await page.locator('input.jalali-input:not([readonly])').count(),0,'Professional Center Jalali dates must remain calendar-only');
+    assert.equal(await page.locator('text=دروازه اطمینان شکار').count()>0,true,'Professional Center must include confidence gate');
+    assert.equal(await page.locator('text=بازپخش تصمیم بدون نگاه به آینده').count()>0,true,'Professional Center must include leakage-safe decision replay');
 
     await page.goto(BASE_URL+'/index.html',{waitUntil:'domcontentloaded',timeout:30000});
     await page.waitForFunction(()=>typeof detailHTML==='function',null,{timeout:10000});
