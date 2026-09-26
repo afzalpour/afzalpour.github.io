@@ -79,6 +79,19 @@ function marketFreshFilterV416(health){
   const last=Date.parse(health?.[0]?.last_feed_at||'');
   return Number.isFinite(last)?`&updated_at=gte.${encodeURIComponent(new Date(last-180000).toISOString())}`:'';
 }
+function marketShowHealthFirstV416(health,source){
+  const h=Array.isArray(health)?health[0]:null;
+  if(!h?.last_feed_at)return;
+  const session=marketSessionTehran(),age=Date.now()-Date.parse(h.last_feed_at),route=source==='supabase'?'مسیر اصلی':'مسیر داده';
+  if(!Number.isFinite(age))return;
+  if(!session.open){
+    showFeed('closed',session.label,`آخرین اطلاعات ثبت‌شده: ${marketFaDateTimeV416(h.last_feed_at)} — ${route}`);
+  }else if(h.status==='ok'&&age<60000){
+    showFeed('ok',session.label,`${session.detail} — آخرین دریافت: ${marketFaDateTimeV416(h.last_feed_at)} — ${Number(h.symbols||0).toLocaleString('fa-IR')} نماد — ${route}`);
+  }else if(age<180000){
+    showFeed('warn','اطلاعات بازار با تأخیر دریافت می‌شود',`آخرین ارتباط: ${marketFaDateTimeV416(h.last_feed_at)} — ${route}`);
+  }
+}
 async function marketReadPagedV416(base,table,select,freshFilter,timeout,label){
   const rows=[];let response=null;
   const pageSize=250;
@@ -112,6 +125,7 @@ async function marketReadBaseV416(base,source){
   const timeout=source==='local'?3000:30000,table=cfg.TABLE||'stock_hunter_signals_v4';
   const hr=await marketFetchV416(`${base}/rest/v1/stock_hunter_feed_health_v4?select=*&id=eq.local-agent&limit=1`,base,timeout);
   let health=[];if(hr.ok)health=await hr.json();
+  if(source==='supabase')marketShowHealthFirstV416(health,source);
   if(source==='supabase'){
     try{
       const {sr,signalRows}=await marketReadCloudSignalsV416(base,table,health,timeout);
