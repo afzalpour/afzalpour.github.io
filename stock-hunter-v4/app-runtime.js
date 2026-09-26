@@ -65,14 +65,15 @@ function marketFreshFilterV416(health){
 }
 async function marketReadPagedV416(base,table,select,freshFilter,timeout,label){
   const rows=[];let response=null;
-  for(let offset=0;offset<5000;offset+=1000){
-    const url=`${base}/rest/v1/${table}?select=${encodeURIComponent(select)}${freshFilter}&offset=${offset}&limit=1000`;
+  const pageSize=250;
+  for(let offset=0;offset<5000;offset+=pageSize){
+    const url=`${base}/rest/v1/${table}?select=${encodeURIComponent(select)}${freshFilter}&order=id.asc&offset=${offset}&limit=${pageSize}`;
     response=await marketFetchV416(url,base,timeout);
     if(!response.ok)throw marketHttpErrorV416(response,label);
     const batch=await response.json();
     if(!Array.isArray(batch))throw new Error('پاسخ داده بازار نامعتبر است');
     rows.push(...batch);
-    if(batch.length<1000)break;
+    if(batch.length<pageSize)break;
   }
   return{response,rows};
 }

@@ -72,7 +72,7 @@ jobs:
           grep -q "stock_hunter_signals_v4'" stock-hunter-v4/app-runtime.js
           grep -q 'integrated enrichment unavailable' stock-hunter-v4/app-runtime.js
           grep -q "updated_at=gte" stock-hunter-v4/app-runtime.js
-          grep -q 'offset=\${offset}&limit=1000' stock-hunter-v4/app-runtime.js
+          grep -q 'order=id.asc&offset=\${offset}&limit=\${pageSize}' stock-hunter-v4/app-runtime.js
           grep -q "مسیر محلی پشتیبان':'مسیر اصلی" stock-hunter-v4/app-runtime.js
           grep -q "calendar:'persian'" stock-hunter-v4/app-runtime.js
           node --check stock-hunter-v4/app-universe.js
@@ -132,7 +132,7 @@ jobs:
           grep -q 'search-neutral-v416.css?v=1' stock-hunter-v4/index-v417.html
           grep -q 'neutral-theme-v416.css?v=1' stock-hunter-v4/index.html
           grep -q 'neutral-theme-v416.css?v=1' stock-hunter-v4/index-v417.html
-          grep -q 'app-runtime.js?v=4.1.6-feed-primary3' stock-hunter-v4/index.html
+          grep -q 'app-runtime.js?v=4.1.6-feed-primary4' stock-hunter-v4/index.html
           grep -q 'app-hotfix-v410.js?v=4.1.6-print1' stock-hunter-v4/index.html
           grep -q 'app-integrated-v410.js?v=4.1.6-print1' stock-hunter-v4/index.html
           grep -q 'href="profile-v417.html">حساب من</a>' stock-hunter-v4/index.html
