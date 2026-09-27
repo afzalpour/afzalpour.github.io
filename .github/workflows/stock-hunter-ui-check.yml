@@ -342,7 +342,7 @@ jobs:
           assert 'exportDocx' in export and 'exportPdf' in export
           assert ".pro-metric" in export and ".pro-passport>div" in export and ".pro-replay-data>div" in export
           assert ".pro-panel" in export and ".pro-metrics" in export
-          assert "4.2.0-export-v3" in export
+          assert "4.2.4-export-v4" in export
           assert '<h1>شکارچی سهم</h1>' in index and '<h1>شکارچی سهم</h1>' in index417
           assert 'summary-row' not in export.split('function wire(){',1)[1].split('window.StockHunterExportV418',1)[0]
           assert 'faCollator.compare' in ai and 'faCollator.compare' in replay

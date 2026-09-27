@@ -488,3 +488,14 @@ The approved Precision Optics / IRAN-font identity remains canonical. 4.2.1 exte
 - Repeated Hunt reads of the same row/snapshot within the same minute reuse an in-memory WeakMap memo result; a new row object, feed timestamp, snapshot tail or minute boundary recomputes through the exact frozen formulas.
 - Browser Cache Storage is written only for a newly accepted feed timestamp in the current page session.
 - DOM status, radar and mobile-list writes are skipped when rendered content is unchanged to reduce MutationObserver/localization churn.
+
+
+## 20. Stable public path, fixed Today/table order, PWA and full export — 2026-09-28
+- Canonical public entry URL is `https://afzalpour.github.io/stock-hunter/index.html`. The historical `/stock-hunter-v4/` entry remains a compatibility endpoint and redirects browser navigation of its main index to the stable public path.
+- `stock-hunter/` is a public production mirror of the approved application surface. Frozen Hunt remains `4.1.6-hunt-v2`; the path change does not modify scoring, thresholds, eligibility, capture provenance, routing or lifecycle gates.
+- The main daily information hierarchy is fixed for the public surface: **Today / Why-this-stock first**, followed by filters/radar as applicable, then the complete Hunt identification table. Personal workspace preferences may hide/compact allowed sections but may not move Radar/Table above Today.
+- The Hunt table is visible on the main public page in simple and professional modes. On narrow screens it remains available as a horizontally scrollable table so the canonical columns are not dropped merely because of viewport width.
+- The public PWA has its own `/stock-hunter/` scope, start URL and optimized service worker. Installation precaches only the critical shell; static assets use cache-first/stale-refresh behavior while navigation uses bounded network-first fallback. Cache cleanup is prefix-scoped and must never delete the legacy `stock-hunter-v4` service-worker cache.
+- The public manifest uses 192px and 512px PNG icons plus the SVG fallback, stable shortcuts and standalone display semantics.
+- Data export remains presentation-only. PDF export must expand clipped/scrollable containers before capture and slice the rendered canvas into real A4 pages so long tables/panels are not truncated. XLSX/CSV/XML/DOCX continue to serialize the full rendered dataset for the selected export surface; no export path may mutate filters, source rows or Hunt state.
+- All production analytical/numeric HTML surfaces must load the shared exporter; staging numeric surfaces are included when they are user-accessible.

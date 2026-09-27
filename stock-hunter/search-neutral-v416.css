@@ -1,0 +1,24 @@
+/* Stock Hunter 4.1.6 — neutral search combobox skin.
+   Presentation only; Hunt/search semantics are unchanged. */
+html:not([data-theme="light"]) .search-suggestions-v416{
+  background:#131519;
+  border-color:#25282e;
+  border-radius:2px;
+  box-shadow:0 16px 42px #0008;
+}
+html:not([data-theme="light"]) .search-suggestion-v416{
+  background:transparent;
+  color:#efece5;
+  border-bottom-color:#1a1c21;
+  border-radius:0;
+}
+html:not([data-theme="light"]) .search-suggestion-v416:hover,
+html:not([data-theme="light"]) .search-suggestion-v416.active{
+  background:#191c21;
+  outline:1px solid #25282e;
+  color:#efece5;
+}
+html:not([data-theme="light"]) .search-suggestion-v416 small,
+html:not([data-theme="light"]) .search-suggestion-v416 em{
+  color:#8d9096;
+}

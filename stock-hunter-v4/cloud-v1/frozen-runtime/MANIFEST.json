@@ -3,11 +3,11 @@
   "architecture_id": "SHIKAR-CLOUD-IRAN-EGRESS-V1",
   "champion": "Stock Hunter 4.1.6",
   "hunt_engine": "4.1.6-hunt-v2",
-  "pinned_from_main_commit": "4f0d9077b952646797bcae855146c9ee805ddd66",
+  "pinned_from_main_commit": "240d3648d01a375345db515bbd2e72e95d9da744",
   "assets": [
     {
       "path": "stock-hunter-v4/app-hunt-v416.js",
-      "git_blob_sha1": "a5eead927382b5ced1c840697e6aaf21d52d8391",
+      "git_blob_sha1": "a1ea8bffe9a117a9fcce2e8d9875dd263aa5ced0",
       "role": "frozen_hunt_engine"
     },
     {
@@ -22,7 +22,7 @@
     },
     {
       "path": "stock-hunter-v4/capture-security/stock-hunter-capture-v416/index.ts",
-      "git_blob_sha1": "0c1edf26b1ff30c2829b507752b0c4ec5a7ca250",
+      "git_blob_sha1": "8d4b89280ef02d939b4fc192f65e98ff2d2ba233",
       "role": "parity_approved_server_scorer_source"
     }
   ],

@@ -1,0 +1,87 @@
+/* Stock Hunter neutral gray visual layer — keeps semantic green/amber/red states intact. */
+html:not([data-theme="light"]){
+  --bg:#111315;
+  --panel:#181b1f;
+  --panel2:#20242a;
+  --line:#343941;
+  --text:#f0efec;
+  --muted:#9ca2a9;
+  --cyan:#c1c6cc;
+  --blue:#8b929a;
+  color-scheme:dark;
+}
+html:not([data-theme="light"]) body{background:#111315!important;color:var(--text)!important}
+html:not([data-theme="light"]) .app-shell{background:radial-gradient(circle at 80% -10%,#292d32 0,transparent 34%),#111315!important}
+html:not([data-theme="light"]) .topbar,
+html:not([data-theme="light"]) .pager,
+html:not([data-theme="light"]) .side-panel,
+html:not([data-theme="light"]) dialog,
+html:not([data-theme="light"]) .detail-head{background:#15181b!important;border-color:#343941!important}
+html:not([data-theme="light"]) .summary-row article{background:linear-gradient(145deg,#1c1f23,#15181b)!important;border-color:#343941!important}
+html:not([data-theme="light"]) .top-actions button,
+html:not([data-theme="light"]) .toolbar button,
+html:not([data-theme="light"]) .pager button,
+html:not([data-theme="light"]) .side-actions button,
+html:not([data-theme="light"]) .top-link,
+html:not([data-theme="light"]) .detail-btn{background:#202328!important;border-color:#3a3f45!important;color:#f0efec!important}
+html:not([data-theme="light"]) .toolbar input,
+html:not([data-theme="light"]) .toolbar select,
+html:not([data-theme="light"]) .search-combobox-v416>input{background:#17191c!important;border-color:#34383d!important;color:#f0efec!important}
+html:not([data-theme="light"]) .search-suggestions-v416,
+html:not([data-theme="light"]) .table-panel,
+html:not([data-theme="light"]) .mobile-card{background:#171a1d!important;border-color:#343941!important}
+html:not([data-theme="light"]) .search-suggestion-v416{border-bottom-color:#30343a!important}
+html:not([data-theme="light"]) .search-suggestion-v416:hover,
+html:not([data-theme="light"]) .search-suggestion-v416.active{background:#24282d!important;outline-color:#565d65!important}
+html:not([data-theme="light"]) .table-wrap th,
+html:not([data-theme="light"]) .forecast-table th,
+html:not([data-theme="light"]) .t th{background:#22262b!important;color:#c3c7cc!important;border-color:#373c42!important}
+html:not([data-theme="light"]) .table-wrap td,
+html:not([data-theme="light"]) .forecast-table td,
+html:not([data-theme="light"]) .t td{border-color:#30343a!important}
+html:not([data-theme="light"]) .table-wrap tbody tr:hover{background:#202328!important}
+html:not([data-theme="light"]) .metric,
+html:not([data-theme="light"]) .forecast-box,
+html:not([data-theme="light"]) .expert-grid>div,
+html:not([data-theme="light"]) .decision-reasons{background:#1b1e22!important;border-color:#353a40!important}
+html:not([data-theme="light"]) .detail-text{background:#1a1d20!important;color:#d7d9dc!important}
+html:not([data-theme="light"]) .section-title{color:#c4c8cd!important;border-color:#343941!important}
+html:not([data-theme="light"]) .forecast-box p,
+html:not([data-theme="light"]) .integrated-banner p{color:#bcc1c6!important}
+html:not([data-theme="light"]) .integrated-banner,
+html:not([data-theme="light"]) .integrated-banner.legacy{background:#1b1e22!important;border-color:#3a3f45!important}
+html:not([data-theme="light"]) .column-options label,
+html:not([data-theme="light"]) .mobile-metrics div{background:#202328!important;border-color:#363b41!important}
+html:not([data-theme="light"]) .continue{background:#34383e!important;color:#d9dde1!important}
+html:not([data-theme="light"]) .watch{background:#303338!important;color:#d2d5d8!important}
+
+/* Standalone analytics / methodology / rollout pages. */
+html:not([data-theme="light"]) .perf-note,
+html:not([data-theme="light"]) .perf-card,
+html:not([data-theme="light"]) .perf-table-wrap,
+html:not([data-theme="light"]) .note,
+html:not([data-theme="light"]) .card,
+html:not([data-theme="light"]) .table-wrap,
+html:not([data-theme="light"]) .c{background:#181b1f!important;border-color:#363b41!important}
+html:not([data-theme="light"]) .perf-table th,
+html:not([data-theme="light"]) .table th{background:#22262b!important}
+html:not([data-theme="light"]) .e{background:#141618!important;border-color:#363b41!important;color:#e0e2e5!important}
+html:not([data-theme="light"]) .b{color:#c5c9ce!important}
+
+/* Auth / profile / admin already use a gray palette; normalize it to the same surface tones. */
+html:not([data-theme="light"]) .auth-card,
+html:not([data-theme="light"]) .profile-shell,
+html:not([data-theme="light"]) .profile-panel,
+html:not([data-theme="light"]) .profile-hero,
+html:not([data-theme="light"]) .admin-actor,
+html:not([data-theme="light"]) .personal-bar-v417,
+html:not([data-theme="light"]) .v417-auth-gate{background:#15181b!important;border-color:#343941!important}
+html:not([data-theme="light"]) .auth-form input,
+html:not([data-theme="light"]) .profile-form input,
+html:not([data-theme="light"]) .profile-form select,
+html:not([data-theme="light"]) .admin-actions-cell button,
+html:not([data-theme="light"]) .admin-actions-cell select,
+html:not([data-theme="light"]) .personal-watch-v417 select,
+html:not([data-theme="light"]) .personal-watch-v417 button,
+html:not([data-theme="light"]) .personal-actions-v417 button,
+html:not([data-theme="light"]) .personal-actions-v417 a{background:#1b1e22!important;border-color:#353a40!important}

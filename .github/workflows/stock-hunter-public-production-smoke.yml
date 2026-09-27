@@ -8,6 +8,7 @@ on:
     paths:
       - 'index.html'
       - 'stock-hunter-v4/**'
+      - 'stock-hunter/**'
       - '.github/workflows/stock-hunter-public-production-smoke.yml'
       - 'stock-hunter-v4/research/PUBLIC_PRODUCTION_SMOKE_AUDIT_2026-09-18.md'
   workflow_dispatch:
@@ -38,6 +39,15 @@ jobs:
             "stock-hunter-v4/index.html|https://afzalpour.github.io/stock-hunter-v4/|app-index.html"
             "stock-hunter-v4/sw.js|https://afzalpour.github.io/stock-hunter-v4/sw.js|sw.js"
             "stock-hunter-v4/manifest.webmanifest|https://afzalpour.github.io/stock-hunter-v4/manifest.webmanifest|manifest.webmanifest"
+            "stock-hunter/index.html|https://afzalpour.github.io/stock-hunter/|public-index.html"
+            "stock-hunter/sw.js|https://afzalpour.github.io/stock-hunter/sw.js|public-sw.js"
+            "stock-hunter/manifest.webmanifest|https://afzalpour.github.io/stock-hunter/manifest.webmanifest|public-manifest.webmanifest"
+            "stock-hunter/app-runtime.js|https://afzalpour.github.io/stock-hunter/app-runtime.js|public-app-runtime.js"
+            "stock-hunter/ux-shell-v421.js|https://afzalpour.github.io/stock-hunter/ux-shell-v421.js|public-ux-shell-v421.js"
+            "stock-hunter/ux-v421.css|https://afzalpour.github.io/stock-hunter/ux-v421.css|public-ux-v421.css"
+            "stock-hunter/workspace-v420.js|https://afzalpour.github.io/stock-hunter/workspace-v420.js|public-workspace-v420.js"
+            "stock-hunter/data-export-v418.js|https://afzalpour.github.io/stock-hunter/data-export-v418.js|public-data-export-v418.js"
+            "stock-hunter/app-hunt-carry-v416.js|https://afzalpour.github.io/stock-hunter/app-hunt-carry-v416.js|public-app-hunt-carry-v416.js"
             "stock-hunter-v4/app-hunt-carry-v416.js|https://afzalpour.github.io/stock-hunter-v4/app-hunt-carry-v416.js|app-hunt-carry-v416.js"
             "stock-hunter-v4/research-common-v416.js|https://afzalpour.github.io/stock-hunter-v4/research-common-v416.js|research-common-v416.js"
             "stock-hunter-v4/research-lab-v416.css|https://afzalpour.github.io/stock-hunter-v4/research-lab-v416.css|research-lab-v416.css"
@@ -101,6 +111,15 @@ jobs:
           cmp stock-hunter-v4/index.html /tmp/stock-hunter-public-smoke/app-index.html
           cmp stock-hunter-v4/sw.js /tmp/stock-hunter-public-smoke/sw.js
           cmp stock-hunter-v4/manifest.webmanifest /tmp/stock-hunter-public-smoke/manifest.webmanifest
+          cmp stock-hunter/index.html /tmp/stock-hunter-public-smoke/public-index.html
+          cmp stock-hunter/sw.js /tmp/stock-hunter-public-smoke/public-sw.js
+          cmp stock-hunter/manifest.webmanifest /tmp/stock-hunter-public-smoke/public-manifest.webmanifest
+          cmp stock-hunter/app-runtime.js /tmp/stock-hunter-public-smoke/public-app-runtime.js
+          cmp stock-hunter/ux-shell-v421.js /tmp/stock-hunter-public-smoke/public-ux-shell-v421.js
+          cmp stock-hunter/ux-v421.css /tmp/stock-hunter-public-smoke/public-ux-v421.css
+          cmp stock-hunter/workspace-v420.js /tmp/stock-hunter-public-smoke/public-workspace-v420.js
+          cmp stock-hunter/data-export-v418.js /tmp/stock-hunter-public-smoke/public-data-export-v418.js
+          cmp stock-hunter/app-hunt-carry-v416.js /tmp/stock-hunter-public-smoke/public-app-hunt-carry-v416.js
           cmp stock-hunter-v4/app-hunt-carry-v416.js /tmp/stock-hunter-public-smoke/app-hunt-carry-v416.js
           cmp stock-hunter-v4/research-common-v416.js /tmp/stock-hunter-public-smoke/research-common-v416.js
           cmp stock-hunter-v4/research-lab-v416.css /tmp/stock-hunter-public-smoke/research-lab-v416.css
@@ -130,6 +149,9 @@ jobs:
           echo "root_index_sha256=$(sha256sum index.html | awk '{print $1}')"
           echo "app_index_sha256=$(sha256sum stock-hunter-v4/index.html | awk '{print $1}')"
           echo "sw_sha256=$(sha256sum stock-hunter-v4/sw.js | awk '{print $1}')"
+          echo "public_index_sha256=$(sha256sum stock-hunter/index.html | awk '{print $1}')"
+          echo "public_sw_sha256=$(sha256sum stock-hunter/sw.js | awk '{print $1}')"
+          echo "public_export_sha256=$(sha256sum stock-hunter/data-export-v418.js | awk '{print $1}')"
           echo "runtime_core_sha256=$(sha256sum stock-hunter-v4/hunt-runtime-core-v417.js | awk '{print $1}')"
           echo "runtime_router_sha256=$(sha256sum stock-hunter-v4/app-runtime-router-v417.js | awk '{print $1}')"
           echo "personal_index_sha256=$(sha256sum stock-hunter-v4/index-v417.html | awk '{print $1}')"
@@ -165,6 +187,14 @@ jobs:
           REPLAY_JS=/tmp/stock-hunter-public-smoke/market-replay-v416.js
           RELIABILITY=/tmp/stock-hunter-public-smoke/reliability-v416.html
           RELIABILITY_JS=/tmp/stock-hunter-public-smoke/reliability-v416.js
+          PUBLIC_APP=/tmp/stock-hunter-public-smoke/public-index.html
+          PUBLIC_SW=/tmp/stock-hunter-public-smoke/public-sw.js
+          PUBLIC_MANIFEST=/tmp/stock-hunter-public-smoke/public-manifest.webmanifest
+          PUBLIC_RUNTIME=/tmp/stock-hunter-public-smoke/public-app-runtime.js
+          PUBLIC_UX=/tmp/stock-hunter-public-smoke/public-ux-shell-v421.js
+          PUBLIC_UX_CSS=/tmp/stock-hunter-public-smoke/public-ux-v421.css
+          PUBLIC_WORKSPACE=/tmp/stock-hunter-public-smoke/public-workspace-v420.js
+          PUBLIC_EXPORT=/tmp/stock-hunter-public-smoke/public-data-export-v418.js
 
           grep -q 'hunt-runtime-core-v417.js' "$APP"
           grep -q 'app-runtime-router-v417.js' "$APP"
@@ -216,6 +246,21 @@ jobs:
           grep -q 'search-neutral-v416.css?v=1' "$APP"
           grep -q 'background:#131519' "$SEARCH_NEUTRAL"
           grep -q 'background:#191c21' "$SEARCH_NEUTRAL"
+          grep -q "location.replace('/stock-hunter/index.html'" "$APP"
+          grep -q 'https://afzalpour.github.io/stock-hunter/index.html' "$PUBLIC_APP"
+          grep -q 'manifest.webmanifest?v=4.2.4-public-r1' "$PUBLIC_APP"
+          grep -q 'data-export-v418.js?v=4.2.4-export4' "$PUBLIC_APP"
+          grep -q "CACHE_PREFIX='shikar-sahm-public-'" "$PUBLIC_SW"
+          grep -q 'navigationPreload.enable' "$PUBLIC_SW"
+          grep -q 'icon-192.png' "$PUBLIC_MANIFEST"
+          grep -q 'icon-512.png' "$PUBLIC_MANIFEST"
+          grep -q "sw.js?v=4.2.4-public-r1" "$PUBLIC_RUNTIME"
+          grep -q 'رفتن به جدول شکار' "$PUBLIC_UX"
+          grep -q 'body.ux-simple-v421 .table-panel{display:grid!important' "$PUBLIC_UX_CSS"
+          grep -Fq 'may not move Radar/Table above Today' stock-hunter-v4/PROJECT_CANONICAL_ARCHITECTURE.md
+          grep -q "VERSION='4.2.4-export-v4'" "$PUBLIC_EXPORT"
+          grep -q 'preparePdfCaptureV424' "$PUBLIC_EXPORT"
+          grep -q 'slicePx' "$PUBLIC_EXPORT"
           if grep -q '#10243a' "$SEARCH_NEUTRAL"; then
             echo "::error::Published neutral search skin contains legacy blue active background"
             exit 1
