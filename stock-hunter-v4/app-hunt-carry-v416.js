@@ -5,6 +5,8 @@
 // detected early hunt for 15 minutes after the first verified +1% crossing.
 const HUNT_CARRY_V416_VERSION='4.1.6-carry-v1';
 let huntCarryRowsV416=[],huntCarryBySymbolV416=new Map(),huntCarryLoadingV416=false,huntCarryDateV416='';
+// Publish the additive carry contract immediately so the UI remains deterministic even when the ledger read is empty or temporarily unavailable.
+window.STOCK_HUNTER_HUNT_CARRY_V416={version:HUNT_CARRY_V416_VERSION,rows:huntCarryRowsV416};
 
 function huntCarryTodayV416(){
   try{return tehranClockV413().ymd}catch{
