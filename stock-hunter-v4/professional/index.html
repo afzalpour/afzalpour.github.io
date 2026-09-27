@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head><base href="../">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#15181b">
+<title>مرکز حرفه‌ای شکار — شکارچی سهم</title><link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="research-lab-v416.css?v=8"><link rel="stylesheet" href="professional-v420.css?v=1">
+</head>
+<body><main class="pro-shell">
+<header class="pro-hero"><div><h1>مرکز حرفه‌ای شکارچی سهم</h1><p>لایه حرفه‌ای اعتبارسنجی، استحکام، اجرای واقعی، رژیم بازار، فرسایش، دیده‌بان پویا، دفترچه تصمیم، بازپخش آموزشی، هوش مصنوعی مستند و میزکار شخصی. این مرکز امتیازها، وزن‌ها و آستانه‌های موتور ثابت ۴.۱.۶ را تغییر نمی‌دهد.</p></div><div class="pro-hero-badges"><span><b>۱۴ قابلیت</b>همگی فعال</span><span><b>موتور شکار</b>بدون تغییر</span><span><b>تاریخ</b>کاملاً شمسی</span><span><b>خروجی</b>۵ قالب داده</span></div></header>
+<nav class="pro-nav"><a href="index.html">صفحه اصلی</a><a href="journey/">سفر شکار</a><a href="replay/">بازپخش بازار</a><a href="backtest/">آزمایشگاه آزمون تاریخی</a><a href="alerts/">مرکز هشدار</a><a href="strategy/">سازنده راهبرد</a><a href="ai/">مرکز هوش مصنوعی</a></nav>
+<div id="proStatus" class="pro-status" data-state="warn">در حال آماده‌سازی لایه حرفه‌ای…</div>
+<div class="feature-strip">
+<span><b>۱</b>دروازه اطمینان</span><span><b>۲</b>گذرنامه شکار</span><span><b>۳</b>استحکام راهبرد</span><span><b>۴</b>آزمون گروهی</span><span><b>۵</b>اجرای واقعی</span><span><b>۶</b>رژیم بازار</span><span><b>۷</b>فرسایش شکار</span><span><b>۸</b>هشدار ابری</span><span><b>۹</b>دیده‌بان هوشمند</span><span><b>۱۰</b>هوش مصنوعی مستند</span><span><b>۱۱</b>گردش‌کار عامل</span><span><b>۱۲</b>دفترچه تصمیم</span><span><b>۱۳</b>بازپخش تصمیم</span><span><b>۱۴</b>میزکار شخصی</span>
+</div>
+
+<div class="pro-tabs">
+<button class="pro-tab active" data-view="confidence">اعتبار و گذرنامه</button>
+<button class="pro-tab" data-view="robustness">استحکام و آزمون گروهی</button>
+<button class="pro-tab" data-view="execution">اجرای واقعی</button>
+<button class="pro-tab" data-view="regime">رژیم و فرسایش</button>
+<button class="pro-tab" data-view="watchlist">دیده‌بان هوشمند</button>
+<button class="pro-tab" data-view="ai">هوش مصنوعی مستند</button>
+<button class="pro-tab" data-view="journal">دفترچه تصمیم</button>
+<button class="pro-tab" data-view="replay">بازپخش تصمیم</button>
+<button class="pro-tab" data-view="workspace">میزکار شخصی</button>
+<button class="pro-tab" data-view="cloud">هشدار ابری</button>
+</div>
+
+<section id="view-confidence" class="pro-view active">
+<div class="pro-panel wide"><div class="pro-filters"><label>تاریخ شمسی<input id="confidenceDate" class="jalali-input" type="text" readonly></label><label>نماد ثبت‌شده<select id="confidenceSymbol" data-sort-fa><option value="">در حال دریافت…</option></select></label><button id="confidenceRefresh" class="pro-btn primary">تازه‌سازی اعتبار</button></div></div>
+<div class="pro-grid">
+<section class="pro-panel"><h2>دروازه اطمینان شکار</h2><div class="pro-confidence"><div id="confidenceGauge" class="pro-gauge" style="--p:0"><div><b id="confidenceScore">۰</b><span id="confidenceLabel">در حال بررسی</span></div></div><div id="confidenceEvidence" class="pro-evidence"></div></div><p class="pro-note">«کیفیت اطمینان» امتیاز شکار نیست و هیچ اثری روی موتور ۴.۱.۶ ندارد؛ فقط کفایت شواهد، سلامت داده، ریسک و سابقه مشابه را جداگانه می‌سنجد.</p></section>
+<section class="pro-panel"><h2>گذرنامه شکار</h2><div id="passportGrid" class="pro-passport"></div><h3>مسیر و سرنوشت</h3><div id="passportOutcome" class="pro-evidence"></div></section>
+<section class="pro-panel wide"><h2>شواهد موافق و مخالف</h2><div id="passportEvidenceTable" class="pro-table-wrap"><table class="pro-table"><thead><tr><th>مولفه</th><th>مقدار ثبت‌شده</th><th>تفسیر</th><th>منبع</th></tr></thead><tbody id="passportEvidenceBody"></tbody></table></div></section>
+</div></section>
+
+<section id="view-robustness" class="pro-view">
+<div class="pro-panel wide"><div class="pro-filters"><label>از تاریخ<input id="robustStart" class="jalali-input" type="text" readonly></label><label>تا تاریخ<input id="robustEnd" class="jalali-input" type="text" readonly></label><label>راهبرد<select id="robustStrategy"><option value="__hunt__">موتور ثابت شکار</option></select></label><button id="runRobustness" class="pro-btn primary">اجرای آزمون استحکام</button></div></div>
+<div class="pro-metrics"><article class="pro-metric"><span>نمونه قابل آزمون</span><b id="robustCount">۰</b></article><article class="pro-metric"><span>نتیجه خارج‌ازنمونه</span><b id="robustOos">—</b></article><article class="pro-metric"><span>افت خارج‌ازنمونه</span><b id="robustDrop">—</b></article><article class="pro-metric"><span>پایداری پارامتر</span><b id="robustStability">—</b></article></div>
+<div class="pro-grid">
+<section class="pro-panel"><h2>آزمایشگاه استحکام راهبرد</h2><div class="pro-table-wrap"><table class="pro-table"><thead><tr><th>آزمون</th><th>نمونه</th><th>نرخ موفقیت</th><th>تغییر نسبت به پایه</th></tr></thead><tbody id="robustBody"></tbody></table></div><p class="pro-note">تقسیم زمانی بدون نگاه به آینده انجام می‌شود و آخرین بخش داده برای سنجش خارج‌ازنمونه کنار گذاشته می‌شود.</p></section>
+<section class="pro-panel"><h2>آزمون گروهی روی نمادها</h2><div class="pro-table-wrap"><table class="pro-table"><thead><tr><th>نماد</th><th>تعداد</th><th>موفق</th><th>نرخ موفقیت</th><th>پیشروی میانه</th></tr></thead><tbody id="groupBody"></tbody></table></div></section>
+</div></section>
+
+<section id="view-execution" class="pro-view">
+<div class="pro-panel wide"><div class="pro-filters"><label>تاریخ شمسی<input id="execDate" class="jalali-input" type="text" readonly></label><label>نماد<select id="execSymbol" data-sort-fa></select></label><label>سرمایه فرضی؛ میلیون ریال<input id="execCapital" type="text" inputmode="decimal" value="۱۰۰۰"></label><label>تأخیر ورود؛ ثانیه<input id="execDelay" type="text" inputmode="numeric" value="۳۰"></label><label>حد مشارکت از حجم؛ درصد<input id="execParticipation" type="text" inputmode="decimal" value="۱۰"></label><button id="runExecution" class="pro-btn primary">شبیه‌سازی اجرا</button></div></div>
+<div class="pro-metrics"><article class="pro-metric"><span>پرشدن تقریبی</span><b id="execFill">—</b></article><article class="pro-metric"><span>لغزش برآوردی</span><b id="execSlip">—</b></article><article class="pro-metric"><span>پیشروی نظری</span><b id="execTheory">—</b></article><article class="pro-metric"><span>پیشروی قابل‌اجرا</span><b id="execReal">—</b></article></div>
+<section class="pro-panel wide"><h2>شبیه‌ساز اجرای واقعی مخصوص بازار ایران</h2><div id="execDetails" class="pro-evidence"></div><p class="pro-note warn">این شبیه‌سازی بر اساس حجم ثبت‌شده، صف‌ها، تأخیر و حد مشارکت تخمینی است و جایگزین دفتر سفارش کامل یا گزارش اجرای واقعی کارگزاری نیست.</p></section>
+</section>
+
+<section id="view-regime" class="pro-view">
+<div class="pro-panel wide"><div class="pro-filters"><label>تاریخ شمسی<input id="regimeDate" class="jalali-input" type="text" readonly></label><button id="runRegime" class="pro-btn primary">تحلیل رژیم و فرسایش</button></div></div>
+<div class="pro-metrics"><article class="pro-metric teal"><span>رژیم بازار</span><b id="regimeLabel">—</b></article><article class="pro-metric"><span>سلامت داده</span><b id="regimeHealth">—</b></article><article class="pro-metric"><span>موفقیت ۷ روز اخیر</span><b id="driftRecent">—</b></article><article class="pro-metric"><span>تغییر نسبت به مبنا</span><b id="driftDelta">—</b></article></div>
+<div class="pro-grid"><section class="pro-panel"><h2>مرکز رژیم بازار</h2><div id="regimeEvidence" class="pro-evidence"></div></section><section class="pro-panel"><h2>آشکارساز فرسایش شکار</h2><div id="driftEvidence" class="pro-evidence"></div></section><section class="pro-panel wide"><h2>تاریخچه خلاصه</h2><div class="pro-table-wrap"><table class="pro-table"><thead><tr><th>تاریخ</th><th>تعداد شکار</th><th>نرخ موفقیت</th><th>امتیاز میانگین</th><th>ریسک میانگین</th><th>شرایط بازار</th></tr></thead><tbody id="regimeHistoryBody"></tbody></table></div></section></div>
+</section>
+
+<section id="view-watchlist" class="pro-view">
+<div class="pro-grid">
+<section class="pro-panel"><h2>ساخت دیده‌بان هوشمند</h2><div class="pro-filters"><label>نام دیده‌بان<input id="smartName" type="text" value="دیده‌بان امروز من"></label><label>مسیر<select id="smartMode"><option value="">همه مسیرها</option><option value="reversal">برگشت از منفی</option><option value="acceleration">شتاب‌گیری</option></select></label><label>حداقل امتیاز<input id="smartScore" type="text" inputmode="decimal" value="۶۵"></label><label>حداکثر ریسک<input id="smartRisk" type="text" inputmode="decimal" value="۶۰"></label><button id="smartScan" class="pro-btn teal">پویش امروز</button><button id="smartSave" class="pro-btn primary">ذخیره در حساب</button></div><p class="pro-note">عضویت نمادها پویاست؛ با هر پویش، قواعد روی داده همان روز دوباره اجرا می‌شوند و فهرست دستی ثابت ساخته نمی‌شود.</p></section>
+<section class="pro-panel"><h2>دیده‌بان‌های ذخیره‌شده</h2><div id="smartSaved" class="pro-list"><div class="pro-note">برای ذخیره‌سازی ابری وارد حساب شوید.</div></div></section>
+<section class="pro-panel wide"><h2>نتیجه پویش</h2><div class="pro-table-wrap"><table class="pro-table"><thead><tr><th>نماد</th><th>وضعیت</th><th>مسیر</th><th>امتیاز</th><th>ریسک</th><th>تغییر روز</th><th>اقدام</th></tr></thead><tbody id="smartBody"></tbody></table></div></section>
+</div></section>
+
+<section id="view-ai" class="pro-view">
+<div class="pro-grid">
+<section class="pro-panel"><h2>هوش مصنوعی همراه با مدرک</h2><div class="pro-filters"><label>نماد<select id="evidenceSymbol" data-sort-fa></select></label><label style="flex:1">پرسش<textarea id="evidenceQuestion" rows="3">چرا این شکار قابل توجه است و مهم‌ترین ضعف آن چیست؟</textarea></label><button id="evidenceAsk" class="pro-btn teal">تحلیل مستند</button></div><div id="evidenceAnswer" class="pro-ai-output">هنوز تحلیلی ساخته نشده است.</div><div id="evidenceSources"></div></section>
+<section class="pro-panel"><h2>گردش‌کار عامل هوشمند</h2><div class="pro-filters"><label>ماموریت<select id="agentMission"><option value="day">بررسی کامل امروز</option><option value="failed">بررسی شکارهای ناموفق</option><option value="symbol">پرونده کامل نماد انتخاب‌شده</option><option value="missed">بررسی فرصت‌های از دست‌رفته</option></select></label><button id="runAgent" class="pro-btn violet">اجرای گردش‌کار</button></div><div id="agentOutput" class="pro-ai-output">عامل هنوز اجرا نشده است.</div></section>
+</div></section>
+
+<section id="view-journal" class="pro-view">
+<div class="pro-grid"><section class="pro-panel"><h2>ثبت تصمیم</h2><div class="pro-filters"><label>تاریخ<input id="journalDate" class="jalali-input" type="text" readonly></label><label>نماد<select id="journalSymbol" data-sort-fa></select></label><label>تصمیم<select id="journalDecision"><option value="OBSERVED">مشاهده کردم</option><option value="ENTERED">وارد شدم</option><option value="SKIPPED">وارد نشدم</option></select></label><label>دلیل<input id="journalReason" type="text" placeholder="دلیل تصمیم"></label><label style="flex:1">یادداشت<textarea id="journalNote" rows="2" placeholder="نکته‌ای که بعداً ارزش مرور دارد"></textarea></label><button id="journalSave" class="pro-btn primary">ثبت تصمیم</button></div></section><section class="pro-panel"><h2>تحلیل رفتار تصمیم</h2><div id="journalInsight" class="pro-evidence"></div></section><section class="pro-panel wide"><h2>دفترچه تصمیم من</h2><div class="pro-table-wrap"><table class="pro-table"><thead><tr><th>تاریخ</th><th>نماد</th><th>زمینه</th><th>تصمیم</th><th>دلیل</th><th>نتیجه</th><th>زمان ثبت</th></tr></thead><tbody id="journalBody"></tbody></table></div></section></div>
+</section>
+
+<section id="view-replay" class="pro-view">
+<div class="pro-panel wide"><div class="pro-filters"><label>تاریخ<input id="decisionReplayDate" class="jalali-input" type="text" readonly></label><label>نماد<select id="decisionReplaySymbol" data-sort-fa></select></label><button id="loadDecisionReplay" class="pro-btn primary">آماده‌سازی تمرین</button></div></div>
+<div class="pro-grid"><section class="pro-panel"><h2>بازپخش تصمیم بدون نگاه به آینده</h2><div class="pro-replay-card"><div id="decisionReplayTime" class="pro-replay-time">—</div><input id="decisionReplaySlider" type="range" min="0" max="0" value="0" style="width:100%"><div id="decisionReplayData" class="pro-replay-data"></div><div id="decisionFuture" class="pro-replay-masked">اطلاعات آینده پنهان است.</div><div class="pro-filters"><button data-replay-decision="ENTERED" class="pro-btn primary">در این لحظه وارد می‌شدم</button><button data-replay-decision="SKIPPED" class="pro-btn warn">در این لحظه وارد نمی‌شدم</button><button id="revealReplay" class="pro-btn violet">نمایش نتیجه واقعی</button></div></div></section><section class="pro-panel"><h2>نتیجه تمرین</h2><div id="decisionReplayOutcome" class="pro-evidence"><article><b>هنوز تصمیمی ثبت نشده است.</b><span>ابتدا فقط با اطلاعات همان لحظه تصمیم بگیرید.</span></article></div></section></div>
+</section>
+
+<section id="view-workspace" class="pro-view">
+<div class="pro-grid"><section class="pro-panel"><h2>میزکار شخصی</h2><div class="pro-workspace-grid"><div class="pro-workspace-card"><label>خلاصه بازار</label><input id="wsSummary" type="checkbox" checked></div><div class="pro-workspace-card"><label>رادار نزدیک</label><input id="wsRadar" type="checkbox" checked></div><div class="pro-workspace-card"><label>جدول نمادها</label><input id="wsTable" type="checkbox" checked></div><div class="pro-workspace-card"><label>نمای فشرده</label><input id="wsCompact" type="checkbox"></div></div><div class="pro-filters"><label>اولین بخش صفحه<select id="wsFirst"><option value="summary">خلاصه بازار</option><option value="radar">رادار نزدیک</option><option value="table">جدول نمادها</option></select></label><button id="saveWorkspace" class="pro-btn primary">ذخیره میزکار</button><a class="pro-btn teal" href="index.html">مشاهده صفحه اصلی</a></div></section><section class="pro-panel"><h2>وضعیت همگام‌سازی</h2><div id="workspaceState" class="pro-evidence"></div></section></div>
+</section>
+
+<section id="view-cloud" class="pro-view">
+<div class="pro-grid"><section class="pro-panel"><h2>هشدار ابری واقعی</h2><p>هشدار سروری مستقل از بازبودن این صفحه، رخدادهای تازه شکار را بررسی و از مسیر Push مرورگر ارسال می‌کند.</p><div class="pro-filters"><a class="pro-btn primary" href="alerts/">مدیریت هشدار ابری</a><button id="cloudHealth" class="pro-btn teal">بررسی سلامت سرویس</button></div><div id="cloudState" class="pro-evidence"></div></section><section class="pro-panel"><h2>رفتار سامانه</h2><div class="pro-evidence"><article><b>بررسی سروری دقیقه‌ای</b><span>رخدادهای تازه با شناسه یکتا ثبت می‌شوند تا هشدار تکراری ارسال نشود.</span></article><article><b>سطوح مستقل</b><span>شکار زودهنگام، شکار ویژه و عبور موفق قابل انتخاب هستند.</span></article><article><b>پاک‌سازی خودکار اشتراک نامعتبر</b><span>اشتراک‌های ازکارافتاده پس از پاسخ نامعتبر سرویس Push غیرفعال می‌شوند.</span></article></div></section></div>
+</section>
+
+<p class="footnote">تمام تحلیل‌های این مرکز توضیحی و پژوهشی‌اند. هیچ بخش تازه‌ای امتیاز Hunt ۴.۱.۶ را تغییر نمی‌دهد و هیچ خروجی به‌تنهایی توصیه قطعی خرید یا فروش نیست.</p>
+</main>
+<script src="config.js?v=4.1.6-cloud-primary1"></script><script src="research-common-v416.js?v=5"></script><script type="module" src="professional-center-v420.js?v=1"></script><script src="data-export-v418.js?v=3"></script><script src="locale-ui-v419.js?v=3"></script>
+</body></html>
