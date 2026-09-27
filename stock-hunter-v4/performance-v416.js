@@ -49,6 +49,15 @@ function renderSummaryV416(){
   setTextV416('avgRet3',`میانگین بازده: ${perfPct(ret3,2)}`);setTextV416('positive3',perfPct(pos3,1));setTextV416('plus1_3',perfPct(plus3,1));setTextV416('minus1_3',perfPct(minus3,1));
   const status=m1<20?'نمونه بالغ هنوز کم است؛ نتیجه‌ها صرفاً برای پایش و جمع‌آوری داده نمایش داده می‌شوند و مبنای کالیبراسیون نهایی نیستند.':`تعداد نمونه بالغ ۱ جلسه: ${m1.toLocaleString('fa-IR')} — داده برای تحلیل تجربی اولیه در حال شکل‌گیری است.`;
   perf$('perfStatus').textContent=status;
+  const maturity=perf$('perfMaturityNarrative');
+  if(maturity){
+    const dates=recentOutcomeRowsV416.map(x=>x.trade_date).filter(Boolean).sort();
+    const first=dates[0],last=dates[dates.length-1];
+    const range=first&&last?` بازه رخدادهای دریافت‌شده در این نما از ${perfJalaliDateV416(first)} تا ${perfJalaliDateV416(last)} است.`:'';
+    if(!events)maturity.innerHTML='<strong>هنوز رکورد واقعی شکل نگرفته است.</strong><br>دفتر رسمی رخداد شکار نمونه‌ای برای ارزیابی ندارد.';
+    else if(!m1)maturity.innerHTML=`<strong>${events.toLocaleString('fa-IR')} رخداد واقعی ثبت شده است، اما هنوز هیچ نتیجه یک‌جلسه‌ای بالغ نشده است.</strong><br>نتیجه یک‌جلسه‌ای فقط پس از مشاهده جلسه بازار بعد تکمیل می‌شود؛ بنابراین فعلاً نمایش درصد موفقیت معتبر نیست.${range}`;
+    else maturity.innerHTML=`<strong>${events.toLocaleString('fa-IR')} رخداد واقعی و ${m1.toLocaleString('fa-IR')} نتیجه یک‌جلسه‌ای بالغ‌شده ثبت شده است.</strong><br>تمام نرخ‌ها فقط از نمونه‌های بالغ محاسبه می‌شوند؛ داده ناتمام شکست محسوب نمی‌شود.${range}`;
+  }
 }
 function renderPerformanceTableV416(){
   const rows=perfFilteredV416(performanceRowsV416).sort((a,b)=>String(a.hunt_mode).localeCompare(String(b.hunt_mode))||String(a.hunt_state).localeCompare(String(b.hunt_state))||String(a.score_bucket).localeCompare(String(b.score_bucket)));
