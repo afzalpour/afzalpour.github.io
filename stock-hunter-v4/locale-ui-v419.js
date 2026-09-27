@@ -1,6 +1,6 @@
 'use strict';
 (function(){
-  const VERSION='4.1.9-fa-ui-v3';
+  const VERSION='4.1.9-fa-ui-v4';
   const DIGITS='۰۱۲۳۴۵۶۷۸۹';
   const collator=new Intl.Collator('fa-IR',{usage:'sort',sensitivity:'base',ignorePunctuation:true,numeric:false});
 
