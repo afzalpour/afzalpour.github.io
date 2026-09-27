@@ -1,6 +1,6 @@
 // Canary admission + expansion + hold/rollback + recovery dashboard assets are pinned to cache r18.
 // Recovery/Re-entry release gate: all CI workflows validate this same service-worker head.
-const CACHE='shikar-sahm-v4.1.6-r18';
+const CACHE='shikar-sahm-v4.1.6-r19';
 const STATIC=[
   './','./index.html','./styles.css','./extra.css','./forecast-v415.css','./neutral-theme-v416.css',
   './app-core.js','./app-forecast.js','./app-runtime.js','./app-universe.js',
@@ -24,12 +24,18 @@ self.addEventListener('fetch',e=>{
   if(e.request.method!=='GET')return;
   const u=new URL(e.request.url);
   if(u.origin!==location.origin)return;
-  e.respondWith(
-    fetch(e.request,{cache:'no-store'}).then(r=>{
+  e.respondWith((async()=>{
+    const cached=await caches.match(e.request,{ignoreSearch:true});
+    if(cached)return cached;
+    try{
+      const r=await fetch(e.request);
       if(r.ok){const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy)).catch(()=>{});}
       return r;
-    }).catch(()=>caches.match(e.request))
-  );
+    }catch{
+      if(e.request.mode==='navigate')return (await caches.match('./index.html'))||(await caches.match('./'));
+      throw new Error('offline');
+    }
+  })());
 });
 self.addEventListener('notificationclick',e=>{
   e.notification.close();
