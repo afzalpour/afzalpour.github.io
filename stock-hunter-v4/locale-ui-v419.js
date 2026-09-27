@@ -84,3 +84,9 @@
 
   window.StockHunterLocaleV419={version:VERSION,faDigits,normalizeFa,compare,sortSelect,shouldSortFa,localizeControlValue};
 })();
+
+// Shared UX 4.2.1 loader — presentation only; no Hunt logic.
+(function(){
+  if(!document.querySelector('link[data-ux-v421]')){const l=document.createElement('link');l.rel='stylesheet';l.href='ux-v421.css?v=1';l.dataset.uxV421='1';document.head.appendChild(l);}
+  if(!document.querySelector('script[data-ux-common-v421]')){const x=document.createElement('script');x.src='ux-common-v421.js?v=1';x.defer=true;x.dataset.uxCommonV421='1';document.body.appendChild(x);}
+})();

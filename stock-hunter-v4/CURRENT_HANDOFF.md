@@ -1418,3 +1418,32 @@ Frozen Hunt engine/scoring/thresholds remain unchanged.
 - نگهداشت داده خام تازه اضافه نشده و لایه حرفه‌ای از داده‌های فشرده فعلی استفاده می‌کند.
 - ممیزی تفصیلی: `research/PROFESSIONAL_SUITE_V420_FINAL_AUDIT_2026-09-27.md`.
 - Authenticated Browser Smoke برای نام دیده‌بان آزمایشی با قرارداد نمایش ارقام فارسی همگام شد.
+
+
+## UX 4.2.1 — Today-first redesign — 2026-09-27
+
+Branch: `stock-hunter/ux-v421-20260927`.
+
+User-approved additive redesign:
+- Today-first home surface above canonical Action Now → Radar → Universe;
+- simple/professional presentation modes;
+- grouped navigation;
+- human-readable `چرا این سهم؟`;
+- explicit empty-state explanations;
+- local last-visit comparison;
+- journey/chart visual polish using existing recorded milestones;
+- standalone end-of-market report;
+- transparent real-performance maturity messaging;
+- stable user route aliases while preserving all legacy versioned endpoints;
+- unified Precision Optics / brass visual treatment;
+- mobile bottom navigation and card-first Today surface;
+- short first-use onboarding;
+- symbol-focused Professional Center drill-down.
+
+Live performance audit during implementation:
+- permanent Hunt performance ledger reported 1,278 registered events;
+- 1-session matured outcomes: 0;
+- 3-session matured outcomes: 0;
+- therefore no success-rate placeholder is allowed; UX explicitly states that results are not mature yet.
+
+Frozen Hunt remains exactly `4.1.6-hunt-v2`; no scoring weights, thresholds or gates were changed.

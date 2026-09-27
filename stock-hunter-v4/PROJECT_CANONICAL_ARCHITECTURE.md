@@ -418,3 +418,64 @@ Default page layout remains unchanged when no preference exists. A hidden radar 
 ### Export / language contract
 All new numerical surfaces join the shared five-format exporter: XLSX, CSV, XML, DOCX, PDF. Visible dates are Jalali calendar inputs and visible digits are Persian. Symbol/company ordering uses Persian collation. New user-facing terminology uses `دیده‌بان`, not English/transliterated watchlist wording.
 
+
+
+## 19. Today-first UX 4.2.1 — 2026-09-27
+
+The user-approved 4.2.1 redesign is a presentation and information-architecture layer only. Frozen Hunt remains `4.1.6-hunt-v2`; formulas, thresholds, risk gates, Action Now eligibility, Radar eligibility, capture provenance, calibration/OOS lifecycle and production routing are unchanged.
+
+### Daily entry contract
+The default market surface is now a **Today-first decision center** layered above the canonical Action Now → Radar → Universe hierarchy:
+- **امروز** shows market/feed context and up to the strongest fresh Action Now opportunities;
+- **رادار نزدیک** remains the observational early-Hunt queue;
+- **Universe** remains reachable through universal search and explicit Hunt filters, including `همه نمادها`;
+- no UX card may turn a stale/ineligible row into an Action Now opportunity.
+
+### Simple / professional presentation
+- **نمای ساده** prioritizes Today, current opportunities, Why-this-stock, Radar, search, watchlist and alerts.
+- **نمای حرفه‌ای** exposes the complete table/research workflow.
+- This switch is presentation-only and MUST NOT change scoring, data selection semantics, permissions, or persisted model state.
+- The professional research menu is hidden from the daily navigation in simple mode but remains available after switching to professional mode.
+
+### Human explanation contract
+`چرا این سهم؟` may only interpret already-recorded Frozen Hunt inputs/outputs and risk evidence. It must:
+- state that Hunt Score is an engineering score, not a success probability;
+- separate strengthening evidence from risk/blockers;
+- never generate a new trading score, threshold, probability, or buy/sell instruction.
+
+### Empty-state contract
+A blank analytical surface must explain the reason whenever it is knowable:
+- market closed;
+- no eligible opportunity;
+- data/feed unavailable or stale;
+- insufficient historical sample;
+- outcome not matured yet.
+A raw `—` or `0` must not be used as the sole explanation of an empty decision surface.
+
+### Real-performance contract
+Real performance surfaces use the permanent event/outcome ledger only.
+- registered events may be shown immediately;
+- 1-session and 3-session rates are shown only from matured outcomes;
+- missing/unmatured outcomes are never counted as failures;
+- no placeholder accuracy or synthetic performance percentage is allowed.
+
+### Journey / chart contract
+Hunt Journey remains the canonical event timeline. Detail and journey charts visually mark recorded Hunt milestones (discovery, early/action state where available, zero crossing and +1/+2/+3 milestones) using recorded timestamps/replay data only.
+
+### Stable user routes
+User-facing navigation may use stable aliases:
+`/today/`, `/journey/`, `/replay/`, `/backtest/`, `/missed/`, `/alerts/`, `/reliability/`, `/strategy/`, `/ai/`, `/professional/`, `/performance/`, `/profile/`, `/report/`.
+Legacy versioned HTML files remain compatibility endpoints until a separately verified removal plan exists. Stable aliases must not break old bookmarks, Auth allow-lists, service-worker behavior, or GitHub Pages routing.
+
+### End-of-market report
+The end-of-market report is a first-class daily surface. It summarizes only registered Journey / missed-opportunity / reliability evidence and clearly distinguishes partial intraday reports from finalized prior-day reports.
+
+### Personal presentation
+Last-visit comparison is user-local/personal presentation state. It may compare previously viewed Hunt score/state/day move/order pressure/risk with the current row, but it never feeds the model.
+Professional Center supports symbol-focused deep links so advanced evidence is a drill-down from an opportunity rather than a required daily landing page.
+
+### Mobile
+Mobile uses a dedicated bottom-navigation and card-first Today experience. Desktop tables remain available in professional mode and through explicit search/filter expansion.
+
+### Visual system
+The approved Precision Optics / IRAN-font identity remains canonical. 4.2.1 extends it consistently with restrained reticle/brass accents, semantic green/red/orange/blue states, and clearer hierarchy; decorative color must not imply model certainty.
