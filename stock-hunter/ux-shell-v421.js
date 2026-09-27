@@ -9,6 +9,8 @@
   const body=document.body;
   if(!body||!document.getElementById('mainTable'))return;
   body.classList.add('stock-ux-v421');
+  const requiredMainColumnsV424=['symbol','dayMoveV416','huntSetupV416','huntScoreV416','hunt','decision','fast','price','entry','target1','stop','details'];
+  try{if(typeof visible!=='undefined')requiredMainColumnsV424.forEach(k=>visible.add(k));}catch{}
 
   function group(title,items,extraClass=''){
     return '<details class="'+extraClass+'"><summary>'+title+'</summary><div class="ux-grouped-nav-menu-v421">'+items.map(x=>'<a href="'+x[1]+'">'+x[0]+'</a>').join('')+'</div></details>';
