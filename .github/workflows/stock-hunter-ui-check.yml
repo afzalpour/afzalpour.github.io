@@ -42,7 +42,7 @@ on:
       - 'stock-hunter-v4/research-common-v416.js'
       - 'stock-hunter-v4/research-tools-v417.js'
       - 'stock-hunter-v4/data-export-v418.js'
-      - 'stock-hunter-v4/locale-ui-v419.js'
+      - 'stock-hunter-v4/locale-ui-v419.js'\n      - 'stock-hunter-v4/ux-v421.css'\n      - 'stock-hunter-v4/ux-common-v421.js'\n      - 'stock-hunter-v4/ux-shell-v421.js'\n      - 'stock-hunter-v4/daily-report-v421.html'\n      - 'stock-hunter-v4/daily-report-v421.js'\n      - 'stock-hunter-v4/*/index.html'
       - 'stock-hunter-v4/ai-center-v417.html'
       - 'stock-hunter-v4/ai-center-v417.js'
       - 'stock-hunter-v4/ai/stock-hunter-ai-v417/index.ts'
@@ -153,7 +153,7 @@ jobs:
           node --check stock-hunter-v4/ai-evidence-agent-v420.js
           node --check stock-hunter-v4/research-tools-v417.js
           node --check stock-hunter-v4/data-export-v418.js
-          node --check stock-hunter-v4/locale-ui-v419.js
+          node --check stock-hunter-v4/locale-ui-v419.js\n          node --check stock-hunter-v4/ux-common-v421.js\n          node --check stock-hunter-v4/ux-shell-v421.js\n          node --check stock-hunter-v4/daily-report-v421.js
           node --check stock-hunter-v4/app-personal-v417.js
           node --check stock-hunter-v4/ai-center-v417.js
           node --check stock-hunter-v4/research-common-v416.js
@@ -236,6 +236,27 @@ jobs:
           grep -q 'app-hunt-timeline-v416.js?v=1' stock-hunter-v4/index-v417.html
           grep -q 'app-ai-assistant-v417.js?v=1' stock-hunter-v4/index.html
           grep -q 'app-ai-assistant-v417.js?v=1' stock-hunter-v4/index-v417.html
+          python - <<'PY'
+          from pathlib import Path
+          ux=Path('stock-hunter-v4/ux-shell-v421.js').read_text(encoding='utf-8')
+          common=Path('stock-hunter-v4/ux-common-v421.js').read_text(encoding='utf-8')
+          report=Path('stock-hunter-v4/daily-report-v421.js').read_text(encoding='utf-8')
+          perf=Path('stock-hunter-v4/performance-v416.js').read_text(encoding='utf-8')
+          hunt=Path('stock-hunter-v4/app-hunt-v416.js').read_text(encoding='utf-8')
+          for token in ['امروز','نمای ساده','نمای حرفه‌ای','چرا این سهم؟','isActionNowV416','stock_hunter_hunt_performance_v416','stockHunterLastVisitV421']:
+              assert token in ux, token
+          assert 'stock_hunter_hunt_journey_v416' in report
+          assert 'stock_hunter_missed_opportunities_v416' in report
+          assert 'perfMaturityNarrative' in perf
+          assert "HUNT_V416_VERSION='4.1.6-hunt-v2'" in hunt
+          assert 'موتور ثابت شکار ۴.۱.۶ بدون تغییر' in common
+          routes=['today','journey','replay','backtest','missed','alerts','reliability','strategy','ai','professional','performance','profile','report']
+          for route in routes:
+              p=Path('stock-hunter-v4',route,'index.html')
+              assert p.exists(), route
+              assert '<base href="../">' in p.read_text(encoding='utf-8'), route
+          print('today-first-ux-v421: PASS')
+          PY
           grep -q 'professional-center-v420.html' stock-hunter-v4/index.html
           grep -q 'app-professional-detail-v420.js?v=1' stock-hunter-v4/index.html
           grep -q 'workspace-v420.js?v=1' stock-hunter-v4/index.html
