@@ -1,7 +1,7 @@
 'use strict';
 (function(){
   if(window.StockHunterUxV421)return;
-  const VERSION='4.2.2-perf1';
+  const VERSION='4.2.4-today-table-order1';
   const $u=id=>document.getElementById(id);
   const escU=v=>typeof esc==='function'?esc(v):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const faU=(v,d=0)=>{const n=Number(v);return Number.isFinite(n)?n.toLocaleString('fa-IR',{maximumFractionDigits:d}):'—';};
@@ -31,7 +31,7 @@
     body.classList.toggle('ux-simple-v421',m==='simple');body.classList.toggle('ux-pro-v421',m==='pro');
     localStorage.setItem('stockHunterUxModeV421',m);
     document.querySelectorAll('[data-ux-mode]').forEach(b=>b.classList.toggle('active',b.dataset.uxMode===m));
-    const tableBtn=$u('uxTableToggleV421');if(tableBtn)tableBtn.textContent=m==='pro'?'جدول حرفه‌ای فعال است':body.classList.contains('ux-table-open-v421')?'بستن جدول کامل':'نمایش جدول کامل';
+    const tableBtn=$u('uxTableToggleV421');if(tableBtn)tableBtn.textContent='رفتن به جدول شکار';
   }
   function modeMarkup(){
     return '<div class="ux-mode-v421" role="group" aria-label="سطح نمایش"><button type="button" data-ux-mode="simple">نمای ساده</button><button type="button" data-ux-mode="pro">نمای حرفه‌ای</button></div>';
@@ -60,7 +60,7 @@
     const sec=document.createElement('section');sec.id='uxTodayV421';sec.className='ux-today-v421';
     sec.innerHTML=
       '<div class="ux-today-head-v421"><div class="ux-today-title-v421"><h2>امروز</h2><p>اول فرصت‌های مهم، بعد دلیل، سپس جزئیات. این صفحه هیچ تغییری در موتور ثابت ۴.۱.۶ ایجاد نمی‌کند.</p></div><div class="ux-today-actions-v421">'+
-      modeMarkup()+'<a class="ux-btn-v421" href="report/">گزارش بازار</a><a class="ux-btn-v421" href="performance/">رکورد واقعی</a><button id="uxTableToggleV421" class="ux-btn-v421" type="button">نمایش جدول کامل</button></div></div>'+
+      modeMarkup()+'<a class="ux-btn-v421" href="report/">گزارش بازار</a><a class="ux-btn-v421" href="performance/">رکورد واقعی</a><button id="uxTableToggleV421" class="ux-btn-v421" type="button">رفتن به جدول شکار</button></div></div>'+
       '<div id="uxPulseV421" class="ux-pulse-v421">'+
       '<article><span>وضعیت بازار</span><b id="uxPulseMarketV421">در حال بررسی</b><small id="uxPulseMarketSubV421">—</small></article>'+
       '<article><span>اقدام فوری</span><b id="uxPulseActionV421">۰</b><small>شکار ویژه + هشدار فوری تازه</small></article>'+
@@ -70,10 +70,17 @@
       '<div class="ux-section-head-v421"><div><h3>فرصت‌های مهم امروز</h3><p>فقط صف اقدام فوری؛ رادار نزدیک جداگانه پایین این بخش باقی می‌ماند.</p></div></div>'+
       '<div id="uxActionGridV421" class="ux-opportunity-grid-v421"></div>'+
       '<div id="uxRecordV421" class="ux-record-v421"><div><b>رکورد واقعی در حال شکل‌گیری است</b><span id="uxRecordTextV421">در حال دریافت دفتر رسمی رخدادها…</span></div><a class="ux-btn-v421" href="performance/">مشاهده جزئیات</a></div>';
-    ws.insertBefore(sec,summary);
+    ws.prepend(sec);
+    const ordered=[summary,document.querySelector('.toolbar'),$u('alertBox'),$u('huntRadarV416'),document.querySelector('.table-panel'),$u('mobileList')].filter(Boolean);
+    let anchor=sec;
+    for(const el of ordered){
+      if(el.parentElement!==ws)continue;
+      anchor.insertAdjacentElement('afterend',el);
+      anchor=el;
+    }
     sec.addEventListener('click',e=>{
       const mode=e.target.closest('[data-ux-mode]');if(mode){setMode(mode.dataset.uxMode);return;}
-      const table=e.target.closest('#uxTableToggleV421');if(table){body.classList.toggle('ux-table-open-v421');setMode(body.classList.contains('ux-pro-v421')?'pro':'simple');if(body.classList.contains('ux-table-open-v421'))document.querySelector('.table-panel')?.scrollIntoView({behavior:'auto',block:'start'});return;}
+      const table=e.target.closest('#uxTableToggleV421');if(table){document.querySelector('.table-panel')?.scrollIntoView({behavior:'smooth',block:'start'});return;}
       const why=e.target.closest('[data-why-id]');if(why){showWhy(why.dataset.whyId);return;}
     });
   }
