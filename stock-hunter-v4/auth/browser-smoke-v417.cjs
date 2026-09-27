@@ -388,7 +388,7 @@ async function main(){
     await page.waitForFunction(name=>{
       const s=document.getElementById('personalWatchlistV417');
       return s && [...s.options].some(o=>o.textContent===name);
-    },WATCHLIST_NAME,{timeout:15000});
+    },WATCHLIST_VISIBLE_NAME,{timeout:15000});
 
     await page.fill('#search',SYMBOL);
     const persistedStar=page.locator('button.personal-star-v417[data-watch-id="'+SYMBOL_ID+'"]').first();
