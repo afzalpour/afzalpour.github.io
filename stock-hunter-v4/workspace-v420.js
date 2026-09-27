@@ -18,7 +18,7 @@
  async function cloudLoad(){
   if(!base||!key)return;try{const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/+esm'),sb=createClient(base,key,{auth:{persistSession:true,autoRefreshToken:true}}),{data:{session}}=await sb.auth.getSession();if(!session)return;const {data}=await sb.from('stock_hunter_workspace_v420').select('layout').eq('user_id',session.user.id).maybeSingle();if(data?.layout){layout=data.layout;localStorage.setItem('stockHunterWorkspaceV420',JSON.stringify(layout));apply(layout);}}catch{}
  }
- apply(layout);cloudLoad();
+ apply(layout);if(typeof requestIdleCallback==='function')requestIdleCallback(()=>cloudLoad(),{timeout:2400});else setTimeout(()=>cloudLoad(),1800);
  const a=document.createElement('a');a.className='top-link';a.href='professional-center-v420.html';a.textContent='میزکار حرفه‌ای';const host=document.querySelector('.top-actions');if(host&&!host.querySelector('a[href="professional-center-v420.html"]'))host.insertBefore(a,host.querySelector('#themeToggle')||null);
  window.StockHunterWorkspaceV420={version:'4.2.0-workspace-v1',apply,read};
 })();
