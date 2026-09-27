@@ -1,7 +1,7 @@
 'use strict';
 (function(){
   if(window.StockHunterUxV421)return;
-  const VERSION='4.2.1-ux1';
+  const VERSION='4.2.2-perf1';
   const $u=id=>document.getElementById(id);
   const escU=v=>typeof esc==='function'?esc(v):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const faU=(v,d=0)=>{const n=Number(v);return Number.isFinite(n)?n.toLocaleString('fa-IR',{maximumFractionDigits:d}):'—';};
@@ -47,7 +47,7 @@
     if(localStorage.getItem('stockHunterOnboardingV421')==='1'||$u('uxOnboardingV421'))return;
     const d=document.createElement('dialog');d.id='uxOnboardingV421';d.className='ux-onboarding-v421';
     d.innerHTML='<h2>از «امروز» شروع کنید</h2><p>شکارچی سهم امکانات پژوهشی زیادی دارد، اما برای استفاده روزانه فقط این سه نکته کافی است.</p><div class="ux-onboarding-steps-v421"><article><b>۱. فرصت مهم را ببینید</b><span>کارت‌های «اقدام فوری» فقط شکار ویژه و هشدار فوری تازه را نشان می‌دهند.</span></article><article><b>۲. دلیل را بخوانید</b><span>«چرا این سهم؟» شواهد و ریسک ثبت‌شده را به زبان ساده توضیح می‌دهد؛ امتیاز شکار احتمال موفقیت نیست.</span></article><article><b>۳. اگر لازم بود عمیق شوید</b><span>سفر شکار، بازپخش، آزمون تاریخی و مرکز حرفه‌ای در لایه بعدی قرار دارند.</span></article></div><div class="ux-onboarding-actions-v421"><button class="ux-btn-v421 primary" id="uxOnboardingDoneV421" type="button">شروع با صفحه امروز</button></div>';
-    body.appendChild(d);$u('uxOnboardingDoneV421').onclick=()=>{localStorage.setItem('stockHunterOnboardingV421','1');d.close();};setTimeout(()=>{try{d.showModal();}catch{}},300);
+    body.appendChild(d);$u('uxOnboardingDoneV421').onclick=()=>{localStorage.setItem('stockHunterOnboardingV421','1');d.close();};setTimeout(()=>{try{d.show();}catch{}},700);
   }
   function ensureMobileNav(){
     if($u('uxMobileNavV421'))return;
@@ -73,7 +73,7 @@
     ws.insertBefore(sec,summary);
     sec.addEventListener('click',e=>{
       const mode=e.target.closest('[data-ux-mode]');if(mode){setMode(mode.dataset.uxMode);return;}
-      const table=e.target.closest('#uxTableToggleV421');if(table){body.classList.toggle('ux-table-open-v421');setMode(body.classList.contains('ux-pro-v421')?'pro':'simple');if(body.classList.contains('ux-table-open-v421'))document.querySelector('.table-panel')?.scrollIntoView({behavior:'smooth',block:'start'});return;}
+      const table=e.target.closest('#uxTableToggleV421');if(table){body.classList.toggle('ux-table-open-v421');setMode(body.classList.contains('ux-pro-v421')?'pro':'simple');if(body.classList.contains('ux-table-open-v421'))document.querySelector('.table-panel')?.scrollIntoView({behavior:'auto',block:'start'});return;}
       const why=e.target.closest('[data-why-id]');if(why){showWhy(why.dataset.whyId);return;}
     });
   }
@@ -81,17 +81,17 @@
   function preparedRows(){
     try{return (Array.isArray(rows)?rows:[]).map(x=>typeof applyHuntV416==='function'?applyHuntV416(x):x);}catch{return [];}
   }
-  function activeRows(){
-    const a=preparedRows();return a.filter(x=>{
+  function activeRows(a){
+    return a.filter(x=>{
       try{return (typeof isActionFreshV416!=='function'||isActionFreshV416(x))&&(typeof isActionSessionV416!=='function'||isActionSessionV416(x));}catch{return true;}
     });
   }
-  function actionRows(){
-    return preparedRows().filter(x=>{try{return typeof isActionNowV416==='function'?isActionNowV416(x):['شکار ویژه','هشدار فوری'].includes(x.hunt);}catch{return false;}})
-      .sort((a,b)=>(Number(b.huntScoreV416)||0)-(Number(a.huntScoreV416)||0)||(Number(b.todayOpportunityV416)||0)-(Number(a.todayOpportunityV416)||0)).slice(0,8);
+  function actionRows(a){
+    return a.filter(x=>{try{return typeof isActionNowV416==='function'?isActionNowV416(x):['شکار ویژه','هشدار فوری'].includes(x.hunt);}catch{return false;}})
+      .sort((m,n)=>(Number(n.huntScoreV416)||0)-(Number(m.huntScoreV416)||0)||(Number(n.todayOpportunityV416)||0)-(Number(m.todayOpportunityV416)||0)).slice(0,8);
   }
-  function radarRows(){
-    return preparedRows().filter(x=>{try{return typeof isRadarEarlyV416==='function'?isRadarEarlyV416(x):x.hunt==='شکار زودهنگام';}catch{return false;}});
+  function radarRows(a){
+    return a.filter(x=>{try{return typeof isRadarEarlyV416==='function'?isRadarEarlyV416(x):x.hunt==='شکار زودهنگام';}catch{return false;}});
   }
   function strength(v,inverse=false){
     const n=Number(v);if(!Number.isFinite(n))return 'نامشخص';
@@ -115,9 +115,10 @@
       '<div class="ux-hunt-facts-v421"><div><span>تغییر</span><b>'+pctU(x.dayChangeV416,2)+'</b></div><div><span>فشار سفارش</span><b>'+strength(x.orderPressureV416)+'</b></div><div><span>ریسک</span><b>'+strength(x.risk,true)+'</b></div></div>'+
       '<div class="ux-hunt-actions-v421"><button type="button" class="ux-btn-v421 primary" data-why-id="'+escU(x.id)+'">چرا این سهم؟</button><button type="button" class="ux-btn-v421 detail-btn" data-id="'+escU(x.id)+'">نمایش</button>'+watch+'</div></article>';
   }
+  let lastActionMarkupV422='';
   function renderToday(){
     if(!$u('uxTodayV421'))return;
-    const all=preparedRows(),active=activeRows(),actions=actionRows(),radar=radarRows();
+    const all=preparedRows(),active=activeRows(all),actions=actionRows(all),radar=radarRows(all);
     const feed=$u('feedState')?.textContent||$u('feedBadge')?.textContent||'در حال بررسی';
     $u('uxPulseMarketV421').textContent=feed;
     $u('uxPulseMarketSubV421').textContent=$u('scanTimes')?.textContent||'—';
@@ -127,8 +128,8 @@
     const contexts=active.map(x=>Number(x.marketContextV416)).filter(Number.isFinite),avg=contexts.length?contexts.reduce((a,b)=>a+b,0)/contexts.length:null;
     $u('uxPulseContextV421').textContent=contextLabel(avg);$u('uxPulseContextSubV421').textContent=avg==null?'داده کافی نیست':'امتیاز زمینه '+faU(avg,0)+' از ۱۰۰';
     const grid=$u('uxActionGridV421');
-    if(actions.length)grid.innerHTML=actions.map(card).join('');
-    else{const m=emptyMessage();grid.innerHTML='<div class="ux-empty-v421" style="grid-column:1/-1"><b>'+m[0]+'</b><span>'+m[1]+'</span></div>';}
+    const markup=actions.length?actions.map(card).join(''):(()=>{const m=emptyMessage();return '<div class="ux-empty-v421" style="grid-column:1/-1"><b>'+m[0]+'</b><span>'+m[1]+'</span></div>';})();
+    if(markup!==lastActionMarkupV422){grid.innerHTML=markup;lastActionMarkupV422=markup;}
   }
 
   function snapshot(x){
@@ -193,16 +194,28 @@
     }catch{target.textContent='دفتر عملکرد واقعی در دسترس است؛ برای جزئیات و وضعیت بلوغ داده‌ها صفحه رکورد واقعی را باز کنید.';}
   }
 
+  let todayRenderTimerV422=0,todayRenderRafV422=0;
+  function scheduleTodayRenderV422(delay=28){
+    clearTimeout(todayRenderTimerV422);
+    todayRenderTimerV422=setTimeout(()=>{
+      if(todayRenderRafV422&&typeof cancelAnimationFrame==='function')cancelAnimationFrame(todayRenderRafV422);
+      const run=()=>{todayRenderRafV422=0;try{renderToday();}catch{}};
+      todayRenderRafV422=typeof requestAnimationFrame==='function'?requestAnimationFrame(run):0;
+      if(!todayRenderRafV422)run();
+    },delay);
+  }
   function installRenderHook(){
     if(typeof render!=='function'||render._uxV421)return;
-    const prev=render;const wrapped=function(){const out=prev.apply(this,arguments);try{renderToday();}catch{}return out;};wrapped._uxV421=true;render=wrapped;
+    const prev=render;const wrapped=function(){const out=prev.apply(this,arguments);scheduleTodayRenderV422();return out;};wrapped._uxV421=true;render=wrapped;
   }
 
   const searchBox=$u('search'),huntSelect=$u('hunt');
   if(searchBox)searchBox.addEventListener('input',()=>body.classList.toggle('ux-search-open-v421',!!searchBox.value.trim()));
   if(huntSelect)huntSelect.addEventListener('change',()=>body.classList.toggle('ux-filter-open-v421',!!huntSelect.value));
   setupGroupedNav();ensureToday();ensureWhyDialog();ensureMobileNav();wrapDetail();installRenderHook();
-  const saved=localStorage.getItem('stockHunterUxModeV421')||'simple';setMode(saved);renderToday();loadRecord();ensureOnboarding();
-  const observer=new MutationObserver(()=>{try{renderToday();}catch{}});const feed=$u('feedState');if(feed)observer.observe(feed,{subtree:true,childList:true,characterData:true});
-  window.StockHunterUxV421={version:VERSION,setMode,renderToday,showWhy};
+  const saved=localStorage.getItem('stockHunterUxModeV421')||'simple';setMode(saved);renderToday();
+  const deferNonCritical=fn=>{if(typeof requestIdleCallback==='function')requestIdleCallback(()=>fn(),{timeout:2200});else setTimeout(fn,1600);};
+  deferNonCritical(loadRecord);ensureOnboarding();
+  const observer=new MutationObserver(()=>scheduleTodayRenderV422(80));const feed=$u('feedState');if(feed)observer.observe(feed,{subtree:true,childList:true,characterData:true});
+  window.StockHunterUxV421={version:VERSION,setMode,renderToday,scheduleTodayRender:scheduleTodayRenderV422,showWhy};
 })();
