@@ -354,6 +354,14 @@ async function main(){
     assert.equal((await page.locator('#personalRoleV417').textContent()).trim(),'کاربر');
     assert.equal(await page.locator('#personalAdminV417').isHidden(),true,'normal user admin link must stay hidden');
 
+    const simpleMode=page.locator('[data-ux-mode="simple"]');
+    const professionalMode=page.locator('[data-ux-mode="pro"]');
+    if(await simpleMode.count()){
+      assert.equal(await page.locator('#pageSize').isHidden(),true,'simple mode must hide professional page-size control');
+      await professionalMode.click();
+      await page.locator('#pageSize').waitFor({state:'visible',timeout:10000});
+    }
+
     await page.selectOption('#pageSize','50');
     await page.selectOption('#hunt','__all__');
     await page.selectOption('#decision',{label:'تحت نظر'});
