@@ -123,3 +123,4 @@ html[data-theme="light"] .ux-global-nav-v421{background:rgba(246,249,251,.96)}
 
 /* 4.2.2 performance/scroll hardening */
 html,body.stock-ux-v421{height:auto!important;min-height:100%!important;overflow-y:auto!important}.stock-ux-v421 .app-shell,.stock-ux-v421 .workspace{height:auto!important;overflow:visible!important}.stock-ux-v421 #search{user-select:text!important;-webkit-user-select:text!important;touch-action:manipulation;caret-color:currentColor}
+.stock-ux-v421 .table-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch}.stock-ux-v421 .table-wrap table{min-width:1180px}
