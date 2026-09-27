@@ -43,7 +43,7 @@ jobs:
           grep -q "document.querySelector('.table-panel')" stock-hunter/ux-shell-v421.js
           grep -q 'رفتن به جدول شکار' stock-hunter/ux-shell-v421.js
           grep -q 'body.ux-simple-v421 .table-panel{display:grid!important' stock-hunter/ux-v421.css
-          grep -q 'may not move Radar/Table above the Today decision center' stock-hunter/PROJECT_CANONICAL_ARCHITECTURE.md
+          grep -q 'may not move Radar/Table above the Today decision center' stock-hunter-v4/PROJECT_CANONICAL_ARCHITECTURE.md
           echo 'today-table-order: PASS'
 
       - name: Verify optimized PWA
@@ -71,7 +71,7 @@ jobs:
           for token in exportXlsx exportCsv exportXml exportDocx exportPdf; do
             grep -q "$token" stock-hunter/data-export-v418.js
           done
-          grep -q 'data-export-v418.js' stock-hunter/cloud-v1/staging/index.html
+          grep -q 'data-export-v418.js' stock-hunter-v4/cloud-v1/staging/index.html
           echo 'full-export-v424: PASS'
 
       - name: Deterministic Hunt/runtime smokes from public path
