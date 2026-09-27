@@ -268,7 +268,7 @@ jobs:
           PY
           grep -q 'professional-center-v420.html' stock-hunter-v4/index.html
           grep -q 'app-professional-detail-v420.js?v=1' stock-hunter-v4/index.html
-          grep -q 'workspace-v420.js?v=1' stock-hunter-v4/index.html
+          grep -q 'workspace-v420.js?v=2' stock-hunter-v4/index.html
           grep -q 'ai-evidence-agent-v420.js?v=1' stock-hunter-v4/ai-center-v417.html
           grep -q 'alerts-cloud-v420.js?v=1' stock-hunter-v4/alerts-center-v416.html
           grep -q "self.addEventListener('push'" stock-hunter-v4/sw.js
@@ -320,7 +320,7 @@ jobs:
           for token in ['exportXlsx','exportCsv','exportXml','exportDocx','exportPdf','xlsx.full.min.js','index.umd.js','html2canvas.min.js','jspdf.umd.min.js','data-export-toolbar-v418']:
               assert token in export, token
           html_files=list(Path('stock-hunter-v4').glob('*.html'))
-          missing=[p.name for p in html_files if 'data-export-v418.js?v=3' not in p.read_text(encoding='utf-8') or 'locale-ui-v419.js?v=3' not in p.read_text(encoding='utf-8')]
+          missing=[p.name for p in html_files if 'data-export-v418.js?v=3' not in p.read_text(encoding='utf-8') or not any(v in p.read_text(encoding='utf-8') for v in ['locale-ui-v419.js?v=3','locale-ui-v419.js?v=4'])]
           assert not missing, missing
           research=Path('stock-hunter-v4/research-lab-v416.css').read_text(encoding='utf-8')
           extra=Path('stock-hunter-v4/extra.css').read_text(encoding='utf-8')
@@ -335,7 +335,7 @@ jobs:
           index=Path('stock-hunter-v4/index.html').read_text(encoding='utf-8')
           index417=Path('stock-hunter-v4/index-v417.html').read_text(encoding='utf-8')
           assert "Intl.Collator('fa-IR'" in locale and 'faDigits' in locale
-          assert "4.1.9-fa-ui-v3" in locale
+          assert "4.1.9-fa-ui-v4" in locale
           assert 'shouldSortFa' in locale and '(symbol|company|نماد|شرکت)' in locale
           assert 'localizeControlValue' in locale
           assert "b.textContent='چاپ'" in tools and 'چاپ / ذخیره PDF' not in tools
@@ -377,7 +377,7 @@ jobs:
           grep -q 'search-neutral-v416.css?v=1' stock-hunter-v4/index-v417.html
           grep -q 'neutral-theme-v416.css?v=1' stock-hunter-v4/index.html
           grep -q 'neutral-theme-v416.css?v=1' stock-hunter-v4/index-v417.html
-          grep -q 'app-runtime.js?v=4.1.6-feed-primary10' stock-hunter-v4/index.html
+          grep -q 'app-runtime.js?v=4.1.6-feed-primary11' stock-hunter-v4/index.html
           grep -q 'app-hotfix-v410.js?v=4.1.6-print1' stock-hunter-v4/index.html
           grep -q 'app-integrated-v410.js?v=4.1.6-print1' stock-hunter-v4/index.html
           grep -q 'href="profile-v417.html">حساب من</a>' stock-hunter-v4/index.html
@@ -411,10 +411,10 @@ jobs:
           grep -q 'hunt-runtime-core-v417.js?v=4.1.7' stock-hunter-v4/index.html
           grep -q 'app-runtime-router-v417.js?v=4.1.7' stock-hunter-v4/index.html
           grep -q 'app-hunt-hierarchy-v416.js?v=4.1.6' stock-hunter-v4/index.html
-          grep -q 'app-universal-search-v416.js?v=4.1.6-local-first1' stock-hunter-v4/index.html
+          grep -q 'app-universal-search-v416.js?v=4.1.6-local-first2' stock-hunter-v4/index.html
           grep -q 'app-eod-v416.js?v=4.1.6-early1' stock-hunter-v4/index.html
-          grep -q 'app-hunt-carry-v416.js?v=4.1.6-carry1' stock-hunter-v4/index.html
-          grep -q 'app-hunt-carry-v416.js?v=4.1.6-carry1' stock-hunter-v4/index-v417.html
+          grep -q 'app-hunt-carry-v416.js?v=4.1.6-carry2' stock-hunter-v4/index.html
+          grep -q 'app-hunt-carry-v416.js?v=4.1.6-carry2' stock-hunter-v4/index-v417.html
           grep -q 'hunt-methodology-v416.html' stock-hunter-v4/index.html
           grep -q 'کاندید شکار' stock-hunter-v4/index.html
           grep -q "HUNT_V416_VERSION='4.1.6-hunt-v2'" stock-hunter-v4/app-hunt-v416.js
@@ -554,19 +554,24 @@ jobs:
           index417=Path('stock-hunter-v4/index-v417.html').read_text(encoding='utf-8')
           assert 'return universeRows.slice().sort' in universe
           assert "if(q)return universalRowsV416(q)" in search
-          assert "STOCK_HUNTER_SEARCH_UI_V416={active:true,version:'4.1.6-search-typeahead-v1'}" in search
+          assert "STOCK_HUNTER_SEARCH_UI_V416={active:true,version:'4.1.6-search-typeahead-v2'}" in search
           assert 'search-combobox-v416' in search
           styles=Path('stock-hunter-v4/styles.css').read_text(encoding='utf-8')
           assert '.search-combobox-v416>input{display:block;width:100%;background:#131519;border-color:#2a2d33;color:#efece5}' in styles
-          assert 'styles.css?v=4.1.6-layout3' in index416
-          assert 'styles.css?v=4.1.6-layout3' in index417
+          assert 'styles.css?v=4.1.6-layout4' in index416
+          assert 'styles.css?v=4.1.6-layout4' in index417
           assert 'searchSuggestionsV416' in search
           assert "e.key==='ArrowDown'" in search and "e.key==='ArrowUp'" in search and "e.key==='Enter'" in search
-          assert 'SEARCH_RENDER_DEBOUNCE_V416=110' in search
+          assert 'SEARCH_RENDER_DEBOUNCE_V416=190' in search
+          assert 'SEARCH_RESULT_LIMIT_V416=600' in search
+          assert 'loadCatalogV416();' not in search.split("if(typeof window!=='undefined')",1)[1].split('document.addEventListener',1)[0]
+          assert 'const pageSize=1000;' in runtime
+          assert 'const primaryPromise=marketReadPagedV416' in runtime
+          assert 'scheduleTodayRenderV422' in Path('stock-hunter-v4/ux-shell-v421.js').read_text(encoding='utf-8')
           assert "for(const id of ['hunt','decision','pageSize'])" in runtime
           assert "['search','hunt','decision','pageSize']" not in runtime
-          assert 'app-universal-search-v416.js?v=4.1.6-local-first1' in index416
-          assert 'app-universal-search-v416.js?v=4.1.6-local-first1' in index417
+          assert 'app-universal-search-v416.js?v=4.1.6-local-first2' in index416
+          assert 'app-universal-search-v416.js?v=4.1.6-local-first2' in index417
           assert "stock_hunter_universe_v4" in search
           assert 'universeLiveSymbolMapV409' in universe
           assert 'historicalDetailHTMLV409' in hotfix
