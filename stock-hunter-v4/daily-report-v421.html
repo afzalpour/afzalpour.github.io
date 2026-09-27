@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#15181b">
+  <title>گزارش پایان بازار — شکارچی سهم</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="research-lab-v416.css?v=9">
+  <link rel="stylesheet" href="ux-v421.css?v=1">
+</head>
+<body>
+<main class="research-shell">
+  <header class="research-head">
+    <div><h1>گزارش پایان بازار</h1><p>خلاصه روزانه شکارها، مسیرهای موفق و ناموفق، فرصت‌های از دست‌رفته و وضعیت سامانه. این گزارش فقط داده ثبت‌شده را خلاصه می‌کند و موتور ثابت ۴.۱.۶ را تغییر نمی‌دهد.</p></div>
+  </header>
+  <div id="researchStatus" class="research-status" data-state="warn">در حال دریافت داده روز…</div>
+  <section class="filters">
+    <label>تاریخ شمسی <input id="reportDate" class="jalali-input" type="text" readonly></label>
+    <button id="reportRefresh" type="button">↻ تازه‌سازی گزارش</button>
+    <a class="ux-btn-v421" href="ai/">تحلیل تکمیلی در مرکز هوش مصنوعی</a>
+  </section>
+
+  <section class="cards">
+    <article class="card"><span>رخدادهای شکار</span><b id="reportHunts">۰</b></article>
+    <article class="card teal-card"><span>عبور از صفر</span><b id="reportZero">۰</b></article>
+    <article class="card good-card"><span>رسیدن به +۱٪</span><b id="reportPlus1">۰</b></article>
+    <article class="card bad-card"><span>ناموفق همان‌روز</span><b id="reportFailed">۰</b></article>
+    <article class="card violet-card"><span>فرصت‌های از دست‌رفته</span><b id="reportMissed">۰</b></article>
+  </section>
+
+  <section class="panel">
+    <h2>اگر فقط ۵ دقیقه وقت دارید</h2>
+    <div id="reportFiveMinute" class="ai-output-v417">در حال ساخت جمع‌بندی کوتاه…</div>
+  </section>
+
+  <section class="panel">
+    <h2>شکارهای برجسته روز</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>نماد</th><th>مسیر</th><th>وضعیت</th><th>امتیاز</th><th>تغییر هنگام کشف</th><th>بیشترین پیشروی</th><th>بیشترین افت</th><th>نتیجه</th></tr></thead>
+      <tbody id="reportTopBody"></tbody>
+    </table></div>
+  </section>
+
+  <section class="panel">
+    <h2>برداشت روز</h2>
+    <div id="reportNarrative" class="ai-output-v417">در حال آماده‌سازی…</div>
+  </section>
+  <p class="footnote">این صفحه عملکرد گذشته را گزارش می‌کند و تضمینی درباره آینده نمی‌دهد. امتیاز شکار احتمال موفقیت نیست.</p>
+</main>
+<script src="config.js?v=4.1.6-cloud-primary1"></script>
+<script src="research-common-v416.js?v=5"></script>
+<script src="daily-report-v421.js?v=1"></script>
+<script src="data-export-v418.js?v=3"></script>
+<script src="locale-ui-v419.js?v=3"></script>
+</body></html>
