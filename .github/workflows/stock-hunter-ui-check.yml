@@ -36,6 +36,7 @@ on:
       - 'stock-hunter-v4/alerts-cloud-v420.js'
       - 'stock-hunter-v4/ai-evidence-agent-v420.js'
       - 'stock-hunter-v4/professional-suite-v420.sql'
+      - 'stock-hunter-v4/professional-suite-v420-least-privilege.sql'
       - 'stock-hunter-v4/cloud-push-v420/**'
       - 'stock-hunter-v4/carry-forward-v416.sql'
       - 'stock-hunter-v4/research-common-v416.js'
@@ -260,6 +261,13 @@ jobs:
               assert table in sql, table
           assert 'enable row level security' in sql.lower()
           assert '(select auth.uid())=user_id' in sql
+          grants=Path('stock-hunter-v4/professional-suite-v420-least-privilege.sql').read_text(encoding='utf-8')
+          assert 'least-privilege grant hardening' in grants
+          assert 'revoke all on table public.stock_hunter_smart_watchlists_v420 from anon' in grants
+          assert 'revoke all on table public.stock_hunter_decision_journal_v420 from anon' in grants
+          assert 'revoke all on table public.stock_hunter_workspace_v420 from anon' in grants
+          assert 'revoke all on table public.stock_hunter_push_subscriptions_v420 from anon' in grants
+          assert 'grant select on table public.stock_hunter_push_public_v420 to anon, authenticated' in grants
           assert 'vapid_private_key' in sql and 'Operational setup after migration' in sql
           assert 'web-push@3.6.7' in edge and 'x-stock-hunter-cron' in edge and 'stock_hunter_push_delivery_v420' in edge
           assert 'vapid_private_key text' not in edge
