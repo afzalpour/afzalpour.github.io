@@ -1,49 +1,74 @@
-// Canary admission + expansion + hold/rollback + recovery dashboard assets are pinned to cache r18.
-// Recovery/Re-entry release gate: all CI workflows validate this same service-worker head.
-const CACHE='shikar-sahm-v4.1.6-r18';
-const STATIC=[
-  './','./index.html','./styles.css','./extra.css','./forecast-v415.css','./neutral-theme-v416.css',
-  './app-core.js','./app-forecast.js','./app-runtime.js','./app-universe.js',
-  './app-hotfix-v410.js','./app-integrated-v410.js','./app-integrated-summary-v410.js',
-  './app-explain-v411.js','./app-forecast-bridge-v414.js','./app-forecast-trend-v415.js','./app-forecast-validation-v430.js',
-  './app-theme-v412.js','./app-session-v413.js','./app-hunt-v416.js','./hunt-runtime-core-v417.js','./app-runtime-router-v417.js','./app-hunt-hierarchy-v416.js',
-   './app-universal-search-v416.js','./app-eod-v416.js','./app-hunt-carry-v416.js','./app-hunt-timeline-v416.js','./app-ai-assistant-v417.js','./app-professional-detail-v420.js','./workspace-v420.js','./performance.html','./performance-v416.js','./calibration.html','./calibration-v416.js','./candidate-evaluator-v416.js','./robustness-gate-v416.js','./promotion-decision-v416.js','./rollout-v417.html','./rollout-v417.js','./canary-admission-v417.js','./canary-expansion-v417.js','./canary-hold-rollback-v417.js','./canary-recovery-v417.js',
-  './ux-v421.css','./ux-common-v421.js','./ux-shell-v421.js','./daily-report-v421.html','./daily-report-v421.js','./config.js','./manifest.webmanifest','./icon.svg','./methodology.html','./hunt-methodology-v416.html','./research-lab-v416.css','./research-common-v416.js','./research-tools-v417.js','./data-export-v418.js','./locale-ui-v419.js','./ai-center-v417.html','./ai-center-v417.js','./hunt-journey-v416.html','./hunt-journey-v416.js','./market-replay-v416.html','./market-replay-v416.js','./backtest-lab-v416.html','./backtest-lab-v416.js','./missed-opportunities-v416.html','./missed-opportunities-v416.js','./alerts-center-v416.html','./alerts-center-v416.js','./reliability-v416.html','./reliability-v416.js','./strategy-builder-v417.html','./strategy-builder-v417.js','./professional-center-v420.html','./professional-center-v420.js','./professional-v420.css','./alerts-cloud-v420.js','./ai-evidence-agent-v420.js'
+// Stock Hunter public PWA 4.2.4 — optimized shell for /stock-hunter/.
+// Frozen Hunt 4.1.6 scoring/runtime semantics are untouched.
+const CACHE_PREFIX='shikar-sahm-public-';
+const CACHE=CACHE_PREFIX+'v4.2.4-r1';
+const CORE=[
+  './','./index.html','./styles.css','./extra.css','./forecast-v415.css','./neutral-theme-v416.css','./ux-v421.css',
+  './config.js','./app-core.js','./app-runtime.js','./app-session-v413.js','./app-hunt-v416.js',
+  './hunt-runtime-core-v417.js','./app-runtime-router-v417.js','./app-hunt-hierarchy-v416.js',
+  './app-universal-search-v416.js','./app-eod-v416.js','./app-hunt-carry-v416.js',
+  './data-export-v418.js','./locale-ui-v419.js','./icon.svg','./icon-192.png','./icon-512.png','./manifest.webmanifest'
 ];
-self.addEventListener('install',e=>{
+self.addEventListener('install',event=>{
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(STATIC)));
+  event.waitUntil((async()=>{
+    const cache=await caches.open(CACHE);
+    await Promise.allSettled(CORE.map(async url=>{
+      try{const r=await fetch(url,{cache:'reload'});if(r.ok)await cache.put(url,r.clone());}catch{}
+    }));
+  })());
 });
-self.addEventListener('activate',e=>{
-  e.waitUntil((async()=>{
-    for(const k of await caches.keys())if(k!==CACHE)await caches.delete(k);
+self.addEventListener('activate',event=>{
+  event.waitUntil((async()=>{
+    for(const key of await caches.keys())if(key.startsWith(CACHE_PREFIX)&&key!==CACHE)await caches.delete(key);
+    if(self.registration.navigationPreload)try{await self.registration.navigationPreload.enable();}catch{}
     await self.clients.claim();
   })());
 });
-self.addEventListener('fetch',e=>{
-  if(e.request.method!=='GET')return;
-  const u=new URL(e.request.url);
-  if(u.origin!==location.origin)return;
-  e.respondWith(
-    fetch(e.request,{cache:'no-store'}).then(r=>{
-      if(r.ok){const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy)).catch(()=>{});}
+async function cachedStatic(request){
+  const cache=await caches.open(CACHE);
+  const hit=await cache.match(request,{ignoreSearch:true});
+  const refresh=fetch(request,{cache:'no-cache'}).then(async r=>{if(r.ok)await cache.put(request,r.clone());return r;}).catch(()=>null);
+  return hit||(await refresh)||Response.error();
+}
+async function navigationResponse(event){
+  const cache=await caches.open(CACHE);
+  try{
+    const preload=await event.preloadResponse;if(preload&&preload.ok){cache.put(event.request,preload.clone()).catch(()=>{});return preload;}
+    const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),4500);
+    try{
+      const r=await fetch(event.request,{cache:'no-cache',signal:ctrl.signal});
+      if(r.ok)cache.put(event.request,r.clone()).catch(()=>{});
       return r;
-    }).catch(()=>caches.match(e.request))
-  );
+    }finally{clearTimeout(timer);}
+  }catch{
+    return (await cache.match(event.request,{ignoreSearch:true}))||
+      (await cache.match('./index.html',{ignoreSearch:true}))||
+      new Response('شکارچی سهم در این لحظه آفلاین است.',{status:503,headers:{'Content-Type':'text/plain;charset=utf-8'}});
+  }
+}
+self.addEventListener('fetch',event=>{
+  const request=event.request;if(request.method!=='GET')return;
+  const u=new URL(request.url);if(u.origin!==self.location.origin)return;
+  if(request.mode==='navigate'){event.respondWith(navigationResponse(event));return;}
+  const dest=request.destination;
+  if(['script','style','image','font','manifest'].includes(dest)||/\.(?:js|css|png|svg|webmanifest)$/i.test(u.pathname)){
+    event.respondWith(cachedStatic(request));
+  }
 });
-self.addEventListener('notificationclick',e=>{
-  e.notification.close();
-  const target=new URL(e.notification?.data?.url||'alerts/',self.location.href).href;
-  e.waitUntil((async()=>{
+self.addEventListener('message',event=>{if(event.data==='SKIP_WAITING')self.skipWaiting();});
+self.addEventListener('notificationclick',event=>{
+  event.notification.close();
+  const target=new URL(event.notification?.data?.url||'alerts/',self.location.href).href;
+  event.waitUntil((async()=>{
     const list=await self.clients.matchAll({type:'window',includeUncontrolled:true});
     for(const client of list){if(client.url===target||client.url.startsWith(target.split('?')[0])){await client.focus();return;}}
     if(self.clients.openWindow)await self.clients.openWindow(target);
   })());
 });
-
-self.addEventListener('push',e=>{
-  let data={};try{data=e.data?e.data.json():{};}catch{data={body:e.data?.text?.()||''};}
+self.addEventListener('push',event=>{
+  let data={};try{data=event.data?event.data.json():{};}catch{data={body:event.data?.text?.()||''};}
   const title=data.title||'شکارچی سهم';
-  const options={body:data.body||'رخداد تازه شکار ثبت شد.',icon:data.icon||'icon.svg',badge:data.badge||'icon.svg',tag:data.tag||'stock-hunter-cloud-push',renotify:false,data:data.data||{url:'alerts/'}};
-  e.waitUntil(self.registration.showNotification(title,options));
+  const options={body:data.body||'رخداد تازه شکار ثبت شد.',icon:data.icon||'icon-192.png',badge:data.badge||'icon-192.png',tag:data.tag||'stock-hunter-cloud-push',renotify:false,data:data.data||{url:'alerts/'}};
+  event.waitUntil(self.registration.showNotification(title,options));
 });
