@@ -479,3 +479,13 @@ Mobile uses a dedicated bottom-navigation and card-first Today experience. Deskt
 
 ### Visual system
 The approved Precision Optics / IRAN-font identity remains canonical. 4.2.1 extends it consistently with restrained reticle/brass accents, semantic green/red/orange/blue states, and clearer hierarchy; decorative color must not imply model certainty.
+
+
+## Performance contract — 4.2.3 main-page freeze fix
+- Scope is presentation/runtime orchestration only; frozen Hunt engine `4.1.6-hunt-v2`, weights, thresholds, eligibility and lifecycle gates are unchanged.
+- Main market refresh is health-first: when `stock_hunter_feed_health_v4.last_feed_at` has not advanced, the browser must not redownload or rerender the full Signals/Integrated payload.
+- Poll cadence is adaptive: normal live cadence while market/session is active, at least 3 minutes while the market is closed, and at least 5 minutes while the tab is hidden.
+- Repeated Hunt reads of the same row/snapshot within the same minute reuse an in-memory WeakMap memo result; a new row object, feed timestamp, snapshot tail or minute boundary recomputes through the exact frozen formulas.
+- Browser Cache Storage is written only for a newly accepted feed timestamp in the current page session.
+- Same-origin static assets use the versioned service-worker cache `shikar-sahm-v4.1.6-r19` cache-first path; Supabase/Data API traffic remains network-only and is never intercepted by the service worker.
+- DOM status, radar and mobile-list writes are skipped when rendered content is unchanged to reduce MutationObserver/localization churn.
