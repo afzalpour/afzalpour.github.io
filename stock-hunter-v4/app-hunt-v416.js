@@ -7,6 +7,7 @@
 // The five 10-day forecast models are display-only and never enter Hunt Score.
 
 const HUNT_V416_VERSION='4.1.6-hunt-v2';
+const huntMemoV416=new WeakMap();
 const clampH416=(v,a=0,b=100)=>Math.max(a,Math.min(b,Number(v)||0));
 const pctH416=(a,b)=>Number(b)>0?((Number(a)/Number(b))-1)*100:0;
 const scoreRangeH416=(v,lo,hi)=>hi===lo?50:clampH416((Number(v)-lo)/(hi-lo)*100);
@@ -217,8 +218,14 @@ function huntDecisionV416(x){
   return 'عدم شکار';
 }
 
+function huntMemoKeyV416(x){
+  const sn=Array.isArray(x?.snapshots)?x.snapshots:[],last=sn.length?sn[sn.length-1]:null;
+  return [Math.floor(Date.now()/60000),x.updated||'',sn.length,snapTsSecV416(last),x.last,x.yesterday,x.volume].join('|');
+}
 function applyHuntV416(x){
   if(!x||x.analyzed===false)return x;
+  const memoKey=huntMemoKeyV416(x);
+  if(huntMemoV416.get(x)===memoKey)return x;
   const dayChange=pctH416(x.last,x.yesterday);
   const mode=dayChange<0?'reversal':dayChange<1?'acceleration':'outside';
   const dyn=snapshotDynamicsV416(x),e=effectiveDynamicV416(x,dyn);
@@ -267,6 +274,7 @@ function applyHuntV416(x){
   x.hunt=huntStatusV416(x.huntScoreV416,x.todayOpportunityV416,Number(x.risk||0),x.huntEvidenceV416,gate);
   x.huntDecisionV416=huntDecisionV416(x);
   x.huntEngineVersionV416=HUNT_V416_VERSION;
+  huntMemoV416.set(x,memoKey);
   return x;
 }
 function isGoalCandidateV416(x){
@@ -328,13 +336,16 @@ function isRadarEarlyV416(x){
   applyHuntV416(x);
   return isActionFreshV416(x)&&isActionSessionV416(x)&&x.dayChangeV416<1&&x.hunt==='شکار زودهنگام';
 }
+let huntRadarMarkupV422='';
 function renderHuntRadarV416(){
   const box=$('huntRadarV416'),list=$('huntRadarListV416'),count=$('huntRadarCountV416');
   if(!box||!list||!count)return;
   const early=rows.map(applyHuntV416).filter(isRadarEarlyV416).sort((a,b)=>b.huntScoreV416-a.huntScoreV416||b.todayOpportunityV416-a.todayOpportunityV416||b.fast-a.fast).slice(0,8);
-  count.textContent=early.length.toLocaleString('fa-IR');
-  box.hidden=early.length===0;
-  list.innerHTML=early.map(x=>`<button class="hunt-radar-item-v416" type="button" data-id="${esc(x.id)}"><span class="hunt-radar-symbol-v416">${esc(x.symbol)}</span><span>${esc(x.huntModeLabelV416||'شکار زودهنگام')}</span><b>${fa(x.huntScoreV416,1)}</b><small>${x.dayChangeV416>0?'+':''}${fa(x.dayChangeV416,2)}٪</small></button>`).join('');
+  const countText=early.length.toLocaleString('fa-IR');
+  if(count.textContent!==countText)count.textContent=countText;
+  const hidden=early.length===0;if(box.hidden!==hidden)box.hidden=hidden;
+  const markup=early.map(x=>`<button class="hunt-radar-item-v416" type="button" data-id="${esc(x.id)}"><span class="hunt-radar-symbol-v416">${esc(x.symbol)}</span><span>${esc(x.huntModeLabelV416||'شکار زودهنگام')}</span><b>${fa(x.huntScoreV416,1)}</b><small>${x.dayChangeV416>0?'+':''}${fa(x.dayChangeV416,2)}٪</small></button>`).join('');
+  if(markup!==huntRadarMarkupV422){list.innerHTML=markup;huntRadarMarkupV422=markup;}
 }
 
 const filteredBeforeHuntV416=filtered;
@@ -366,13 +377,15 @@ render=function(...args){
   return out;
 };
 
+let huntMobileMarkupV422='';
 renderMobile=function(a){
-  $('mobileList').innerHTML=a.length?a.map(x=>{
+  const markup=a.length?a.map(x=>{
     if(x?.analyzed!==false)applyHuntV416(x);
     const setup=x.huntModeV416==='reversal'?'↗ برگشت منفی':x.huntModeV416==='acceleration'?'⚡ شتاب مثبت':'—';
     const ch=Number(x.dayChangeV416||0);
     return `<article class="mobile-card"><div class="mobile-head"><div><div class="mobile-symbol">${esc(x.symbol)}</div><div class="company">${esc(x.company)}</div></div><div><span class="badge ${hc(x.hunt)}">${esc(x.hunt)}</span></div></div><div class="mobile-metrics"><div><span>نوع فرصت</span><b>${setup}</b></div><div><span>تغییر</span><b>${ch>0?'+':''}${fa(ch,2)}٪</b></div><div><span>امتیاز شکار</span><b>${fa(x.huntScoreV416,1)}</b></div><div><span>قدرت امروز</span><b>${fa(x.todayOpportunityV416,1)}</b></div><div><span>تداوم ۱–۲ روزه</span><b>${fa(x.continuation12V416,1)}</b></div><div><span>Delta</span><b>${x.deltaReadyV416?'آماده':'ناکافی'}</b></div></div><div class="mobile-foot"><span>${esc(x.huntDecisionV416||'')}</span><button class="detail-btn" data-id="${esc(x.id)}">جزئیات</button></div></article>`;
   }).join(''):'<div class="alert-box">در این لحظه کاندید هدف‌محور مطابق فیلتر فعلی وجود ندارد.</div>';
+  if(markup!==huntMobileMarkupV422){$('mobileList').innerHTML=markup;huntMobileMarkupV422=markup;}
 };
 
 updateSummary=function(){
