@@ -1,0 +1,31 @@
+{
+  "manifest_version": 1,
+  "stage": "BASE_SIGNAL_PARITY_V401",
+  "source": {
+    "path": "stock-hunter-v4/legacy-security/stock-hunter-market-scan-v4/index.ts",
+    "git_blob_sha1": "e2b2e9353af61ac3b479b52a0338ceac1a26fd0f"
+  },
+  "generated_core": {
+    "path": "stock-hunter-v4/cloud-v1/live-features/generated-signal-core-v401.ts",
+    "generator": "stock-hunter-v4/cloud-v1/scripts/generate-signal-core.mjs"
+  },
+  "wrapper": "stock-hunter-v4/cloud-v1/live-features/live-feature-builder-v1.ts",
+  "authoritative_scope": [
+    "rolling_microstructure_features",
+    "5m_intraday_technical_features",
+    "live_clienttype_real_flow",
+    "legacy_fast_signal_acceleration",
+    "legacy_continuation_score",
+    "legacy_risk_score"
+  ],
+  "explicitly_non_authoritative": [
+    "legacy_hunt_state",
+    "legacy_decision",
+    "legacy_entry_and_targets"
+  ],
+  "frozen_hunt_input_ready": false,
+  "blockers": [
+    "integrated_view_provenance_unresolved",
+    "asset_session_classification_provenance_unresolved"
+  ]
+}

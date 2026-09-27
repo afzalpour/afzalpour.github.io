@@ -1,0 +1,490 @@
+# Stock Hunter — Canonical Architecture Freeze
+
+Status: canonical
+Date: 2026-09-19
+Scope: Stock Hunter 4.1.6 champion + 4.1.7 challenger lifecycle
+
+## 1. Product objective
+The main screen is an operational hunting surface, not a market directory.
+
+Canonical information architecture:
+1. **Action Now** — default main table.
+2. **Radar** — compact near-action queue.
+3. **Universe** — full market access through search and explicit filters.
+
+This contract applies to 4.1.6 and all later versions unless the user explicitly approves a replacement.
+
+## 2. Action Now contract
+Default main table shows only:
+- `شکار ویژه`
+- `هشدار فوری`
+
+Additional mandatory gates:
+- row data must be fresh (maximum age: 180 seconds);
+- the instrument must be inside its valid hunt/session window;
+- the setup must remain inside the 4.1.6 goal domain (`dayChange < +1%`).
+
+Stale rows must NEVER appear as active Action Now alerts.
+
+## 3. Radar contract
+A compact **رادار نزدیک** section shows up to 8 best fresh `شکار زودهنگام` rows.
+Sort priority:
+1. Hunt Score
+2. Today Opportunity
+3. fast score
+
+Radar is observational/pre-action. It does not change scoring or thresholds.
+
+## 4. Universe contract
+All search/filter capabilities remain.
+- Universal search searches the complete `stock_hunter_universe_v4` catalog, independent of Hunt/session filters.
+- Hunt dropdown preserves: active default, special, urgent, early, watch, normal, and explicit **همه نمادها**.
+- Selecting **همه نمادها** shows the loaded market universe, including instruments not eligible for fast Hunt.
+- Funds and other instruments must not disappear from Search/Universe just because they are not current Hunt candidates.
+
+## 5. Eligibility vs visibility
+Hunt eligibility and Universe visibility are separate.
+Options, debt/fixed-income and other excluded instrument classes may be visible/searchable while remaining ineligible for the fast Hunt engine.
+Never solve clutter by deleting instruments from the Universe.
+
+## 6. 4.1.6 champion freeze
+4.1.6 remains the production champion.
+Frozen scoring engine: `4.1.6-hunt-v2`.
+Do not change formulas, thresholds, model list, capture provenance, prospective boundaries, calibration criteria, or lifecycle gates without explicit user authorization.
+UI bug fixes may be made only when they preserve this architecture and approved visual identity.
+
+Approved visual identity remains frozen:
+- IRAN font across all site text;
+- Precision Optics dark palette;
+- approved recolor of the original logo geometry;
+- brass/orange numeric treatment;
+- full explanatory text under Detail metrics;
+- existing 5 forecast models and 10-day comparison.
+
+## 7. 4.1.7 challenger contract
+4.1.7 inherits the same Action Now → Radar → Universe UI contract.
+Its runtime scorer may only affect rows routed to challenger after approved activation gates.
+UI visibility rules are version-neutral and shared.
+Current safety baseline until lifecycle advancement:
+- champion only;
+- challenger traffic 0%;
+- kill switch engaged;
+- capture-v417 dark/no active callers.
+
+Do not activate 4.1.7 merely because implementation is complete. Continue prospective collection → maturity → calibration → robustness → candidate evaluation → OOS → promotion proposal → forward shadow → activation review → canary.
+
+## 8. Feed/freshness contract
+Primary live-market provenance is the approved PC Eco architecture `SHIKAR-PC-ECO-GITHUB-V1`.
+
+Canonical path:
+- the owner's Windows PC reads TSETMC bulk MarketWatch every 30 seconds and ClientType every 120 seconds;
+- `Stock_Hunter_PC_Eco_Bridge_v4.1.1.exe` processes the full eligible MarketWatch universe for flows 1/2/4;
+- no local Top-N transport prefilter may prevent an eligible symbol from reaching Frozen Hunt;
+- upload remains low-bandwidth through gzip batches of at most 250 rows;
+- Supabase Edge Function `stock-hunter-pc-ingest-v410` is the ingest boundary and writes the existing signal/universe/feed-health tables;
+- GitHub Pages remains the public UI;
+- the browser remains the authoritative `4.1.6-hunt-v2` scorer.
+
+The earlier v4.0.8/v4.0.9 loopback-controller path and the Iran-VPS/Cloudflare architecture are retained only as legacy/optional redundancy designs. They are not the primary feed prerequisite.
+
+No fixed Iranian IP, VPS, Cloudflare credential, Python runtime, or Windows service is required for the primary path.
+
+Browser refresh interval remains 15 seconds. A stale feed can remain searchable but cannot create active Action Now/Radar alerts. The frozen <=180-second Action Now freshness gate is unchanged. Feed snapshots must be preserved into browser normalization because the frozen 4.1.6 Delta logic consumes them.
+
+
+Quality-quarantine contract:
+- prospective source rows are never deleted or synthetically repaired to hide a capture-quality incident;
+- a known-invalid or conservatively unsafe Shadow Sample may be placed in the immutable `stock_hunter_shadow_sample_exclusions_v416` ledger;
+- any sample in that ledger is permanently excluded from the live Calibration dataset before OOS freeze;
+- quarantine must be evidence-backed and documented; it cannot be used to improve model metrics by selectively removing poor outcomes.
+
+Prospective capture freshness is also per-row, not heartbeat-only:
+- `stock-hunter-capture-v416` may evaluate/write prospective Hunt Events or Shadow Samples only from source rows whose `updated_at` age is at most 180 seconds at capture invocation time;
+- a fresh global `stock_hunter_feed_health_v4` heartbeat is not sufficient if an individual symbol row is stale;
+- source rows older than 180 seconds must be excluded before Hunt evaluation and before prospective writes.
+
+
+## 9. New-chat continuity rule
+This file is the architectural source of truth.
+Any new project chat/agent must read this file BEFORE proposing or applying changes.
+Then read `NEW_CHAT_BOOTSTRAP.md`, inspect current GitHub `main`, and verify live Supabase state.
+Never reconstruct architecture only from conversational memory.
+
+## 10. Change-control rule
+Every explicitly approved architecture change must update this canonical file in the SAME PR/commit series.
+If code and this document disagree, stop and reconcile before release.
+
+
+## 11. 4.1.7 Auth / Profile contract
+Authentication and personal profiles are mandatory release scope for 4.1.7.
+
+### Identity
+- Supabase Auth is the identity provider.
+- The market application requires an authenticated session; only the login/recovery surface may be public.
+- Initial sign-in scope: email + password, with email verification/recovery. Additional providers may be added later without changing the core authorization model.
+- Authentication must remain logically separate from Hunt scoring, capture, calibration, OOS, promotion, and runtime routing.
+
+### Roles
+Canonical roles:
+- `owner_admin` — exactly the project owner / primary administrator.
+- `admin` — optional delegated administrator.
+- `user` — normal application user.
+
+The first `owner_admin` assignment is a one-time privileged bootstrap after the owner's Auth account exists. It must NEVER be claimable from browser UI, signup metadata, `user_metadata`, email text matching, or "first registered user" logic.
+
+Authorization data must not be trusted from user-editable metadata. Sensitive administrative operations must use protected role state and/or trusted `app_metadata`, with server-side enforcement and RLS.
+
+### Personal profile
+Each authenticated user receives an own-only profile containing at minimum:
+- display name;
+- avatar reference;
+- account status;
+- created / updated / last-seen timestamps;
+- UI preferences;
+- saved columns / filters;
+- alert preferences.
+
+Personal features are part of 4.1.7:
+- personal watchlists;
+- saved symbols;
+- personal alert settings;
+- saved display/filter preferences.
+
+### Privacy and RLS
+- Every user-owned table exposed through the Data API must have RLS enabled.
+- Users can read/update only their own profile and personal objects.
+- Admin access is explicit and least-privilege; no broad browser service key exists.
+- `service_role` / secret keys must never be exposed to the browser.
+- Administrative mutations run through a protected server-side/Edge Function boundary and must be audited.
+- User deletion/suspension must account for active sessions/token lifetime; access revocation is not implemented as a UI-only flag.
+
+### Admin console
+The owner admin receives an admin-only surface for:
+- user list and account status;
+- role management except transfer/removal of the sole owner without a controlled owner-transfer procedure;
+- suspend/reactivate;
+- audit trail;
+- aggregate usage/health information.
+
+The admin console must not silently expose a user's private personal data beyond what is required for administration.
+
+### Release gating
+4.1.7 cannot be declared final until Auth/Profile passes:
+- signup/login/logout/recovery verification;
+- owner bootstrap verification;
+- RLS isolation tests with at least two distinct test users;
+- admin authorization negative tests;
+- session expiry/revocation tests;
+- no-secret-in-browser verification;
+- security advisor review;
+- public-production auth smoke.
+
+See `AUTH_PROFILE_V417_ARCHITECTURE.md` for the implementation contract.
+
+
+### Auth implementation status
+Admin boundary status (2026-09-19): `stock-hunter-admin-v417` is deployed with `verify_jwt=true`; the staged admin console is implemented; suspension combines Auth ban with restrictive account-status RLS. Two-user real-session isolation and admin-negative tests PASS.
+
+
+## 12. Continuity and current Auth checkpoint
+Canonical continuation keyword: `SHIKAR-417-CONTINUE-CANONICAL`.
+
+The older phrase `ادامه پروژه شکار سهم — SHIKAR-417-CANONICAL-CONTINUE` is a compatibility alias only. New chats must normalize it to the canonical keyword above.
+
+When the canonical keyword appears:
+- read `CURRENT_HANDOFF.md`, `NEW_CHAT_BOOTSTRAP.md`, this architecture, Auth architecture, and latest audits;
+- verify current GitHub `main` and live Supabase state before mutation;
+- continue from the first incomplete gate without asking the user to reconstruct prior history.
+
+Auth/RLS two-user real-session isolation self-test: PASS (2026-09-19).
+Admin boundary and console: implemented.
+Authenticated 4.1.7 personal app surface: implemented as a staging surface; Profile/Preferences/Watchlists are connected to the market UI.
+4.1.6 remains production Champion and is not login-gated.
+
+
+### Engineering proof status
+As of 2026-09-19:
+- 4.1.6 Browser ↔ deployed capture Hunt parity final revalidation: PASS on the frozen deterministic fixture protocol.
+- 4.1.7 control-plane crash/partial-failure proof: PASS on real START/ADVANCE/ROLLBACK transition functions using rollback-only live PostgreSQL failpoints.
+- 4.1.7 advisory-lock + state_version contention proof: PASS with real independent PostgreSQL connections.
+- 4.1.7 authenticated deployed Chromium smoke: PASS for login, personal Preferences persistence, Watchlists, normal-user Admin isolation and logout; temporary user cleanup PASS.
+These proofs do not authorize challenger activation; statistical maturity/OOS/promotion/activation gates remain independent.
+
+
+### Capture service authentication
+As of 2026-09-19 the active 4.1.6 prospective capture boundary is `VAULT_HMAC_NONCE_V2`.
+- `verify_jwt=false` is intentional for the database-cron/service-to-service endpoint; it is not browser-authenticated.
+- the Vault capture secret is an HMAC key and must never be transmitted on the request;
+- every production capture request requires a fresh timestamp, UUID nonce and HMAC-SHA256 signature;
+- timestamp window is ±180 seconds;
+- nonce reuse is denied atomically by a private ledger;
+- the legacy static capture-token header is rejected by the active Edge source;
+- only the private postgres cron signer may construct valid capture requests;
+- Hunt formulas, capture provenance and prospective semantics are unchanged.
+Capture security hardening live + deployed regression status: PASS.
+
+
+### Legacy market-scan compatibility hardening
+The non-canonical legacy `stock-hunter-market-scan-v4` endpoint must not be confused with the 4.1.6 prospective capture service.
+As of 2026-09-20 its raw embedded caller credential has been removed from source and replaced by digest-only validation while preserving the existing `x-scan-secret` caller contract. No repo/pg_cron caller was found, but an external caller may exist, so caller transport/secret rotation requires separate evidence.
+
+### Hosted Auth platform blockers
+The deployed 4.1.7 browser/login/personal/Admin-isolation smoke is PASS, but final Auth/Profile release gating still requires:
+- correcting hosted Site URL / redirect allow-list through a legitimate Dashboard or Management API path;
+- Leaked Password Protection when the project plan supports the Pro-only feature;
+- password-recovery/public redirect smoke after URL configuration is corrected.
+These platform blockers must not be bypassed with browser-side redirect weakening or fake HIBP logic.
+
+
+## 13. Frozen Hunt 4.1.6 prospective effectiveness tracking
+Primary model validation is outcome-based and prospective.
+
+Canonical tracker objects:
+- `stock_hunter_hunt_market_tape_v416`: bounded narrow market tape only for symbols with a real Hunt alert;
+- `stock_hunter_hunt_effectiveness_v416`: permanent deduplicated alert-outcome ledger;
+- `stock_hunter_hunt_effectiveness_summary_v416`: aggregate effectiveness view;
+- `stock_hunter_hunt_effectiveness_control_v416`: prospective boundary and operational status.
+
+Prospective D+1 tracking begins on **2026-09-26**. Older missing sessions or queue state must never be synthetically backfilled from later market state.
+
+Two channels are measured independently:
+- **ACTION_NOW**: first actual `شکار ویژه` / `هشدار فوری` event per symbol/day;
+- **RADAR**: first non-quarantined `شکار زودهنگام` Shadow Sample per symbol/day.
+
+Permanent outcomes include:
+- same-day cross of 0%;
+- same-day +1/+2/+3 reach;
+- same-day mode target reach/close;
+- same-day canonical buy queue any-time / close;
+- next observed market-session (D+1) positive close;
+- D+1 +1/+2/+3 reach;
+- D+1 canonical buy queue any-time / close;
+- MFE/MAE and return from the original alert price.
+
+Canonical buy queue is the existing feed `buy_queue` feature (level-1 best bid approximately equals `max_allowed` with positive bid quantity). The effectiveness layer must not substitute a price-change proxy for queue state.
+
+The narrow tape has 30-day retention; permanent alert outcomes remain after tape cleanup.
+
+Missing/unmatured D+1 evidence is excluded from denominators and is never counted as failure.
+
+This tracking layer is observational only. It does **not** modify Frozen Hunt `4.1.6-hunt-v2` formulas, thresholds, state classification, Action Now/Radar visibility, calibration gates, or production routing.
+
+
+## 14. Personal account entry and own-profile landing contract
+The public 4.1.6 market surface remains ungated, but it may expose a visible **حساب من** entry to the authenticated personal surface.
+
+Canonical account flow:
+1. public user chooses `حساب من`;
+2. `profile-v417.html` protects itself and redirects signed-out users to `auth-v417.html?next=profile-v417.html`;
+3. successful login validates the Supabase Auth user and lands on the user's own profile by default;
+4. profile data are loaded only through own-row RLS;
+5. the profile page provides the explicit entry to the authenticated personal market `index-v417.html`.
+
+Allowed post-auth destinations are restricted to the internal allow-list:
+- `profile-v417.html`
+- `index-v417.html`
+- `admin-v417.html`
+
+An inactive or missing profile must never be treated as active by browser fallback logic.
+
+This UX contract is independent from Frozen Hunt scoring and does not gate the public 4.1.6 Champion.
+
+
+## 15. AI assistance, Jalali calendar and research export contract — 2026-09-26
+User-approved AI capabilities are an explanatory/research layer only and MUST NOT mutate Frozen Hunt `4.1.6-hunt-v2` formulas, thresholds, lifecycle gates, routing, capture provenance or activation state.
+
+Approved AI surfaces:
+- symbol-detail Hunt assistant grounded only in the current signal/journey data;
+- Persian natural-language strategy translation into visible, editable Strategy Builder rules;
+- end-of-market daily report built from Hunt Journey, missed opportunities, backtest summaries and reliability evidence;
+- historical similar-Hunt retrieval based on recorded feature distance and observed outcomes;
+- reliability diagnostic assistant that distinguishes feed/capture issues from model-outcome evidence.
+
+Security and reliability rules:
+- browser code never contains an OpenAI secret;
+- optional generative enhancement runs only through the Supabase Edge Function `stock-hunter-ai-v417`, which validates the Supabase user session in server code;
+- the external model secret is read only from Edge Function environment variables;
+- if generative inference is unavailable, deterministic local data-grounded analysis remains functional;
+- AI output must not invent missing observations, promise returns, issue a definitive buy/sell instruction, or change Frozen Hunt scoring.
+
+Date selection contract:
+- every current user-selectable date in Stock Hunter uses the shared Persian/Jalali calendar grid;
+- date fields are read-only and are selected from the calendar rather than typed manually;
+- future date-selection UI must reuse the same calendar contract.
+
+Research export contract:
+- every page under the Hunt Analysis research family exposes `چاپ / ذخیره PDF`;
+- print styling removes interactive controls and expands tables for browser Print / Save as PDF.
+
+
+## 16. Universal numeric export and visual presentation contract — 2026-09-26
+User-visible analytical/numeric outputs must provide reusable data export without changing Hunt logic.
+
+Export contract:
+- the shared browser exporter is `data-export-v418.js`;
+- numerical sections expose XLSX, CSV and XML exports from the current rendered/filtered view;
+- XLSX may contain multiple worksheets when the visible section has multiple tables/metric groups;
+- CSV serializes the visible datasets with section separators;
+- XML is the canonical structured third format. XLM is intentionally not used because it is the legacy Excel macro-sheet format rather than a neutral data interchange format;
+- export collection includes visible tables, metric/summary cards and numeric analytical text where applicable;
+- export controls are presentation-only and MUST NOT mutate source data, scoring, filters or persistence.
+
+Visual contract:
+- AI answers use larger typography and distinct visual treatments for Hunt explanation, end-of-market report and reliability diagnosis;
+- principal summary cards at the top of analytical pages are centered;
+- summary cards use restrained accent color coding and remain readable in dark/light layouts.
+
+
+## 17. Persian display, alphabetical collation and extended export contract — 2026-09-26
+Presentation rules:
+- all user-visible ASCII digits are localized to Persian digits by `locale-ui-v419.js`;
+- localization applies after dynamic DOM updates and does not mutate internal IDs, API values, URLs, calculation inputs or source records;
+- the public and authenticated main header title is displayed simply as `شکارچی سهم` without an inline version suffix;
+- name/symbol selectors that are semantically alphabetical use Persian collation (`Intl.Collator('fa-IR')` with normalized Persian ی/ک);
+- chronological, score-ranked, outcome-ranked and operational-priority lists MUST NOT be replaced by alphabetical sorting.
+
+Export rules:
+- numeric/data sections expose XLSX, CSV, XML, DOCX and PDF;
+- DOCX is a real OOXML Word document generated from visible datasets;
+- PDF is a direct rendered export of the selected visible section and is distinct from browser printing;
+- the legacy research action is named only `چاپ`; PDF saving belongs to the data-export toolbar;
+- the main Action Now summary row (شکار ویژه / هشدار فوری / کاندید شکار / ...) does not receive a separate export toolbar; the main market table remains exportable.
+
+
+## 17. Persian presentation and alphabetical ordering contract — 2026-09-27
+User-facing numerical text is Persian-digit presentation across Stock Hunter HTML surfaces through the shared `locale-ui-v419.js` layer. Machine values used for calculations, API transport and spreadsheet numeric cells may remain numeric/Latin internally; this must never leak as Latin digits into ordinary rendered UI text.
+
+Persian alphabetical ordering contract:
+- symbol/company selectors are sorted with `Intl.Collator('fa-IR')`;
+- the shared locale layer automatically recognizes symbol/company selects even when a future page forgets to add `data-sort-fa`;
+- textual universal-search result ordering uses a Persian collator rather than numeric identifiers or codepoint order;
+- exact/relevance search grouping may remain primary, but ties and alphabetic result views use Persian collation.
+
+Export/print clarification:
+- XLSX, CSV, XML, DOCX and PDF are data-export choices;
+- the separate Hunt Analysis navigation action is labeled only `چاپ`;
+- the primary market summary cards do not receive an export toolbar; table/detail numerical sections do.
+
+
+### Persian digit completion — 2026-09-27
+The Persian presentation contract also applies to user-visible editable research dates and strategy numeric rule values.
+- Jalali date inputs store ISO in `dataset.iso` but display Persian digits.
+- parsing always normalizes Persian/Arabic digits back to Latin numeric form before calculations.
+- Strategy Builder numeric rule editors render as Persian-digit text with decimal input mode, then normalize through `R.latinDigits` before numeric comparison.
+- authentication/password fields are excluded from digit rewriting.
+- browser smoke assertions for visible DOM dates/times must expect Persian digits; internal JS calculation fixtures may remain Latin.
+
+
+## 18. Professional layer v4.2.0 — 2026-09-27
+
+The professional layer is additive and explanatory. Frozen Hunt remains `4.1.6-hunt-v2`; professional confidence, regime, execution, robustness, AI, journal, replay and workspace outputs MUST NOT feed Hunt Score, Hunt state transitions or thresholds.
+
+### Professional Center contract
+`professional-center-v420.html/js` is the unified surface for fourteen capabilities:
+1. independent confidence gate;
+2. Hunt passport;
+3. strategy robustness / time holdout;
+4. grouped cross-symbol testing;
+5. Iran-market execution approximation;
+6. market-regime analysis;
+7. Hunt performance drift detection;
+8. real server-backed Web Push;
+9. dynamic smart watchlists;
+10. evidence-backed AI;
+11. multi-source agent workflow;
+12. user decision journal;
+13. leakage-safe decision replay;
+14. personal workspace.
+
+Only observed outcomes may enter success/failure statistics. Current or incomplete hunts MUST NOT be counted as failures.
+
+### Storage contract
+No new high-volume raw market history is introduced. Professional analytics reuse compact Journey / Backtest / Replay / Reliability datasets. User-owned smart-watchlist, journal and workspace records are compact. Push delivery history is retained for 90 days.
+
+### Cloud Push contract
+- Edge function: `stock-hunter-cloud-push-v420`.
+- Public VAPID key may be read by clients.
+- VAPID private key is server-only.
+- raw cron token is held in Supabase Vault; only its SHA-256 digest is held in the private config table.
+- client subscription rows are owner-RLS protected.
+- private configuration and delivery ledgers explicitly deny anon/authenticated access.
+- server cron runs once per minute but the function avoids Journey scans outside Saturday-Wednesday 09:00–17:00 Tehran.
+- delivery deduplication is enforced by `(subscription_id,event_key)`.
+- expired browser subscriptions are disabled after 404/410.
+
+### Personal workspace contract
+Default page layout remains unchanged when no preference exists. A hidden radar must remain hidden across later live rerenders. Cloud layout is loaded only for authenticated users and localStorage remains the immediate fallback.
+
+### Export / language contract
+All new numerical surfaces join the shared five-format exporter: XLSX, CSV, XML, DOCX, PDF. Visible dates are Jalali calendar inputs and visible digits are Persian. Symbol/company ordering uses Persian collation. New user-facing terminology uses `دیده‌بان`, not English/transliterated watchlist wording.
+
+
+
+## 19. Today-first UX 4.2.1 — 2026-09-27
+
+The user-approved 4.2.1 redesign is a presentation and information-architecture layer only. Frozen Hunt remains `4.1.6-hunt-v2`; formulas, thresholds, risk gates, Action Now eligibility, Radar eligibility, capture provenance, calibration/OOS lifecycle and production routing are unchanged.
+
+### Daily entry contract
+The default market surface is now a **Today-first decision center** layered above the canonical Action Now → Radar → Universe hierarchy:
+- **امروز** shows market/feed context and up to the strongest fresh Action Now opportunities;
+- **رادار نزدیک** remains the observational early-Hunt queue;
+- **Universe** remains reachable through universal search and explicit Hunt filters, including `همه نمادها`;
+- no UX card may turn a stale/ineligible row into an Action Now opportunity.
+
+### Simple / professional presentation
+- **نمای ساده** prioritizes Today, current opportunities, Why-this-stock, Radar, search, watchlist and alerts.
+- **نمای حرفه‌ای** exposes the complete table/research workflow.
+- This switch is presentation-only and MUST NOT change scoring, data selection semantics, permissions, or persisted model state.
+- The professional research menu is hidden from the daily navigation in simple mode but remains available after switching to professional mode.
+
+### Human explanation contract
+`چرا این سهم؟` may only interpret already-recorded Frozen Hunt inputs/outputs and risk evidence. It must:
+- state that Hunt Score is an engineering score, not a success probability;
+- separate strengthening evidence from risk/blockers;
+- never generate a new trading score, threshold, probability, or buy/sell instruction.
+
+### Empty-state contract
+A blank analytical surface must explain the reason whenever it is knowable:
+- market closed;
+- no eligible opportunity;
+- data/feed unavailable or stale;
+- insufficient historical sample;
+- outcome not matured yet.
+A raw `—` or `0` must not be used as the sole explanation of an empty decision surface.
+
+### Real-performance contract
+Real performance surfaces use the permanent event/outcome ledger only.
+- registered events may be shown immediately;
+- 1-session and 3-session rates are shown only from matured outcomes;
+- missing/unmatured outcomes are never counted as failures;
+- no placeholder accuracy or synthetic performance percentage is allowed.
+
+### Journey / chart contract
+Hunt Journey remains the canonical event timeline. Detail and journey charts visually mark recorded Hunt milestones (discovery, early/action state where available, zero crossing and +1/+2/+3 milestones) using recorded timestamps/replay data only.
+
+### Stable user routes
+User-facing navigation may use stable aliases:
+`/today/`, `/journey/`, `/replay/`, `/backtest/`, `/missed/`, `/alerts/`, `/reliability/`, `/strategy/`, `/ai/`, `/professional/`, `/performance/`, `/profile/`, `/report/`.
+Legacy versioned HTML files remain compatibility endpoints until a separately verified removal plan exists. Stable aliases must not break old bookmarks, Auth allow-lists, service-worker behavior, or GitHub Pages routing.
+
+### End-of-market report
+The end-of-market report is a first-class daily surface. It summarizes only registered Journey / missed-opportunity / reliability evidence and clearly distinguishes partial intraday reports from finalized prior-day reports.
+
+### Personal presentation
+Last-visit comparison is user-local/personal presentation state. It may compare previously viewed Hunt score/state/day move/order pressure/risk with the current row, but it never feeds the model.
+Professional Center supports symbol-focused deep links so advanced evidence is a drill-down from an opportunity rather than a required daily landing page.
+
+### Mobile
+Mobile uses a dedicated bottom-navigation and card-first Today experience. Desktop tables remain available in professional mode and through explicit search/filter expansion.
+
+### Visual system
+The approved Precision Optics / IRAN-font identity remains canonical. 4.2.1 extends it consistently with restrained reticle/brass accents, semantic green/red/orange/blue states, and clearer hierarchy; decorative color must not imply model certainty.
+
+
+## Performance contract — 4.2.3 main-page freeze fix
+- Scope is presentation/runtime orchestration only; frozen Hunt engine `4.1.6-hunt-v2`, weights, thresholds, eligibility and lifecycle gates are unchanged.
+- Main market refresh is health-first: when `stock_hunter_feed_health_v4.last_feed_at` has not advanced, the browser must not redownload or rerender the full Signals/Integrated payload.
+- Poll cadence is adaptive: normal live cadence while market/session is active, at least 3 minutes while the market is closed, and at least 5 minutes while the tab is hidden.
+- Repeated Hunt reads of the same row/snapshot within the same minute reuse an in-memory WeakMap memo result; a new row object, feed timestamp, snapshot tail or minute boundary recomputes through the exact frozen formulas.
+- Browser Cache Storage is written only for a newly accepted feed timestamp in the current page session.
+- DOM status, radar and mobile-list writes are skipped when rendered content is unchanged to reduce MutationObserver/localization churn.

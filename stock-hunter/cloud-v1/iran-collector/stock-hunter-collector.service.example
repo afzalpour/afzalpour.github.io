@@ -1,0 +1,21 @@
+[Unit]
+Description=Stock Hunter Iran Feed Collector v1
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=stockhunter
+Group=stockhunter
+EnvironmentFile=/etc/stock-hunter-collector.env
+ExecStart=/usr/bin/python3 /opt/stock-hunter/collector.py --loop
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/stock-hunter-collector
+
+[Install]
+WantedBy=multi-user.target

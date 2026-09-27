@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ورود به حساب — شکارچی سهم</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="extra.css?v=4.1.7-auth">
+  <link rel="stylesheet" href="auth-v417.css?v=4">
+<link rel="stylesheet" href="neutral-theme-v416.css?v=1">
+</head>
+<body>
+<main class="auth-shell">
+  <section class="auth-card" aria-labelledby="authTitle">
+    <div class="auth-brand">
+      <img src="icon.svg" alt="نشان شکارچی سهم">
+      <div>
+        <h1 id="authTitle">حساب شخصی <span>شکارچی سهم</span></h1>
+        <p>ورود، ثبت‌نام و دسترسی به پروفایل و بازار شخصی</p>
+      </div>
+    </div>
+    <div id="alreadySignedIn" class="auth-session" hidden>
+      اکنون با <b id="alreadySignedInEmail"></b> وارد هستید.
+      <button id="continueSession" type="button">رفتن به صفحه من</button>
+      <button id="signOutHere" type="button">خروج</button>
+    </div>
+    <div class="auth-tabs" role="tablist" aria-label="عملیات حساب">
+      <button type="button" data-auth-tab="signin" class="active">ورود</button>
+      <button type="button" data-auth-tab="signup">ثبت‌نام</button>
+      <button type="button" data-auth-tab="recovery">بازیابی رمز</button>
+    </div>
+    <form id="authForm" class="auth-form" novalidate>
+      <label id="displayNameWrap" hidden>نام نمایشی
+        <input id="displayName" autocomplete="name" maxlength="80">
+      </label>
+      <label>ایمیل
+        <input id="email" type="email" autocomplete="email" required>
+      </label>
+      <div id="passwordWrap" class="auth-field">
+        <label for="password">رمز عبور</label>
+        <div class="password-input-wrap">
+          <input id="password" type="password" autocomplete="current-password" minlength="8">
+          <button class="password-toggle" type="button" data-password-toggle="password" data-password-label="رمز عبور" aria-controls="password" aria-pressed="false" aria-label="نمایش رمز عبور" title="نمایش رمز عبور">
+            <svg class="password-eye password-eye-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>
+            <svg class="password-eye password-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle><path d="M4 4l16 16"></path></svg>
+          </button>
+        </div>
+      </div>
+      <div id="confirmPasswordWrap" class="auth-field" hidden>
+        <label for="confirmPassword">تکرار رمز عبور</label>
+        <div class="password-input-wrap">
+          <input id="confirmPassword" type="password" autocomplete="new-password" minlength="8">
+          <button class="password-toggle" type="button" data-password-toggle="confirmPassword" data-password-label="تکرار رمز عبور" aria-controls="confirmPassword" aria-pressed="false" aria-label="نمایش تکرار رمز عبور" title="نمایش تکرار رمز عبور">
+            <svg class="password-eye password-eye-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>
+            <svg class="password-eye password-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle><path d="M4 4l16 16"></path></svg>
+          </button>
+        </div>
+      </div>
+      <div id="newPasswordWrap" class="auth-field" hidden>
+        <label for="newPassword">رمز جدید</label>
+        <div class="password-input-wrap">
+          <input id="newPassword" type="password" autocomplete="new-password" minlength="8">
+          <button class="password-toggle" type="button" data-password-toggle="newPassword" data-password-label="رمز جدید" aria-controls="newPassword" aria-pressed="false" aria-label="نمایش رمز جدید" title="نمایش رمز جدید">
+            <svg class="password-eye password-eye-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>
+            <svg class="password-eye password-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle><path d="M4 4l16 16"></path></svg>
+          </button>
+        </div>
+      </div>
+      <button id="authSubmit" type="submit">ورود</button>
+    </form>
+    <div id="authMessage" class="auth-message" hidden></div>
+    <div class="auth-footer"><a href="index.html">بازگشت به صفحه اصلی شکارچی سهم</a></div>
+  </section>
+</main>
+<script src="config.js?v=4.1.6"></script>
+<script type="module" src="app-auth-v417.js?v=3"></script>
+<script src="data-export-v418.js?v=3"></script><script src="locale-ui-v419.js?v=3"></script></body>
+</html>
