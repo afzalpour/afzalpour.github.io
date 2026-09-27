@@ -10,8 +10,8 @@
   if(!body||!document.getElementById('mainTable'))return;
   body.classList.add('stock-ux-v421');
 
-  function group(title,items){
-    return '<details><summary>'+title+'</summary><div class="ux-grouped-nav-menu-v421">'+items.map(x=>'<a href="'+x[1]+'">'+x[0]+'</a>').join('')+'</div></details>';
+  function group(title,items,extraClass=''){
+    return '<details class="'+extraClass+'"><summary>'+title+'</summary><div class="ux-grouped-nav-menu-v421">'+items.map(x=>'<a href="'+x[1]+'">'+x[0]+'</a>').join('')+'</div></details>';
   }
   function setupGroupedNav(){
     const actions=document.querySelector('.top-actions');if(!actions||$u('uxGroupedNavV421'))return;
