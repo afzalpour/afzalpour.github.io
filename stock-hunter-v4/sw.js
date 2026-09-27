@@ -8,7 +8,7 @@ const STATIC=[
   './app-explain-v411.js','./app-forecast-bridge-v414.js','./app-forecast-trend-v415.js','./app-forecast-validation-v430.js',
   './app-theme-v412.js','./app-session-v413.js','./app-hunt-v416.js','./hunt-runtime-core-v417.js','./app-runtime-router-v417.js','./app-hunt-hierarchy-v416.js',
    './app-universal-search-v416.js','./app-eod-v416.js','./app-hunt-carry-v416.js','./app-hunt-timeline-v416.js','./app-ai-assistant-v417.js','./app-professional-detail-v420.js','./workspace-v420.js','./performance.html','./performance-v416.js','./calibration.html','./calibration-v416.js','./candidate-evaluator-v416.js','./robustness-gate-v416.js','./promotion-decision-v416.js','./rollout-v417.html','./rollout-v417.js','./canary-admission-v417.js','./canary-expansion-v417.js','./canary-hold-rollback-v417.js','./canary-recovery-v417.js',
-  './config.js','./manifest.webmanifest','./icon.svg','./methodology.html','./hunt-methodology-v416.html','./research-lab-v416.css','./research-common-v416.js','./research-tools-v417.js','./data-export-v418.js','./locale-ui-v419.js','./ai-center-v417.html','./ai-center-v417.js','./hunt-journey-v416.html','./hunt-journey-v416.js','./market-replay-v416.html','./market-replay-v416.js','./backtest-lab-v416.html','./backtest-lab-v416.js','./missed-opportunities-v416.html','./missed-opportunities-v416.js','./alerts-center-v416.html','./alerts-center-v416.js','./reliability-v416.html','./reliability-v416.js','./strategy-builder-v417.html','./strategy-builder-v417.js','./professional-center-v420.html','./professional-center-v420.js','./professional-v420.css','./alerts-cloud-v420.js','./ai-evidence-agent-v420.js'
+  './ux-v421.css','./ux-common-v421.js','./ux-shell-v421.js','./daily-report-v421.html','./daily-report-v421.js','./config.js','./manifest.webmanifest','./icon.svg','./methodology.html','./hunt-methodology-v416.html','./research-lab-v416.css','./research-common-v416.js','./research-tools-v417.js','./data-export-v418.js','./locale-ui-v419.js','./ai-center-v417.html','./ai-center-v417.js','./hunt-journey-v416.html','./hunt-journey-v416.js','./market-replay-v416.html','./market-replay-v416.js','./backtest-lab-v416.html','./backtest-lab-v416.js','./missed-opportunities-v416.html','./missed-opportunities-v416.js','./alerts-center-v416.html','./alerts-center-v416.js','./reliability-v416.html','./reliability-v416.js','./strategy-builder-v417.html','./strategy-builder-v417.js','./professional-center-v420.html','./professional-center-v420.js','./professional-v420.css','./alerts-cloud-v420.js','./ai-evidence-agent-v420.js'
 ];
 self.addEventListener('install',e=>{
   self.skipWaiting();
@@ -33,7 +33,7 @@ self.addEventListener('fetch',e=>{
 });
 self.addEventListener('notificationclick',e=>{
   e.notification.close();
-  const target=new URL(e.notification?.data?.url||'alerts-center-v416.html',self.location.href).href;
+  const target=new URL(e.notification?.data?.url||'alerts/',self.location.href).href;
   e.waitUntil((async()=>{
     const list=await self.clients.matchAll({type:'window',includeUncontrolled:true});
     for(const client of list){if(client.url===target||client.url.startsWith(target.split('?')[0])){await client.focus();return;}}
@@ -44,6 +44,6 @@ self.addEventListener('notificationclick',e=>{
 self.addEventListener('push',e=>{
   let data={};try{data=e.data?e.data.json():{};}catch{data={body:e.data?.text?.()||''};}
   const title=data.title||'شکارچی سهم';
-  const options={body:data.body||'رخداد تازه شکار ثبت شد.',icon:data.icon||'icon.svg',badge:data.badge||'icon.svg',tag:data.tag||'stock-hunter-cloud-push',renotify:false,data:data.data||{url:'alerts-center-v416.html'}};
+  const options={body:data.body||'رخداد تازه شکار ثبت شد.',icon:data.icon||'icon.svg',badge:data.badge||'icon.svg',tag:data.tag||'stock-hunter-cloud-push',renotify:false,data:data.data||{url:'alerts/'}};
   e.waitUntil(self.registration.showNotification(title,options));
 });
