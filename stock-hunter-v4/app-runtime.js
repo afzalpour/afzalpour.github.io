@@ -28,6 +28,10 @@ const MARKET_CACHE_V416='stock-hunter-market-v416-last-good';
 const MARKET_CACHE_SIGNALS_V416='./__market-cache__/signals-v416.json';
 const MARKET_CACHE_HEALTH_V416='./__market-cache__/health-v416.json';
 let marketLoadInFlightV416=false,marketRetryNotBeforeV416=0,marketLastGoodAtV416=0,marketRecoveryTimerV416=null;
+let marketLastFeedStampV416='',marketLastCacheFeedStampV416='',marketPollTimerV416=null;
+const MARKET_OPEN_POLL_MS_V416=Math.max(15000,Number(cfg.REFRESH_MS||15000));
+const MARKET_CLOSED_POLL_MS_V416=Math.max(180000,MARKET_OPEN_POLL_MS_V416);
+const MARKET_HIDDEN_POLL_MS_V416=Math.max(300000,MARKET_CLOSED_POLL_MS_V416);
 
 function marketHttpErrorV416(response,label){
   const e=new Error(`${label} — HTTP ${response.status}`);
@@ -130,9 +134,14 @@ async function marketReadBaseV416(base,source){
   let health=[];if(hr.ok)health=await hr.json();
   if(source==='supabase')marketShowHealthFirstV416(health,source);
   if(source==='supabase'){
+    const feedStamp=String(health?.[0]?.last_feed_at||'');
+    const hidden=typeof document!=='undefined'&&document.hidden;
+    if(rows.length&&feedStamp&&(feedStamp===marketLastFeedStampV416||hidden)){
+      return{base,source,sr:null,hr,signalRows:null,health,feedStamp,unchanged:true};
+    }
     try{
       const {sr,signalRows}=await marketReadCloudSignalsV416(base,table,health,timeout);
-      return{base,source,sr,hr,signalRows,health};
+      return{base,source,sr,hr,signalRows,health,feedStamp,unchanged:false};
     }catch(e){
       e.marketHealth=health;
       e.marketSource=source;
@@ -143,7 +152,7 @@ async function marketReadBaseV416(base,source){
   if(!sr.ok)throw marketHttpErrorV416(sr,'پل محلی بازار پاسخ معتبر نداد');
   const signalRows=await sr.json();
   if(!signalRows.length&&!health.length){const e=new Error('پل محلی هنوز snapshot بازار ندارد');e.status=204;throw e;}
-  return{base,source,sr,hr,signalRows,health};
+  return{base,source,sr,hr,signalRows,health,feedStamp:String(health?.[0]?.last_feed_at||''),unchanged:false};
 }
 function marketBaseCandidatesV416(){
   const out=[];
@@ -158,14 +167,16 @@ if(typeof window!=='undefined'){
   window.stockHunterMarketSourceV416=()=>marketActiveSourceV416;
 }
 
-async function marketCacheWriteV416(signalRows,healthRows){
+async function marketCacheWriteV416(signalRows,healthRows,feedStamp=''){
   if(typeof caches==='undefined')return;
+  if(feedStamp&&feedStamp===marketLastCacheFeedStampV416)return;
   try{
     const cache=await caches.open(MARKET_CACHE_V416),stamp=new Date().toISOString();
     await Promise.all([
-      cache.put(MARKET_CACHE_SIGNALS_V416,new Response(JSON.stringify({saved_at:stamp,rows:signalRows}),{headers:{'Content-Type':'application/json'}})),
-      cache.put(MARKET_CACHE_HEALTH_V416,new Response(JSON.stringify({saved_at:stamp,rows:healthRows||[]}),{headers:{'Content-Type':'application/json'}}))
+      cache.put(MARKET_CACHE_SIGNALS_V416,new Response(JSON.stringify({saved_at:stamp,feed_at:feedStamp||null,rows:signalRows}),{headers:{'Content-Type':'application/json'}})),
+      cache.put(MARKET_CACHE_HEALTH_V416,new Response(JSON.stringify({saved_at:stamp,feed_at:feedStamp||null,rows:healthRows||[]}),{headers:{'Content-Type':'application/json'}}))
     ]);
+    marketLastCacheFeedStampV416=feedStamp||stamp;
   }catch{}
 }
 async function marketCacheReadV416(){
@@ -217,13 +228,16 @@ async function load(force=false){
       catch(e){lastErr=e;}
     }
     if(!chosen)throw lastErr||new Error('هیچ مسیر داده‌ای پاسخ نداد');
-    const {base,source,sr,hr,signalRows,health}=chosen;
+    const {base,source,sr,hr,signalRows,health,feedStamp='',unchanged=false}=chosen;
     marketActiveBaseV416=base;marketActiveSourceV416=source;
-    marketApplyRowsV416(signalRows);
-    marketLastGoodAtV416=Date.now();
+    if(!unchanged){
+      marketApplyRowsV416(signalRows);
+      marketLastFeedStampV416=feedStamp||String(health?.[0]?.last_feed_at||'');
+      marketLastGoodAtV416=Date.now();
+      if(marketRecoveryTimerV416){clearTimeout(marketRecoveryTimerV416);marketRecoveryTimerV416=null;}
+      marketCacheWriteV416(signalRows,health,marketLastFeedStampV416);
+    }
     marketRetryNotBeforeV416=0;
-    if(marketRecoveryTimerV416){clearTimeout(marketRecoveryTimerV416);marketRecoveryTimerV416=null;}
-    marketCacheWriteV416(signalRows,health);
     const h=health[0],age=h?.last_feed_at?Date.now()-Date.parse(h.last_feed_at):Infinity;
     const route=source==='local'?'مسیر محلی پشتیبان':'مسیر اصلی';
     if(!session.open){
@@ -240,12 +254,14 @@ async function load(force=false){
       const last=h?.last_feed_at?marketFaDateTimeV416(h.last_feed_at):'ناموجود';
       showFeed('bad','اطلاعات لحظه‌ای معاملات در دسترس نیست',`آخرین اطلاعات ثبت‌شده: ${last} — در ساعات رسمی بازار داده تازه دریافت نشده است؛ احتمال وقفه در مسیر دریافت داده وجود دارد — ${route}.`);
     }
-    marketRenderAfterDataV416();
-    const urgent=rows.filter(x=>x.hunt==='شکار ویژه'||x.hunt==='هشدار فوری');
-    if(sound&&session.open&&urgent.some(x=>!seen.has(x.id))){
-      try{const c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);g.gain.value=.035;o.frequency.value=900;o.start();o.stop(c.currentTime+.12);}catch{}
+    if(!unchanged){
+      marketRenderAfterDataV416();
+      const urgent=rows.filter(x=>x.hunt==='شکار ویژه'||x.hunt==='هشدار فوری');
+      if(sound&&session.open&&urgent.some(x=>!seen.has(x.id))){
+        try{const c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);g.gain.value=.035;o.frequency.value=900;o.start();o.stop(c.currentTime+.12);}catch{}
+      }
+      urgent.forEach(x=>seen.add(x.id));
     }
-    urgent.forEach(x=>seen.add(x.id));
   }catch(e){
     const retry=Math.max(Number(e?.retryAfterMs||0),Number(cfg.REFRESH_MS||15000));
     const maxRetry=MARKET_LOCAL_BASE_V416?15000:120000;
@@ -253,9 +269,8 @@ async function load(force=false){
     const cached=await marketCacheReadV416();
     if(!rows.length&&cached?.signals?.length){
       marketApplyRowsV416(cached.signals);
+      marketLastFeedStampV416=String(cached?.health?.[0]?.last_feed_at||'');
       marketRenderAfterDataV416();
-    }else if(rows.length){
-      try{marketRenderAfterDataV416();}catch{}
     }
     const partialHealth=Array.isArray(e?.marketHealth)?e.marketHealth[0]:null;
     const partialAge=partialHealth?.last_feed_at?Date.now()-Date.parse(partialHealth.last_feed_at):Infinity;
@@ -278,9 +293,14 @@ async function load(force=false){
     marketLoadInFlightV416=false;
   }
 }
+function marketSetTextV416(el,value){if(el&&el.textContent!==String(value??''))el.textContent=String(value??'');}
 function showFeed(type,title,sub){
-  $('feedBadge').className=`feed-badge ${type}`;$('feedBadge').textContent=title;$('feedState').textContent=title;$('scanTimes').textContent=sub;
-  const quiet=type==='ok'||type==='closed';$('alertBox').hidden=quiet;if(!quiet)$('alertBox').textContent=sub;
+  const badge=$('feedBadge'),state=$('feedState'),scan=$('scanTimes'),alert=$('alertBox'),cls=`feed-badge ${type}`;
+  if(badge?.className!==cls)badge.className=cls;
+  marketSetTextV416(badge,title);marketSetTextV416(state,title);marketSetTextV416(scan,sub);
+  const quiet=type==='ok'||type==='closed';
+  if(alert&&alert.hidden!==quiet)alert.hidden=quiet;
+  if(!quiet)marketSetTextV416(alert,sub);
 }
 function openColumns(){$('columnPanel').classList.add('open');$('columnPanel').setAttribute('aria-hidden','false');$('panelBackdrop').hidden=false;}
 function closeColumns(){$('columnPanel').classList.remove('open');$('columnPanel').setAttribute('aria-hidden','true');$('panelBackdrop').hidden=true;}
@@ -307,10 +327,25 @@ $('soundBtn').onclick=()=>{sound=!sound;$('soundBtn').textContent=sound?'🔔 ه
 async function registerServiceWorkerV416(){
   if(!('serviceWorker' in navigator))return;
   try{
-    await navigator.serviceWorker.register('./sw.js?v=4.1.6-r18');
+    await navigator.serviceWorker.register('./sw.js?v=4.1.6-r19');
   }catch{}
 }
+function marketNextPollDelayV416(){
+  if(typeof document!=='undefined'&&document.hidden)return MARKET_HIDDEN_POLL_MS_V416;
+  return marketSessionTehran().open?MARKET_OPEN_POLL_MS_V416:MARKET_CLOSED_POLL_MS_V416;
+}
+function marketSchedulePollV416(delayMs){
+  if(marketPollTimerV416){clearTimeout(marketPollTimerV416);marketPollTimerV416=null;}
+  const wait=Math.max(750,Number.isFinite(Number(delayMs))?Number(delayMs):marketNextPollDelayV416());
+  marketPollTimerV416=setTimeout(async()=>{
+    marketPollTimerV416=null;
+    try{await load();}finally{marketSchedulePollV416();}
+  },wait);
+}
+if(typeof document!=='undefined')document.addEventListener('visibilitychange',()=>{
+  if(document.hidden)marketSchedulePollV416();
+  else{marketRetryNotBeforeV416=0;marketSchedulePollV416(750);}
+});
 renderColumnOptions();
-load();
-setInterval(load,Number(cfg.REFRESH_MS||15000));
+load().finally(()=>marketSchedulePollV416());
 registerServiceWorkerV416();
