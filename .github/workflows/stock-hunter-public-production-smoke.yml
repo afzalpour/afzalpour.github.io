@@ -257,7 +257,7 @@ jobs:
           grep -q "sw.js?v=4.2.4-public-r1" "$PUBLIC_RUNTIME"
           grep -q 'رفتن به جدول شکار' "$PUBLIC_UX"
           grep -q 'body.ux-simple-v421 .table-panel{display:grid!important' "$PUBLIC_UX_CSS"
-          grep -q 'may not move Radar/Table above the Today decision center' stock-hunter/PROJECT_CANONICAL_ARCHITECTURE.md
+          grep -q 'may not move Radar/Table above the Today decision center' stock-hunter-v4/PROJECT_CANONICAL_ARCHITECTURE.md
           grep -q "VERSION='4.2.4-export-v4'" "$PUBLIC_EXPORT"
           grep -q 'preparePdfCaptureV424' "$PUBLIC_EXPORT"
           grep -q 'slicePx' "$PUBLIC_EXPORT"
