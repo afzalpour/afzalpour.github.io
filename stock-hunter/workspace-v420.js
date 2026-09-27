@@ -10,15 +10,14 @@
    if(radar){radar.dataset.workspaceHidden=x.radar===false?'1':'0';if(x.radar===false)radar.hidden=true;}
    table.hidden=x.table===false;
    document.body.classList.toggle('workspace-compact-v420',!!x.compact);
-   const first=['summary','radar','table'].includes(x.first)?x.first:'summary';
-   if(first==='summary'){if(summary.nextElementSibling!==toolbar)toolbar.insertAdjacentElement('beforebegin',summary);}
-   else if(first==='radar'&&radar){summary.insertAdjacentElement('beforebegin',radar);}
-   else if(first==='table'){summary.insertAdjacentElement('beforebegin',table);}
+   // Today-first public layout is fixed: personal workspace may hide/compact sections
+   // but it may not move Radar/Table above the Today decision center.
+   if(summary.nextElementSibling!==toolbar)toolbar.insertAdjacentElement('beforebegin',summary);
  }
  async function cloudLoad(){
   if(!base||!key)return;try{const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/+esm'),sb=createClient(base,key,{auth:{persistSession:true,autoRefreshToken:true}}),{data:{session}}=await sb.auth.getSession();if(!session)return;const {data}=await sb.from('stock_hunter_workspace_v420').select('layout').eq('user_id',session.user.id).maybeSingle();if(data?.layout){layout=data.layout;localStorage.setItem('stockHunterWorkspaceV420',JSON.stringify(layout));apply(layout);}}catch{}
  }
  apply(layout);if(typeof requestIdleCallback==='function')requestIdleCallback(()=>cloudLoad(),{timeout:2400});else setTimeout(()=>cloudLoad(),1800);
  const a=document.createElement('a');a.className='top-link';a.href='professional-center-v420.html';a.textContent='میزکار حرفه‌ای';const host=document.querySelector('.top-actions');if(host&&!host.querySelector('a[href="professional-center-v420.html"]'))host.insertBefore(a,host.querySelector('#themeToggle')||null);
- window.StockHunterWorkspaceV420={version:'4.2.0-workspace-v1',apply,read};
+ window.StockHunterWorkspaceV420={version:'4.2.4-workspace-fixed-order1',apply,read};
 })();
