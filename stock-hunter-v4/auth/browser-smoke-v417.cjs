@@ -271,7 +271,14 @@ async function main(){
     assert.equal(printContract.hasDailyReport,true,'daily-only detail must generate printable report');
     assert.equal(printContract.hasPdfLabel,true,'print report must expose PDF save label');
     assert.equal(printContract.hasSixModels,true,'daily-only PDF must include six diagnostic models');
-    const accountLink=page.locator('a.top-link[href="profile-v417.html"]');
+    const onboardingDone=page.locator('#uxOnboardingDoneV421');
+    if(await onboardingDone.count() && await onboardingDone.isVisible().catch(()=>false)){
+      await onboardingDone.click();
+    }
+    const accountMenu=page.locator('#uxGroupedNavV421 details').filter({hasText:'حساب من'}).locator('summary');
+    await accountMenu.waitFor({state:'visible',timeout:10000});
+    await accountMenu.click();
+    const accountLink=page.locator('#uxGroupedNavV421 a[href="profile/"]');
     await accountLink.waitFor({state:'visible',timeout:10000});
     await Promise.all([
       page.waitForURL(/auth-v417\.html\?next=profile-v417\.html/, {timeout:20000}),
