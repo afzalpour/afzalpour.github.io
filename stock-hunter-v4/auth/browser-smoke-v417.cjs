@@ -10,6 +10,7 @@ const SYMBOL_ID=process.env.SMOKE_SYMBOL_ID||'';
 const SYMBOL=process.env.SMOKE_SYMBOL||'';
 const RUN_ID=process.env.GITHUB_RUN_ID||'local';
 const WATCHLIST_NAME='CI Browser Smoke '+RUN_ID;
+const WATCHLIST_VISIBLE_NAME=WATCHLIST_NAME.replace(/[0-9]/g,d=>'۰۱۲۳۴۵۶۷۸۹'[Number(d)]);
 
 function required(name,value){
   assert.ok(value,name+' is required');
@@ -359,7 +360,7 @@ async function main(){
     await page.waitForFunction(name=>{
       const s=document.getElementById('personalWatchlistV417');
       return s && [...s.options].some(o=>o.textContent===name) && s.options[s.selectedIndex]?.textContent===name;
-    },WATCHLIST_NAME,{timeout:15000});
+    },WATCHLIST_VISIBLE_NAME,{timeout:15000});
 
     await page.fill('#search',SYMBOL);
     const star=page.locator('button.personal-star-v417[data-watch-id="'+SYMBOL_ID+'"]').first();
