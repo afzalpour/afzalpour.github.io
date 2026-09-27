@@ -20,7 +20,7 @@
     nav.innerHTML=
       group('شکار',[['امروز','index.html'],['سفر شکار','journey/'],['بازپخش بازار','replay/'],['دیده‌بان و هشدارها','alerts/'],['گزارش بازار','report/']])+
       group('تحلیل و آزمون',[['آزمایشگاه آزمون تاریخی','backtest/'],['فرصت‌های از دست‌رفته','missed/'],['سازنده راهبرد','strategy/'],['عملکرد واقعی','performance/']])+
-      group('پژوهش حرفه‌ای',[['مرکز حرفه‌ای','professional/'],['مرکز هوش مصنوعی','ai/'],['پایداری سامانه','reliability/']])+
+      group('پژوهش حرفه‌ای',[['مرکز حرفه‌ای','professional/'],['مرکز هوش مصنوعی','ai/'],['پایداری سامانه','reliability/']],'ux-pro-only-v421')+
       group('حساب من',[['پروفایل و تنظیمات','profile/'],['محیط شخصی','index-v417.html']]);
     const theme=$u('themeToggle');actions.insertBefore(nav,theme||actions.firstChild);
     document.addEventListener('click',e=>{if(!e.target.closest('#uxGroupedNavV421 details'))nav.querySelectorAll('details[open]').forEach(d=>d.removeAttribute('open'));});
@@ -198,6 +198,9 @@
     const prev=render;const wrapped=function(){const out=prev.apply(this,arguments);try{renderToday();}catch{}return out;};wrapped._uxV421=true;render=wrapped;
   }
 
+  const searchBox=$u('search'),huntSelect=$u('hunt');
+  if(searchBox)searchBox.addEventListener('input',()=>body.classList.toggle('ux-search-open-v421',!!searchBox.value.trim()));
+  if(huntSelect)huntSelect.addEventListener('change',()=>body.classList.toggle('ux-filter-open-v421',!!huntSelect.value));
   setupGroupedNav();ensureToday();ensureWhyDialog();ensureMobileNav();wrapDetail();installRenderHook();
   const saved=localStorage.getItem('stockHunterUxModeV421')||'simple';setMode(saved);renderToday();loadRecord();ensureOnboarding();
   const observer=new MutationObserver(()=>{try{renderToday();}catch{}});const feed=$u('feedState');if(feed)observer.observe(feed,{subtree:true,childList:true,characterData:true});
