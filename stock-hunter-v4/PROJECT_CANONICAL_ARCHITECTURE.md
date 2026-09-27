@@ -487,5 +487,4 @@ The approved Precision Optics / IRAN-font identity remains canonical. 4.2.1 exte
 - Poll cadence is adaptive: normal live cadence while market/session is active, at least 3 minutes while the market is closed, and at least 5 minutes while the tab is hidden.
 - Repeated Hunt reads of the same row/snapshot within the same minute reuse an in-memory WeakMap memo result; a new row object, feed timestamp, snapshot tail or minute boundary recomputes through the exact frozen formulas.
 - Browser Cache Storage is written only for a newly accepted feed timestamp in the current page session.
-- Same-origin static assets use the versioned service-worker cache `shikar-sahm-v4.1.6-r19` cache-first path; Supabase/Data API traffic remains network-only and is never intercepted by the service worker.
 - DOM status, radar and mobile-list writes are skipped when rendered content is unchanged to reduce MutationObserver/localization churn.
