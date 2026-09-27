@@ -224,8 +224,22 @@ async function cloudHealth(){
 }
 function wireTabs(){document.querySelectorAll('.pro-tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.pro-tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.pro-view').forEach(x=>x.classList.toggle('active',x.id==='view-'+b.dataset.view));});}
 function wireDates(){const t=R.todayIso();for(const id of ['confidenceDate','execDate','regimeDate','journalDate','decisionReplayDate'])R.setJalaliInput($(id),t);R.setJalaliInput($('robustEnd'),t);R.setJalaliInput($('robustStart'),R.daysAgoIso(90));}
+async function applyDeepLinkV421(){
+ const p=new URLSearchParams(location.search),sid=p.get('symbol_id'),view=p.get('view');
+ if(view){
+   const safe=String(view).replace(/[^a-z]/g,'');
+   const b=document.querySelector('.pro-tab[data-view="'+safe+'"]');
+   if(b)b.click();
+ }
+ if(!sid)return;
+ for(const id of ['confidenceSymbol','execSymbol','evidenceSymbol','journalSymbol']){
+   const sel=$(id);
+   if(sel&&[...sel.options].some(o=>String(o.value)===String(sid)))sel.value=String(sid);
+ }
+ if($('confidenceSymbol')?.value===String(sid))await confidence();
+}
 async function init(){
- wireTabs();wireDates();await initAuth();await loadStrategies();await Promise.all([loadConfidenceDay(),loadSmartSaved(),loadWorkspace(),loadReplaySymbols(),cloudHealth()]);R.setJalaliInput($('execDate'),R.readJalaliInput($('confidenceDate'),R.todayIso()));R.setJalaliInput($('regimeDate'),R.readJalaliInput($('confidenceDate'),R.todayIso()));R.setJalaliInput($('journalDate'),R.readJalaliInput($('confidenceDate'),R.todayIso()));scanSmart();await loadJournal();status('مرکز حرفه‌ای آماده است؛ ۱۴ قابلیت بدون تغییر موتور ۴.۱.۶ فعال‌اند.','ok');
+ wireTabs();wireDates();const qp=new URLSearchParams(location.search),qd=qp.get('date');if(qd){for(const id of ['confidenceDate','execDate','regimeDate','journalDate','decisionReplayDate'])R.setJalaliInput($(id),qd);}await initAuth();await loadStrategies();await Promise.all([loadConfidenceDay(),loadSmartSaved(),loadWorkspace(),loadReplaySymbols(),cloudHealth()]);R.setJalaliInput($('execDate'),R.readJalaliInput($('confidenceDate'),R.todayIso()));R.setJalaliInput($('regimeDate'),R.readJalaliInput($('confidenceDate'),R.todayIso()));R.setJalaliInput($('journalDate'),R.readJalaliInput($('confidenceDate'),R.todayIso()));scanSmart();await loadJournal();await applyDeepLinkV421();status('مرکز حرفه‌ای آماده است؛ ۱۴ قابلیت بدون تغییر موتور ۴.۱.۶ فعال‌اند.','ok');
 }
 $('confidenceRefresh').onclick=loadConfidenceDay;$('confidenceSymbol').onchange=confidence;$('runRobustness').onclick=runRobustness;$('runExecution').onclick=runExecution;$('runRegime').onclick=runRegime;$('smartScan').onclick=scanSmart;$('smartSave').onclick=saveSmart;$('evidenceAsk').onclick=askEvidence;$('runAgent').onclick=runAgent;$('journalSave').onclick=()=>saveJournal('LIVE');$('journalDate').addEventListener('change',loadJournal);$('decisionReplayDate').addEventListener('change',loadReplaySymbols);$('loadDecisionReplay').onclick=loadDecisionReplay;$('decisionReplaySlider').oninput=renderReplay;document.querySelectorAll('[data-replay-decision]').forEach(b=>b.onclick=()=>replayDecisionSave(b.dataset.replayDecision));$('revealReplay').onclick=revealReplay;$('saveWorkspace').onclick=saveWorkspace;$('cloudHealth').onclick=cloudHealth;
 $('confidenceDate').addEventListener('change',async()=>{await loadConfidenceDay();const d=R.readJalaliInput($('confidenceDate'),R.todayIso());for(const id of ['execDate','regimeDate','journalDate'])R.setJalaliInput($(id),d);scanSmart();await loadJournal();});$('execDate').addEventListener('change',async()=>fillSymbols($('execSymbol'),await loadDate(R.readJalaliInput($('execDate'),R.todayIso()))));$('regimeDate').addEventListener('change',runRegime);
