@@ -74,12 +74,26 @@
   document.addEventListener('change',e=>localizeControlValue(e.target),true);
   document.addEventListener('blur',e=>localizeControlValue(e.target),true);
   let scheduled=false;
+  const pendingRoots=new Set(),pendingText=new Set();
+  function flushLocaleMutations(){
+    scheduled=false;
+    for(const n of pendingText)localizeText(n);
+    pendingText.clear();
+    for(const n of pendingRoots){
+      localizeTree(n);
+      if(n instanceof Element){
+        if(n.matches?.('select'))sortSelect(n);
+        wireSort(n);
+      }
+    }
+    pendingRoots.clear();
+  }
   new MutationObserver(muts=>{
     for(const m of muts){
-      if(m.type==='characterData')localizeText(m.target);
-      else for(const n of m.addedNodes)localizeTree(n);
+      if(m.type==='characterData')pendingText.add(m.target);
+      else for(const n of m.addedNodes)if(n.nodeType===Node.ELEMENT_NODE||n.nodeType===Node.TEXT_NODE)pendingRoots.add(n);
     }
-    if(!scheduled){scheduled=true;requestAnimationFrame(()=>{scheduled=false;wireSort();});}
+    if(!scheduled){scheduled=true;requestAnimationFrame(flushLocaleMutations);}
   }).observe(document.body,{subtree:true,childList:true,characterData:true});
 
   window.StockHunterLocaleV419={version:VERSION,faDigits,normalizeFa,compare,sortSelect,shouldSortFa,localizeControlValue};
