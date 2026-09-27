@@ -1,6 +1,6 @@
 'use strict';
 (function(){
-  const VERSION='4.2.0-export-v3';
+  const VERSION='4.2.4-export-v4';
   const FA='۰۱۲۳۴۵۶۷۸۹',AR='٠١٢٣٤٥٦٧٨٩';
   const latin=s=>String(s??'').replace(/[۰-۹]/g,d=>String(FA.indexOf(d))).replace(/[٠-٩]/g,d=>String(AR.indexOf(d))).replace(/٬/g,',').replace(/٫/g,'.');
   const clean=s=>String(s??'').replace(/\u200c/g,'‌').replace(/\s+/g,' ').trim();
@@ -191,28 +191,61 @@
     }
     return {html2canvas:window.html2canvas,jsPDF:window.jspdf.jsPDF};
   }
+  function preparePdfCaptureV424(root){
+    const host=document.createElement('div');
+    host.className='export-stage-v424';
+    const clone=root.cloneNode(true);
+    clone.classList.add('export-capturing-v419');
+    clone.querySelectorAll('.data-export-toolbar-v418,script').forEach(x=>x.remove());
+    const src=[root,...root.querySelectorAll('*')],dst=[clone,...clone.querySelectorAll('*')];
+    const n=Math.min(src.length,dst.length);
+    for(let i=0;i<n;i++){
+      const a=src[i],b=dst[i];
+      if(!a||!b||!(a instanceof HTMLElement)||!(b instanceof HTMLElement))continue;
+      const clippedY=a.scrollHeight>a.clientHeight+2;
+      const clippedX=a.scrollWidth>a.clientWidth+2;
+      if(clippedY){
+        b.style.maxHeight='none';b.style.height='auto';b.style.overflowY='visible';b.style.overflow='visible';
+      }
+      if(clippedX){
+        b.style.maxWidth='none';b.style.width=Math.max(a.scrollWidth,a.clientWidth)+'px';b.style.overflowX='visible';b.style.overflow='visible';
+      }
+    }
+    host.appendChild(clone);document.body.appendChild(host);
+    const width=Math.max(900,root.scrollWidth||0,root.getBoundingClientRect?.().width||0,clone.scrollWidth||0);
+    host.style.width=width+'px';clone.style.width='100%';clone.style.maxWidth='none';
+    return {host,clone};
+  }
   async function exportPdf(root){
     if(!root)return;
+    let stage=null;
     try{
       const {html2canvas,jsPDF}=await ensurePdf();
-      root.classList.add('export-capturing-v419');
-      const canvas=await html2canvas(root,{scale:1.35,useCORS:true,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:-window.scrollY});
-      root.classList.remove('export-capturing-v419');
+      stage=preparePdfCaptureV424(root);
+      await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+      const target=stage.clone,width=Math.ceil(target.scrollWidth||target.getBoundingClientRect().width||1200),height=Math.ceil(target.scrollHeight||target.getBoundingClientRect().height||1);
+      const canvas=await html2canvas(target,{scale:1.15,useCORS:true,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0,width,height,windowWidth:width,windowHeight:height});
       const portrait=canvas.height>=canvas.width;
       const pdf=new jsPDF({orientation:portrait?'p':'l',unit:'pt',format:'a4',compress:true});
       const pageW=pdf.internal.pageSize.getWidth(),pageH=pdf.internal.pageSize.getHeight(),margin=20;
-      const imgW=pageW-margin*2,imgH=canvas.height*imgW/canvas.width,pageContent=pageH-margin*2;
-      const img=canvas.toDataURL('image/jpeg',0.92);
-      let offset=0,page=0;
-      while(offset<imgH){
+      const imgW=pageW-margin*2,pageContent=pageH-margin*2;
+      const slicePx=Math.max(1,Math.floor(canvas.width*pageContent/imgW));
+      let y=0,page=0;
+      while(y<canvas.height){
+        const h=Math.min(slicePx,canvas.height-y);
+        const part=document.createElement('canvas');part.width=canvas.width;part.height=h;
+        const ctx=part.getContext('2d',{alpha:false});ctx.fillStyle='#fff';ctx.fillRect(0,0,part.width,part.height);
+        ctx.drawImage(canvas,0,y,canvas.width,h,0,0,canvas.width,h);
         if(page++)pdf.addPage();
-        pdf.addImage(img,'JPEG',margin,margin-offset,imgW,imgH,undefined,'FAST');
-        offset+=pageContent;
+        const renderH=h*imgW/canvas.width;
+        pdf.addImage(part.toDataURL('image/jpeg',0.9),'JPEG',margin,margin,imgW,renderH,undefined,'FAST');
+        y+=h;
       }
       pdf.save(filename(root,'pdf'));
     }catch(e){
-      root?.classList?.remove('export-capturing-v419');
       console.error(e);alert('ساخت فایل PDF ممکن نشد. خروجی‌های دیگر همچنان در دسترس هستند.');
+    }finally{
+      stage?.host?.remove?.();
     }
   }
   function injectStyle(){
@@ -227,6 +260,10 @@
       .data-export-toolbar-v418 button[data-export-docx]{border-color:#4477b5!important;color:#c9e2ff!important;background:#182b43!important}
       .data-export-toolbar-v418 button[data-export-pdf]{border-color:#a85656!important;color:#ffd0d0!important;background:#3b1d20!important}
       .export-capturing-v419 .data-export-toolbar-v418{display:none!important}
+      .export-stage-v424{position:absolute!important;left:-100000px!important;top:0!important;z-index:-1!important;display:block!important;background:#fff!important;color:#111!important;padding:0!important;margin:0!important;overflow:visible!important;height:auto!important;max-height:none!important}
+      .export-stage-v424 .table-panel,.export-stage-v424 .table-wrap,.export-stage-v424 .ux-why-body-v421,.export-stage-v424 .panel,.export-stage-v424 .pro-panel{height:auto!important;max-height:none!important;overflow:visible!important}
+      .export-stage-v424 table{height:auto!important;max-height:none!important}
+      .export-stage-v424 [hidden]{display:none!important}
       .data-export-toolbar-v418 button:hover{transform:translateY(-1px);filter:brightness(1.14)}
       .summary-export-v418{grid-column:1/-1!important}
       .detail-actions>.data-export-toolbar-v418{margin:0;padding:4px 6px;background:transparent;border-color:#35404a}
