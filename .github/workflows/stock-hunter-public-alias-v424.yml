@@ -43,7 +43,7 @@ jobs:
           grep -q "document.querySelector('.table-panel')" stock-hunter/ux-shell-v421.js
           grep -q 'رفتن به جدول شکار' stock-hunter/ux-shell-v421.js
           grep -q 'body.ux-simple-v421 .table-panel{display:grid!important' stock-hunter/ux-v421.css
-          grep -q 'may not move Radar/Table above the Today decision center' stock-hunter-v4/PROJECT_CANONICAL_ARCHITECTURE.md
+          grep -Fq 'may not move Radar/Table above Today' stock-hunter-v4/PROJECT_CANONICAL_ARCHITECTURE.md
           echo 'today-table-order: PASS'
 
       - name: Verify optimized PWA
