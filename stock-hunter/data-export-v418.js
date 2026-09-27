@@ -196,7 +196,6 @@
     host.className='export-stage-v424';
     const clone=root.cloneNode(true);
     clone.classList.add('export-capturing-v419');
-    clone.querySelectorAll('.data-export-toolbar-v418,script').forEach(x=>x.remove());
     const src=[root,...root.querySelectorAll('*')],dst=[clone,...clone.querySelectorAll('*')];
     const n=Math.min(src.length,dst.length);
     for(let i=0;i<n;i++){
@@ -211,6 +210,7 @@
         b.style.maxWidth='none';b.style.width=Math.max(a.scrollWidth,a.clientWidth)+'px';b.style.overflowX='visible';b.style.overflow='visible';
       }
     }
+    clone.querySelectorAll('.data-export-toolbar-v418,script').forEach(x=>x.remove());
     host.appendChild(clone);document.body.appendChild(host);
     const width=Math.max(900,root.scrollWidth||0,root.getBoundingClientRect?.().width||0,clone.scrollWidth||0);
     host.style.width=width+'px';clone.style.width='100%';clone.style.maxWidth='none';
