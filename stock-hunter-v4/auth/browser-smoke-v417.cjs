@@ -354,6 +354,12 @@ async function main(){
     assert.equal((await page.locator('#personalRoleV417').textContent()).trim(),'کاربر');
     assert.equal(await page.locator('#personalAdminV417').isHidden(),true,'normal user admin link must stay hidden');
 
+    const personalOnboarding=page.locator('#uxOnboardingDoneV421');
+    if(await personalOnboarding.count()){
+      await page.waitForTimeout(400);
+      if(await personalOnboarding.isVisible().catch(()=>false))await personalOnboarding.click();
+    }
+
     const simpleMode=page.locator('[data-ux-mode="simple"]');
     const professionalMode=page.locator('[data-ux-mode="pro"]');
     if(await simpleMode.count()){
