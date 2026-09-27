@@ -34,7 +34,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git hash-object stock-hunter-v4/app-hunt-v416.js)" = "a5eead927382b5ced1c840697e6aaf21d52d8391"
+          test "$(git hash-object stock-hunter-v4/app-hunt-v416.js)" = "a1ea8bffe9a117a9fcce2e8d9875dd263aa5ced0"
           test "$(git hash-object stock-hunter-v4/app-session-v413.js)" = "84eb8564aecd9681c014a0978f7bd0dbc8e39f01"
           test "$(git hash-object stock-hunter-v4/hunt-parity-v416.js)" = "400fb64e841de6261d0e5e744c475e032f9c9dfe"
           test "$(git hash-object stock-hunter-v4/capture-security/stock-hunter-capture-v416/index.ts)" = "0c1edf26b1ff30c2829b507752b0c4ec5a7ca250"
