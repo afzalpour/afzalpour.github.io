@@ -70,9 +70,10 @@ body.stock-ux-v421{padding-bottom:0;overflow-y:auto!important}
 
 .ux-mobile-nav-v421{display:none}
 body.ux-simple-v421 .summary-row{display:none!important}\nbody.ux-simple-v421 .ux-pro-only-v421{display:none!important}
-body.ux-simple-v421 .table-panel{display:none!important}
-body.ux-simple-v421.ux-table-open-v421 .table-panel,body.ux-simple-v421.ux-search-open-v421 .table-panel,body.ux-simple-v421.ux-filter-open-v421 .table-panel{display:grid!important;height:auto!important;min-height:0!important;overflow:visible!important}
-body.ux-simple-v421.ux-table-open-v421 .table-wrap,body.ux-simple-v421.ux-search-open-v421 .table-wrap,body.ux-simple-v421.ux-filter-open-v421 .table-wrap{overflow-y:visible!important;overflow-x:auto!important;max-height:none!important}
+body.ux-simple-v421 .table-panel{display:grid!important;height:auto!important;min-height:0!important;overflow:visible!important;margin-top:12px}
+body.ux-simple-v421 .table-wrap,body.ux-simple-v421.ux-table-open-v421 .table-wrap,body.ux-simple-v421.ux-search-open-v421 .table-wrap,body.ux-simple-v421.ux-filter-open-v421 .table-wrap{overflow-y:visible!important;overflow-x:auto!important;max-height:none!important}
+body.ux-simple-v421 .table-wrap table{min-width:1180px}
+body.ux-simple-v421 .pager{position:relative}
 body.ux-simple-v421 .toolbar #decision,body.ux-simple-v421 .toolbar #pageSize,body.ux-simple-v421 .toolbar #columnsBtn{display:none!important}
 body.ux-pro-v421 .table-panel{display:block!important}
 body.ux-pro-v421 .summary-row{display:grid!important}
@@ -113,6 +114,10 @@ html[data-theme="light"] .ux-global-nav-v421{background:rgba(246,249,251,.96)}
   .ux-why-grid-v421{grid-template-columns:1fr}.ux-why-metrics-v421{grid-template-columns:repeat(2,1fr)}.ux-change-grid-v421{grid-template-columns:repeat(2,1fr)}
   .ux-onboarding-steps-v421{grid-template-columns:1fr}
   .toolbar{gap:6px}.toolbar #search{min-width:0;flex:1}
+  body.stock-ux-v421 .table-panel{display:grid!important;height:auto!important;min-height:0!important;overflow:visible!important}
+  body.stock-ux-v421 .table-wrap{overflow-x:auto!important;overflow-y:visible!important;max-height:none!important;-webkit-overflow-scrolling:touch}
+  body.stock-ux-v421 .table-wrap table{min-width:1180px}
+  body.stock-ux-v421 .mobile-list{display:none!important}
 }
 @media(max-width:480px){.ux-pulse-v421{grid-template-columns:1fr 1fr}.ux-pulse-v421 article:last-child{grid-column:1/-1}.ux-hunt-facts-v421{grid-template-columns:repeat(3,1fr)}}
 
