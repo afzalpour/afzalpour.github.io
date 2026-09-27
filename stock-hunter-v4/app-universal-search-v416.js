@@ -9,7 +9,7 @@
 let catalogV416=[],catalogIndexV416=[],catalogLoadingV416=false,catalogLoadedAtV416=0;
 let searchRenderTimerV416=null,searchSuggestRafV416=0,searchSuggestTimerV416=null;
 let searchComposingV416=false,searchActiveIndexV416=-1,lastSearchInputAtV416=0;
-const SEARCH_RENDER_DEBOUNCE_V416=110,SEARCH_SUGGEST_LIMIT_V416=10;
+const SEARCH_RENDER_DEBOUNCE_V416=190,SEARCH_SUGGEST_DEBOUNCE_V416=45,SEARCH_SUGGEST_LIMIT_V416=10,SEARCH_RESULT_LIMIT_V416=600;
 const SEARCH_FA_COLLATOR_V416=new Intl.Collator('fa-IR',{usage:'sort',sensitivity:'base',ignorePunctuation:true,numeric:false});
 function faSearchCompareV416(a,b){return SEARCH_FA_COLLATOR_V416.compare(normalizeSearchV416(a),normalizeSearchV416(b));}
 
@@ -46,10 +46,13 @@ function currentSearchIndexV416(){
 function universalRowsV416(q){
   const liveMap=new Map(rows.map(x=>[String(x.id||''),x]));
   if(catalogIndexV416.length){
-    return catalogIndexV416.filter(i=>matchesUniversalSearchV416(i.raw,q)).map(i=>{
+    const matched=catalogIndexV416.filter(i=>matchesUniversalSearchV416(i.raw,q))
+      .sort((a,b)=>faSearchCompareV416(a.symbol,b.symbol)||faSearchCompareV416(a.company,b.company))
+      .slice(0,SEARCH_RESULT_LIMIT_V416);
+    return matched.map(i=>{
       const r=i.raw,x=typeof normUniverse==='function'?normUniverse(r,liveMap):(liveMap.get(String(r.ins_code||''))||r);
       x.universeLastSeenV416=r.last_seen_at||r.updated_at||x.updated||'';x.universeListedV416=true;return x;
-    }).sort((a,b)=>q?faSearchCompareV416(a.symbol,b.symbol)||faSearchCompareV416(a.company,b.company):(Number(b.analyzed===true)-Number(a.analyzed===true))||faSearchCompareV416(a.symbol,b.symbol)||faSearchCompareV416(a.company,b.company));
+    });
   }
   if(typeof universeRows!=='undefined'&&Array.isArray(universeRows)&&universeRows.length){
     return universeRows.filter(r=>matchesUniversalSearchV416(r,q)).slice().sort((a,b)=>q?faSearchCompareV416(a.symbol,b.symbol)||faSearchCompareV416(a.company,b.company):(Number(b.analyzed===true)-Number(a.analyzed===true))||faSearchCompareV416(a.symbol,b.symbol)||faSearchCompareV416(a.company,b.company));
@@ -121,7 +124,7 @@ function scheduleSuggestionsV416(){
   if(typeof requestAnimationFrame!=='function'){clearTimeout(searchSuggestTimerV416);searchSuggestTimerV416=setTimeout(renderSuggestionsV416,0);return;}
   if(searchSuggestRafV416)cancelAnimationFrame(searchSuggestRafV416);
   clearTimeout(searchSuggestTimerV416);
-  searchSuggestRafV416=requestAnimationFrame(()=>{searchSuggestTimerV416=setTimeout(renderSuggestionsV416,0);});
+  searchSuggestRafV416=requestAnimationFrame(()=>{searchSuggestTimerV416=setTimeout(renderSuggestionsV416,SEARCH_SUGGEST_DEBOUNCE_V416);});
 }
 function scheduleSearchRenderV416(delay=SEARCH_RENDER_DEBOUNCE_V416){
   clearTimeout(searchRenderTimerV416);
@@ -192,13 +195,14 @@ filtered=function(){
 };
 
 if(typeof window!=='undefined'){
-  window.STOCK_HUNTER_SEARCH_UI_V416={active:true,version:'4.1.6-search-typeahead-v1'};
+  window.STOCK_HUNTER_SEARCH_UI_V416={active:true,version:'4.1.6-search-typeahead-v2'};
   window.scheduleStockHunterSearchRenderV416=scheduleSearchRenderV416;
   window.stockHunterSearchRenderAfterDataV416=()=>{
     const typing=Date.now()-lastSearchInputAtV416<180;
     if(typing)scheduleSearchRenderV416(120);else render();
   };
   setupSearchComboboxV416();
-  loadCatalogV416();
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadCatalogV416();});
+  // The full Universe catalog is intentionally loaded on first search focus, not during initial market bootstrap.
+  // This keeps startup network/CPU available for the live market feed and preserves responsive Persian typing.
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&document.activeElement===$('search'))loadCatalogV416();});
 }

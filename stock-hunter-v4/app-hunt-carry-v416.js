@@ -140,5 +140,5 @@ carryStyleV416.textContent=`
 document.head.appendChild(carryStyleV416);
 
 ensureCarryFilterV416();
-setTimeout(()=>{try{loadHuntCarryV416(true)}catch{}},0);
+setTimeout(()=>{try{loadHuntCarryV416(true)}catch{}},1400);
 setInterval(()=>{try{loadHuntCarryV416(true)}catch{}},30000);

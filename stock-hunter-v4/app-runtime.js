@@ -94,7 +94,7 @@ function marketShowHealthFirstV416(health,source){
 }
 async function marketReadPagedV416(base,table,select,freshFilter,timeout,label){
   const rows=[];let response=null;
-  const pageSize=250;
+  const pageSize=1000;
   for(let offset=0;offset<5000;offset+=pageSize){
     const url=`${base}/rest/v1/${table}?select=${encodeURIComponent(select)}${freshFilter}&order=id.asc&offset=${offset}&limit=${pageSize}`;
     response=await marketFetchV416(url,base,timeout);
@@ -108,15 +108,18 @@ async function marketReadPagedV416(base,table,select,freshFilter,timeout,label){
 }
 async function marketReadCloudSignalsV416(base,table,health,timeout){
   const freshFilter=marketFreshFilterV416(health);
-  const primary=await marketReadPagedV416(base,'stock_hunter_signals_v4',MARKET_SIGNAL_SELECT_V416,freshFilter,timeout,'دریافت داده بازار ناموفق بود');
+  const primaryPromise=marketReadPagedV416(base,'stock_hunter_signals_v4',MARKET_SIGNAL_SELECT_V416,freshFilter,timeout,'دریافت داده بازار ناموفق بود');
+  const extraPromise=table&&table!=='stock_hunter_signals_v4'
+    ? marketReadPagedV416(base,table,MARKET_INTEGRATED_SELECT_V416,freshFilter,timeout,'دریافت داده تکمیلی بازار ناموفق بود').catch(e=>({error:e,rows:[]}))
+    : null;
+  const primary=await primaryPromise;
   let signalRows=primary.rows;
-  if(table&&table!=='stock_hunter_signals_v4'&&signalRows.length){
-    try{
-      const extra=await marketReadPagedV416(base,table,MARKET_INTEGRATED_SELECT_V416,freshFilter,timeout,'دریافت داده تکمیلی بازار ناموفق بود');
+  if(extraPromise&&signalRows.length){
+    const extra=await extraPromise;
+    if(extra.error)console.warn('Stock Hunter integrated enrichment unavailable; live signal rows remain active.',extra.error);
+    else{
       const byId=new Map(extra.rows.map(r=>[String(r.id),r]));
       signalRows=signalRows.map(r=>({...r,...(byId.get(String(r.id))||{})}));
-    }catch(e){
-      console.warn('Stock Hunter integrated enrichment unavailable; live signal rows remain active.',e);
     }
   }
   return{sr:primary.response,signalRows};

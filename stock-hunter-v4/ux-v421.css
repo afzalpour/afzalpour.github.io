@@ -12,7 +12,7 @@
   --ux-info:#6688aa;
 }
 html,body{scroll-behavior:smooth}
-body.stock-ux-v421{padding-bottom:0}
+body.stock-ux-v421{padding-bottom:0;overflow-y:auto!important}
 .ux-global-nav-v421{max-width:1500px;margin:0 auto 10px;padding:8px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border:1px solid var(--ux-line);border-top:0;background:rgba(20,23,27,.96);position:sticky;top:0;z-index:80;backdrop-filter:blur(12px)}
 .ux-global-nav-v421>a,.ux-global-nav-v421 details>summary{color:var(--ux-ink);text-decoration:none;border:1px solid var(--ux-line);background:var(--ux-panel);padding:7px 10px;border-radius:9px;cursor:pointer;list-style:none;font-size:10px}
 .ux-global-nav-v421 details{position:relative}.ux-global-nav-v421 summary::-webkit-details-marker{display:none}
@@ -71,7 +71,8 @@ body.stock-ux-v421{padding-bottom:0}
 .ux-mobile-nav-v421{display:none}
 body.ux-simple-v421 .summary-row{display:none!important}\nbody.ux-simple-v421 .ux-pro-only-v421{display:none!important}
 body.ux-simple-v421 .table-panel{display:none!important}
-body.ux-simple-v421.ux-table-open-v421 .table-panel,body.ux-simple-v421.ux-search-open-v421 .table-panel,body.ux-simple-v421.ux-filter-open-v421 .table-panel{display:block!important}
+body.ux-simple-v421.ux-table-open-v421 .table-panel,body.ux-simple-v421.ux-search-open-v421 .table-panel,body.ux-simple-v421.ux-filter-open-v421 .table-panel{display:grid!important;height:auto!important;min-height:0!important;overflow:visible!important}
+body.ux-simple-v421.ux-table-open-v421 .table-wrap,body.ux-simple-v421.ux-search-open-v421 .table-wrap,body.ux-simple-v421.ux-filter-open-v421 .table-wrap{overflow-y:visible!important;overflow-x:auto!important;max-height:none!important}
 body.ux-simple-v421 .toolbar #decision,body.ux-simple-v421 .toolbar #pageSize,body.ux-simple-v421 .toolbar #columnsBtn{display:none!important}
 body.ux-pro-v421 .table-panel{display:block!important}
 body.ux-pro-v421 .summary-row{display:grid!important}
@@ -114,3 +115,6 @@ html[data-theme="light"] .ux-global-nav-v421{background:rgba(246,249,251,.96)}
   .toolbar{gap:6px}.toolbar #search{min-width:0;flex:1}
 }
 @media(max-width:480px){.ux-pulse-v421{grid-template-columns:1fr 1fr}.ux-pulse-v421 article:last-child{grid-column:1/-1}.ux-hunt-facts-v421{grid-template-columns:repeat(3,1fr)}}
+
+/* 4.2.2 performance/scroll hardening */
+html,body.stock-ux-v421{height:auto!important;min-height:100%!important;overflow-y:auto!important}.stock-ux-v421 .app-shell,.stock-ux-v421 .workspace{height:auto!important;overflow:visible!important}.stock-ux-v421 #search{user-select:text!important;-webkit-user-select:text!important;touch-action:manipulation;caret-color:currentColor}
