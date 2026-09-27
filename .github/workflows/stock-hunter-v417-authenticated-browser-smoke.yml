@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'stock-hunter-v4/index.html'
+      - 'stock-hunter/**'
       - 'stock-hunter-v4/profile-v417.html'
       - 'stock-hunter-v4/search-neutral-v416.css'
       - 'stock-hunter-v4/index-v417.html'
@@ -89,7 +90,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
-      BASE_URL: https://afzalpour.github.io/stock-hunter-v4
+      BASE_URL: https://afzalpour.github.io/stock-hunter
       SMOKE_ADMIN_URL: https://summnepwuziwulzvpcms.supabase.co/functions/v1/stock-hunter-browser-smoke-admin-v417
       OIDC_AUDIENCE: stock-hunter-browser-smoke-v417
     steps:
@@ -123,7 +124,7 @@ jobs:
                 all_ok=0
                 break
               fi
-              expected="$(sha256sum "stock-hunter-v4/$f" | awk '{print $1}')"
+              expected="$(sha256sum "stock-hunter/$f" | awk '{print $1}')"
               actual="$(sha256sum "$tmp" | awk '{print $1}')"
               rm -f "$tmp"
               if [ "$actual" != "$expected" ]; then
