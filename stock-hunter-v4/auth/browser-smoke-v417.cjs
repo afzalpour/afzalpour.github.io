@@ -1,4 +1,5 @@
 'use strict';
+// UX 4.2.1 full-tree verification: exercises the current published main tree, including additive carry bootstrap.
 
 const assert=require('node:assert/strict');
 const {chromium}=require('playwright');
