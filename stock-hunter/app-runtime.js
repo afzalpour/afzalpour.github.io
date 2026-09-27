@@ -327,7 +327,7 @@ $('soundBtn').onclick=()=>{sound=!sound;$('soundBtn').textContent=sound?'🔔 ه
 async function registerServiceWorkerV416(){
   if(!('serviceWorker' in navigator))return;
   try{
-    await navigator.serviceWorker.register('./sw.js?v=4.1.6-r18');
+    await navigator.serviceWorker.register('./sw.js?v=4.2.4-public-r1');
   }catch{}
 }
 function marketNextPollDelayV416(){
