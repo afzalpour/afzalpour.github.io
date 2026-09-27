@@ -1,0 +1,81 @@
+name: Stock Hunter Public Alias 4.2.4
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'stock-hunter/**'
+      - 'stock-hunter-v4/index.html'
+      - 'stock-hunter-v4/PROJECT_CANONICAL_ARCHITECTURE.md'
+      - '.github/workflows/stock-hunter-public-alias-v424.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'stock-hunter/**'
+      - 'stock-hunter-v4/index.html'
+      - 'stock-hunter-v4/PROJECT_CANONICAL_ARCHITECTURE.md'
+      - '.github/workflows/stock-hunter-public-alias-v424.yml'
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify public path and frozen Hunt parity
+        run: |
+          set -euo pipefail
+          test -f stock-hunter/index.html
+          test -f stock-hunter/manifest.webmanifest
+          test -f stock-hunter/sw.js
+          grep -q 'https://afzalpour.github.io/stock-hunter/index.html' stock-hunter/index.html
+          grep -q "location.replace('/stock-hunter/index.html'" stock-hunter-v4/index.html
+          cmp stock-hunter/app-hunt-v416.js stock-hunter-v4/app-hunt-v416.js
+          grep -q "HUNT_V416_VERSION='4.1.6-hunt-v2'" stock-hunter/app-hunt-v416.js
+          echo 'public-path-frozen-hunt: PASS'
+
+      - name: Verify main Today and Hunt-table order
+        run: |
+          set -euo pipefail
+          node --check stock-hunter/ux-shell-v421.js
+          node --check stock-hunter/workspace-v420.js
+          grep -q "ws.prepend(sec)" stock-hunter/ux-shell-v421.js
+          grep -q "document.querySelector('.table-panel')" stock-hunter/ux-shell-v421.js
+          grep -q 'رفتن به جدول شکار' stock-hunter/ux-shell-v421.js
+          grep -q 'body.ux-simple-v421 .table-panel{display:grid!important' stock-hunter/ux-v421.css
+          grep -q 'may not move Radar/Table above the Today decision center' stock-hunter/PROJECT_CANONICAL_ARCHITECTURE.md
+          echo 'today-table-order: PASS'
+
+      - name: Verify optimized PWA
+        run: |
+          set -euo pipefail
+          node --check stock-hunter/sw.js
+          python -m json.tool stock-hunter/manifest.webmanifest >/dev/null
+          grep -q "CACHE_PREFIX='shikar-sahm-public-'" stock-hunter/sw.js
+          grep -q 'navigationPreload.enable' stock-hunter/sw.js
+          grep -q 'Promise.allSettled' stock-hunter/sw.js
+          grep -q "start_url.*index.html" stock-hunter/manifest.webmanifest
+          grep -q 'icon-192.png' stock-hunter/manifest.webmanifest
+          grep -q 'icon-512.png' stock-hunter/manifest.webmanifest
+          grep -q "sw.js?v=4.2.4-public-r1" stock-hunter/app-runtime.js
+          echo 'pwa-public-v424: PASS'
+
+      - name: Verify full export capture
+        run: |
+          set -euo pipefail
+          node --check stock-hunter/data-export-v418.js
+          grep -q "VERSION='4.2.4-export-v4'" stock-hunter/data-export-v418.js
+          grep -q 'preparePdfCaptureV424' stock-hunter/data-export-v418.js
+          grep -q 'export-stage-v424' stock-hunter/data-export-v418.js
+          grep -q 'slicePx' stock-hunter/data-export-v418.js
+          for token in exportXlsx exportCsv exportXml exportDocx exportPdf; do
+            grep -q "$token" stock-hunter/data-export-v418.js
+          done
+          grep -q 'data-export-v418.js' stock-hunter/cloud-v1/staging/index.html
+          echo 'full-export-v424: PASS'
+
+      - name: Deterministic Hunt/runtime smokes from public path
+        run: |
+          node stock-hunter/hunt-smoke-v416.js
+          node stock-hunter/runtime-router-smoke-v417.js
+          node stock-hunter/search-eod-smoke-v416.js
