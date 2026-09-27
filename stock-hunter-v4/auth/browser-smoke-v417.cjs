@@ -5,7 +5,7 @@
 const assert=require('node:assert/strict');
 const {chromium}=require('playwright');
 
-const BASE_URL=String(process.env.BASE_URL||'https://afzalpour.github.io/stock-hunter-v4').replace(/\/$/,'');
+const BASE_URL=String(process.env.BASE_URL||'https://afzalpour.github.io/stock-hunter').replace(/\/$/,'');
 const EMAIL=process.env.SMOKE_EMAIL||'';
 const PASSWORD=process.env.SMOKE_PASSWORD||'';
 const SYMBOL_ID=process.env.SMOKE_SYMBOL_ID||'';
@@ -146,12 +146,9 @@ async function main(){
       await new Promise(resolve=>setTimeout(resolve,250));
       const cacheKeys=await caches.keys();
       const carryResponse=await caches.match('./app-hunt-carry-v416.js');
-      const journeyResponse=await caches.match('./hunt-journey-v416.html');
-      const backtestResponse=await caches.match('./backtest-lab-v416.html');
-      const missedResponse=await caches.match('./missed-opportunities-v416.html');
-      const alertsResponse=await caches.match('./alerts-center-v416.html');
-      const replayResponse=await caches.match('./market-replay-v416.html');
-      const reliabilityResponse=await caches.match('./reliability-v416.html');
+      const runtimeResponse=await caches.match('./app-runtime.js');
+      const uxResponse=await caches.match('./ux-v421.css');
+      const exportResponse=await caches.match('./data-export-v418.js');
       return {
         manifestLink,
         display:manifest.display,
@@ -162,29 +159,23 @@ async function main(){
         swScript:reg.active?.scriptURL||'',
         cacheKeys,
         carryCached:Boolean(carryResponse),
-        journeyCached:Boolean(journeyResponse),
-        backtestCached:Boolean(backtestResponse),
-        missedCached:Boolean(missedResponse),
-        alertsCached:Boolean(alertsResponse),
-        replayCached:Boolean(replayResponse),
-        reliabilityCached:Boolean(reliabilityResponse)
+        runtimeCached:Boolean(runtimeResponse),
+        uxCached:Boolean(uxResponse),
+        exportCached:Boolean(exportResponse)
       };
     });
-    assert.match(pwaContract.manifestLink,/manifest\.webmanifest\?v=4\.1\.6-pwa-r15$/,'PWA manifest must be cache-busted for carry release');
+    assert.match(pwaContract.manifestLink,/manifest\.webmanifest\?v=4\.2\.4-public-r1$/,'PWA manifest must use the stable public release');
     assert.equal(pwaContract.display,'standalone','PWA must remain standalone');
     assert.equal(pwaContract.themeColor,'#15181b','PWA theme must match neutral main UI');
     assert.equal(pwaContract.backgroundColor,'#111315','PWA background must match neutral main UI');
-    assert.equal(pwaContract.scope,'./','PWA scope must remain stock-hunter-v4');
-    assert.equal(pwaContract.startUrl,'./','PWA start URL must open the carry-enabled main app');
-    assert.match(pwaContract.swScript,/sw\.js\?v=4\.1\.6-r18/,'PWA must activate service worker r18');
-    assert.ok(pwaContract.cacheKeys.includes('shikar-sahm-v4.1.6-r18'),'PWA cache r18 must exist');
-    assert.equal(pwaContract.carryCached,true,'carry-forward runtime must be available from the PWA offline cache');
-    assert.equal(pwaContract.journeyCached,true,'Hunt Journey must be available from the PWA offline cache');
-    assert.equal(pwaContract.backtestCached,true,'Backtest Lab must be available from the PWA offline cache');
-    assert.equal(pwaContract.missedCached,true,'Missed Opportunities Audit must be available from the PWA offline cache');
-    assert.equal(pwaContract.alertsCached,true,'Alert Center must be available from the PWA offline cache');
-    assert.equal(pwaContract.replayCached,true,'Market Replay must be available from the PWA offline cache');
-    assert.equal(pwaContract.reliabilityCached,true,'Reliability dashboard must be available from the PWA offline cache');
+    assert.equal(pwaContract.scope,'./','PWA scope must remain inside the stable public path');
+    assert.equal(pwaContract.startUrl,'./index.html','PWA start URL must open the stable public main app');
+    assert.match(pwaContract.swScript,/sw\.js\?v=4\.2\.4-public-r1/,'PWA must activate optimized public service worker');
+    assert.ok(pwaContract.cacheKeys.some(k=>k.startsWith('shikar-sahm-public-v4.2.4')),'optimized public PWA cache must exist');
+    assert.equal(pwaContract.carryCached,true,'carry-forward runtime must be available from the critical offline shell');
+    assert.equal(pwaContract.runtimeCached,true,'main runtime must be available from the critical offline shell');
+    assert.equal(pwaContract.uxCached,true,'main UX stylesheet must be available from the critical offline shell');
+    assert.equal(pwaContract.exportCached,true,'shared data exporter must be available from the critical offline shell');
 
     assert.equal(await page.locator('a.top-link[href="hunt-journey-v416.html"]').count(),1,'main page must link to Hunt Journey');
 
@@ -240,15 +231,23 @@ async function main(){
     await page.waitForFunction(()=>typeof detailHTML==='function',null,{timeout:10000});
 
     await page.setViewportSize({width:1280,height:640});
-    const mainLayout=await page.evaluate(()=>({
-      bodyOverflowY:getComputedStyle(document.body).overflowY,
-      tableOverflowY:getComputedStyle(document.querySelector('.table-wrap')).overflowY,
-      tablePanelHeight:getComputedStyle(document.querySelector('.table-panel')).height,
-      validationInjected:String(detailHTML).includes('forecast-validation-gate-v430')
-    }));
+    const mainLayout=await page.evaluate(()=>{
+      const today=document.getElementById('uxTodayV421'),table=document.querySelector('.table-panel'),wrap=document.querySelector('.table-wrap');
+      const tr=today?.getBoundingClientRect(),rr=table?.getBoundingClientRect();
+      return {
+        bodyOverflowY:getComputedStyle(document.body).overflowY,
+        tableOverflowY:getComputedStyle(wrap).overflowY,
+        tableOverflowX:getComputedStyle(wrap).overflowX,
+        tablePanelHeight:getComputedStyle(table).height,
+        todayBeforeTable:Boolean(tr&&rr&&tr.top<=rr.top),
+        validationInjected:String(detailHTML).includes('forecast-validation-gate-v430')
+      };
+    });
     assert.notEqual(mainLayout.bodyOverflowY,'hidden','main identification page must not lock vertical scrolling');
-    assert.equal(mainLayout.tableOverflowY,'auto','hunt table must keep its own vertical scrolling');
-    assert.notEqual(mainLayout.tablePanelHeight,'0px','hunt table panel must retain visible height');
+    assert.notEqual(mainLayout.tableOverflowY,'hidden','hunt table must not clip vertical output');
+    assert.equal(mainLayout.tableOverflowX,'auto','hunt table must remain horizontally scrollable when needed');
+    assert.notEqual(mainLayout.tablePanelHeight,'0px','hunt table panel must remain visible under Today');
+    assert.equal(mainLayout.todayBeforeTable,true,'Today decision center must remain above the Hunt table');
     assert.equal(mainLayout.validationInjected,false,'forecast validation gate must not be injected into end-user details');
     await page.setViewportSize({width:1440,height:1000});
 
