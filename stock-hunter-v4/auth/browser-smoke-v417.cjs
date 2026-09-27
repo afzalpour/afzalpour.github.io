@@ -1,5 +1,6 @@
 'use strict';
 // UX 4.2.1 full-tree verification: exercises the current published main tree, including additive carry bootstrap.
+// UX 4.2.1 retention fallback contract: fixed research policy must remain visible during transient data failures.
 
 const assert=require('node:assert/strict');
 const {chromium}=require('playwright');
