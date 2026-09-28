@@ -62,10 +62,10 @@ func TestVolumeProfileNeedsThreePriorSessions(t *testing.T){
 	v:=newVolumeProfile();v.path=t.TempDir()+"/profile.json"
 	for d:=1;d<=3;d++{
 		v.rollDate(fmt.Sprintf("2026-09-%02d",d))
-		v.observe("1",540,100)
+		v.observe("1",540,1,100)
 	}
 	v.rollDate("2026-09-04")
-	r,n:=v.observe("1",540,150)
+	r,n:=v.observe("1",540,1,150)
 	if n<3{t.Fatalf("samples=%d",n)}
 	if !closeTo(r,1.5,1e-9){t.Fatalf("rvol=%v",r)}
 }
