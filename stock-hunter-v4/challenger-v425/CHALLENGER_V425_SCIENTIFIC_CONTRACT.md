@@ -93,3 +93,5 @@ Modifier تداوم ۱–۲ روزه نیز فعلاً همان نقش محدو�
 - هیچ Threshold یا Route در `4.1.6-hunt-v2` تغییر نمی‌کند.
 - `daily_rvol`, `ofi`, `qi`, `cancellation_ratio` قدیمی حفظ می‌شوند.
 - ارتقا فقط پس از داده Prospective کافی، Walk-Forward/OOS و تصمیم Promotion مجاز است.
+
+- Champion risk semantics are preserved in Shadow: invalid price/volume and `risk_score >= 75` remain comparison gates, and the existing risk-above-40 score penalty is retained. The legacy cancellation penalty is not duplicated because correction #4 supplies the new cancellation proxy inside Challenger Order Score.
