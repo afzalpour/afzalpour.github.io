@@ -78,6 +78,9 @@ jobs:
           node --check stock-hunter-v4/app-runtime.js
           node --check stock-hunter/sw.js
 
+      - name: Challenger numerical smoke
+        run: node stock-hunter-v4/challenger-v425/challenger-v425-smoke.cjs
+
       - name: Five approved corrections contract
         run: |
           set -euo pipefail
