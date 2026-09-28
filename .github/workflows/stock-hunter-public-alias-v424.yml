@@ -57,8 +57,10 @@ jobs:
           grep -q "start_url.*index.html" stock-hunter/manifest.webmanifest
           grep -q 'icon-192.png' stock-hunter/manifest.webmanifest
           grep -q 'icon-512.png' stock-hunter/manifest.webmanifest
-          grep -q "sw.js?v=4.2.4-public-r1" stock-hunter/app-runtime.js
-          echo 'pwa-public-v424: PASS'
+          grep -q "sw.js?v=4.2.5-public-r2" stock-hunter/app-runtime.js
+          grep -q 'app-hunt-challenger-v425.js' stock-hunter/index.html
+          grep -q "'./app-hunt-challenger-v425.js'" stock-hunter/sw.js
+          echo 'pwa-public-v425: PASS'
 
       - name: Verify full export capture
         run: |

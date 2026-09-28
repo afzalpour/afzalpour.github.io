@@ -149,6 +149,7 @@ async function main(){
       const runtimeResponse=await caches.match('./app-runtime.js');
       const uxResponse=await caches.match('./ux-v421.css');
       const exportResponse=await caches.match('./data-export-v418.js');
+      const challengerResponse=await caches.match('./app-hunt-challenger-v425.js');
       return {
         manifestLink,
         display:manifest.display,
@@ -161,21 +162,23 @@ async function main(){
         carryCached:Boolean(carryResponse),
         runtimeCached:Boolean(runtimeResponse),
         uxCached:Boolean(uxResponse),
-        exportCached:Boolean(exportResponse)
+        exportCached:Boolean(exportResponse),
+        challengerCached:Boolean(challengerResponse)
       };
     });
-    assert.match(pwaContract.manifestLink,/manifest\.webmanifest\?v=4\.2\.4-public-r1$/,'PWA manifest must use the stable public release');
+    assert.match(pwaContract.manifestLink,/manifest\.webmanifest\?v=4\.2\.5-public-r2$/,'PWA manifest must use the stable public release');
     assert.equal(pwaContract.display,'standalone','PWA must remain standalone');
     assert.equal(pwaContract.themeColor,'#15181b','PWA theme must match neutral main UI');
     assert.equal(pwaContract.backgroundColor,'#111315','PWA background must match neutral main UI');
     assert.equal(pwaContract.scope,'./','PWA scope must remain inside the stable public path');
     assert.equal(pwaContract.startUrl,'./index.html','PWA start URL must open the stable public main app');
-    assert.match(pwaContract.swScript,/sw\.js\?v=4\.2\.4-public-r1/,'PWA must activate optimized public service worker');
-    assert.ok(pwaContract.cacheKeys.some(k=>k.startsWith('shikar-sahm-public-v4.2.4')),'optimized public PWA cache must exist');
+    assert.match(pwaContract.swScript,/sw\.js\?v=4\.2\.5-public-r2/,'PWA must activate optimized public service worker');
+    assert.ok(pwaContract.cacheKeys.some(k=>k.startsWith('shikar-sahm-public-v4.2.5')),'optimized public PWA cache must exist');
     assert.equal(pwaContract.carryCached,true,'carry-forward runtime must be available from the critical offline shell');
     assert.equal(pwaContract.runtimeCached,true,'main runtime must be available from the critical offline shell');
     assert.equal(pwaContract.uxCached,true,'main UX stylesheet must be available from the critical offline shell');
     assert.equal(pwaContract.exportCached,true,'shared data exporter must be available from the critical offline shell');
+    assert.equal(pwaContract.challengerCached,true,'shadow Challenger runtime must be available from the critical offline shell');
 
     assert.equal(await page.locator('a.top-link[href="hunt-journey-v416.html"]').count(),1,'main page must link to Hunt Journey');
 

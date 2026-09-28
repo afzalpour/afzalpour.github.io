@@ -71,7 +71,7 @@ const MARKET_SIGNAL_SELECT_V416=[
   'id','symbol','company_name','state','last_price','closing_price','yesterday_price','low_price','high_price','min_allowed','max_allowed','volume','value',
   'buy_depth','sell_depth','best_bid','best_ask','sell_queue','buy_queue','fast_score','fast_probability','signal_accel','continuation_score','prob_2d','prob_3d','risk_score',
   'qi','ofi','bid_stack_15s','ask_pull_15s','daily_rvol','rsi_5m','ema9_5m','ema21_5m','vwap','atr_5m','technical_score','microprice','absorption',
-  'cancellation_ratio','price_velocity','trade_accel','recovery','depth_ratio','queue_decay','momentum','real_flow_ratio','hunt_state','decision','entry_price','entry_low',
+  'cancellation_ratio','price_velocity','trade_accel','recovery','depth_ratio','queue_decay','momentum','real_flow_ratio','book_imbalance3_v425','mlofi3_v425','book_persistence_v425','cancel_proxy_v425','rvol_tod_v425','rvol_tod_samples_v425','book_levels_ready_v425','challenger_feature_version_v425','hunt_state','decision','entry_price','entry_low',
   'entry_high','stop_loss','target_1','target_2','target_3','risk_reward','reason','snapshots','candles','updated_at'
 ].join(',');
 const MARKET_INTEGRATED_SELECT_V416=[
@@ -327,7 +327,7 @@ $('soundBtn').onclick=()=>{sound=!sound;$('soundBtn').textContent=sound?'🔔 ه
 async function registerServiceWorkerV416(){
   if(!('serviceWorker' in navigator))return;
   try{
-    await navigator.serviceWorker.register('./sw.js?v=4.2.4-public-r1');
+    await navigator.serviceWorker.register('./sw.js?v=4.2.5-public-r2');
   }catch{}
 }
 function marketNextPollDelayV416(){

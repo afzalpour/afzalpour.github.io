@@ -499,3 +499,32 @@ The approved Precision Optics / IRAN-font identity remains canonical. 4.2.1 exte
 - The public manifest uses 192px and 512px PNG icons plus the SVG fallback, stable shortcuts and standalone display semantics.
 - Data export remains presentation-only. PDF export must expand clipped/scrollable containers before capture and slice the rendered canvas into real A4 pages so long tables/panels are not truncated. XLSX/CSV/XML/DOCX continue to serialize the full rendered dataset for the selected export surface; no export path may mutate filters, source rows or Hunt state.
 - All production analytical/numeric HTML surfaces must load the shared exporter; staging numeric surfaces are included when they are user-accessible.
+
+
+## 21. Challenger 4.2.5 — five scientifically motivated shadow corrections — 2026-09-28
+User explicitly approved implementation of five model corrections after literature/market review. This approval **does not replace or unfreeze** production Champion `4.1.6-hunt-v2`.
+
+Shadow Challenger identifier: `4.2.5-challenger-shadow-v1`.
+
+Approved corrections:
+1. price-aware multi-level OFI from the first three order-book levels;
+2. true time-of-day RVOL against a bounded same-5-minute historical baseline, while legacy `daily_rvol = Volume/BaseVolume` remains untouched for Champion compatibility;
+3. removal of QI/DepthRatio duplicate evidence inside Challenger Order Score;
+4. explicit order-book persistence and a conservative displayed-depth cancellation proxy;
+5. independent Reversal and Acceleration scoring functions.
+
+Isolation contract:
+- no Champion formula, weight, threshold, Hunt state, Action Now/Radar route or Risk Gate is modified;
+- legacy `qi`, `ofi`, `depth_ratio`, `daily_rvol`, `cancellation_ratio` remain unchanged;
+- all new feed/database columns carry the `v425` suffix;
+- Challenger output is detail-only / shadow-only and cannot create production Hunt alerts;
+- top-level component weights are intentionally inherited from Champion for the first shadow phase so the causal effect of the five approved feature/model-structure changes can be measured without simultaneous threshold tuning;
+- Challenger is not statistically mature until time-of-day RVOL has at least three prior same-bucket sessions and the first three book levels are valid in current/previous observations;
+- promotion remains forbidden before prospective evidence, walk-forward/OOS comparison and explicit promotion approval.
+
+Feature-feed implementation is additive in `pc-eco-v425/`. The existing v4.1.1 bridge remains compatible with ingest but does not populate Challenger features. Live Challenger maturation therefore begins only when the v4.2.5 feature feed is actually run on the owner PC.
+
+Scientific formula/provenance details:
+`challenger-v425/CHALLENGER_V425_SCIENTIFIC_CONTRACT.md`.
+
+- Champion risk semantics are preserved in Shadow: invalid price/volume and `risk_score >= 75` remain comparison gates, and the existing risk-above-40 score penalty is retained. The legacy cancellation penalty is not duplicated because correction #4 supplies the new cancellation proxy inside Challenger Order Score.
