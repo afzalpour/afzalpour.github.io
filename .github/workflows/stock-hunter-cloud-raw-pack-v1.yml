@@ -32,18 +32,25 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Require Cloudflare read/write credentials
+      - name: Detect Cloudflare read/write credentials
+        id: creds
         shell: bash
         run: |
           set -euo pipefail
-          test -n "$CLOUDFLARE_API_TOKEN"
-          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          if [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "ready=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=0" >> "$GITHUB_OUTPUT"
+            echo "::warning::Raw-pack job is credential-blocked: Cloudflare credentials are not configured."
+          fi
 
       - name: Install pinned R2 tooling
+        if: steps.creds.outputs.ready == '1'
         working-directory: stock-hunter-v4/cloud-v1/cloudflare
         run: npm install --ignore-scripts --no-audit --no-fund
 
       - name: Resolve Tehran date
+        if: steps.creds.outputs.ready == '1'
         id: date
         shell: bash
         env:
@@ -56,6 +63,7 @@ jobs:
           echo "value=$d" >> "$GITHUB_OUTPUT"
 
       - name: List raw objects with bounded Cloudflare REST API
+        if: steps.creds.outputs.ready == '1'
         id: raw
         shell: bash
         run: |
@@ -68,7 +76,7 @@ jobs:
           echo "count=$count" >> "$GITHUB_OUTPUT"
 
       - name: Download raw day
-        if: steps.raw.outputs.count != '0'
+        if: steps.creds.outputs.ready == '1' && steps.raw.outputs.count != '0'
         shell: bash
         working-directory: stock-hunter-v4/cloud-v1/cloudflare
         run: |
@@ -80,12 +88,12 @@ jobs:
           done
 
       - name: Build deterministic raw pack
-        if: steps.raw.outputs.count != '0'
+        if: steps.creds.outputs.ready == '1' && steps.raw.outputs.count != '0'
         run: |
           node stock-hunter-v4/cloud-v1/historical/compact-r2-day-v1.mjs             --input raw-day --output pack-out --date "${{ steps.date.outputs.value }}"
 
       - name: Upload and verify pack
-        if: steps.raw.outputs.count != '0'
+        if: steps.creds.outputs.ready == '1' && steps.raw.outputs.count != '0'
         shell: bash
         working-directory: stock-hunter-v4/cloud-v1/cloudflare
         run: |
@@ -97,5 +105,9 @@ jobs:
           cmp "$GITHUB_WORKSPACE/pack-out/manifest.json" "$RUNNER_TEMP/manifest-check.json"
 
       - name: No raw data notice
-        if: steps.raw.outputs.count == '0'
+        if: steps.creds.outputs.ready == '1' && steps.raw.outputs.count == '0'
         run: echo "No raw cloud snapshots for ${{ steps.date.outputs.value }}; no pack fabricated."
+
+      - name: Cloud credential blocker notice
+        if: steps.creds.outputs.ready != '1'
+        run: echo "Raw Daily Pack is disabled until Cloudflare credentials are configured; no synthetic pack is created."

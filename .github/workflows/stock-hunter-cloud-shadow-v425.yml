@@ -57,18 +57,25 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Require bounded Cloudflare credentials
+      - name: Detect bounded Cloudflare credentials
+        id: creds
         shell: bash
         run: |
           set -euo pipefail
-          test -n "$CLOUDFLARE_API_TOKEN"
-          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          if [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "ready=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=0" >> "$GITHUB_OUTPUT"
+            echo "::warning::Cloud Shadow v4.2.5 is credential-blocked: CLOUDFLARE_API_TOKEN/CLOUDFLARE_ACCOUNT_ID are not configured in stock-hunter-cloud-production."
+          fi
 
       - name: Install pinned replay and R2 tooling
+        if: steps.creds.outputs.ready == '1'
         working-directory: stock-hunter-v4/cloud-v1/cloudflare
         run: npm install --ignore-scripts --no-audit --no-fund
 
       - name: Resolve Tehran date
+        if: steps.creds.outputs.ready == '1'
         id: date
         shell: bash
         env:
@@ -84,6 +91,7 @@ jobs:
           echo "value=$d" >> "$GITHUB_OUTPUT"
 
       - name: Locate target market pack or raw snapshots
+        if: steps.creds.outputs.ready == '1'
         id: source
         shell: bash
         working-directory: stock-hunter-v4/cloud-v1/cloudflare
@@ -104,7 +112,7 @@ jobs:
           echo "raw=$count" >> "$GITHUB_OUTPUT"
 
       - name: Build target pack from prospective raw snapshots
-        if: steps.source.outputs.pack != '1' && steps.source.outputs.raw != '0'
+        if: steps.creds.outputs.ready == '1' && steps.source.outputs.pack != '1' && steps.source.outputs.raw != '0'
         shell: bash
         working-directory: stock-hunter-v4/cloud-v1/cloudflare
         run: |
@@ -118,7 +126,7 @@ jobs:
           cp "$GITHUB_WORKSPACE/local-pack/market-facts.ndjson.gz" "$GITHUB_WORKSPACE/shadow-input/market-facts.ndjson.gz"
 
       - name: Download bounded prior-session RVOL baseline
-        if: steps.source.outputs.pack == '1' || steps.source.outputs.raw != '0'
+        if: steps.creds.outputs.ready == '1' && (steps.source.outputs.pack == '1' || steps.source.outputs.raw != '0')
         shell: bash
         working-directory: stock-hunter-v4/cloud-v1/cloudflare
         run: |
@@ -139,14 +147,14 @@ jobs:
           echo "baseline_days=$(find "$GITHUB_WORKSPACE/baseline-input" -type f -name '*.gz' | wc -l)" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Replay Champion and Challenger on identical prospective snapshots
-        if: steps.source.outputs.pack == '1' || steps.source.outputs.raw != '0'
+        if: steps.creds.outputs.ready == '1' && (steps.source.outputs.pack == '1' || steps.source.outputs.raw != '0')
         shell: bash
         run: |
           set -euo pipefail
           ./stock-hunter-v4/cloud-v1/cloudflare/node_modules/.bin/tsx stock-hunter-v4/cloud-v1/historical/shadow-replay-v425.ts             --input shadow-input/market-facts.ndjson.gz             --baseline-dir baseline-input             --output shadow-out/shadow-v425-report.json             --date "${{ steps.date.outputs.value }}"
 
       - name: Persist bounded 4.2.5 Shadow report
-        if: steps.source.outputs.pack == '1' || steps.source.outputs.raw != '0'
+        if: steps.creds.outputs.ready == '1' && (steps.source.outputs.pack == '1' || steps.source.outputs.raw != '0')
         shell: bash
         working-directory: stock-hunter-v4/cloud-v1/cloudflare
         run: |
@@ -156,7 +164,7 @@ jobs:
           test -s "$GITHUB_WORKSPACE/shadow-out/shadow-v425-report.json"
 
       - uses: actions/upload-artifact@v4
-        if: steps.source.outputs.pack == '1' || steps.source.outputs.raw != '0'
+        if: steps.creds.outputs.ready == '1' && (steps.source.outputs.pack == '1' || steps.source.outputs.raw != '0')
         with:
           name: stock-hunter-shadow-v425-${{ steps.date.outputs.value }}
           path: shadow-out/shadow-v425-report.json
@@ -164,5 +172,9 @@ jobs:
           if-no-files-found: error
 
       - name: No prospective data notice
-        if: steps.source.outputs.pack != '1' && steps.source.outputs.raw == '0'
+        if: steps.creds.outputs.ready == '1' && steps.source.outputs.pack != '1' && steps.source.outputs.raw == '0'
         run: echo "No prospective cloud snapshots for ${{ steps.date.outputs.value }}; no Challenger evidence fabricated."
+
+      - name: Cloud credential blocker notice
+        if: steps.creds.outputs.ready != '1'
+        run: echo "Shadow replay code/self-test passed, but cloud object access is disabled until the Cloudflare credentials are configured; no evidence is fabricated."

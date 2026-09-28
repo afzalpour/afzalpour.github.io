@@ -20,7 +20,7 @@ Status: DELIVERY_BACKEND_REGISTERED / LOCAL_EXECUTION_PENDING
 ## Cloud shadow credential repair
 The first v4.2.5 cloud-shadow push run failed at the credential preflight because the GitHub environment did not provide the S3-compatible `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` pair.
 
-The repaired workflow uses the bounded Cloudflare account API token already used by the Cloud deployment path:
+The repaired workflow supports the bounded Cloudflare account API-token path:
 - Cloudflare R2 REST API is used for prefix/list operations.
 - Wrangler `r2 object get/put --remote` is used for object transfers.
 - No R2 S3 access-key pair is required by the repaired workflow.
