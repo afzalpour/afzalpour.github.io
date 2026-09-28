@@ -2,11 +2,6 @@ name: Stock Hunter PC Eco v4.2.5 Secure Delivery
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'stock-hunter-v4/pc-eco-v425/**'
-      - '.github/workflows/stock-hunter-pc-eco-v425-delivery.yml'
 
 permissions:
   contents: read
@@ -65,6 +60,7 @@ jobs:
           ۳) برنامه هر ۳۰ ثانیه داده بازار را دریافت می‌کند و ویژگی‌های آزمایشی ۴.۲.۵ را به مسیر Shadow می‌فرستد.
           ۴) موتور اصلی ۴.۱.۶ و تصمیم‌های تولیدی تغییر نمی‌کنند.
           ۵) پروفایل حجم هم‌زمان روز در فضای محلی محدود نگهداری می‌شود و پس از حداقل سه جلسه برای RVOL بالغ می‌شود.
+          ۶) این بسته فقط پس از ثبت هش device_key_sha256 در ingest مجاز است؛ ساخت Artifact به‌تنهایی مجوز Backend ایجاد نمی‌کند.
           EOF
           unset device_key
 
