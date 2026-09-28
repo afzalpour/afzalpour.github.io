@@ -1465,3 +1465,18 @@ Implemented on branch `model/challenger-v425-five-fixes`:
 - dedicated CI gate `Stock Hunter Challenger v4.2.5`.
 
 Production Champion remains `4.1.6-hunt-v2`. Do not promote/tune Challenger from literature or from the first few sessions. First comparable RVOL requires at least three prior observed same-time sessions per symbol/bucket after the v4.2.5 feed is actually run.
+
+
+## 2026-09-28 — v4.2.5 secure delivery + complete prospective Shadow
+Next-step implementation after the five-fix Challenger:
+- added complete R2 prospective replay `cloud-v1/historical/shadow-replay-v425.ts`;
+- added scheduled/manual workflow `Stock Hunter Cloud Live Shadow v4.2.5`;
+- Shadow compares 4.1.6 and 4.2.5 on identical point-in-time market snapshots and evaluates Reversal/Acceleration separately;
+- RVOL baseline uses only prior daily packs and needs >=3 prior same-bucket sessions;
+- no new high-frequency Supabase shadow table/write path was introduced; reports are compact JSON in the existing R2 daily pack path;
+- added secure Windows delivery workflow for PC Eco v4.2.5: a fresh device credential is generated only inside the GitHub runner, embedded into the EXE, and only its SHA-256 digest is exported for server authorization;
+- plaintext credential is never committed or returned as a sidecar;
+- live PC cutover is not complete until feed health reports `4.2.5-pc-eco-challenger-features`;
+- legacy 4.1.1 feed remains valid until that live cutover is observed.
+
+Production remains `CHAMPION_ONLY / 0% challenger / kill switch ON`. Frozen Champion remains `4.1.6-hunt-v2`.

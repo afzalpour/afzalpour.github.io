@@ -528,3 +528,26 @@ Scientific formula/provenance details:
 `challenger-v425/CHALLENGER_V425_SCIENTIFIC_CONTRACT.md`.
 
 - Champion risk semantics are preserved in Shadow: invalid price/volume and `risk_score >= 75` remain comparison gates, and the existing risk-above-40 score penalty is retained. The legacy cancellation penalty is not duplicated because correction #4 supplies the new cancellation proxy inside Challenger Order Score.
+
+
+## 22. Challenger 4.2.5 secure delivery and prospective cloud shadow — 2026-09-28
+The five approved scientific corrections remain Shadow-only. Frozen Champion `4.1.6-hunt-v2`, production Hunt states, thresholds, routing and lifecycle gates are unchanged.
+
+### Secure PC delivery
+- The v4.2.5 Windows Bridge is built only by `.github/workflows/stock-hunter-pc-eco-v425-delivery.yml`.
+- Each manual delivery build generates a fresh device credential inside the ephemeral GitHub runner, masks it immediately, embeds it into the EXE at link time, and emits **only its SHA-256 digest** in the delivery manifest.
+- The plaintext device credential MUST NOT be committed, logged, exposed in UI/chat, or emitted as a sidecar file.
+- Production ingest may accept the legacy v4.1.1 credential digest and the currently issued v4.2.5 delivery digest concurrently during the migration window. Removing the legacy digest requires a separately verified cutover after live v4.2.5 heartbeat.
+- Merely building the executable does not prove local deployment. Live cutover is established only when `stock_hunter_feed_health_v4.agent_version` reports `4.2.5-pc-eco-challenger-features`.
+
+### Complete cloud shadow replay
+- Canonical daily raw source: prospective R2 market-fact snapshots already collected under `raw/v1/<date>/` and compacted to `packs/raw-v1/<date>/market-facts.ndjson.gz`.
+- `cloud-v1/historical/shadow-replay-v425.ts` replays Champion and Challenger on the **same ordered point-in-time snapshots**.
+- Three-level MLOFI, book imbalance, persistence and cancellation proxy are computed using current/past snapshots only.
+- Time-of-day RVOL baseline is built exclusively from prior dated packs; the target date is never included in its own baseline. At least three prior same-bucket sessions are required for comparable Challenger rows.
+- Reversal outcome is first observed crossing from negative day return to >=0; Acceleration outcome is first observed crossing from [0,+1%) to >=+1%.
+- Daily report records base rate, candidate count, precision, recall, lift and detection lead time separately for Reversal/Acceleration and Champion/Challenger.
+- Reports are evidence-only and stored as `packs/raw-v1/<date>/shadow-v425-report.json`; they MUST NOT mutate production routing or model weights.
+- Same-cohort tuning/promotion is prohibited. Promotion still requires aggregate prospective evidence plus independent walk-forward/OOS and explicit promotion authorization.
+
+Scheduled workflow: `.github/workflows/stock-hunter-cloud-shadow-v425.yml`.
