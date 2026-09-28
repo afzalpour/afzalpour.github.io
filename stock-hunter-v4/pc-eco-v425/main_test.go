@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math"
 	"testing"
 )
@@ -60,7 +61,7 @@ func TestPersistence(t *testing.T){
 func TestVolumeProfileNeedsThreePriorSessions(t *testing.T){
 	v:=newVolumeProfile();v.path=t.TempDir()+"/profile.json"
 	for d:=1;d<=3;d++{
-		v.rollDate("2026-09-"+strconv2(d))
+		v.rollDate(fmt.Sprintf("2026-09-%02d",d))
 		v.observe("1",540,100)
 	}
 	v.rollDate("2026-09-04")
@@ -69,7 +70,3 @@ func TestVolumeProfileNeedsThreePriorSessions(t *testing.T){
 	if !closeTo(r,1.5,1e-9){t.Fatalf("rvol=%v",r)}
 }
 
-func strconv2(v int) string {
-	if v<10{return "0"+string(rune('0'+v))}
-	return ""
-}
