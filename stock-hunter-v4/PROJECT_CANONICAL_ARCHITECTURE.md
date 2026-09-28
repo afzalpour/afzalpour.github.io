@@ -526,3 +526,5 @@ Feature-feed implementation is additive in `pc-eco-v425/`. The existing v4.1.1 b
 
 Scientific formula/provenance details:
 `challenger-v425/CHALLENGER_V425_SCIENTIFIC_CONTRACT.md`.
+
+- Champion risk semantics are preserved in Shadow: invalid price/volume and `risk_score >= 75` remain comparison gates, and the existing risk-above-40 score penalty is retained. The legacy cancellation penalty is not duplicated because correction #4 supplies the new cancellation proxy inside Challenger Order Score.
