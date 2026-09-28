@@ -52,6 +52,18 @@ function challengerFeasibilityV425(x,mode,dayChange){
   if(typeof feasibilityScoreV416!=='function')return {score:50,left:0,distance:0,runway:0};
   return feasibilityScoreV416(x,mode,dayChange,{pv:Number(x.pv||0),ofi:Number(x.mlofi3V425||0),tradeAccel:Number(x.tradeAccel||0),accel:0,bidStack:0,askPull:0});
 }
+function challengerRiskPenaltyV425(x){
+  // Preserve the Champion's risk semantics. The legacy cancellation term is intentionally
+  // not reused because correction #4 replaces it with the new cancellation proxy in Order Score.
+  return Math.max(0,Number(x.risk||0)-40)*.23;
+}
+function challengerGateV425(x){
+  if(!(Number(x.last)>0&&Number(x.yesterday)>0)||Number(x.volume||0)<=0)return 'داده قیمت/حجم معتبر نیست';
+  if(Number(x.risk||0)>=75)return 'ریسک لحظه‌ای بسیار بالا است';
+  if(!Boolean(x.bookLevelsReadyV425))return 'سه سطح معتبر دفتر سفارش برای مقایسه آماده نیست';
+  if(Number(x.rvolTodSamplesV425||0)<3)return 'حجم نسبی هم‌زمان هنوز به حداقل سه جلسه نرسیده است';
+  return '';
+}
 function challengerEvidenceV425(x){
   let n=0;
   if(Number(x.mlofi3V425)>0.05)n++;
@@ -78,7 +90,7 @@ function challengerReversalV425(x,dayChange){
   const market=challengerMarketV425(x);
   const continuation=challengerContinuationV425(x);
   // Keep the champion's top-level component weights to isolate the five approved changes.
-  const today=c425Clamp(.28*order+.27*impulse+.20*feasibility.score+.15*flow+.10*market);
+  const today=c425Clamp(.28*order+.27*impulse+.20*feasibility.score+.15*flow+.10*market-challengerRiskPenaltyV425(x));
   const score=c425Clamp(today*(.82+.18*continuation/100));
   return {mode:'reversal',today,score,order,impulse,feasibility:feasibility.score,flow,market,continuation};
 }
@@ -89,7 +101,7 @@ function challengerAccelerationV425(x,dayChange){
   const flow=challengerFlowScoreV425(x);
   const market=challengerMarketV425(x);
   const continuation=challengerContinuationV425(x);
-  const today=c425Clamp(.30*order+.30*impulse+.15*feasibility.score+.15*flow+.10*market);
+  const today=c425Clamp(.30*order+.30*impulse+.15*feasibility.score+.15*flow+.10*market-challengerRiskPenaltyV425(x));
   const score=c425Clamp(today*(.82+.18*continuation/100));
   return {mode:'acceleration',today,score,order,impulse,feasibility:feasibility.score,flow,market,continuation};
 }
@@ -106,7 +118,8 @@ function applyHuntChallengerV425(x){
   const day=typeof pctH416==='function'?pctH416(x.last,x.yesterday):(Number(x.yesterday)>0?(Number(x.last)/Number(x.yesterday)-1)*100:0);
   const mode=day<0?'reversal':day<1?'acceleration':'outside';
   x.challengerModeV425=mode;
-  x.challengerComparableV425=challengerFeatureReadyV425(x);
+  x.challengerGateV425=challengerGateV425(x);
+  x.challengerComparableV425=challengerFeatureReadyV425(x)&&!x.challengerGateV425;
   x.challengerEvidenceV425=challengerEvidenceV425(x);
   x.challengerVersionV425=HUNT_CHALLENGER_V425_VERSION;
 
@@ -153,6 +166,7 @@ function challengerPanelV425(x){
       '<div><span>قدرت امروز آزمایشی</span><b>'+fa(x.challengerTodayV425,1)+'</b><small>Reversal و Acceleration جداگانه</small></div>'+
       '<div><span>شواهد مستقل</span><b>'+fa(x.challengerEvidenceV425,0)+'</b><small>صرفاً برای ارزیابی Shadow</small></div>'+
     '</div>'+
+    (x.challengerGateV425?'<div class="integrated-gate">'+esc(x.challengerGateV425)+'</div>':'')+
     '<div class="calibration-note">این Challenger فقط برای جمع‌آوری و مقایسه آینده‌نگر ساخته شده است. آستانه‌های نمایشی آن مجوز معامله یا جایگزینی Champion نیستند و تا اعتبارسنجی خارج از نمونه و Shadow تغییر مسیر تولید ممنوع است.</div>';
 }
 
