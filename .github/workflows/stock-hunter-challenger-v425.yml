@@ -1,0 +1,115 @@
+name: Stock Hunter Challenger v4.2.5
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'stock-hunter-v4/pc-eco-v425/**'
+      - 'stock-hunter-v4/app-hunt-challenger-v425.js'
+      - 'stock-hunter/app-hunt-challenger-v425.js'
+      - 'stock-hunter-v4/app-core.js'
+      - 'stock-hunter/app-core.js'
+      - 'stock-hunter-v4/app-runtime.js'
+      - 'stock-hunter/app-runtime.js'
+      - 'stock-hunter-v4/feed-security/stock-hunter-pc-ingest-v410/index.ts'
+      - 'stock-hunter-v4/challenger-v425/**'
+      - 'stock-hunter-v4/index.html'
+      - 'stock-hunter/index.html'
+      - 'stock-hunter/sw.js'
+      - '.github/workflows/stock-hunter-challenger-v425.yml'
+      - 'stock-hunter-v4/PROJECT_CANONICAL_ARCHITECTURE.md'
+      - 'stock-hunter-v4/CURRENT_HANDOFF.md'
+  push:
+    branches: [main]
+    paths:
+      - 'stock-hunter-v4/pc-eco-v425/**'
+      - 'stock-hunter-v4/app-hunt-challenger-v425.js'
+      - 'stock-hunter/app-hunt-challenger-v425.js'
+      - 'stock-hunter-v4/app-core.js'
+      - 'stock-hunter/app-core.js'
+      - 'stock-hunter-v4/app-runtime.js'
+      - 'stock-hunter/app-runtime.js'
+      - 'stock-hunter-v4/feed-security/stock-hunter-pc-ingest-v410/index.ts'
+      - 'stock-hunter-v4/challenger-v425/**'
+      - 'stock-hunter-v4/index.html'
+      - 'stock-hunter/index.html'
+      - 'stock-hunter/sw.js'
+      - '.github/workflows/stock-hunter-challenger-v425.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  challenger-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+
+      - name: Frozen Champion must remain unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --name-only origin/main...HEAD -- stock-hunter-v4/app-hunt-v416.js | grep -q .; then
+            echo "Frozen Champion app-hunt-v416.js changed" >&2
+            exit 1
+          fi
+          grep -F "HUNT_V416_VERSION='4.1.6-hunt-v2'" stock-hunter-v4/app-hunt-v416.js
+          cmp stock-hunter-v4/app-hunt-v416.js stock-hunter/app-hunt-v416.js
+
+      - name: Go feature-feed tests
+        working-directory: stock-hunter-v4/pc-eco-v425
+        run: |
+          go test ./...
+          go vet ./...
+          go build -trimpath ./...
+          go run . --self-test
+
+      - name: JavaScript syntax
+        run: |
+          node --check stock-hunter-v4/app-hunt-challenger-v425.js
+          node --check stock-hunter/app-hunt-challenger-v425.js
+          node --check stock-hunter-v4/app-core.js
+          node --check stock-hunter-v4/app-runtime.js
+          node --check stock-hunter/sw.js
+
+      - name: Five approved corrections contract
+        run: |
+          set -euo pipefail
+          grep -F 'mlofi3_v425' stock-hunter-v4/pc-eco-v425/main.go
+          grep -F 'rvol_tod_v425' stock-hunter-v4/pc-eco-v425/main.go
+          grep -F 'book_persistence_v425' stock-hunter-v4/pc-eco-v425/main.go
+          grep -F 'cancel_proxy_v425' stock-hunter-v4/pc-eco-v425/main.go
+          grep -F 'challengerReversalV425' stock-hunter-v4/app-hunt-challenger-v425.js
+          grep -F 'challengerAccelerationV425' stock-hunter-v4/app-hunt-challenger-v425.js
+          grep -F 'QI and DepthRatio are algebraically redundant' stock-hunter-v4/app-hunt-challenger-v425.js
+          grep -F '4.2.5-challenger-shadow-v1' stock-hunter-v4/app-hunt-challenger-v425.js
+          grep -F 'روی تصمیم ۴.۱.۶ هیچ اثری ندارد' stock-hunter-v4/app-hunt-challenger-v425.js
+
+      - name: Legacy inputs stay untouched
+        run: |
+          set -euo pipefail
+          grep -F '"daily_rvol": rvol' stock-hunter-v4/pc-eco-v425/main.go
+          grep -F '"cancellation_ratio": 0' stock-hunter-v4/pc-eco-v425/main.go
+          grep -F '"ofi": ofi' stock-hunter-v4/pc-eco-v425/main.go
+          grep -F '"qi": qi' stock-hunter-v4/pc-eco-v425/main.go
+          grep -F 'final Hunt 4.1.6 is browser-side' stock-hunter-v4/pc-eco-v425/main.go
+
+      - name: Public and compatibility web parity
+        run: |
+          cmp stock-hunter-v4/app-hunt-challenger-v425.js stock-hunter/app-hunt-challenger-v425.js
+          grep -F 'app-hunt-challenger-v425.js?v=4.2.5-shadow1' stock-hunter-v4/index.html
+          grep -F 'app-hunt-challenger-v425.js?v=4.2.5-shadow1' stock-hunter/index.html
+          grep -F "'./app-hunt-challenger-v425.js'" stock-hunter/sw.js
+
+      - name: Ingest/schema contract
+        run: |
+          grep -F "'book_imbalance3_v425'" stock-hunter-v4/feed-security/stock-hunter-pc-ingest-v410/index.ts
+          grep -F "'mlofi3_v425'" stock-hunter-v4/feed-security/stock-hunter-pc-ingest-v410/index.ts
+          grep -F 'add column if not exists rvol_tod_v425' stock-hunter-v4/challenger-v425/challenger-v425.sql
+          grep -F 'add column if not exists book_levels_ready_v425' stock-hunter-v4/challenger-v425/challenger-v425.sql
