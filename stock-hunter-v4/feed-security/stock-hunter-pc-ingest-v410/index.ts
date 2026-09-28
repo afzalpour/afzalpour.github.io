@@ -1,7 +1,9 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
 import postgres from 'npm:postgres@3.4.7';
 
-const PC_KEY_SHA256 = 'a44db59e173ced2712fd0d405213a5a1fbbc6a2cc30498398f22ccea9408e89f';
+const PC_KEY_SHA256_V411 = 'a44db59e173ced2712fd0d405213a5a1fbbc6a2cc30498398f22ccea9408e89f';
+const PC_KEY_SHA256_V425 = 'f38cad7d5c118610d8c54bcfbb96521536ea59db61c56747f4f907127513b17a';
+const PC_KEY_SHA256_ALLOWED = new Set([PC_KEY_SHA256_V411,PC_KEY_SHA256_V425]);
 const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'content-type,content-encoding,x-pc-key',
@@ -124,7 +126,8 @@ Deno.serve(async req => {
   }
 
   const supplied = req.headers.get('x-pc-key') || '';
-  if (!supplied || await sha256Hex(supplied) !== PC_KEY_SHA256) {
+  const suppliedHash = supplied ? await sha256Hex(supplied) : '';
+  if (!suppliedHash || !PC_KEY_SHA256_ALLOWED.has(suppliedHash)) {
     return new Response(JSON.stringify({ok:false,error:'unauthorized'}), {
       status:401, headers:{...cors,'Content-Type':'application/json'}
     });
