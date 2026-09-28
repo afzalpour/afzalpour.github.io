@@ -9,6 +9,11 @@ on:
         type: string
   schedule:
     - cron: '20 15 * * 0-3,6'
+  push:
+    branches: [main]
+    paths:
+      - 'stock-hunter-v4/cloud-v1/historical/shadow-replay-v425.ts'
+      - '.github/workflows/stock-hunter-cloud-shadow-v425.yml'
 
 permissions:
   contents: read
@@ -74,6 +79,9 @@ jobs:
         run: |
           set -euo pipefail
           d="$INPUT_DATE"
+          if [ -z "$d" ] && [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            d="$(TZ=Asia/Tehran date -d 'yesterday' +%F)"
+          fi
           if [ -z "$d" ]; then d="$(TZ=Asia/Tehran date +%F)"; fi
           [[ "$d" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]
           echo "value=$d" >> "$GITHUB_OUTPUT"
