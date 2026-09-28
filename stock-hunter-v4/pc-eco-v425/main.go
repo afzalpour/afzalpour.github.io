@@ -804,15 +804,13 @@ func main() {
 			totalBytes += n
 			lastOut = out
 			if uerr != nil {
-				fmt.Printf("%s UPLOAD ERROR batch=%d/%d: %v
-", time.Now().Format("15:04:05"), bi+1, batchCount, uerr)
+				fmt.Printf("%s UPLOAD ERROR batch=%d/%d: %v\n", time.Now().Format("15:04:05"), bi+1, batchCount, uerr)
 				ok = false
 				break
 			}
 		}
 		if ok {
-			fmt.Printf("%s OK rows=%d batches=%d gzip=%d KB challenger_features=v425 server=%v
-",
+			fmt.Printf("%s OK rows=%d batches=%d gzip=%d KB challenger_features=v425 server=%v\n",
 				time.Now().Format("15:04:05"), len(rows), batchCount, (totalBytes+1023)/1024, lastOut)
 			if !opened { openSite(); opened = true }
 		}
