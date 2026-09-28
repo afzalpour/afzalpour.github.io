@@ -1480,3 +1480,13 @@ Next-step implementation after the five-fix Challenger:
 - legacy 4.1.1 feed remains valid until that live cutover is observed.
 
 Production remains `CHAMPION_ONLY / 0% challenger / kill switch ON`. Frozen Champion remains `4.1.6-hunt-v2`.
+
+
+## 23. Challenger 4.2.5 live delivery registration and Cloudflare-token shadow repair — 2026-09-28
+- The sealed Windows v4.2.5 delivery built from main commit `122bfab688a9c437f9c253e68e2b6eac6114d108` has EXE SHA-256 `e61b52f065bc26e2ac781dd9efb8c6b2e5db8a501e912270ce0be3681f83e4e4`.
+- Only the delivery credential SHA-256 `e1d7d45b571ab181891429b7f895478c3218a7583db82ae5e6f1f22185519b3d` is registered in code; plaintext credential material is forbidden from repo/chat/sidecars.
+- Live `stock-hunter-pc-ingest-v410` deployment version 9 accepts both the registered v4.2.5 digest and the legacy v4.1.1 digest during cutover. Legacy removal requires a verified v4.2.5 heartbeat first.
+- Automatic push-based secure-delivery builds are disabled because a freshly generated random delivery is not authorized until its digest is explicitly registered.
+- v4.2.5 Shadow and Raw Daily Pack GitHub workflows use `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`, Cloudflare R2 REST listing, and Wrangler remote object get/put; they no longer require the missing S3-style R2 access-key pair.
+- Local cutover remains unproven until live health reports `4.2.5-pc-eco-challenger-features`; repository/backend readiness is not equivalent to local execution.
+- Frozen Champion remains `4.1.6-hunt-v2`; routing remains Champion-only until normal evidence gates are met.

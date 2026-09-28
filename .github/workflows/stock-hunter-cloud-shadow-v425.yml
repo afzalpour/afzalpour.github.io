@@ -46,9 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: stock-hunter-cloud-production
     env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-      AWS_DEFAULT_REGION: auto
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       BUCKET: stock-hunter-market-v1
       STOCK_HUNTER_RAW_PACK_MAX_BYTES: '200000000'
@@ -59,15 +57,14 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Require bounded R2 credentials
+      - name: Require bounded Cloudflare credentials
         shell: bash
         run: |
           set -euo pipefail
-          test -n "$AWS_ACCESS_KEY_ID"
-          test -n "$AWS_SECRET_ACCESS_KEY"
+          test -n "$CLOUDFLARE_API_TOKEN"
           test -n "$CLOUDFLARE_ACCOUNT_ID"
 
-      - name: Install pinned replay tooling
+      - name: Install pinned replay and R2 tooling
         working-directory: stock-hunter-v4/cloud-v1/cloudflare
         run: npm install --ignore-scripts --no-audit --no-fund
 
@@ -89,60 +86,57 @@ jobs:
       - name: Locate target market pack or raw snapshots
         id: source
         shell: bash
+        working-directory: stock-hunter-v4/cloud-v1/cloudflare
         run: |
           set -euo pipefail
-          endpoint="https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com"
           date="${{ steps.date.outputs.value }}"
-          pack="packs/raw-v1/$date/market-facts.ndjson.gz"
-          if aws s3api head-object --bucket "$BUCKET" --key "$pack" --endpoint-url "$endpoint" >/dev/null 2>&1; then
+          mkdir -p "$GITHUB_WORKSPACE/shadow-input" "$GITHUB_WORKSPACE/raw-day"
+          if npx wrangler r2 object get "$BUCKET/packs/raw-v1/$date/market-facts.ndjson.gz" --file "$GITHUB_WORKSPACE/shadow-input/market-facts.ndjson.gz" --remote >/dev/null 2>&1; then
             echo "pack=1" >> "$GITHUB_OUTPUT"
             echo "raw=0" >> "$GITHUB_OUTPUT"
-          else
-            count="$(aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "raw/v1/$date/" --max-items 1 --endpoint-url "$endpoint" --query 'KeyCount' --output text)"
-            echo "pack=0" >> "$GITHUB_OUTPUT"
-            echo "raw=$count" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
-
-      - name: Download target daily pack
-        if: steps.source.outputs.pack == '1'
-        shell: bash
-        run: |
-          set -euo pipefail
-          endpoint="https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com"
-          mkdir -p shadow-input
-          aws s3 cp "s3://$BUCKET/packs/raw-v1/${{ steps.date.outputs.value }}/market-facts.ndjson.gz" shadow-input/market-facts.ndjson.gz --endpoint-url "$endpoint" --only-show-errors
+          api="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/r2/buckets/$BUCKET/objects"
+          curl -fsS -G "$api" -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN"             --data-urlencode "prefix=raw/v1/$date/" --data-urlencode "per_page=1000" > "$GITHUB_WORKSPACE/raw-list.json"
+          jq -e '.success == true' "$GITHUB_WORKSPACE/raw-list.json" >/dev/null
+          count="$(jq '[.result[] | select(.key | startswith("raw/v1/'"$date"'/"))] | length' "$GITHUB_WORKSPACE/raw-list.json")"
+          echo "pack=0" >> "$GITHUB_OUTPUT"
+          echo "raw=$count" >> "$GITHUB_OUTPUT"
 
       - name: Build target pack from prospective raw snapshots
         if: steps.source.outputs.pack != '1' && steps.source.outputs.raw != '0'
         shell: bash
+        working-directory: stock-hunter-v4/cloud-v1/cloudflare
         run: |
           set -euo pipefail
-          endpoint="https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com"
-          mkdir -p raw-day shadow-input
-          aws s3 cp "s3://$BUCKET/raw/v1/${{ steps.date.outputs.value }}/" raw-day/ --recursive --endpoint-url "$endpoint" --only-show-errors
-          node stock-hunter-v4/cloud-v1/historical/compact-r2-day-v1.mjs --input raw-day --output local-pack --date "${{ steps.date.outputs.value }}"
-          cp local-pack/market-facts.ndjson.gz shadow-input/market-facts.ndjson.gz
+          jq -r '.result[].key' "$GITHUB_WORKSPACE/raw-list.json" | while read -r key; do
+            [ -n "$key" ] || continue
+            name="$(basename "$key")"
+            npx wrangler r2 object get "$BUCKET/$key" --file "$GITHUB_WORKSPACE/raw-day/$name" --remote >/dev/null
+          done
+          node ../historical/compact-r2-day-v1.mjs --input "$GITHUB_WORKSPACE/raw-day" --output "$GITHUB_WORKSPACE/local-pack" --date "${{ steps.date.outputs.value }}"
+          cp "$GITHUB_WORKSPACE/local-pack/market-facts.ndjson.gz" "$GITHUB_WORKSPACE/shadow-input/market-facts.ndjson.gz"
 
       - name: Download bounded prior-session RVOL baseline
         if: steps.source.outputs.pack == '1' || steps.source.outputs.raw != '0'
         shell: bash
+        working-directory: stock-hunter-v4/cloud-v1/cloudflare
         run: |
           set -euo pipefail
-          endpoint="https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com"
           target="${{ steps.date.outputs.value }}"
-          mkdir -p baseline-input
-          aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "packs/raw-v1/" --endpoint-url "$endpoint" --query 'Contents[].Key' --output text |
-            tr '\t' '\n' |
+          mkdir -p "$GITHUB_WORKSPACE/baseline-input"
+          api="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/r2/buckets/$BUCKET/objects"
+          curl -fsS -G "$api" -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN"             --data-urlencode "prefix=packs/raw-v1/" --data-urlencode "per_page=1000" > "$GITHUB_WORKSPACE/pack-list.json"
+          jq -e '.success == true' "$GITHUB_WORKSPACE/pack-list.json" >/dev/null
+          jq -r '.result[].key' "$GITHUB_WORKSPACE/pack-list.json" |
             grep -E '^packs/raw-v1/[0-9]{4}-[0-9]{2}-[0-9]{2}/market-facts\.ndjson\.gz$' |
             sed -E 's#^packs/raw-v1/([0-9]{4}-[0-9]{2}-[0-9]{2})/market-facts\.ndjson\.gz$#\1#' |
-            awk -v t="$target" '$1 < t' |
-            sort -u |
-            tail -n 20 > /tmp/v425-baseline-dates.txt || true
+            awk -v t="$target" '$1 < t' | sort -u | tail -n 20 > "$GITHUB_WORKSPACE/baseline-dates.txt" || true
           while read -r d; do
             [ -n "$d" ] || continue
-            aws s3 cp "s3://$BUCKET/packs/raw-v1/$d/market-facts.ndjson.gz" "baseline-input/$d.ndjson.gz" --endpoint-url "$endpoint" --only-show-errors
-          done < /tmp/v425-baseline-dates.txt
-          echo "baseline_days=$(find baseline-input -type f -name '*.gz' | wc -l)" >> "$GITHUB_STEP_SUMMARY"
+            npx wrangler r2 object get "$BUCKET/packs/raw-v1/$d/market-facts.ndjson.gz" --file "$GITHUB_WORKSPACE/baseline-input/$d.ndjson.gz" --remote >/dev/null
+          done < "$GITHUB_WORKSPACE/baseline-dates.txt"
+          echo "baseline_days=$(find "$GITHUB_WORKSPACE/baseline-input" -type f -name '*.gz' | wc -l)" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Replay Champion and Challenger on identical prospective snapshots
         if: steps.source.outputs.pack == '1' || steps.source.outputs.raw != '0'
@@ -154,12 +148,12 @@ jobs:
       - name: Persist bounded 4.2.5 Shadow report
         if: steps.source.outputs.pack == '1' || steps.source.outputs.raw != '0'
         shell: bash
+        working-directory: stock-hunter-v4/cloud-v1/cloudflare
         run: |
           set -euo pipefail
-          endpoint="https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com"
           key="packs/raw-v1/${{ steps.date.outputs.value }}/shadow-v425-report.json"
-          aws s3 cp shadow-out/shadow-v425-report.json "s3://$BUCKET/$key" --endpoint-url "$endpoint" --only-show-errors
-          aws s3api head-object --bucket "$BUCKET" --key "$key" --endpoint-url "$endpoint" >/dev/null
+          npx wrangler r2 object put "$BUCKET/$key" --file "$GITHUB_WORKSPACE/shadow-out/shadow-v425-report.json" --remote >/dev/null
+          test -s "$GITHUB_WORKSPACE/shadow-out/shadow-v425-report.json"
 
       - uses: actions/upload-artifact@v4
         if: steps.source.outputs.pack == '1' || steps.source.outputs.raw != '0'
