@@ -491,18 +491,31 @@ func (v *VolumeProfile) rollDate(date string) bool {
 	return true
 }
 
-func (v *VolumeProfile) observe(id string, bucket int, volume float64) (float64, int) {
+func (v *VolumeProfile) observe(id string, bucket int, phase float64, volume float64) (float64, int) {
 	k := strconv.Itoa(bucket)
 	if v.Today[id] == nil { v.Today[id] = map[string]float64{} }
 	v.Today[id][k] = math.Max(v.Today[id][k], volume)
 	v.dirty = true
-	expected := 0.0
+	endExpected := 0.0
 	count := 0
-	if v.Baseline[id] != nil { expected = v.Baseline[id][k] }
+	if v.Baseline[id] != nil { endExpected = v.Baseline[id][k] }
 	if v.Counts[id] != nil { count = v.Counts[id][k] }
-	if count < 3 || expected <= 0 {
+	if count < 3 || endExpected <= 0 {
 		return 0, count
 	}
+	phase = clamp(phase, 0, 1)
+	expected := endExpected
+	prevK := strconv.Itoa(bucket-5)
+	prevExpected, prevCount := 0.0, 0
+	if v.Baseline[id] != nil { prevExpected = v.Baseline[id][prevK] }
+	if v.Counts[id] != nil { prevCount = v.Counts[id][prevK] }
+	if prevCount >= 3 && prevExpected > 0 {
+		expected = prevExpected + phase*(endExpected-prevExpected)
+	} else {
+		// First mature bucket of a session: conservative linear ramp to its historical bucket-end volume.
+		expected = endExpected * math.Max(.10, phase)
+	}
+	if expected <= 0 { return 0, count }
 	return clamp(volume/expected, 0, 10), count
 }
 
@@ -527,13 +540,15 @@ func tehranNow() time.Time {
 	return time.Now().In(loc)
 }
 func tehranDate() string { return tehranNow().Format("2006-01-02") }
-func tehranBucket5() int {
+func tehranBucket5() (int, float64) {
 	t := tehranNow()
 	m := t.Hour()*60 + t.Minute()
-	return (m / 5) * 5
+	bucket := (m / 5) * 5
+	phase := float64((t.Minute()%5)*60+t.Second()) / 300.0
+	return bucket, clamp(phase, 0, 1)
 }
 
-func buildRow(p *Price, levels map[int]Level, real float64, st *State, now int64, vp *VolumeProfile, bucket int) Row {
+func buildRow(p *Price, levels map[int]Level, real float64, st *State, now int64, vp *VolumeProfile, bucket int, bucketPhase float64) Row {
 	var buyDepth, sellDepth float64
 	for i := 1; i <= 5; i++ {
 		l := levels[i]
@@ -571,7 +586,7 @@ func buildRow(p *Price, levels map[int]Level, real float64, st *State, now int64
 		cancelProxy = cancellationProxy(prevBook, book)
 	}
 	persistence := bookPersistence(st.Books)
-	rvolTOD, rvolSamples := vp.observe(p.ID, bucket, p.Volume)
+	rvolTOD, rvolSamples := vp.observe(p.ID, bucket, bucketPhase, p.Volume)
 	bookLevelsReady := prevBookReady && bookReady(book)
 
 	var qi, ofi, bidStack, askPull, pv, tradeAccel float64
@@ -763,7 +778,7 @@ func main() {
 		}
 
 		now := time.Now().Unix()
-		bucket := tehranBucket5()
+		bucket, bucketPhase := tehranBucket5()
 		rows := make([]Row, 0, len(feed.Prices))
 		for id, p := range feed.Prices {
 			flow := int(p.Flow)
@@ -773,7 +788,7 @@ func main() {
 				st = &State{}
 				states[id] = st
 			}
-			rows = append(rows, buildRow(p, feed.Best[id], feed.ClientRatio[id], st, now, profile, bucket))
+			rows = append(rows, buildRow(p, feed.Best[id], feed.ClientRatio[id], st, now, profile, bucket, bucketPhase))
 		}
 		profile.save(false)
 
