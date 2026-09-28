@@ -87,3 +87,27 @@ The only remaining operational acceptance is a genuine run of the delivered Wind
 5. repeated cycles remain bounded and stable.
 
 This acceptance must be based on the real Windows run; it must not be fabricated from historical or synthetic data.
+
+
+## Challenger feature-feed addendum — 2026-09-28
+`pc-eco-v425` is an additive successor feed for shadow-model research. It preserves all legacy 4.1.6 input fields and adds only `v425` feature columns.
+
+New local-only bounded state:
+- `%LOCALAPPDATA%\StockHunterHistorical\challenger_volume_profile_v425.json`
+- same-time 5-minute cumulative-volume baseline;
+- minimum 3 prior sessions for mature RVOL;
+- capped historical averaging (20 effective observations) rather than raw unbounded tape retention.
+
+New live scalar features:
+- `book_imbalance3_v425`
+- `mlofi3_v425`
+- `book_persistence_v425`
+- `cancel_proxy_v425`
+- `rvol_tod_v425`
+- `rvol_tod_samples_v425`
+- `book_levels_ready_v425`
+- `challenger_feature_version_v425`
+
+The cancellation feature is a conservative displayed-depth disappearance proxy after subtracting observed trade-volume change. It must never be described as official exchange cancellation data.
+
+The v4.2.5 feature feed may replace v4.1.1 on the owner PC once its build is verified, but this replacement changes **feature capture only**. Frozen Hunt 4.1.6 continues to consume the same legacy fields with identical semantics.
