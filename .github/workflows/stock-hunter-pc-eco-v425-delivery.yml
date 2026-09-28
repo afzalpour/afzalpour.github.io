@@ -1,0 +1,82 @@
+name: Stock Hunter PC Eco v4.2.5 Secure Delivery
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+
+      - name: Test Challenger feature bridge
+        working-directory: stock-hunter-v4/pc-eco-v425
+        run: |
+          set -euo pipefail
+          go test ./...
+          go vet ./...
+
+      - name: Build sealed Windows delivery
+        shell: bash
+        working-directory: stock-hunter-v4/pc-eco-v425
+        run: |
+          set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/delivery-v425"
+          device_key="$(openssl rand -hex 32)"
+          echo "::add-mask::$device_key"
+          device_hash="$(printf '%s' "$device_key" | sha256sum | awk '{print $1}')"
+
+          CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X main.embeddedKey=$device_key"             -o "$RUNNER_TEMP/Stock_Hunter_PC_Eco_Bridge_v4.2.5-linux" .
+          "$RUNNER_TEMP/Stock_Hunter_PC_Eco_Bridge_v4.2.5-linux" --self-test
+          rm -f "$RUNNER_TEMP/Stock_Hunter_PC_Eco_Bridge_v4.2.5-linux"
+
+          GOOS=windows GOARCH=amd64 CGO_ENABLED=0             go build -trimpath -ldflags="-s -w -X main.embeddedKey=$device_key"             -o "$GITHUB_WORKSPACE/delivery-v425/Stock_Hunter_PC_Eco_Bridge_v4.2.5.exe" .
+
+          exe_sha="$(sha256sum "$GITHUB_WORKSPACE/delivery-v425/Stock_Hunter_PC_Eco_Bridge_v4.2.5.exe" | awk '{print $1}')"
+          cat > "$GITHUB_WORKSPACE/delivery-v425/delivery-manifest.json" <<EOF
+          {
+            "schema": "stock-hunter-pc-eco-v425-secure-delivery-v1",
+            "version": "4.2.5-pc-eco-challenger-features",
+            "feature_version": "4.2.5-challenger-features-v1",
+            "source_commit": "$GITHUB_SHA",
+            "device_key_sha256": "$device_hash",
+            "exe_sha256": "$exe_sha",
+            "champion": "4.1.6-hunt-v2",
+            "routing_change": false
+          }
+          EOF
+          cat > "$GITHUB_WORKSPACE/delivery-v425/راهنما.txt" <<'EOF'
+          شکارچی سهم — پل داده ۴.۲.۵
+
+          ۱) پنجره نسخه ۴.۱.۱ را ببندید.
+          ۲) فایل Stock_Hunter_PC_Eco_Bridge_v4.2.5.exe را اجرا کنید.
+          ۳) برنامه هر ۳۰ ثانیه داده بازار را دریافت می‌کند و ویژگی‌های آزمایشی ۴.۲.۵ را به مسیر Shadow می‌فرستد.
+          ۴) موتور اصلی ۴.۱.۶ و تصمیم‌های تولیدی تغییر نمی‌کنند.
+          ۵) پروفایل حجم هم‌زمان روز در فضای محلی محدود نگهداری می‌شود و پس از حداقل سه جلسه برای RVOL بالغ می‌شود.
+          EOF
+          unset device_key
+
+      - name: Verify delivery contains no plaintext sidecar credential
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f delivery-v425/Stock_Hunter_PC_Eco_Bridge_v4.2.5.exe
+          test -f delivery-v425/delivery-manifest.json
+          ! find delivery-v425 -type f -iname '*key*' -o -iname '*secret*' | grep -q .
+          python -m json.tool delivery-v425/delivery-manifest.json >/dev/null
+          grep -F '"routing_change": false' delivery-v425/delivery-manifest.json
+          grep -F '"champion": "4.1.6-hunt-v2"' delivery-v425/delivery-manifest.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stock-hunter-pc-eco-v425-secure-delivery
+          path: delivery-v425/
+          retention-days: 14
+          if-no-files-found: error
