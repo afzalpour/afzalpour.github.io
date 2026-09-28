@@ -94,7 +94,7 @@ This acceptance must be based on the real Windows run; it must not be fabricated
 
 New local-only bounded state:
 - `%LOCALAPPDATA%\StockHunterHistorical\challenger_volume_profile_v425.json`
-- same-time 5-minute cumulative-volume baseline;
+- same-time 5-minute cumulative-volume baseline with within-bucket interpolation;
 - minimum 3 prior sessions for mature RVOL;
 - capped historical averaging (20 effective observations) rather than raw unbounded tape retention.
 
