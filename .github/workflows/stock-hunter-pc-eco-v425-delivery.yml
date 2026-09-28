@@ -2,6 +2,11 @@ name: Stock Hunter PC Eco v4.2.5 Secure Delivery
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'stock-hunter-v4/pc-eco-v425/**'
+      - '.github/workflows/stock-hunter-pc-eco-v425-delivery.yml'
 
 permissions:
   contents: read
