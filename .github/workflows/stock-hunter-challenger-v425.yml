@@ -13,6 +13,8 @@ on:
       - 'stock-hunter/app-runtime.js'
       - 'stock-hunter-v4/feed-security/stock-hunter-pc-ingest-v410/index.ts'
       - 'stock-hunter-v4/challenger-v425/**'
+      - 'stock-hunter-v4/cloud-v1/historical/shadow-replay-v425.ts'
+      - '.github/workflows/stock-hunter-cloud-shadow-v425.yml'
       - 'stock-hunter-v4/index.html'
       - 'stock-hunter/index.html'
       - 'stock-hunter/sw.js'
@@ -31,6 +33,8 @@ on:
       - 'stock-hunter/app-runtime.js'
       - 'stock-hunter-v4/feed-security/stock-hunter-pc-ingest-v410/index.ts'
       - 'stock-hunter-v4/challenger-v425/**'
+      - 'stock-hunter-v4/cloud-v1/historical/shadow-replay-v425.ts'
+      - '.github/workflows/stock-hunter-cloud-shadow-v425.yml'
       - 'stock-hunter-v4/index.html'
       - 'stock-hunter/index.html'
       - 'stock-hunter/sw.js'
@@ -80,6 +84,12 @@ jobs:
 
       - name: Challenger numerical smoke
         run: node stock-hunter-v4/challenger-v425/challenger-v425-smoke.cjs
+
+      - name: Challenger cloud-shadow self-test
+        working-directory: stock-hunter-v4/cloud-v1/cloudflare
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          ./node_modules/.bin/tsx ../historical/shadow-replay-v425.ts --self-test
 
       - name: Five approved corrections contract
         run: |
