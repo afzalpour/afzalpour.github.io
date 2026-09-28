@@ -43,6 +43,8 @@ jobs:
             "stock-hunter/sw.js|https://afzalpour.github.io/stock-hunter/sw.js|public-sw.js"
             "stock-hunter/manifest.webmanifest|https://afzalpour.github.io/stock-hunter/manifest.webmanifest|public-manifest.webmanifest"
             "stock-hunter/app-runtime.js|https://afzalpour.github.io/stock-hunter/app-runtime.js|public-app-runtime.js"
+            "stock-hunter/app-core.js|https://afzalpour.github.io/stock-hunter/app-core.js|public-app-core.js"
+            "stock-hunter/app-hunt-challenger-v425.js|https://afzalpour.github.io/stock-hunter/app-hunt-challenger-v425.js|public-app-hunt-challenger-v425.js"
             "stock-hunter/ux-shell-v421.js|https://afzalpour.github.io/stock-hunter/ux-shell-v421.js|public-ux-shell-v421.js"
             "stock-hunter/ux-v421.css|https://afzalpour.github.io/stock-hunter/ux-v421.css|public-ux-v421.css"
             "stock-hunter/workspace-v420.js|https://afzalpour.github.io/stock-hunter/workspace-v420.js|public-workspace-v420.js"
@@ -66,6 +68,8 @@ jobs:
             "stock-hunter-v4/hunt-runtime-core-v417.js|https://afzalpour.github.io/stock-hunter-v4/hunt-runtime-core-v417.js|hunt-runtime-core-v417.js"
             "stock-hunter-v4/app-runtime-router-v417.js|https://afzalpour.github.io/stock-hunter-v4/app-runtime-router-v417.js|app-runtime-router-v417.js"
             "stock-hunter-v4/app-runtime.js|https://afzalpour.github.io/stock-hunter-v4/app-runtime.js|app-runtime.js"
+            "stock-hunter-v4/app-core.js|https://afzalpour.github.io/stock-hunter-v4/app-core.js|app-core.js"
+            "stock-hunter-v4/app-hunt-challenger-v425.js|https://afzalpour.github.io/stock-hunter-v4/app-hunt-challenger-v425.js|app-hunt-challenger-v425.js"
             "stock-hunter-v4/app-universe.js|https://afzalpour.github.io/stock-hunter-v4/app-universe.js|app-universe.js"
             "stock-hunter-v4/app-universal-search-v416.js|https://afzalpour.github.io/stock-hunter-v4/app-universal-search-v416.js|app-universal-search-v416.js"
             "stock-hunter-v4/styles.css|https://afzalpour.github.io/stock-hunter-v4/styles.css|styles.css"
@@ -115,6 +119,8 @@ jobs:
           cmp stock-hunter/sw.js /tmp/stock-hunter-public-smoke/public-sw.js
           cmp stock-hunter/manifest.webmanifest /tmp/stock-hunter-public-smoke/public-manifest.webmanifest
           cmp stock-hunter/app-runtime.js /tmp/stock-hunter-public-smoke/public-app-runtime.js
+          cmp stock-hunter/app-core.js /tmp/stock-hunter-public-smoke/public-app-core.js
+          cmp stock-hunter/app-hunt-challenger-v425.js /tmp/stock-hunter-public-smoke/public-app-hunt-challenger-v425.js
           cmp stock-hunter/ux-shell-v421.js /tmp/stock-hunter-public-smoke/public-ux-shell-v421.js
           cmp stock-hunter/ux-v421.css /tmp/stock-hunter-public-smoke/public-ux-v421.css
           cmp stock-hunter/workspace-v420.js /tmp/stock-hunter-public-smoke/public-workspace-v420.js
@@ -138,6 +144,8 @@ jobs:
           cmp stock-hunter-v4/hunt-runtime-core-v417.js /tmp/stock-hunter-public-smoke/hunt-runtime-core-v417.js
           cmp stock-hunter-v4/app-runtime-router-v417.js /tmp/stock-hunter-public-smoke/app-runtime-router-v417.js
           cmp stock-hunter-v4/app-runtime.js /tmp/stock-hunter-public-smoke/app-runtime.js
+          cmp stock-hunter-v4/app-core.js /tmp/stock-hunter-public-smoke/app-core.js
+          cmp stock-hunter-v4/app-hunt-challenger-v425.js /tmp/stock-hunter-public-smoke/app-hunt-challenger-v425.js
           cmp stock-hunter-v4/app-universe.js /tmp/stock-hunter-public-smoke/app-universe.js
           cmp stock-hunter-v4/app-universal-search-v416.js /tmp/stock-hunter-public-smoke/app-universal-search-v416.js
           cmp stock-hunter-v4/styles.css /tmp/stock-hunter-public-smoke/styles.css
