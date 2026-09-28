@@ -1447,3 +1447,21 @@ Live performance audit during implementation:
 - therefore no success-rate placeholder is allowed; UX explicitly states that results are not mature yet.
 
 Frozen Hunt remains exactly `4.1.6-hunt-v2`; no scoring weights, thresholds or gates were changed.
+
+
+## 2026-09-28 — Challenger 4.2.5 five-fix implementation checkpoint
+User approved the five previously proposed scientific corrections. Implementation is intentionally Shadow-only.
+
+Implemented on branch `model/challenger-v425-five-fixes`:
+- PC feature feed `pc-eco-v425`;
+- price-aware three-level MLOFI;
+- bounded local same-time 5-minute RVOL profile;
+- Challenger order score without QI/DepthRatio duplicate counting;
+- positive book persistence + conservative cancellation proxy;
+- separate `challengerReversalV425` and `challengerAccelerationV425`;
+- shared UI detail panel clearly marked Shadow/no impact on 4.1.6;
+- additive Supabase signal columns with `v425` suffix;
+- live ingest Edge Function v8 accepts both v4.1.1 and v4.2.5 agents;
+- dedicated CI gate `Stock Hunter Challenger v4.2.5`.
+
+Production Champion remains `4.1.6-hunt-v2`. Do not promote/tune Challenger from literature or from the first few sessions. First comparable RVOL requires at least three prior observed same-time sessions per symbol/bucket after the v4.2.5 feed is actually run.
