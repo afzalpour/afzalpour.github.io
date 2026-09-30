@@ -219,3 +219,100 @@
   const observer=new MutationObserver(()=>scheduleTodayRenderV422(80));const feed=$u('feedState');if(feed)observer.observe(feed,{subtree:true,childList:true,characterData:true});
   window.StockHunterUxV421={version:VERSION,setMode,renderToday,scheduleTodayRender:scheduleTodayRenderV422,showWhy};
 })();
+
+/* Stock Hunter UX 4.2.6 — interaction redesign only. Frozen Hunt 4.1.6 remains untouched. */
+(function(){
+  'use strict';
+  if(window.StockHunterUiV426)return;
+  const body=document.body, main=document.getElementById('mainTable');
+  if(!body||!main)return;
+  body.classList.add('stock-ui-v426');
+  const $=id=>document.getElementById(id);
+  const fa=n=>String(n??'').replace(/[0-9]/g,d=>'۰۱۲۳۴۵۶۷۸۹'[Number(d)]);
+  const safe=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const viewKey='stockHunterSavedViewV426';
+  const collapseKey='stockHunterSidebarV426';
+  function dispatch(el,type='change'){if(!el)return;el.dispatchEvent(new Event(type,{bubbles:true}));}
+  function sidebar(){
+    if($('.uiSidebarV426'))return;
+    const el=document.createElement('aside');el.id='uiSidebarV426';el.className='ui-sidebar-v426';
+    el.innerHTML='<div class="ui-side-head-v426"><div class="ui-side-brand-v426"><span class="ui-side-mark-v426">ش</span><span class="ui-side-label-v426">شکارچی سهم</span></div><button id="uiSideToggleV426" class="ui-side-toggle-v426" type="button" aria-label="جمع کردن منو">‹</button></div>'+
+      '<nav class="ui-side-nav-v426">'+
+      '<a class="active" href="index.html"><span class="ui-ico-v426">⌂</span><span class="ui-side-label-v426">امروز</span></a>'+
+      '<a href="journey/"><span class="ui-ico-v426">↝</span><span class="ui-side-label-v426">سفر شکار</span></a>'+
+      '<a href="alerts/"><span class="ui-ico-v426">◎</span><span class="ui-side-label-v426">هشدارها و دیده‌بان</span></a>'+
+      '<a href="backtest/"><span class="ui-ico-v426">▦</span><span class="ui-side-label-v426">آزمایشگاه آزمون تاریخی</span></a>'+
+      '<a href="missed/"><span class="ui-ico-v426">◇</span><span class="ui-side-label-v426">فرصت‌های از دست‌رفته</span></a>'+
+      '<a href="professional/"><span class="ui-ico-v426">◆</span><span class="ui-side-label-v426">مرکز حرفه‌ای</span></a>'+
+      '<a href="ai/"><span class="ui-ico-v426">✦</span><span class="ui-side-label-v426">هوش مصنوعی</span></a>'+
+      '<a href="reliability/"><span class="ui-ico-v426">●</span><span class="ui-side-label-v426">سلامت سامانه</span></a>'+
+      '<a href="profile/"><span class="ui-ico-v426">◉</span><span class="ui-side-label-v426">حساب من</span></a>'+
+      '</nav><div class="ui-side-foot-v426">موتور ثابت شکار <b>۴.۱.۶</b><br>بازطراحی فقط رابط و تجربه کاربری است.</div>';
+    body.prepend(el);
+    const collapsed=localStorage.getItem(collapseKey)==='۱';
+    body.classList.toggle('ui-sidebar-collapsed-v426',collapsed);
+    $('uiSideToggleV426').onclick=()=>{const next=!body.classList.contains('ui-sidebar-collapsed-v426');body.classList.toggle('ui-sidebar-collapsed-v426',next);localStorage.setItem(collapseKey,next?'۱':'۰');};
+  }
+  function command(){
+    const top=document.querySelector('.topbar'),actions=document.querySelector('.top-actions');
+    if(!top||!actions||$('.uiCommandV426'))return;
+    const wrap=document.createElement('div');wrap.id='uiCommandV426';wrap.className='ui-command-v426';
+    wrap.innerHTML='<span class="ui-command-icon-v426">⌕</span><input id="uiCommandInputV426" autocomplete="off" placeholder="جست‌وجوی نماد یا فرمان؛ نمونه: شکار ویژه"><div id="uiCommandResultsV426" class="ui-command-results-v426"></div>';
+    top.insertBefore(wrap,actions);
+    const inp=$('uiCommandInputV426'),box=$('uiCommandResultsV426');
+    function setSearch(q){const s=$('search');if(!s)return;s.value=q;dispatch(s,'input');s.scrollIntoView({behavior:'smooth',block:'center'});}
+    function setHunt(v){const h=$('hunt');if(!h)return;h.value=v;dispatch(h);document.querySelector('.table-panel')?.scrollIntoView({behavior:'smooth',block:'start'});}
+    const commands=[
+      ['شکار ویژه','شکار ویژه'],['هشدار فوری','هشدار فوری'],['شکار زودهنگام','شکار زودهنگام'],['همه نمادها','__all__']
+    ];
+    function prepared(){
+      try{return (Array.isArray(rows)?rows:[]).map(x=>typeof applyHuntV416==='function'?applyHuntV416(x):x);}catch{return [];}
+    }
+    function render(){
+      const q=inp.value.trim();
+      if(!q){box.classList.remove('open');box.innerHTML='';return;}
+      const cmd=commands.filter(x=>x[0].includes(q)).slice(0,4);
+      const symbols=prepared().filter(x=>String(x.symbol||'').includes(q)||String(x.company||'').includes(q)).slice(0,6);
+      box.innerHTML=cmd.map(x=>'<div class="ui-command-item-v426" data-cmd="'+safe(x[1])+'"><b>'+safe(x[0])+'</b><small>فرمان فیلتر</small></div>').join('')+
+        symbols.map(x=>'<div class="ui-command-item-v426" data-symbol="'+safe(x.symbol)+'"><b>'+safe(x.symbol)+'</b><small>'+safe(x.company||'')+'</small></div>').join('');
+      box.classList.toggle('open',!!box.innerHTML);
+    }
+    inp.addEventListener('input',render);inp.addEventListener('focus',render);
+    box.addEventListener('click',e=>{const c=e.target.closest('[data-cmd]'),s=e.target.closest('[data-symbol]');if(c){setHunt(c.dataset.cmd);inp.value='';}else if(s){setSearch(s.dataset.symbol);inp.value=s.dataset.symbol;}box.classList.remove('open');});
+    document.addEventListener('click',e=>{if(!e.target.closest('#uiCommandV426'))box.classList.remove('open');});
+  }
+  function tools(){
+    const actions=document.querySelector('.top-actions');if(!actions||$('.uiFocusV426'))return;
+    const focus=document.createElement('button');focus.id='uiFocusV426';focus.type='button';focus.className='ui-tool-v426';focus.title='حالت تمرکز';focus.textContent='تمرکز';
+    const save=document.createElement('button');save.id='uiSaveViewV426';save.type='button';save.className='ui-tool-v426';save.title='ذخیره نمای فعلی';save.textContent='ذخیره نما';
+    const load=document.createElement('button');load.id='uiLoadViewV426';load.type='button';load.className='ui-tool-v426';load.title='بازیابی نمای ذخیره‌شده';load.textContent='نمای من';
+    const alerts=document.createElement('a');alerts.className='ui-tool-v426';alerts.href='alerts/';alerts.title='مرکز اعلان و دیده‌بان';alerts.textContent='اعلان';
+    const theme=$('themeToggle');actions.insertBefore(focus,theme||actions.firstChild);actions.insertBefore(save,theme||actions.firstChild);actions.insertBefore(load,theme||actions.firstChild);actions.insertBefore(alerts,theme||actions.firstChild);
+    focus.onclick=()=>{body.classList.toggle('ui-focus-v426');focus.textContent=body.classList.contains('ui-focus-v426')?'خروج از تمرکز':'تمرکز';};
+    save.onclick=()=>{const data={search:$('search')?.value||'',hunt:$('hunt')?.value||'',decision:$('decision')?.value||'',pageSize:$('pageSize')?.value||'',mode:body.classList.contains('ux-pro-v421')?'pro':'simple'};localStorage.setItem(viewKey,JSON.stringify(data));save.textContent='ذخیره شد';setTimeout(()=>save.textContent='ذخیره نما',1200);};
+    load.onclick=()=>{try{const d=JSON.parse(localStorage.getItem(viewKey)||'null');if(!d)return;for(const k of ['search','hunt','decision','pageSize']){const el=$(k);if(el&&d[k]!=null){el.value=d[k];dispatch(el,k==='search'?'input':'change');}}if(window.StockHunterUxV421?.setMode)window.StockHunterUxV421.setMode(d.mode||'simple');load.textContent='بازیابی شد';setTimeout(()=>load.textContent='نمای من',1200);}catch{}};
+  }
+  function heatmapShell(){
+    if($('.uiHeatmapV426'))return;
+    const anchor=$('uxTodayV421')||$('huntRadarV416')||document.querySelector('.toolbar');
+    if(!anchor)return;
+    const sec=document.createElement('section');sec.id='uiHeatmapV426';sec.className='ui-heatmap-v426';
+    sec.innerHTML='<div class="ui-heat-head-v426"><div><h3>نقشه شکار بازار</h3><p>رنگ فقط شدت وضعیت شکار را نشان می‌دهد؛ معیارهای موتور بدون تغییر باقی مانده‌اند.</p></div><span id="uiHeatNoteV426" class="ui-view-note-v426">—</span></div><div id="uiHeatGridV426" class="ui-heat-grid-v426"></div>';
+    anchor.insertAdjacentElement('afterend',sec);
+  }
+  function heatmap(){
+    const grid=$('uiHeatGridV426'),note=$('uiHeatNoteV426');if(!grid)return;
+    let a=[];try{a=(Array.isArray(rows)?rows:[]).map(x=>typeof applyHuntV416==='function'?applyHuntV416(x):x);}catch{}
+    a=a.filter(x=>x&&x.symbol).sort((m,n)=>(Number(n.huntScoreV416)||0)-(Number(m.huntScoreV416)||0)).slice(0,50);
+    grid.innerHTML=a.map(x=>{const h=String(x.hunt||'');const cls=h==='شکار ویژه'?'special':h==='هشدار فوری'?'urgent':h==='شکار زودهنگام'?'early':'neutral';const score=Number(x.huntScoreV416);return '<button type="button" class="ui-heat-v426 '+cls+'" data-ui-id="'+safe(x.id)+'"><b>'+safe(x.symbol)+'</b><span>'+safe(h||'عادی')+(Number.isFinite(score)?' · '+fa(Math.round(score)):'')+'</span></button>';}).join('');
+    if(note)note.textContent=a.length?fa(a.length)+' نماد برتر از نظر امتیاز موجود':'در انتظار داده بازار';
+  }
+  function init(){
+    sidebar();command();tools();heatmapShell();heatmap();
+    $('uiHeatGridV426')?.addEventListener('click',e=>{const b=e.target.closest('[data-ui-id]');if(!b)return;try{if(typeof openDetail==='function')openDetail(b.dataset.uiId);}catch{}});
+    const obs=new MutationObserver(()=>heatmap());const tbody=$('tbody');if(tbody)obs.observe(tbody,{childList:true,subtree:false});
+    setInterval(heatmap,4000);
+  }
+  init();
+  window.StockHunterUiV426={version:'4.2.6-ui1',renderHeatmap:heatmap};
+})();
