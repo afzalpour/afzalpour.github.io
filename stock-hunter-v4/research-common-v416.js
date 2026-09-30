@@ -4,7 +4,8 @@
   const base=String(cfg.SUPABASE_URL||'').replace(/\/$/,'');
   const key=String(cfg.SUPABASE_PUBLISHABLE_KEY||'');
   function headers(){return {'apikey':key,'Authorization':'Bearer '+key,'Accept':'application/json'};}
-  async function api(table,query){
+  let fallbackTradeDateV427=null,fallbackTradeDatePromiseV427=null;
+  async function apiRawV427(table,query){
     const url=base+'/rest/v1/'+table+(query?('?'+query):'');
     const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),15000);
     try{
@@ -12,6 +13,43 @@
       if(!r.ok)throw new Error('خطای دریافت داده؛ کد '+r.status);
       return await r.json();
     }finally{clearTimeout(timer);}
+  }
+  async function latestTradeDateV427(){
+    if(fallbackTradeDateV427)return fallbackTradeDateV427;
+    if(fallbackTradeDatePromiseV427)return fallbackTradeDatePromiseV427;
+    fallbackTradeDatePromiseV427=(async()=>{
+      const a=await apiRawV427('stock_hunter_hunt_journey_v416','select=trade_date&order=trade_date.desc&limit=1');
+      fallbackTradeDateV427=String(a?.[0]?.trade_date||'');
+      return fallbackTradeDateV427;
+    })().finally(()=>{fallbackTradeDatePromiseV427=null;});
+    return fallbackTradeDatePromiseV427;
+  }
+  function announceFallbackV427(requested,resolved){
+    if(!resolved||requested===resolved)return;
+    document.querySelectorAll('.jalali-input').forEach(el=>{
+      if((el.dataset.iso||'')===requested)setJalaliInput(el,resolved);
+    });
+    let box=document.getElementById('researchFallbackDateV427');
+    if(!box){
+      box=document.createElement('div');box.id='researchFallbackDateV427';box.className='research-fallback-date-v427';
+      const status=document.getElementById('researchStatus')||document.getElementById('proStatus');
+      if(status)status.insertAdjacentElement('afterend',box);
+      else document.querySelector('main')?.prepend(box);
+    }
+    box.textContent='بازار در تاریخ انتخاب‌شده داده معاملاتی ندارد؛ آخرین روز معاملاتی ثبت‌شده '+jalaliDate(resolved).replace(/[0-9]/g,d=>'۰۱۲۳۴۵۶۷۸۹'[Number(d)])+' نمایش داده می‌شود.';
+  }
+  async function api(table,query){
+    let data=await apiRawV427(table,query);
+    const m=String(query||'').match(/(?:^|&)trade_date=eq\.(\d{4}-\d{2}-\d{2})(?:&|$)/);
+    if(Array.isArray(data)&&data.length===0&&m&&m[1]===todayIso()){
+      const fallback=await latestTradeDateV427();
+      if(fallback&&fallback!==m[1]){
+        const q2=String(query).replace('trade_date=eq.'+m[1],'trade_date=eq.'+fallback);
+        data=await apiRawV427(table,q2);
+        announceFallbackV427(m[1],fallback);
+      }
+    }
+    return data;
   }
   function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
   function fa(v,d=0){if(v==null||v==='')return '—';const n=Number(v);return Number.isFinite(n)?n.toLocaleString('fa-IR',{minimumFractionDigits:d,maximumFractionDigits:d}):'—';}
@@ -70,7 +108,7 @@
   const tierFa={RAW:'خام و کوتاه‌مدت',COMPACT:'فشرده و تحلیلی',SUMMARY:'خلاصه بلندمدت'};
   const carryFa={WAITING_CROSS:'در انتظار عبور +۱٪',ACTIVE:'پیگیری ۱۵ دقیقه‌ای فعال',COMPLETED:'پیگیری تکمیل شده',EXPIRED_NO_CROSS:'بدون عبور +۱٪'};
   window.StockHunterResearchV416={
-    version:'4.1.6-research-v3',api,esc,fa,pct,latinDigits,jalaliDate,jalaliToIso,setJalaliInput,readJalaliInput,
+    version:'4.1.6-research-v3.1',api,esc,fa,pct,latinDigits,jalaliDate,jalaliToIso,setJalaliInput,readJalaliInput,
     time,dateTime,todayIso,daysAgoIso,addDaysIso,setStatus,datasetFa,tierFa,carryFa
   };
   if(!document.querySelector('script[data-research-tools-v417]')){
