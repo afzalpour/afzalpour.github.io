@@ -316,3 +316,82 @@
   init();
   window.StockHunterUiV426={version:'4.2.6-ui1',renderHeatmap:heatmap};
 })();
+
+
+/* Stock Hunter UX 4.2.7 — closed-market last-session summary. Presentation only. */
+(function(){
+  'use strict';
+  if(window.StockHunterLastSessionV427||!document.getElementById('mainTable'))return;
+  const cfg=window.STOCK_HUNTER_CONFIG||{},base=String(cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,'');
+  const key=String(cfg.SUPABASE_PUBLISHABLE_KEY||cfg.publishableKey||'');
+  if(!base||!key)return;
+  const $=id=>document.getElementById(id);
+  const safe=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const num=(v,d=0)=>{const n=Number(v);return Number.isFinite(n)?n.toLocaleString('fa-IR',{minimumFractionDigits:d,maximumFractionDigits:d}):'—';};
+  const pct=(v,d=1)=>{const n=Number(v);return Number.isFinite(n)?(n>0?'+':'')+num(n,d)+'٪':'—';};
+  const jalali=v=>{const d=new Date(String(v)+'T12:00:00Z');return Number.isFinite(d.getTime())?new Intl.DateTimeFormat('fa-IR-u-ca-persian',{timeZone:'Asia/Tehran',year:'numeric',month:'2-digit',day:'2-digit'}).format(d):'—';};
+  const time=v=>{const d=new Date(v);return Number.isFinite(d.getTime())?new Intl.DateTimeFormat('fa-IR',{timeZone:'Asia/Tehran',hour:'2-digit',minute:'2-digit',hour12:false}).format(d):'—';};
+  const headers={apikey:key,Authorization:'Bearer '+key,Accept:'application/json'};
+  async function get(table,q){
+    const r=await fetch(base+'/rest/v1/'+table+'?'+q,{headers,cache:'no-store'});
+    if(!r.ok)throw new Error(String(r.status));
+    return r.json();
+  }
+  function sessionOpen(){
+    try{return typeof marketSessionTehran==='function'?!!marketSessionTehran().open:false;}catch{return false;}
+  }
+  function outcome(v){
+    return ({HIT_PLUS3:'رسیده به +۳٪',HIT_PLUS2:'رسیده به +۲٪',HIT_PLUS1:'رسیده به +۱٪',CROSSED_ZERO:'عبور از صفر',POSITIVE_CLOSE:'پایان مثبت',FAILED_SAME_DAY:'ناموفق همان‌روز',PENDING:'در انتظار تکمیل'})[v]||'ثبت شده';
+  }
+  function archiveCard(x){
+    const cls=x.hunt_state==='شکار ویژه'?'special':x.hunt_state==='هشدار فوری'?'urgent':'';
+    return '<article class="ux-hunt-card-v421 '+cls+'"><div class="ux-hunt-card-top-v421"><div><b>'+safe(x.symbol)+'</b><small>'+safe(x.company_name||'')+'</small></div><span class="ux-state-chip-v421">'+safe(x.hunt_state||'شکار ثبت‌شده')+'</span></div>'+
+      '<div class="ux-hunt-card-score-v421"><div><strong>'+num(x.hunt_score,0)+'</strong><span>از ۱۰۰ · امتیاز ثبت‌شده</span></div><em>'+safe(outcome(x.result_label))+'</em></div>'+
+      '<div class="ux-hunt-facts-v421"><div><span>تغییر هنگام شکار</span><b>'+pct(x.detected_day_change,2)+'</b></div><div><span>بیشترین پیشروی</span><b>'+pct(x.same_day_mfe_pct,2)+'</b></div><div><span>زمان کشف</span><b>'+time(x.detected_at)+'</b></div></div>'+
+      '<div class="ux-hunt-actions-v421"><a class="ux-btn-v421 primary" href="journey/?date='+encodeURIComponent(x.trade_date)+'&symbol='+encodeURIComponent(x.symbol)+'">سفر شکار</a><a class="ux-btn-v421" href="professional/?symbol_id='+encodeURIComponent(x.symbol_id||'')+'">بررسی حرفه‌ای</a></div></article>';
+  }
+  function renderArchive(date,rows){
+    if(sessionOpen()||!rows.length)return;
+    const special=rows.filter(x=>x.hunt_state==='شکار ویژه'),urgent=rows.filter(x=>x.hunt_state==='هشدار فوری'),early=rows.filter(x=>x.hunt_state==='شکار زودهنگام');
+    const candidates=rows.filter(x=>['شکار ویژه','هشدار فوری','شکار زودهنگام'].includes(x.hunt_state));
+    const top=[...candidates].sort((a,b)=>(Number(b.hunt_score)||0)-(Number(a.hunt_score)||0))[0];
+    if($('specialCount'))$('specialCount').textContent=special.length.toLocaleString('fa-IR');
+    if($('urgentCount'))$('urgentCount').textContent=urgent.length.toLocaleString('fa-IR');
+    if($('buyCount'))$('buyCount').textContent=candidates.length.toLocaleString('fa-IR');
+    if($('topSymbol'))$('topSymbol').textContent=top?.symbol||'—';
+    if($('topMeta'))$('topMeta').textContent=top?'آخرین روز معاملاتی · امتیاز '+num(top.hunt_score,0):'داده‌ای ثبت نشده است';
+    if($('uxPulseActionV421'))$('uxPulseActionV421').textContent=(special.length+urgent.length).toLocaleString('fa-IR');
+    if($('uxPulseRadarV421'))$('uxPulseRadarV421').textContent=early.length.toLocaleString('fa-IR');
+    if($('uxPulseRowsV421'))$('uxPulseRowsV421').textContent=rows.length.toLocaleString('fa-IR');
+    const ctx=rows.map(x=>Number(x.market_context)).filter(Number.isFinite),avg=ctx.length?ctx.reduce((a,b)=>a+b,0)/ctx.length:null;
+    if($('uxPulseContextV421'))$('uxPulseContextV421').textContent=avg==null?'—':avg>=65?'حمایتی':avg>=45?'متعادل':'ضعیف';
+    if($('uxPulseContextSubV421'))$('uxPulseContextSubV421').textContent=avg==null?'داده کافی نیست':'امتیاز زمینه '+num(avg,0)+' از ۱۰۰';
+    let banner=$('uiLastSessionBannerV427');
+    if(!banner){
+      banner=document.createElement('div');banner.id='uiLastSessionBannerV427';banner.className='ui-last-session-banner-v427';
+      const head=document.querySelector('#uxTodayV421 .ux-today-head-v421');
+      head?.insertAdjacentElement('afterend',banner);
+    }
+    if(banner)banner.innerHTML='<b>نمایش آخرین روز معاملاتی</b><span>بازار اکنون بسته است؛ اطلاعات ثبت‌شده '+jalali(date)+' نمایش داده می‌شود و به‌عنوان سیگنال زنده تلقی نمی‌شود.</span>';
+    const title=document.querySelector('#uxTodayV421 .ux-section-head-v421 h3');
+    const sub=document.querySelector('#uxTodayV421 .ux-section-head-v421 p');
+    if(title)title.textContent='فرصت‌های مهم آخرین روز معاملاتی';
+    if(sub)sub.textContent='مرور شکارهای ثبت‌شده '+jalali(date)+'؛ این فهرست آرشیوی است و فرمان ورود لحظه‌ای نیست.';
+    const grid=$('uxActionGridV421');
+    const important=[...special,...urgent].sort((a,b)=>(Number(b.hunt_score)||0)-(Number(a.hunt_score)||0)).slice(0,8);
+    if(grid)grid.innerHTML=important.length?important.map(archiveCard).join(''):'<div class="ux-empty-v421" style="grid-column:1/-1"><b>در آخرین روز معاملاتی شکار ویژه یا هشدار فوری ثبت نشده است.</b><span>سفر شکار همچنان تمام رخدادهای ثبت‌شده روز را نگه می‌دارد.</span></div>';
+  }
+  async function load(){
+    if(sessionOpen())return;
+    try{
+      const d=await get('stock_hunter_hunt_journey_v416','select=trade_date&order=trade_date.desc&limit=1');
+      const date=String(d?.[0]?.trade_date||'');if(!date)return;
+      const fields='trade_date,symbol_id,symbol,company_name,hunt_state,hunt_score,hunt_mode,detected_at,detected_day_change,result_label,same_day_mfe_pct,same_day_mae_pct,market_context';
+      const rows=await get('stock_hunter_hunt_journey_v416','select='+encodeURIComponent(fields)+'&trade_date=eq.'+encodeURIComponent(date)+'&order=hunt_score.desc&limit=1500');
+      renderArchive(date,Array.isArray(rows)?rows:[]);
+    }catch(e){console.warn('Stock Hunter last-session summary unavailable',e);}
+  }
+  setTimeout(load,600);
+  window.StockHunterLastSessionV427={version:'4.2.7',load};
+})();
+
