@@ -108,7 +108,7 @@
   const tierFa={RAW:'خام و کوتاه‌مدت',COMPACT:'فشرده و تحلیلی',SUMMARY:'خلاصه بلندمدت'};
   const carryFa={WAITING_CROSS:'در انتظار عبور +۱٪',ACTIVE:'پیگیری ۱۵ دقیقه‌ای فعال',COMPLETED:'پیگیری تکمیل شده',EXPIRED_NO_CROSS:'بدون عبور +۱٪'};
   window.StockHunterResearchV416={
-    version:'4.1.6-research-v3.1',api,esc,fa,pct,latinDigits,jalaliDate,jalaliToIso,setJalaliInput,readJalaliInput,
+    version:'4.1.6-research-v3',api,esc,fa,pct,latinDigits,jalaliDate,jalaliToIso,setJalaliInput,readJalaliInput,
     time,dateTime,todayIso,daysAgoIso,addDaysIso,setStatus,datasetFa,tierFa,carryFa
   };
   if(!document.querySelector('script[data-research-tools-v417]')){
