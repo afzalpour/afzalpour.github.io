@@ -137,3 +137,161 @@ html body > main{
   background:#f3f4f6!important;
   background-color:#f3f4f6!important;
 }
+
+/* Unified dark surface 4.3.0 — match Today */
+html:not([data-theme="light"]){
+  color-scheme:dark!important;
+  --bg:#111315!important;
+  --panel:#181b1f!important;
+  --panel2:#20242a!important;
+  --line:#343941!important;
+  --text:#f0efec!important;
+  --muted:#9ca2a9!important;
+}
+html:not([data-theme="light"]),
+html:not([data-theme="light"]) body{
+  background:#111315!important;
+  background-color:#111315!important;
+  color:#f0efec!important;
+}
+html:not([data-theme="light"]) body main,
+html:not([data-theme="light"]) body main.research-shell,
+html:not([data-theme="light"]) body main.pro-shell,
+html:not([data-theme="light"]) body main.profile-shell,
+html:not([data-theme="light"]) body main.auth-shell,
+html:not([data-theme="light"]) body main.cal-shell,
+html:not([data-theme="light"]) body main.perf-shell,
+html:not([data-theme="light"]) body main.report-shell,
+html:not([data-theme="light"]) body main.performance-shell,
+html:not([data-theme="light"]) body main.app-shell,
+html:not([data-theme="light"]) body main.w{
+  background:#111315!important;
+  background-color:#111315!important;
+  color:#f0efec!important;
+}
+html:not([data-theme="light"]) .research-head,
+html:not([data-theme="light"]) .research-status,
+html:not([data-theme="light"]) .filters,
+html:not([data-theme="light"]) .panel,
+html:not([data-theme="light"]) .card,
+html:not([data-theme="light"]) .health-item,
+html:not([data-theme="light"]) .retention-item,
+html:not([data-theme="light"]) .pro-hero,
+html:not([data-theme="light"]) .pro-panel,
+html:not([data-theme="light"]) .pro-metric,
+html:not([data-theme="light"]) .profile-panel,
+html:not([data-theme="light"]) .profile-hero,
+html:not([data-theme="light"]) .auth-card,
+html:not([data-theme="light"]) .auth-session,
+html:not([data-theme="light"]) .note,
+html:not([data-theme="light"]) .section,
+html:not([data-theme="light"]) .table-wrap,
+html:not([data-theme="light"]) .c{
+  background:#181b1f!important;
+  background-color:#181b1f!important;
+  color:#f0efec!important;
+  border-color:#343941!important;
+  box-shadow:0 8px 24px rgba(0,0,0,.16)!important;
+}
+html:not([data-theme="light"]) .research-head h1,
+html:not([data-theme="light"]) .panel h2,
+html:not([data-theme="light"]) .panel h3,
+html:not([data-theme="light"]) .pro-hero h1,
+html:not([data-theme="light"]) .pro-panel h2,
+html:not([data-theme="light"]) .profile-head h1,
+html:not([data-theme="light"]) .profile-panel h2,
+html:not([data-theme="light"]) .auth-brand h1,
+html:not([data-theme="light"]) .c h1,
+html:not([data-theme="light"]) .c h2,
+html:not([data-theme="light"]) .c h3{
+  color:#f0efec!important;
+}
+html:not([data-theme="light"]) .research-head p,
+html:not([data-theme="light"]) .muted,
+html:not([data-theme="light"]) .footnote,
+html:not([data-theme="light"]) .section-note,
+html:not([data-theme="light"]) .pro-hero p,
+html:not([data-theme="light"]) .pro-panel p,
+html:not([data-theme="light"]) .pro-metric span,
+html:not([data-theme="light"]) .profile-head small,
+html:not([data-theme="light"]) .profile-form label,
+html:not([data-theme="light"]) .auth-form label,
+html:not([data-theme="light"]) .profile-kv span,
+html:not([data-theme="light"]) .profile-empty,
+html:not([data-theme="light"]) .auth-brand p,
+html:not([data-theme="light"]) .m{
+  color:#9ca2a9!important;
+}
+html:not([data-theme="light"]) .research-nav a,
+html:not([data-theme="light"]) .research-nav button,
+html:not([data-theme="light"]) .pro-nav a,
+html:not([data-theme="light"]) .pro-nav button,
+html:not([data-theme="light"]) .filters input,
+html:not([data-theme="light"]) .filters select,
+html:not([data-theme="light"]) .filters button,
+html:not([data-theme="light"]) .auth-form input,
+html:not([data-theme="light"]) .profile-form input,
+html:not([data-theme="light"]) .profile-form select,
+html:not([data-theme="light"]) .auth-form button,
+html:not([data-theme="light"]) .profile-form button,
+html:not([data-theme="light"]) .profile-actions button,
+html:not([data-theme="light"]) .profile-actions a,
+html:not([data-theme="light"]) .auth-tabs button,
+html:not([data-theme="light"]) .cal-nav a,
+html:not([data-theme="light"]) .controls button{
+  background:#202328!important;
+  background-color:#202328!important;
+  color:#f0efec!important;
+  border-color:#3a3f45!important;
+}
+html:not([data-theme="light"]) .research-nav a:hover,
+html:not([data-theme="light"]) .research-nav a[aria-current="page"],
+html:not([data-theme="light"]) .pro-nav a:hover,
+html:not([data-theme="light"]) .auth-tabs button.active{
+  border-color:#b88723!important;
+  color:#d4a83d!important;
+  background:#24282d!important;
+}
+html:not([data-theme="light"]) table{
+  background:#181b1f!important;
+  color:#f0efec!important;
+}
+html:not([data-theme="light"]) th{
+  background:#22262b!important;
+  color:#c3c7cc!important;
+  border-color:#373c42!important;
+}
+html:not([data-theme="light"]) td{
+  background:#181b1f!important;
+  color:#f0efec!important;
+  border-color:#30343a!important;
+}
+html:not([data-theme="light"]) tbody tr:hover td{
+  background:#202328!important;
+}
+html:not([data-theme="light"]) .empty,
+html:not([data-theme="light"]) .timeline-step,
+html:not([data-theme="light"]) .detail-timeline-step,
+html:not([data-theme="light"]) .journey-chart,
+html:not([data-theme="light"]) .health-history,
+html:not([data-theme="light"]) .explain-box,
+html:not([data-theme="light"]) .metric-bar,
+html:not([data-theme="light"]) .ai-output-v417,
+html:not([data-theme="light"]) .detail-ai-output,
+html:not([data-theme="light"]) .detail-ai-similar,
+html:not([data-theme="light"]) .strategy-ai-builder-v417,
+html:not([data-theme="light"]) .rule-row,
+html:not([data-theme="light"]) .saved-strategy,
+html:not([data-theme="light"]) .profile-avatar,
+html:not([data-theme="light"]) .admin-actor{
+  background:#20242a!important;
+  background-color:#20242a!important;
+  color:#f0efec!important;
+  border-color:#343941!important;
+}
+html:not([data-theme="light"]) .research-fallback-date-v427,
+html:not([data-theme="light"]) .ui-last-session-banner-v427{
+  background:#2b2514!important;
+  color:#e6c56c!important;
+  border-color:#7a6527!important;
+}
