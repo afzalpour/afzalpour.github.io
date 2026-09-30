@@ -375,3 +375,39 @@ html[data-theme="light"] .perf-cards .perf-card,html[data-theme="light"] .cards 
 
 /* Personal workspace visibility contract — v4.2.0 */
 #huntRadarV416[data-workspace-hidden="1"]{display:none!important}
+
+
+/* Unified Stock Hunter surface 4.2.7 — same visual family as صفحه امروز */
+html body{background:#f3f4f6!important;color:#1f2937!important;font-family:Iran,IRANSans,Tahoma,sans-serif!important}
+.research-shell,.pro-shell,.profile-shell,.auth-shell,.cal-shell,.perf-shell,.w{background:transparent!important;color:#1f2937!important}
+.research-head,.research-status,.filters,.panel,.card,.health-item,.retention-item,
+.pro-hero,.pro-panel,.pro-metric,.profile-shell,.profile-panel,.profile-hero,.auth-card,.auth-session,
+.note,.section,.table-wrap,.c{
+  background:#ffffff!important;color:#1f2937!important;border-color:#d8dde3!important;box-shadow:0 8px 24px rgba(31,41,55,.05)!important
+}
+.research-head h1,.panel h2,.panel h3,.pro-hero h1,.pro-panel h2,.profile-head h1,.profile-panel h2,.auth-brand h1,.c h1,.c h2,.c h3{color:#1f2937!important}
+.research-head p,.research-status,.muted,.footnote,.section-note,.pro-hero p,.pro-panel p,.pro-metric span,
+.profile-head small,.profile-form label,.auth-form label,.profile-kv span,.profile-empty,.auth-brand p,.m{color:#6b7280!important}
+.research-nav a,.research-nav button,.pro-nav a,.pro-nav button,.filters input,.filters select,.filters button,
+.auth-form input,.profile-form input,.profile-form select,.auth-form button,.profile-form button,.profile-actions button,.profile-actions a,.auth-tabs button,
+.cal-nav a,.controls button{
+  background:#e9ecef!important;color:#1f2937!important;border-color:#d8dde3!important;border-radius:10px!important
+}
+.research-nav a:hover,.research-nav a[aria-current="page"],.pro-nav a:hover,.auth-tabs button.active{border-color:#b88723!important;color:#b88723!important;background:#fff8e8!important}
+table{background:#fff!important;color:#1f2937!important}
+th{background:#e9ecef!important;color:#6b7280!important;border-color:#d8dde3!important}
+td{background:#fff;color:#1f2937!important;border-color:#e5e7eb!important}
+tbody tr:hover td{background:#fffaf0!important}
+.empty,.timeline-step,.detail-timeline-step,.journey-chart,.health-history,.explain-box,.metric-bar,.retention-item,
+.ai-output-v417,.detail-ai-output,.detail-ai-similar,.strategy-ai-builder-v417,.rule-row,.saved-strategy,
+.profile-avatar,.admin-actor{
+  background:#e9ecef!important;color:#1f2937!important;border-color:#d8dde3!important
+}
+.research-fallback-date-v427,.ui-last-session-banner-v427{
+  margin:10px 0;padding:10px 12px;border:1px solid #d4a83d;border-radius:11px;background:#fff8e8;color:#6b4f12;font-size:11px;line-height:1.9
+}
+.research-fallback-date-v427 b,.ui-last-session-banner-v427 b{color:#8a6414}
+.ui-last-session-banner-v427{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ui-last-session-banner-v427 span{color:#6b7280}
+@media(max-width:760px){.research-shell,.pro-shell,.profile-shell,.cal-shell,.perf-shell,.w{padding:10px!important}}
+
