@@ -67,6 +67,21 @@ async function assertStandaloneScroll(page,path){
   assert.ok(await page.evaluate(()=>window.scrollY>0),path+' must actually scroll in Chromium');
 }
 
+
+async function assertTodayGraySurface(page,path){
+  await page.goto(BASE_URL+'/'+path,{waitUntil:'domcontentloaded',timeout:30000});
+  await page.waitForTimeout(180);
+  const state=await page.evaluate(()=>{
+    const main=document.querySelector('main');
+    return {
+      body:getComputedStyle(document.body).backgroundColor,
+      main:main?getComputedStyle(main).backgroundColor:null
+    };
+  });
+  assert.equal(state.body,'rgb(17, 19, 21)',path+' body background must match Today neutral gray');
+  assert.equal(state.main,'rgb(17, 19, 21)',path+' main background must match Today neutral gray');
+}
+
 async function main(){
   const browser=await chromium.launch({headless:true});
   const context=await browser.newContext({
@@ -83,6 +98,9 @@ async function main(){
 
   try{
     await page.setViewportSize({width:1280,height:600});
+    for(const route of ['journey/','backtest/','professional/','reliability/','strategy/','ai/','performance/']){
+      await assertTodayGraySurface(page,route);
+    }
     await assertStandaloneScroll(page,'performance.html');
     const performanceContract=await page.evaluate(()=>({
       jalali:typeof perfJalaliDateV416==='function'?perfJalaliDateV416('2026-09-25'):null,
