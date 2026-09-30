@@ -28,3 +28,17 @@ linear-gradient(145deg,#1b2025,#121519);box-shadow:0 18px 48px rgba(0,0,0,.28)}
 @media(max-width:1050px){.pro-hero{grid-template-columns:1fr}.pro-panel,.pro-panel.third{grid-column:1/-1}.feature-strip{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:720px){.pro-shell{padding:8px}.pro-metrics{grid-template-columns:repeat(2,1fr)}.pro-confidence,.pro-split{grid-template-columns:1fr}.pro-passport,.pro-replay-data{grid-template-columns:repeat(2,1fr)}.feature-strip{grid-template-columns:repeat(2,1fr)}.pro-hero h1{font-size:19px}}
 @media print{.pro-tabs,.pro-nav,.pro-filters,.pro-item-actions,button{display:none!important}.pro-view{display:block!important}.pro-panel{break-inside:avoid;background:#fff!important;color:#111!important;border-color:#bbb!important}.pro-hero{background:#fff!important;color:#111!important;box-shadow:none!important}.pro-table-wrap{max-height:none!important;overflow:visible!important}.pro-table th{position:static;background:#eee!important;color:#111!important}}
+
+/* Stock Hunter Professional UX 4.2.6 — visual redesign only. */
+:root{--p-bg:#f3f4f6;--p-panel:#fff;--p-panel2:#e9ecef;--p-text:#1f2937;--p-muted:#6b7280;--p-line:#d8dde3;--p-gold:#b88723;--p-ok:#168a56;--p-warn:#c96f24;--p-bad:#c74a4a}
+html,body{background:var(--p-bg)!important;color:var(--p-text)!important;font-family:Iran,IRANSans,Tahoma,sans-serif!important}
+.pro-shell{max-width:1560px!important;padding:20px!important}
+.pro-hero,.pro-panel,.pro-metric{background:var(--p-panel)!important;border-color:var(--p-line)!important;color:var(--p-text)!important;border-radius:15px!important;box-shadow:0 8px 24px rgba(31,41,55,.05)!important}
+.pro-hero p,.pro-panel p,.pro-metric span,.muted{color:var(--p-muted)!important}
+.pro-nav a,.pro-btn,button,input,select,textarea{border-color:var(--p-line)!important;border-radius:10px!important;font-family:inherit}
+.pro-nav a{background:var(--p-panel2)!important;color:var(--p-text)!important}.pro-nav a:hover{color:var(--p-gold)!important;border-color:var(--p-gold)!important}
+.pro-btn.primary{background:var(--p-gold)!important;color:#fff!important;border-color:var(--p-gold)!important}
+input,select,textarea{background:var(--p-panel2)!important;color:var(--p-text)!important}
+.pro-table-wrap{border:1px solid var(--p-line)!important;border-radius:12px!important;overflow:auto!important}table{background:var(--p-panel)!important}th{background:var(--p-panel2)!important;color:var(--p-muted)!important}td,th{border-color:var(--p-line)!important}
+@media(max-width:760px){.pro-shell{padding:10px!important}.pro-hero,.pro-panel{padding:13px!important}}
+/* Stock Hunter Professional UX 4.2.6 end */
