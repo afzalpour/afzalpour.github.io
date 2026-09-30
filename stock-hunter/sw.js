@@ -1,7 +1,8 @@
+// CSS network-first 4.2.9 — visual fixes must not be masked by stale cache.
 // Stock Hunter public PWA 4.2.4 — optimized shell for /stock-hunter/.
 // Frozen Hunt 4.1.6 scoring/runtime semantics are untouched.
 const CACHE_PREFIX='shikar-sahm-public-';
-const CACHE=CACHE_PREFIX+'v4.2.5-ui3';
+const CACHE=CACHE_PREFIX+'v4.2.5-ui4';
 const CORE=[
   './','./index.html','./styles.css','./extra.css','./forecast-v415.css','./neutral-theme-v416.css','./ux-v421.css',
   './config.js','./app-core.js','./app-runtime.js','./app-session-v413.js','./app-hunt-v416.js','./app-hunt-challenger-v425.js',
@@ -27,9 +28,9 @@ self.addEventListener('activate',event=>{
 });
 async function cachedStatic(request){
   const cache=await caches.open(CACHE);
-  const hit=await cache.match(request,{ignoreSearch:true});
-  const refresh=fetch(request,{cache:'no-cache'}).then(async r=>{if(r.ok)await cache.put(request,r.clone());return r;}).catch(()=>null);
-  return hit||(await refresh)||Response.error();
+  const fresh=await fetch(request,{cache:'no-cache'}).then(async r=>{if(r.ok)await cache.put(request,r.clone());return r;}).catch(()=>null);
+  if(fresh&&fresh.ok)return fresh;
+  return (await cache.match(request,{ignoreSearch:true}))||Response.error();
 }
 async function navigationResponse(event){
   const cache=await caches.open(CACHE);
