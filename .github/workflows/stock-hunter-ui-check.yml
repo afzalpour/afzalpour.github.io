@@ -375,8 +375,8 @@ jobs:
           grep -q 'app-forecast-validation-v430.js?v=4.3.0-evidence1' stock-hunter-v4/index-v417.html
           grep -q 'search-neutral-v416.css?v=1' stock-hunter-v4/index.html
           grep -q 'search-neutral-v416.css?v=1' stock-hunter-v4/index-v417.html
-          grep -q 'neutral-theme-v416.css?v=1' stock-hunter-v4/index.html
-          grep -q 'neutral-theme-v416.css?v=1' stock-hunter-v4/index-v417.html
+          grep -q 'neutral-theme-v416.css?v=4.2.7-ui2' stock-hunter-v4/index.html
+          grep -q 'neutral-theme-v416.css?v=4.2.7-ui2' stock-hunter-v4/index-v417.html
           grep -q 'app-runtime.js?v=4.2.5-features1' stock-hunter-v4/index.html
           grep -q 'app-hotfix-v410.js?v=4.1.6-print1' stock-hunter-v4/index.html
           grep -q 'app-integrated-v410.js?v=4.1.6-print1' stock-hunter-v4/index.html
@@ -387,7 +387,7 @@ jobs:
           grep -q 'data-password-toggle="confirmPassword"' stock-hunter-v4/auth-v417.html
           grep -q 'data-password-toggle="newPassword"' stock-hunter-v4/auth-v417.html
           grep -q 'novalidate' stock-hunter-v4/auth-v417.html
-          grep -q 'auth-v417.css?v=4' stock-hunter-v4/auth-v417.html
+          grep -q 'auth-v417.css?v=4.2.7-ui2' stock-hunter-v4/auth-v417.html
           grep -q 'app-auth-v417.js?v=3' stock-hunter-v4/auth-v417.html
           grep -q "password!==confirmPassword" stock-hunter-v4/app-auth-v417.js
           grep -q "این ایمیل نامعتبر است" stock-hunter-v4/app-auth-v417.js
@@ -497,7 +497,7 @@ jobs:
           assert 'return_3d_pct' in js
           assert 'perfJalaliDateV416(r.trade_date)' in js
           assert 'performance-v416.js?v=4.1.6-jalali1' in html
-          assert 'neutral-theme-v416.css?v=1' in html
+          assert 'neutral-theme-v416.css?v=4.2.7-ui2' in html
           print('performance-semantics: PASS')
           PY
       - name: Check calibration and robustness semantics
