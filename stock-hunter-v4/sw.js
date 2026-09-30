@@ -1,3 +1,4 @@
+// CSS network-first 4.2.9 — visual fixes must not be masked by stale cache.
 // UI refresh 4.2.7-ui2 — unified theme and closed-market latest-session fallback.
 // Recovery/Re-entry release gate: all CI workflows validate this same service-worker head.
 const CACHE='shikar-sahm-v4.1.6-r18';

@@ -286,3 +286,20 @@ html[data-theme="light"] .stock-ui-v426 .ux-global-nav-menu-v421,html[data-theme
 .stock-ui-v426 #uxGroupedNavV421{display:flex!important}
 .stock-ui-v426 #uxGroupedNavV421>details:not(:last-child){display:none!important}
 @media(max-width:760px){.stock-ui-v426 #uxGroupedNavV421{display:none!important}}
+
+
+/* Root gray hard guarantee 4.2.9 */
+html body main.research-shell,
+html body main.pro-shell,
+html body main.profile-shell,
+html body main.auth-shell,
+html body main.cal-shell,
+html body main.perf-shell,
+html body main.report-shell,
+html body main.performance-shell,
+html body main.app-shell,
+html body main.w,
+html body > main{
+  background:#f3f4f6!important;
+  background-color:#f3f4f6!important;
+}
