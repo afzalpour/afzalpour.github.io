@@ -417,3 +417,20 @@ html,body,main,.research-shell,.pro-shell,.profile-shell,.auth-shell,.cal-shell,
   background:#f3f4f6!important;
   background-color:#f3f4f6!important;
 }
+
+
+/* Root gray hard guarantee 4.2.9 */
+html body main.research-shell,
+html body main.pro-shell,
+html body main.profile-shell,
+html body main.auth-shell,
+html body main.cal-shell,
+html body main.perf-shell,
+html body main.report-shell,
+html body main.performance-shell,
+html body main.app-shell,
+html body main.w,
+html body > main{
+  background:#f3f4f6!important;
+  background-color:#f3f4f6!important;
+}
