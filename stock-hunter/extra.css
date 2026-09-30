@@ -411,3 +411,9 @@ tbody tr:hover td{background:#fffaf0!important}
 .ui-last-session-banner-v427 span{color:#6b7280}
 @media(max-width:760px){.research-shell,.pro-shell,.profile-shell,.cal-shell,.perf-shell,.w{padding:10px!important}}
 
+
+/* Root gray guarantee 4.2.9 */
+html,body,main,.research-shell,.pro-shell,.profile-shell,.auth-shell,.cal-shell,.perf-shell,.report-shell,.performance-shell,.app-shell,.w{
+  background:#f3f4f6!important;
+  background-color:#f3f4f6!important;
+}
