@@ -280,3 +280,9 @@ html[data-theme="light"] .stock-ui-v426 .ux-global-nav-menu-v421,html[data-theme
 }
 @media(max-width:480px){.ui-heat-grid-v426{grid-template-columns:repeat(2,minmax(0,1fr))}.stock-ui-v426 .summary-row{grid-template-columns:1fr!important}}
 /* Stock Hunter UX 4.2.6 visual redesign end */
+
+
+/* UX 4.2.6 auth-navigation compatibility: keep only compact Account menu visible in desktop header. */
+.stock-ui-v426 #uxGroupedNavV421{display:flex!important}
+.stock-ui-v426 #uxGroupedNavV421>details:not(:last-child){display:none!important}
+@media(max-width:760px){.stock-ui-v426 #uxGroupedNavV421{display:none!important}}
