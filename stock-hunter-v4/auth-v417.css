@@ -317,3 +317,9 @@ html:not([data-theme="light"]) .ui-last-session-banner-v427{
   color:#e6c56c!important;
   border-color:#7a6527!important;
 }
+
+/* 4.2.9 readability pass — authentication. */
+html,body{font-size:14px}
+.auth-shell{font-size:14px}.auth-card h1,.auth-card h2{font-size:24px!important}.auth-card p{font-size:13px!important;line-height:1.9}
+.auth-card label{font-size:12.5px!important}.auth-card input,.auth-card select,.auth-card button{font-size:14px!important;min-height:42px}
+.auth-card small,.auth-note,.auth-help{font-size:11.5px!important;line-height:1.8}
