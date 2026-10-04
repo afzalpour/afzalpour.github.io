@@ -206,7 +206,7 @@ jobs:
           grep -q 'رسیدن به +۳٪' stock-hunter-v4/hunt-journey-v416.html
           grep -q 'چرا این نماد شکار شد؟' stock-hunter-v4/hunt-journey-v416.js
           grep -q 'نمودار مسیر شکار' stock-hunter-v4/hunt-journey-v416.js
-          grep -q 'stock_hunter_market_replay_v416' stock-hunter-v4/market-replay-v416.js
+          grep -q 'stock_hunter_market_replay_live_v416' stock-hunter-v4/market-replay-v416.js
           grep -q 'بازپخش بازار' stock-hunter-v4/market-replay-v416.html
           grep -q 'مرکز هشدار شکار' stock-hunter-v4/alerts-center-v416.html
           grep -q 'stock_hunter_reliability_v416' stock-hunter-v4/reliability-v416.js
@@ -241,8 +241,8 @@ jobs:
           grep -q 'available=.*bucket_seconds' stock-hunter-v4/market-replay-v416.js
           grep -q "URLSearchParams(location.search)" stock-hunter-v4/hunt-journey-v416.js
           grep -q "symbol_id=" stock-hunter-v4/app-hunt-timeline-v416.js
-          grep -q 'app-hunt-timeline-v416.js?v=1' stock-hunter-v4/index.html
-          grep -q 'app-hunt-timeline-v416.js?v=1' stock-hunter-v4/index-v417.html
+          grep -q 'app-hunt-timeline-v416.js?v=2' stock-hunter-v4/index.html
+          grep -q 'app-hunt-timeline-v416.js?v=2' stock-hunter-v4/index-v417.html
           grep -q 'app-ai-assistant-v417.js?v=1' stock-hunter-v4/index.html
           grep -q 'app-ai-assistant-v417.js?v=1' stock-hunter-v4/index-v417.html
           python - <<'PY'
