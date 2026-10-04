@@ -2,6 +2,8 @@
 -- UI/data-access only. Frozen engine 4.1.6-hunt-v2 remains unchanged.
 -- Returns the complete active numeric universe in one JSON value so Data API row caps
 -- cannot truncate the replay dropdown. SECURITY INVOKER preserves caller RLS/grants.
+-- Availability is aggregated directly from the indexed Market Tape for one date only;
+-- this avoids scanning the all-date replay symbols view.
 
 create or replace function public.stock_hunter_market_replay_symbol_catalog_v430(p_trade_date date default null)
 returns jsonb
@@ -11,19 +13,21 @@ security invoker
 set search_path = public
 as $$
 with latest as (
-  select max(trade_date) as latest_trade_date
-  from public.stock_hunter_market_replay_live_symbols_v416
+  select max(observation_date) as latest_trade_date
+  from public.stock_hunter_hunt_market_tape_v416
+  where last_price is not null and last_price > 0
 ), chosen as (
   select coalesce(p_trade_date, latest.latest_trade_date) as trade_date
   from latest
 ), available as (
-  select s.symbol_id::text as symbol_id,
-         max(s.symbol) as symbol,
-         max(s.bucket_count)::integer as bucket_count,
-         max(s.resolution_seconds)::integer as resolution_seconds
-  from public.stock_hunter_market_replay_live_symbols_v416 s
-  join chosen c on s.trade_date = c.trade_date
-  group by s.symbol_id
+  select t.symbol_id::text as symbol_id,
+         max(t.symbol) as symbol,
+         count(t.last_price)::integer as bucket_count,
+         30::integer as resolution_seconds
+  from public.stock_hunter_hunt_market_tape_v416 t
+  join chosen c on t.observation_date = c.trade_date
+  where t.last_price is not null and t.last_price > 0
+  group by t.symbol_id
 ), catalog as (
   select u.ins_code::text as symbol_id,
          u.symbol,
