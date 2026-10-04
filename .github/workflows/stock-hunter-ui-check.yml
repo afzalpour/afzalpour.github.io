@@ -635,12 +635,12 @@ jobs:
           assert "x.hunt_mode==='reversal'?!!x.crossed_zero_at:!!x.crossed_plus1_at" in bt
           assert "stock_hunter_backtest_slices_v416" in bt
           assert "limit=2500" in rp and "bucket_seconds" in rp
-          assert "هنوز نمادی برای بازپخش ثبت نشده است" in rp
+          assert "stock_hunter_universe_v4" in rp and "stock_hunter_market_replay_live_symbols_v416" in rp
           assert "levelFa={early:'شکار زودهنگام',special:'شکار ویژه',success:'عبور موفق'}" in al
           assert "reg.showNotification" in al and "stockHunterAlertsSeenV416" in al
           assert "rules.every" in st and "stock_hunter_shadow_samples_v416" in st and "stock_hunter_shadow_outcomes_v416" in st
           assert "stock_hunter_user_strategies_v417" in st
-          assert "stock_hunter_hunt_journey_v416" in tl and "stock_hunter_market_replay_v416" in tl
+          assert "stock_hunter_hunt_journey_v416" in tl and "stock_hunter_market_replay_live_v416" in tl
           assert "MARKET_REPLAY_30SEC" in sql and "BACKTEST_SLICES" in sql
           assert "stock_hunter_user_strategies_v417" in sql
           print('research-completion: PASS')
