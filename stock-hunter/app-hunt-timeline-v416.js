@@ -41,7 +41,7 @@
     const jr=await api('stock_hunter_hunt_journey_v416','select=*&symbol_id=eq.'+encodeURIComponent(id)+'&order=trade_date.desc,detected_at.asc&limit=4');
     if(!jr.length)return null;
     const latestDate=jr[0].trade_date,dayRows=jr.filter(x=>x.trade_date===latestDate),j=chooseJourney(dayRows);
-    let replay=await api('stock_hunter_market_replay_v416','select=bucket_at,close_change_pct,close_price,bucket_seconds&trade_date=eq.'+encodeURIComponent(latestDate)+'&symbol_id=eq.'+encodeURIComponent(id)+'&order=bucket_at.asc&limit=2500').catch(()=>[]);
+    let replay=await api('stock_hunter_market_replay_live_v416','select=bucket_at,close_change_pct,close_price,bucket_seconds&trade_date=eq.'+encodeURIComponent(latestDate)+'&symbol_id=eq.'+encodeURIComponent(id)+'&order=bucket_at.asc&limit=2500').catch(()=>[]);
     const bestResolution=replay.length?Math.min(...replay.map(x=>Number(x.bucket_seconds)||300)):0;if(bestResolution)replay=replay.filter(x=>(Number(x.bucket_seconds)||300)===bestResolution);
     const radar=dayRows.find(x=>x.channel==='RADAR'),action=dayRows.find(x=>x.channel==='ACTION_NOW');
     const first=[...dayRows].sort((a,b)=>new Date(a.detected_at)-new Date(b.detected_at))[0];
