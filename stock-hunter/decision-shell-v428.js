@@ -118,7 +118,7 @@
     return '<div class="ui-hunt-progress-v428" aria-label="مسیر شکار"><div class="ui-hunt-progress-head-v428"><span>مسیر شکار</span><small>'+(j?.trade_date?'جلسه '+jalali(j.trade_date):'در انتظار دفتر رخداد')+'</small></div><div class="ui-hunt-progress-track-v428">'+labels.map((l,i)=>'<span class="'+(st[i]?'reached':'')+'"><i></i><b>'+l+'</b></span>').join('')+'</div></div>';
   }
   function forwardCell(label,v,q){
-    const n=Number(v),has=Number.isFinite(n),cls=!has?'pending':n>0?'pos':n<0?'neg':'flat';
+    const has=v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v)),n=has?Number(v):NaN,cls=!has?'pending':n>0?'pos':n<0?'neg':'flat';
     const quality=q==='PARTIAL'?' · توصیفی':'';
     return '<div class="'+cls+'"><span>'+label+'</span><b>'+pct(v,1)+'</b><small>'+(!has?'در انتظار بلوغ':(q==='FULL'?'جلسه کامل':quality||'ثبت‌شده'))+'</small></div>';
   }
@@ -142,8 +142,8 @@
       forwardById=new Map();
       for(const x of Array.isArray(forward)?forward:[]){
         const id=String(x.symbol_id),prev=forwardById.get(id);
-        const maturity=['d1_return_pct','d2_return_pct','d3_return_pct','d5_return_pct'].filter(k=>Number.isFinite(Number(x[k]))).length;
-        const prevMat=prev?['d1_return_pct','d2_return_pct','d3_return_pct','d5_return_pct'].filter(k=>Number.isFinite(Number(prev[k]))).length:-1;
+        const maturity=['d1_return_pct','d2_return_pct','d3_return_pct','d5_return_pct'].filter(k=>x[k]!==null&&x[k]!==undefined&&x[k]!==''&&Number.isFinite(Number(x[k]))).length;
+        const prevMat=prev?['d1_return_pct','d2_return_pct','d3_return_pct','d5_return_pct'].filter(k=>prev[k]!==null&&prev[k]!==undefined&&prev[k]!==''&&Number.isFinite(Number(prev[k]))).length:-1;
         if(!prev||maturity>prevMat||(maturity===prevMat&&x.channel==='ACTION_NOW'))forwardById.set(id,x);
       }
       scheduleDecorate();
