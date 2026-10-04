@@ -22,3 +22,30 @@ html:not([data-theme="light"]) .search-suggestion-v416 small,
 html:not([data-theme="light"]) .search-suggestion-v416 em{
   color:#8d9096;
 }
+
+/* 4.3.0 — Today / full analysis table readability.
+   Presentation only; Hunt 4.1.6 scoring and table semantics are unchanged. */
+#mainTable th:nth-child(2){
+  width:24%!important;
+  min-width:190px;
+  font-size:13.5px!important;
+  font-weight:800;
+}
+#mainTable td:nth-child(2){
+  min-width:190px;
+  padding-inline:10px!important;
+}
+#mainTable td:nth-child(2) .symbol{
+  font-size:16px!important;
+  line-height:1.35;
+  letter-spacing:-.15px;
+}
+#mainTable td:nth-child(2) .company{
+  font-size:11.5px!important;
+  line-height:1.45;
+  margin-top:2px;
+}
+@media(max-width:1000px){
+  #mainTable th:nth-child(2),#mainTable td:nth-child(2){min-width:175px}
+  #mainTable td:nth-child(2) .symbol{font-size:15px!important}
+}
