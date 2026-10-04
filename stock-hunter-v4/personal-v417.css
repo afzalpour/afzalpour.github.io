@@ -29,3 +29,11 @@
   .personal-identity-v417,.personal-watch-v417,.personal-actions-v417{width:100%}
   .personal-watch-v417 select{flex:1;min-width:150px}
 }
+/* 4.2.9 readability pass — profile/personal workspace. */
+html,body{font-size:14px}
+.profile-shell,.personal-shell{font-size:14px}
+.profile-shell h1,.personal-shell h1{font-size:24px!important}.profile-shell h2,.personal-shell h2{font-size:17px!important}
+.profile-shell p,.personal-shell p{font-size:13px!important;line-height:1.9}
+.profile-shell label,.personal-shell label{font-size:12.5px!important}
+.profile-shell input,.profile-shell select,.profile-shell button,.personal-shell input,.personal-shell select,.personal-shell button{font-size:13.5px!important}
+.profile-shell small,.personal-shell small{font-size:11.5px!important}

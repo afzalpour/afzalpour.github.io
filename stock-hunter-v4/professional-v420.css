@@ -259,3 +259,15 @@ html:not([data-theme="light"]) .ui-last-session-banner-v427{
   color:#e6c56c!important;
   border-color:#7a6527!important;
 }
+
+/* 4.2.9 readability pass — professional pages. */
+html,body{font-size:14px}
+.pro-shell,.professional-shell{font-size:14px}
+.pro-hero h1,.professional-head h1{font-size:25px!important}
+.pro-hero p,.professional-head p{font-size:13.5px!important;line-height:1.9}
+.pro-panel h2,.professional-panel h2{font-size:17px!important}
+.pro-panel h3,.professional-panel h3{font-size:14px!important}
+.pro-metric span,.professional-metric span{font-size:11.5px!important}
+.pro-metric b,.professional-metric b{font-size:16px!important}
+.pro-shell button,.pro-shell input,.pro-shell select,.professional-shell button,.professional-shell input,.professional-shell select{font-size:13px!important}
+.pro-shell table,.professional-shell table{font-size:12.5px!important}

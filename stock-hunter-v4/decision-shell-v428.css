@@ -97,3 +97,15 @@ body.stock-decision-v428.ui-analysis-open-v428 .workspace>.table-panel{
 }
 body.stock-decision-v428.ui-analysis-open-v428 .workspace>.summary-row{display:grid!important}
 body.stock-decision-v428.ui-analysis-open-v428 .workspace>.toolbar{display:flex!important}
+
+/* 4.2.9 readability pass — decision shell. */
+.ui-decision-strip-v428 span{font-size:11px}.ui-decision-strip-v428 b{font-size:13px}
+body.stock-decision-v428 .ux-today-title-v421 h2{font-size:21px}body.stock-decision-v428 .ux-today-title-v421 p{font-size:12px}
+body.stock-decision-v428 .ux-pulse-v421 b{font-size:17px}body.stock-decision-v428 .ux-pulse-v421 small{font-size:11px}
+.ui-reasons-v428>span{font-size:11px}.ui-reasons-v428 b{font-size:11px}
+.ui-hunt-progress-head-v428 span,.ui-forward-head-v428 span{font-size:11px}.ui-hunt-progress-head-v428 small,.ui-forward-head-v428 small{font-size:10.5px}
+.ui-hunt-progress-track-v428>span,.ui-hunt-progress-track-v428 b{font-size:10.5px}
+.ui-forward-grid-v428 span{font-size:10.5px}.ui-forward-grid-v428 b{font-size:12px}.ui-forward-grid-v428 small{font-size:9.5px}
+.ui-analysis-layer-v428>summary b{font-size:14px}.ui-analysis-layer-v428>summary span{font-size:11.5px}.ui-analysis-layer-v428>summary em{font-size:11px}
+.ui-side-group-title-v428{font-size:11px}
+@media(max-width:480px){.ui-hunt-progress-track-v428 b{font-size:9.5px}.ui-decision-strip-v428 span{font-size:10px}.ui-decision-strip-v428 b{font-size:12px}}

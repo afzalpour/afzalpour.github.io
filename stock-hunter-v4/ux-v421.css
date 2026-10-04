@@ -461,3 +461,16 @@ html:not([data-theme="light"]) .ui-last-session-banner-v427{
   color:#e6c56c!important;
   border-color:#7a6527!important;
 }
+
+/* 4.2.9 readability pass — shared UX. */
+.ui-side-nav-v426 a{font-size:13px}.ui-side-foot-v426{font-size:11.5px}.ui-side-group-title-v428{font-size:11px}
+.ux-today-title-v421 p{font-size:12px!important}.ux-section-head-v421 p{font-size:11.5px!important}
+.ux-pulse-v421 span,.ux-pulse-v421 small{font-size:11px!important}
+.ux-state-chip-v421,.ux-btn-v421{font-size:12px!important}
+.ux-hunt-facts-v421 span{font-size:10.5px!important}.ux-hunt-facts-v421 b{font-size:12px!important}
+.ux-why-head-v421 p{font-size:11.5px}.ux-why-lead-v421{font-size:13.5px}.ux-why-box-v421 b{font-size:12.5px}.ux-why-box-v421 ul{font-size:11.5px}
+.ux-why-metrics-v421 span{font-size:10.5px}.ux-why-metrics-v421 b{font-size:12.5px}
+.ux-change-panel-v421 h3{font-size:13px}.ux-change-grid-v421 span,.ux-change-grid-v421 small{font-size:10.5px}.ux-change-grid-v421 b{font-size:12px}
+.ux-onboarding-v421>p{font-size:12px}.ux-onboarding-steps-v421 span{font-size:11.5px}
+.ux-mobile-nav-v421 a{font-size:10.5px}
+.ai-center-page-v417 .research-head p{font-size:13px!important}

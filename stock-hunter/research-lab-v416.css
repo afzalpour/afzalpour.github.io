@@ -341,3 +341,21 @@ html:not([data-theme="light"]) .ui-last-session-banner-v427{
   color:#e6c56c!important;
   border-color:#7a6527!important;
 }
+
+/* 4.2.9 readability pass — research/replay pages. */
+html,body{font-size:14px}
+.research-head h1{font-size:25px}.research-head p{font-size:14px;line-height:1.9}
+.research-nav a,.research-nav button{font-size:13px;padding:9px 11px}
+.research-status{font-size:13px;padding:9px 12px}
+.filters label{font-size:12px}.filters input,.filters select,.filters button{font-size:13.5px;min-height:42px}
+.cards .card span{font-size:12px}.cards .card b{font-size:18px}
+.panel h2{font-size:17px}.panel h3{font-size:14px}
+table{font-size:12.5px}th,td{padding:8px}.badge{font-size:11.5px}
+.timeline-step span{font-size:11px}.timeline-step b{font-size:13px}.chart-label{font-size:10.5px}
+.explain-list{font-size:12px}.metric-bar span{font-size:11px}.metric-bar b{font-size:13px}
+.retention-item b{font-size:12.5px}.retention-item span{font-size:11.5px}
+.empty{font-size:13px}.footnote{font-size:11.5px}.section-note{font-size:12.5px}
+.alert-title{font-size:13px}.alert-meta,.alert-time{font-size:11px}
+.health-item span{font-size:11px}.health-item b{font-size:13px}
+.research-shell small{font-size:11px}
+@media(max-width:760px){.research-head h1{font-size:22px}.research-head p{font-size:13px}.research-nav a,.research-nav button{font-size:12px}.filters input,.filters select,.filters button{font-size:13px}table{font-size:12px}}
