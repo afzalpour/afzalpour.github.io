@@ -2,13 +2,13 @@
 // Stock Hunter public PWA 4.2.4 — optimized shell for /stock-hunter/.
 // Frozen Hunt 4.1.6 scoring/runtime semantics are untouched.
 const CACHE_PREFIX='shikar-sahm-public-';
-const CACHE=CACHE_PREFIX+'v4.2.5-ui4';
+const CACHE=CACHE_PREFIX+'v4.2.8-decision1';
 const CORE=[
-  './','./index.html','./styles.css','./extra.css','./forecast-v415.css','./neutral-theme-v416.css','./ux-v421.css',
+  './','./index.html','./styles.css','./extra.css','./forecast-v415.css','./neutral-theme-v416.css','./ux-v421.css','./decision-shell-v428.css',
   './config.js','./app-core.js','./app-runtime.js','./app-session-v413.js','./app-hunt-v416.js','./app-hunt-challenger-v425.js',
   './hunt-runtime-core-v417.js','./app-runtime-router-v417.js','./app-hunt-hierarchy-v416.js',
   './app-universal-search-v416.js','./app-eod-v416.js','./app-hunt-carry-v416.js',
-  './data-export-v418.js','./locale-ui-v419.js','./icon.svg','./icon-192.png','./icon-512.png','./manifest.webmanifest'
+  './data-export-v418.js','./locale-ui-v419.js','./decision-shell-v428.js','./icon.svg','./icon-192.png','./icon-512.png','./manifest.webmanifest'
 ];
 self.addEventListener('install',event=>{
   self.skipWaiting();
