@@ -227,7 +227,7 @@ jobs:
           grep -q 'مرکز هشدار شکار' "$ALERTS"
           grep -q 'stock_hunter_hunt_journey_v416' "$ALERTS_JS"
           grep -q 'بازپخش بازار' "$REPLAY"
-          grep -q 'stock_hunter_market_replay_v416' "$REPLAY_JS"
+          grep -q 'stock_hunter_market_replay_live_v416' "$REPLAY_JS"
           grep -q 'پایداری سامانه' "$RELIABILITY"
           grep -q 'stock_hunter_reliability_v416' "$RELIABILITY_JS"
           grep -q 'alerts-center-v416.html' "$SW"
