@@ -2,6 +2,7 @@
 const R=StockHunterResearchV416;const $=id=>document.getElementById(id);let replayRows=[],journey=null,playTimer=null,index=0,symbolMeta=[];
 const faCollator=new Intl.Collator('fa-IR',{usage:'sort',sensitivity:'base',ignorePunctuation:true,numeric:false});
 const faName=v=>String(v??'').normalize('NFKC').replace(/ي/g,'ی').replace(/ى/g,'ی').replace(/ك/g,'ک').replace(/\u200c/g,' ').trim();
+// 4.3.0 catalog contract: direct client reads of stock_hunter_universe_v4 and stock_hunter_market_replay_live_symbols_v416 were intentionally replaced by stock_hunter_market_replay_symbol_catalog_v430 so Data API row caps cannot truncate the dropdown.
 function stopPlay(){clearTimeout(playTimer);playTimer=null;$('replayPlay').textContent='▶ شروع بازپخش';$('replayPlay').classList.remove('active');}
 function current(){return replayRows[index]||null;}
 function resolutionFa(v){const n=Number(v);return n===30?'۳۰ ثانیه':n===300?'۵ دقیقه':Number.isFinite(n)?R.fa(n)+' ثانیه':'—';}
