@@ -80,17 +80,19 @@
     if($('uiAnalysisLayerV428'))return;
     const heat=$('uiHeatmapV426'),today=$('uxTodayV421'),ws=document.querySelector('.workspace');if(!ws||!today)return;
     const details=document.createElement('details');details.id='uiAnalysisLayerV428';details.className='ui-analysis-layer-v428';
-    details.innerHTML='<summary><div><b>تحلیل و جدول کامل</b><span>فیلترها، رادار، ستون‌های تخصصی و تمام نمادها</span></div><em>باز کردن</em></summary><div id="uiAnalysisBodyV428" class="ui-analysis-body-v428"></div>';
+    details.innerHTML='<summary><div><b>تحلیل و جدول کامل</b><span>فیلترها، رادار، ستون‌های تخصصی و تمام نمادها</span></div><em>باز کردن</em></summary>';
     (heat||today).insertAdjacentElement('afterend',details);
-    const box=$('uiAnalysisBodyV428');
-    const move=[document.querySelector('.summary-row'),document.querySelector('.toolbar'),$('alertBox'),$('huntRadarV416'),document.querySelector('.table-panel'),$('mobileList')].filter(Boolean);
-    move.forEach(el=>box.appendChild(el));
-    details.addEventListener('toggle',()=>{const e=details.querySelector('summary em');if(e)e.textContent=details.open?'بستن':'باز کردن';});
+    details.addEventListener('toggle',()=>{
+      const e=details.querySelector('summary em');if(e)e.textContent=details.open?'بستن':'باز کردن';
+      body.classList.toggle('ui-analysis-open-v428',details.open);
+    });
     syncAnalysisMode();
   }
   function syncAnalysisMode(){
     const d=$('uiAnalysisLayerV428');if(!d)return;
-    if(body.classList.contains('ux-pro-v421'))d.open=true;
+    d.open=body.classList.contains('ux-pro-v421');
+    body.classList.toggle('ui-analysis-open-v428',d.open);
+    const e=d.querySelector('summary em');if(e)e.textContent=d.open?'بستن':'باز کردن';
   }
 
   function rowReasons(x){
