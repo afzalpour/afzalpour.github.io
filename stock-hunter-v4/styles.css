@@ -35,3 +35,18 @@ dialog{width:min(920px,94vw);max-height:90vh;overflow:auto;border:1px solid #254
 .detail-hunt-chart{height:210px;margin:8px 0;background:#14171a;border:1px solid #343a40;border-radius:10px;padding:7px;overflow:hidden}.detail-hunt-chart svg{width:100%;height:100%;display:block}.detail-chart-line{fill:none;stroke:#7fd9d2;stroke-width:2}.detail-chart-zero{stroke:#646b72;stroke-dasharray:4 4}.detail-chart-marker-line{stroke:#7f878e;stroke-dasharray:3 3;opacity:.5}.detail-chart-marker{fill:#78d49a}.detail-chart-label{font-size:8px;fill:#bfc4c8}.detail-hunt-empty{padding:18px;text-align:center;color:#9ca3a9}
 .detail-hunt-metrics{display:grid;grid-template-columns:repeat(5,minmax(100px,1fr));gap:6px}.detail-hunt-metrics span{padding:7px;border:1px solid #343a40;border-radius:8px;background:#1c2024;font-size:9px;color:#a8afb5}.detail-hunt-metrics b{display:block;margin-top:3px;color:#e9e7e2;font-size:11px}
 @media(max-width:720px){.detail-hunt-title{flex-direction:column}.detail-hunt-metrics{grid-template-columns:1fr 1fr}.detail-hunt-chart{height:180px}}
+
+/* 4.2.9 readability pass — typography only, model logic untouched. */
+html,body{font-size:14px}
+.brand h1{font-size:20px}.brand h1 span{font-size:12px}.brand p{font-size:12px}.designer{font-size:11px}
+.top-actions button,.toolbar button,.pager button,.side-actions button,.top-link,.feed-badge{font-size:13px}
+.toolbar input,.toolbar select{font-size:13.5px}
+.summary-row span{font-size:12px}.summary-row small{font-size:11px}.feed-info b{font-size:13px}.top-pick b{font-size:17px}
+.search-suggestion-v416 b{font-size:13px}.search-suggestion-v416 small{font-size:11px}.search-suggestion-v416 em{font-size:10.5px}
+.alert-box{font-size:12.5px}
+.table-wrap th{font-size:12px}.table-wrap td{font-size:13px}.symbol{font-size:14px}.company{font-size:11px}.badge{font-size:11px}.detail-btn{font-size:12.5px}.pager span{font-size:12px}
+.side-head small{font-size:11px}.column-options label{font-size:12px}
+.detail-head p{font-size:12px}.metric span{font-size:11px}.metric b{font-size:15px}.section-title{font-size:13px}.detail-text{font-size:13px}.forecast-box b{font-size:13px}.forecast-box p{font-size:12px}.forecast-note{font-size:11px}
+.detail-hunt-title b{font-size:15px}.detail-hunt-title small{font-size:11px}.detail-hunt-title a{font-size:12px}
+.detail-timeline-step span,.detail-timeline-step small{font-size:11px}.detail-timeline-step b{font-size:12.5px}.detail-chart-label{font-size:10px}.detail-hunt-metrics span{font-size:11px}.detail-hunt-metrics b{font-size:13px}
+@media(max-width:760px){.designer{font-size:10px}.mobile-metrics span{font-size:10.5px}.mobile-metrics b{font-size:12px}}
