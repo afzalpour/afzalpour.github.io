@@ -2,7 +2,6 @@
 const R=StockHunterResearchV416;const $=id=>document.getElementById(id);let replayRows=[],journey=null,playTimer=null,index=0,symbolMeta=[];
 const faCollator=new Intl.Collator('fa-IR',{usage:'sort',sensitivity:'base',ignorePunctuation:true,numeric:false});
 const faName=v=>String(v??'').normalize('NFKC').replace(/ي/g,'ی').replace(/ى/g,'ی').replace(/ك/g,'ک').replace(/\u200c/g,' ').trim();
-const numericId=v=>/^\d+$/.test(String(v||'').trim());
 function stopPlay(){clearTimeout(playTimer);playTimer=null;$('replayPlay').textContent='▶ شروع بازپخش';$('replayPlay').classList.remove('active');}
 function current(){return replayRows[index]||null;}
 function resolutionFa(v){const n=Number(v);return n===30?'۳۰ ثانیه':n===300?'۵ دقیقه':Number.isFinite(n)?R.fa(n)+' ثانیه':'—';}
@@ -41,18 +40,30 @@ function renderTable(){
 }
 function scheduleNext(){if(!playTimer)return;const speed=Math.max(1,Number($('replaySpeed').value)||1);if(index>=replayRows.length-1){stopPlay();return;}playTimer=setTimeout(()=>{index++;renderCurrent();scheduleNext();},700/speed);}
 function togglePlay(){if(playTimer){stopPlay();return;}if(!replayRows.length)return;if(index>=replayRows.length-1)index=0;$('replayPlay').textContent='⏸ توقف بازپخش';$('replayPlay').classList.add('active');playTimer=true;scheduleNext();}
-async function loadSymbols(){
- stopPlay();const d=R.readJalaliInput($('replayDate'),R.todayIso());R.setStatus('در حال دریافت فهرست کامل نمادها و وضعیت داده '+R.jalaliDate(d)+'…','warn');
+async function loadSymbolCatalog(d){
+ const cfg=window.STOCK_HUNTER_CONFIG||{},base=String(cfg.SUPABASE_URL||'').replace(/\/$/,''),key=String(cfg.SUPABASE_PUBLISHABLE_KEY||'');
+ if(!base||!key)throw new Error('تنظیمات اتصال داده در دسترس نیست.');
+ const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),20000);
  try{
-   const [universe,available]=await Promise.all([
-     R.api('stock_hunter_universe_v4','select=ins_code,symbol,company_name,asset_type,market&is_active=eq.true&order=symbol.asc&limit=5000'),
-     R.api('stock_hunter_market_replay_live_symbols_v416','select=symbol_id,symbol,bucket_count,resolution_seconds&trade_date=eq.'+encodeURIComponent(d)+'&order=symbol.asc&limit=5000').catch(()=>[])
-   ]);
-   const av=new Map((Array.isArray(available)?available:[]).map(x=>[String(x.symbol_id),x]));
+   const r=await fetch(base+'/rest/v1/rpc/stock_hunter_market_replay_symbol_catalog_v430',{
+     method:'POST',cache:'no-store',signal:ctrl.signal,
+     headers:{'apikey':key,'Authorization':'Bearer '+key,'Accept':'application/json','Content-Type':'application/json'},
+     body:JSON.stringify({p_trade_date:d===R.todayIso()?null:d})
+   });
+   if(!r.ok)throw new Error('خطای دریافت کاتالوگ نمادها؛ کد '+r.status);
+   const j=await r.json();return Array.isArray(j)?(j[0]||{}):(j||{});
+ }finally{clearTimeout(timer);}
+}
+async function loadSymbols(){
+ stopPlay();const requested=R.readJalaliInput($('replayDate'),R.todayIso());R.setStatus('در حال دریافت فهرست کامل نمادها و وضعیت داده '+R.jalaliDate(requested)+'…','warn');
+ try{
+   const catalog=await loadSymbolCatalog(requested),resolved=String(catalog.trade_date||requested),items=Array.isArray(catalog.symbols)?catalog.symbols:[];
+   if(resolved!==requested)R.setJalaliInput($('replayDate'),resolved);
    const seen=new Set();
-   symbolMeta=(Array.isArray(universe)?universe:[])
-     .filter(x=>numericId(x.ins_code)&&x.symbol&&!seen.has(String(x.ins_code))&&(seen.add(String(x.ins_code))||true))
-     .map(x=>({symbol_id:String(x.ins_code),symbol:x.symbol,company_name:x.company_name||'',asset_type:x.asset_type||'',market:x.market||'',available:av.get(String(x.ins_code))||null}));
+   symbolMeta=items.filter(x=>x&&x.symbol_id&&x.symbol&&!seen.has(String(x.symbol_id))&&(seen.add(String(x.symbol_id))||true)).map(x=>({
+     symbol_id:String(x.symbol_id),symbol:x.symbol,company_name:x.company_name||'',asset_type:x.asset_type||'',market:x.market||'',
+     available:x.bucket_count==null?null:{bucket_count:Number(x.bucket_count)||0,resolution_seconds:Number(x.resolution_seconds)||30}
+   }));
    symbolMeta.sort((a,b)=>Number(Boolean(b.available))-Number(Boolean(a.available))||faCollator.compare(faName(a.symbol),faName(b.symbol))||faCollator.compare(faName(a.company_name),faName(b.company_name)));
    const old=$('replaySymbol').value;
    $('replaySymbol').innerHTML='<option value="">انتخاب نماد…</option>'+symbolMeta.map(x=>{
@@ -66,7 +77,8 @@ async function loadSymbols(){
    else if(qsymbol){const m=symbolMeta.find(x=>faName(x.symbol)===faName(qsymbol));if(m)chosen=m.symbol_id;}
    else {const first=symbolMeta.find(x=>x.available);if(first)chosen=first.symbol_id;}
    $('replaySymbol').value=chosen;
-   R.setStatus('فهرست کامل '+R.fa(symbolMeta.length)+' نماد فعال آماده است؛ '+R.fa(av.size)+' نماد برای '+R.jalaliDate(d)+' داده بازپخش دارند.','ok');
+   const availableCount=Number(catalog.available_symbols)||symbolMeta.filter(x=>x.available).length;
+   R.setStatus('فهرست کامل '+R.fa(symbolMeta.length)+' نماد فعال آماده است؛ '+R.fa(availableCount)+' نماد برای '+R.jalaliDate(resolved)+' داده بازپخش دارند.','ok');
    if(chosen)await loadReplay();else{replayRows=[];journey=null;renderTable();renderCurrent();renderMilestones();}
  }catch(e){$('replaySymbol').innerHTML='<option value="">خطا در دریافت نمادها</option>';R.setStatus('دریافت فهرست نمادها ناموفق بود: '+e.message,'bad');}
 }
