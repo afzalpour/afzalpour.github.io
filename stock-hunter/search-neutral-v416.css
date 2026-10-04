@@ -23,29 +23,41 @@ html:not([data-theme="light"]) .search-suggestion-v416 em{
   color:#8d9096;
 }
 
-/* 4.3.0 — Today / full analysis table readability.
-   Presentation only; Hunt 4.1.6 scoring and table semantics are unchanged. */
+/* 4.3.0 — Today / full analysis table: symbol-first layout.
+   Presentation only; Hunt 4.1.6 scoring and table semantics are unchanged.
+   The symbol column owns at least ~70% of the usable table width even when
+   optional columns are enabled; remaining columns are deliberately compact. */
 #mainTable th:nth-child(2){
-  width:24%!important;
-  min-width:190px;
-  font-size:13.5px!important;
-  font-weight:800;
+  width:70%!important;
+  min-width:70%!important;
+  font-size:15px!important;
+  font-weight:900;
 }
+#mainTable th:nth-child(n+3){width:1.25%!important}
 #mainTable td:nth-child(2){
-  min-width:190px;
-  padding-inline:10px!important;
+  width:70%!important;
+  min-width:70%!important;
+  padding-inline:14px!important;
+  white-space:normal!important;
 }
 #mainTable td:nth-child(2) .symbol{
-  font-size:16px!important;
-  line-height:1.35;
-  letter-spacing:-.15px;
+  font-size:20px!important;
+  line-height:1.4;
+  letter-spacing:-.2px;
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
 }
 #mainTable td:nth-child(2) .company{
-  font-size:11.5px!important;
-  line-height:1.45;
-  margin-top:2px;
+  font-size:13px!important;
+  line-height:1.6;
+  margin-top:3px;
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
 }
 @media(max-width:1000px){
-  #mainTable th:nth-child(2),#mainTable td:nth-child(2){min-width:175px}
-  #mainTable td:nth-child(2) .symbol{font-size:15px!important}
+  #mainTable th:nth-child(2),#mainTable td:nth-child(2){width:70%!important;min-width:70%!important}
+  #mainTable td:nth-child(2) .symbol{font-size:18px!important}
+  #mainTable td:nth-child(2) .company{font-size:12.5px!important}
 }
