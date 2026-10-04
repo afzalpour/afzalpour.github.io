@@ -1,8 +1,8 @@
-// CSS network-first 4.2.9 — visual fixes must not be masked by stale cache.
+// Replay/font refresh 4.2.9 — live Tape source + readability; frozen Hunt logic untouched.
 // Stock Hunter public PWA 4.2.4 — optimized shell for /stock-hunter/.
 // Frozen Hunt 4.1.6 scoring/runtime semantics are untouched.
 const CACHE_PREFIX='shikar-sahm-public-';
-const CACHE=CACHE_PREFIX+'v4.2.5-ui4-decision1';
+const CACHE=CACHE_PREFIX+'v4.2.5-ui4-decision1-replayfont1';
 const CORE=[
   './','./index.html','./styles.css','./extra.css','./forecast-v415.css','./neutral-theme-v416.css','./ux-v421.css','./decision-shell-v428.css',
   './config.js','./app-core.js','./app-runtime.js','./app-session-v413.js','./app-hunt-v416.js','./app-hunt-challenger-v425.js',
