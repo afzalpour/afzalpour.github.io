@@ -66,3 +66,34 @@ body.stock-decision-v428 .chart-dot,body.stock-decision-v428 .detail-chart-marke
   .ui-forward-grid-v428{grid-template-columns:repeat(4,1fr)}.ui-forward-grid-v428 small{display:none}
 }
 @media(max-width:480px){.ui-forward-grid-v428{grid-template-columns:repeat(2,1fr)}.ui-hunt-progress-track-v428 b{font-size:6.5px}}
+
+/* 4.2.8 layout-contract: Today stays physically above Hunt table for browser/PWA compatibility.
+   Decision mode collapses heavy analysis visually without reparenting core DOM nodes. */
+body.stock-decision-v428:not(.ui-analysis-open-v428) .workspace>.summary-row,
+body.stock-decision-v428:not(.ui-analysis-open-v428) .workspace>.toolbar,
+body.stock-decision-v428:not(.ui-analysis-open-v428) .workspace>#alertBox,
+body.stock-decision-v428:not(.ui-analysis-open-v428) .workspace>#huntRadarV416,
+body.stock-decision-v428:not(.ui-analysis-open-v428) .workspace>#mobileList{display:none!important}
+body.stock-decision-v428:not(.ui-analysis-open-v428) .workspace>.table-panel{
+  display:block!important;
+  height:1px!important;
+  min-height:1px!important;
+  max-height:1px!important;
+  overflow:hidden!important;
+  opacity:0!important;
+  pointer-events:none!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+body.stock-decision-v428.ui-analysis-open-v428 .workspace>.table-panel{
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+  overflow:visible!important;
+}
+body.stock-decision-v428.ui-analysis-open-v428 .workspace>.summary-row{display:grid!important}
+body.stock-decision-v428.ui-analysis-open-v428 .workspace>.toolbar{display:flex!important}
