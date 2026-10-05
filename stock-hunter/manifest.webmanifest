@@ -1,1 +1,29 @@
-{"name":"شکارچی سهم","short_name":"شکارچی سهم","description":"سامانه هوشمند پایش لحظه‌ای و شکار زودهنگام سهام با پیگیری عبور موفق","id":"./","start_url":"./index.html","scope":"./","display":"standalone","display_override":["window-controls-overlay","standalone","minimal-ui"],"orientation":"any","background_color":"#111315","theme_color":"#15181b","lang":"fa","dir":"rtl","categories":["finance","productivity"],"prefer_related_applications":false,"icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},{"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"},{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}],"shortcuts":[{"name":"مرکز هشدار","short_name":"هشدارها","url":"./alerts/","icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"}]},{"name":"تحلیل شکار","short_name":"تحلیل شکار","url":"./journey/","icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"}]},{"name":"سازنده راهبرد","short_name":"راهبرد","url":"./strategy/","icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"}]}],"launch_handler":{"client_mode":"navigate-existing"}}
+{
+  "name":"شکارچی سهم",
+  "short_name":"شکارچی سهم",
+  "description":"سامانه هوشمند پایش بازار، شکار سهم، تحلیل، بازپخش و پژوهش حرفه‌ای",
+  "id":"./",
+  "start_url":"./index.html?source=pwa",
+  "scope":"./",
+  "display":"standalone",
+  "display_override":["window-controls-overlay","standalone","minimal-ui"],
+  "orientation":"any",
+  "background_color":"#111315",
+  "theme_color":"#15181b",
+  "lang":"fa",
+  "dir":"rtl",
+  "categories":["finance","productivity"],
+  "prefer_related_applications":false,
+  "icons":[
+    {"src":"icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"},
+    {"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}
+  ],
+  "shortcuts":[
+    {"name":"امروز","short_name":"امروز","description":"صفحه تصمیم و شکارهای امروز","url":"./index.html","icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"}]},
+    {"name":"بازپخش بازار","short_name":"بازپخش","description":"مشاهده دوباره حرکت واقعی نمادها","url":"./replay/","icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"}]},
+    {"name":"دیده‌بان و هشدارها","short_name":"هشدارها","description":"مرکز دیده‌بان و هشدارهای شکار","url":"./alerts/","icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"}]},
+    {"name":"سفر شکار","short_name":"سفر شکار","description":"مرور مسیر هر شکار تا نتیجه","url":"./journey/","icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"}]}
+  ],
+  "launch_handler":{"client_mode":"navigate-existing"}
+}
