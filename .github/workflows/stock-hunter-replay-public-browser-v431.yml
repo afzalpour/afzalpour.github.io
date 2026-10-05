@@ -1,0 +1,85 @@
+name: Stock Hunter Replay Public Browser 4.3.1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'stock-hunter/replay/**'
+      - 'stock-hunter/market-replay-v416.html'
+      - 'stock-hunter/market-replay-v416.js'
+      - 'stock-hunter/replay-catalog-resilience-v431.js'
+      - 'stock-hunter-v4/replay/**'
+      - 'stock-hunter-v4/market-replay-v416.html'
+      - 'stock-hunter-v4/market-replay-v416.js'
+      - 'stock-hunter-v4/replay-catalog-resilience-v431.js'
+      - 'stock-hunter-v4/replay-browser-smoke-v431.cjs'
+      - '.github/workflows/stock-hunter-replay-public-browser-v431.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'stock-hunter-v4/replay-browser-smoke-v431.cjs'
+      - '.github/workflows/stock-hunter-replay-public-browser-v431.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify replay browser smoke contract
+        run: |
+          set -euo pipefail
+          node --check stock-hunter-v4/replay-browser-smoke-v431.cjs
+          grep -q "'/replay/'" stock-hunter-v4/replay-browser-smoke-v431.cjs
+          grep -q "'/market-replay-v416.html'" stock-hunter-v4/replay-browser-smoke-v431.cjs
+          grep -q "count<minSymbols" stock-hunter-v4/replay-browser-smoke-v431.cjs
+          grep -q "PAGINATED_REST" stock-hunter-v4/replay-browser-smoke-v431.cjs
+          echo 'stock-hunter-replay-browser-contract: PASS'
+
+  public-browser-smoke:
+    if: github.event_name != 'pull_request'
+    needs: contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      BASE_URL: https://afzalpour.github.io/stock-hunter
+      MIN_REPLAY_SYMBOLS: '3000'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Wait for published replay bytes
+        run: |
+          set -euo pipefail
+          files=(replay/index.html market-replay-v416.html replay-catalog-resilience-v431.js market-replay-v416.js)
+          for n in $(seq 1 35); do
+            all_ok=1
+            for f in "${files[@]}"; do
+              tmp="$(mktemp)"
+              if ! curl -L --fail --silent --show-error --connect-timeout 10 --max-time 30 "$BASE_URL/$f?sha=${GITHUB_SHA}" -o "$tmp"; then
+                rm -f "$tmp"; all_ok=0; break
+              fi
+              expected="$(sha256sum "stock-hunter/$f" | awk '{print $1}')"
+              actual="$(sha256sum "$tmp" | awk '{print $1}')"
+              rm -f "$tmp"
+              if [ "$actual" != "$expected" ]; then all_ok=0; break; fi
+            done
+            if [ "$all_ok" = "1" ]; then echo 'published_replay_bytes: MATCH'; exit 0; fi
+            sleep 8
+          done
+          echo '::error::Published replay surface did not converge to merged repository bytes'
+          exit 1
+      - name: Install pinned Playwright Chromium
+        run: |
+          set -euo pipefail
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Run replay public Chromium smoke
+        run: node stock-hunter-v4/replay-browser-smoke-v431.cjs
