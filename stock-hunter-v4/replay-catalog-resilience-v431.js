@@ -36,11 +36,12 @@
     const j=await r.json();return Array.isArray(j)?j:[];
   }
   async function paged(root,path,headers){
-    const out=[];
-    for(let from=0,guard=0;guard<30;guard++,from+=PAGE){
+    const out=[];let from=0;
+    for(let guard=0;guard<100;guard++){
       const rows=await jsonGet(root,path,headers,[from,from+PAGE-1]);
+      if(!rows.length)break;
       out.push(...rows);
-      if(rows.length<PAGE)break;
+      from+=rows.length;
     }
     return out;
   }
