@@ -1,0 +1,11 @@
+/* Stock Hunter Replay visual v4.3.3 — axis readability only */
+#replayChart .replay-axis-gutter{fill:#101316;opacity:.98}
+#replayChart .chart-y-axis{stroke:#69727d;stroke-width:1.2;vector-effect:non-scaling-stroke}
+#replayChart .axis-tick line{stroke:#8a939e;stroke-width:1.2;vector-effect:non-scaling-stroke}
+#replayChart .axis-label,#replayChart .zero-label{font-size:13px!important;font-weight:900!important;fill:#f2f4f6!important;direction:ltr;unicode-bidi:bidi-override;paint-order:stroke;stroke:#101316;stroke-width:3px}
+#replayChart .zero-label{fill:#f4cf68!important}
+#replayChart .x-axis-label{font-size:12px!important;font-weight:800!important;fill:#cbd3da!important;direction:ltr;unicode-bidi:bidi-override;paint-order:stroke;stroke:#101316;stroke-width:2.5px}
+html[data-theme="light"] #replayChart .replay-axis-gutter{fill:#f7f8f9}
+html[data-theme="light"] #replayChart .axis-label,html[data-theme="light"] #replayChart .zero-label,html[data-theme="light"] #replayChart .x-axis-label{stroke:#f7f8f9;fill:#1f2937!important}
+html[data-theme="light"] #replayChart .zero-label{fill:#8a6500!important}
+@media(max-width:720px){#replayChart .axis-label,#replayChart .zero-label{font-size:14px!important}#replayChart .x-axis-label{font-size:13px!important}}
