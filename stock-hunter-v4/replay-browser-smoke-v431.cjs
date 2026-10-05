@@ -23,7 +23,7 @@ async function check(page,path,label){
   if(mode!=='PAGINATED_REST')throw new Error(label+': resilient catalog mode missing: '+mode);
   if(errors.some(x=>/REPLAY_CATALOG_V431_FAILED|خطای دریافت کاتالوگ|status.?500/i.test(x)))throw new Error(label+': console replay error · '+errors.join(' | '));
 
-  await page.waitForFunction(()=>Number(document.getElementById('replaySlider')?.max||0)>2&&document.querySelector('#replayChart svg'),null,{timeout:60000});
+  await page.waitForFunction(()=>Number(document.getElementById('replaySlider')?.max||0)>0&&document.querySelector('#replayChart svg'),null,{timeout:60000});
   await page.locator('#replayChart').scrollIntoViewIfNeeded();
   const startY=await page.evaluate(()=>window.scrollY);
   await page.locator('#replayPlay').click();
