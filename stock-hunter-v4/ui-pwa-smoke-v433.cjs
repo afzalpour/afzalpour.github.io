@@ -37,8 +37,9 @@ function localSeconds(iso){const d=new Date(iso),p=new Intl.DateTimeFormat('en-G
     if(replay.visual?.axis_mode!=='RESERVED_GUTTER'||replay.visual?.time_scale!=='ACTUAL_SESSION_TIME'||replay.axis_x!==96||replay.label_font<13||replay.label_count<2||replay.label_x.some(x=>x<60||x>=96))fail('Y axis readability contract failed',replay);
     if(replay.times.some(t=>{const s=localSeconds(t);return s<9*3600||s>12*3600+30*60;}))fail('شفام contains samples outside 09:00-12:30',replay.times);
 
-    await page.goto(BASE+'/index.html?offline-prep='+Date.now(),{waitUntil:'networkidle',timeout:60000});
-    await page.waitForFunction(()=>navigator.serviceWorker.controller!==null,null,{timeout:30000});
+    await page.goto(BASE+'/index.html?offline-prep='+Date.now(),{waitUntil:'domcontentloaded',timeout:60000});
+    await page.waitForFunction(()=>window.STOCK_HUNTER_PWA_V433?.version==='4.3.3-pwa1'&&navigator.serviceWorker.controller!==null,null,{timeout:30000});
+    await page.waitForTimeout(800);
     await context.setOffline(true);
     await page.goto(BASE+'/offline.html',{waitUntil:'domcontentloaded',timeout:30000});
     const offlineText=String(await page.locator('body').textContent()||'');
