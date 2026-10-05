@@ -9,17 +9,18 @@ function localSeconds(iso){const d=new Date(iso),p=new Intl.DateTimeFormat('en-G
   const page=await context.newPage();
   try{
     await page.goto(BASE+'/index.html?smoke433='+Date.now(),{waitUntil:'domcontentloaded',timeout:60000});
-    await page.waitForFunction(()=>window.STOCK_HUNTER_PWA_V433?.version==='4.3.3-pwa1',null,{timeout:30000});
-    await page.waitForSelector('.ux-grouped-nav-v421 details',{timeout:30000});
+    await page.waitForFunction(()=>window.STOCK_HUNTER_PWA_V433?.version==='4.3.3-pwa2',null,{timeout:30000});
+    await page.waitForSelector('.ux-grouped-nav-v421 details',{state:'attached',timeout:30000});
+    await page.waitForFunction(()=>document.querySelector('.ux-grouped-nav-v421 details')?.getBoundingClientRect().width>0,null,{timeout:30000});
     const first=page.locator('.ux-grouped-nav-v421 details').first();await first.click();
     const nav=await page.evaluate(()=>{const summary=document.querySelector('.ux-grouped-nav-v421 details summary'),menu=document.querySelector('.ux-grouped-nav-menu-v421'),a=menu?.querySelector('a'),cs=x=>x?getComputedStyle(x):null;return {summary_font:parseFloat(cs(summary)?.fontSize||0),link_font:parseFloat(cs(a)?.fontSize||0),menu_bg:cs(menu)?.backgroundColor||'',link_color:cs(a)?.color||'',menu_width:menu?.getBoundingClientRect().width||0};});
     if(nav.summary_font<12||nav.link_font<13||nav.menu_width<250||/rgba\(0, 0, 0, 0\)/.test(nav.menu_bg))fail('grouped navigation readability contract failed',nav);
     const manifest=await page.evaluate(async()=>await (await fetch(new URL('manifest.webmanifest',location.href))).json());
     if(manifest.display!=='standalone'||!Array.isArray(manifest.icons)||manifest.icons.length<2||!Array.isArray(manifest.shortcuts)||manifest.shortcuts.length<4)fail('manifest contract failed',manifest);
     const sw=await page.evaluate(async()=>{const reg=await navigator.serviceWorker.ready;return {scope:reg.scope,active:reg.active?.state||null,pwa:window.STOCK_HUNTER_PWA_V433?.version||null};});
-    if(!sw.scope.endsWith('/stock-hunter/')||sw.active!=='activated')fail('service worker not active',sw);
+    if(!sw.scope.endsWith('/stock-hunter/')||sw.active!=='activated'||sw.pwa!=='4.3.3-pwa2')fail('service worker not active',sw);
     await page.reload({waitUntil:'domcontentloaded',timeout:60000});
-    await page.waitForFunction(()=>navigator.serviceWorker.controller!==null,null,{timeout:30000});
+    await page.waitForFunction(()=>navigator.serviceWorker.controller!==null&&window.STOCK_HUNTER_PWA_V433?.version==='4.3.3-pwa2',null,{timeout:30000});
 
     await page.goto(BASE+'/replay/?smoke433='+Date.now(),{waitUntil:'domcontentloaded',timeout:60000});
     await page.waitForFunction(()=>document.getElementById('researchStatus')?.dataset.state!=='warn'&&document.querySelectorAll('#replaySymbol option').length>3000,null,{timeout:60000});
@@ -38,7 +39,7 @@ function localSeconds(iso){const d=new Date(iso),p=new Intl.DateTimeFormat('en-G
     if(replay.times.some(t=>{const s=localSeconds(t);return s<9*3600||s>12*3600+30*60;}))fail('شفام contains samples outside 09:00-12:30',replay.times);
 
     await page.goto(BASE+'/index.html?offline-prep='+Date.now(),{waitUntil:'domcontentloaded',timeout:60000});
-    await page.waitForFunction(()=>window.STOCK_HUNTER_PWA_V433?.version==='4.3.3-pwa1'&&navigator.serviceWorker.controller!==null,null,{timeout:30000});
+    await page.waitForFunction(()=>window.STOCK_HUNTER_PWA_V433?.version==='4.3.3-pwa2'&&navigator.serviceWorker.controller!==null,null,{timeout:30000});
     await page.waitForTimeout(800);
     await context.setOffline(true);
     await page.goto(BASE+'/offline.html',{waitUntil:'domcontentloaded',timeout:30000});
@@ -46,6 +47,6 @@ function localSeconds(iso){const d=new Date(iso),p=new Intl.DateTimeFormat('en-G
     if(!offlineText.includes('شکارچی سهم آفلاین است')||!offlineText.includes('هیچ داده ساختگی'))fail('offline fallback contract failed');
     await context.setOffline(false);
     console.log(JSON.stringify({nav,sw,manifest:{display:manifest.display,icons:manifest.icons.length,shortcuts:manifest.shortcuts.length},replay:{symbol:replay.session.symbol,profile:replay.session.profile,start:replay.session.start_label,end:replay.session.end_label,raw:replay.session.raw_rows,kept:replay.session.kept_rows,removed:replay.session.removed_rows,axis_x:replay.axis_x,label_font:replay.label_font,time_scale:replay.visual.time_scale},offline:'PASS'}));
-    console.log('stock-hunter-ui-pwa-v433: PASS');
+    console.log('stock-hunter-ui-pwa-v433-pwa2: PASS');
   }finally{await context.setOffline(false).catch(()=>{});await browser.close();}
 })().catch(e=>{console.error(e&&e.stack||e);process.exit(1);});
