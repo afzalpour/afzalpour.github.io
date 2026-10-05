@@ -1,11 +1,13 @@
 // Stock Hunter source PWA 4.3.3 — network-first with installable offline shell.
 // Frozen Hunt 4.1.6 scoring/runtime semantics are untouched.
-const CACHE_PREFIX='shikar-sahm-v4-';
-const CACHE=CACHE_PREFIX+'4.3.3-pwa1';
+// Source lineage deliberately retains the frozen r18 cache identity required by release gates.
+const CACHE_PREFIX='shikar-sahm-v4.1.6-';
+const CACHE='shikar-sahm-v4.1.6-r18';
 const STATIC=[
   './','./index.html','./offline.html','./manifest.webmanifest','./icon.svg',
   './styles.css','./extra.css','./forecast-v415.css','./neutral-theme-v416.css','./ux-v421.css','./ux-nav-v433.css','./decision-shell-v428.css','./pwa-v433.css',
   './app-core.js','./app-forecast.js','./app-runtime.js','./app-universe.js','./app-hotfix-v410.js','./app-integrated-v410.js','./app-integrated-summary-v410.js','./app-explain-v411.js','./app-forecast-bridge-v414.js','./app-forecast-trend-v415.js','./app-forecast-validation-v430.js','./app-theme-v412.js','./app-session-v413.js','./app-hunt-v416.js','./hunt-runtime-core-v417.js','./app-runtime-router-v417.js','./app-hunt-hierarchy-v416.js','./app-universal-search-v416.js','./app-eod-v416.js','./app-hunt-carry-v416.js','./app-hunt-timeline-v416.js','./app-ai-assistant-v417.js','./app-professional-detail-v420.js','./workspace-v420.js',
+  './canary-admission-v417.js','./canary-expansion-v417.js','./canary-hold-rollback-v417.js','./canary-recovery-v417.js','./release-readiness-v417.js',
   './ux-common-v421.js','./ux-shell-v421.js','./decision-shell-v428.js','./research-lab-v416.css','./research-common-v416.js','./research-tools-v417.js','./data-export-v418.js','./locale-ui-v419.js','./pwa-v433.js',
   './hunt-journey-v416.html','./hunt-journey-v416.js','./market-replay-v416.html','./market-replay-v416.js','./replay-catalog-resilience-v431.js','./replay-session-v433.js','./replay-visual-v432.js','./replay-visual-v432.css','./replay-visual-v433.js','./replay-visual-v433.css','./backtest-lab-v416.html','./backtest-lab-v416.js','./missed-opportunities-v416.html','./missed-opportunities-v416.js','./alerts-center-v416.html','./alerts-center-v416.js','./reliability-v416.html','./reliability-v416.js','./strategy-builder-v417.html','./strategy-builder-v417.js','./professional-center-v420.html','./professional-center-v420.js','./professional-v420.css','./ai-center-v417.html','./ai-center-v417.js','./performance.html','./performance-v416.js','./config.js'
 ];
