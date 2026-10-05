@@ -15,8 +15,9 @@ function localSeconds(iso){const d=new Date(iso),p=new Intl.DateTimeFormat('en-G
     if(!nav.open||nav.summary_font<12||nav.link_font<13||nav.menu_min_width<250||/rgba\(0, 0, 0, 0\)/.test(nav.menu_bg))fail('grouped navigation readability contract failed',nav);
     const manifest=await page.evaluate(async()=>await (await fetch(new URL('manifest.webmanifest',location.href))).json());
     if(manifest.display!=='standalone'||!Array.isArray(manifest.icons)||manifest.icons.length<2||!Array.isArray(manifest.shortcuts)||manifest.shortcuts.length<4)fail('manifest contract failed',manifest);
-    const sw=await page.evaluate(async()=>{const reg=await navigator.serviceWorker.ready;return {scope:reg.scope,active:reg.active?.state||null,pwa:window.STOCK_HUNTER_PWA_V433?.version||null};});
-    if(!sw.scope.endsWith('/stock-hunter/')||sw.active!=='activated'||sw.pwa!=='4.3.3-pwa2')fail('service worker not active',sw);
+    await page.waitForFunction(async()=>{const reg=await navigator.serviceWorker.ready;return reg?.active?.state==='activated'&&navigator.serviceWorker.controller!==null;},null,{timeout:30000});
+    const sw=await page.evaluate(async()=>{const reg=await navigator.serviceWorker.ready;return {scope:reg.scope,active:reg.active?.state||null,controller:Boolean(navigator.serviceWorker.controller),pwa:window.STOCK_HUNTER_PWA_V433?.version||null};});
+    if(!sw.scope.endsWith('/stock-hunter/')||sw.active!=='activated'||!sw.controller||sw.pwa!=='4.3.3-pwa2')fail('service worker not active',sw);
     await page.reload({waitUntil:'domcontentloaded',timeout:60000});
     await page.waitForFunction(()=>navigator.serviceWorker.controller!==null&&window.STOCK_HUNTER_PWA_V433?.version==='4.3.3-pwa2',null,{timeout:30000});
 
