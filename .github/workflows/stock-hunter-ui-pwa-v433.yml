@@ -1,0 +1,95 @@
+name: Stock Hunter UI PWA 4.3.3
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'stock-hunter/**'
+      - 'stock-hunter-v4/replay-session-v433.js'
+      - 'stock-hunter-v4/replay-visual-v433.js'
+      - 'stock-hunter-v4/replay-visual-v433.css'
+      - 'stock-hunter-v4/ux-nav-v433.css'
+      - 'stock-hunter-v4/pwa-v433.js'
+      - 'stock-hunter-v4/pwa-v433.css'
+      - 'stock-hunter-v4/manifest.webmanifest'
+      - 'stock-hunter-v4/sw.js'
+      - 'stock-hunter-v4/ui-pwa-smoke-v433.cjs'
+      - '.github/workflows/stock-hunter-ui-pwa-v433.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'stock-hunter/**'
+      - 'stock-hunter-v4/replay-session-v433.js'
+      - 'stock-hunter-v4/replay-visual-v433.js'
+      - 'stock-hunter-v4/replay-visual-v433.css'
+      - 'stock-hunter-v4/ux-nav-v433.css'
+      - 'stock-hunter-v4/pwa-v433.js'
+      - 'stock-hunter-v4/pwa-v433.css'
+      - 'stock-hunter-v4/manifest.webmanifest'
+      - 'stock-hunter-v4/sw.js'
+      - 'stock-hunter-v4/ui-pwa-smoke-v433.cjs'
+      - '.github/workflows/stock-hunter-ui-pwa-v433.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify UI/PWA 4.3.3 contract
+        run: |
+          set -euo pipefail
+          node --check stock-hunter/replay-session-v433.js
+          node --check stock-hunter/replay-visual-v433.js
+          node --check stock-hunter/pwa-v433.js
+          node --check stock-hunter/sw.js
+          node --check stock-hunter-v4/ui-pwa-smoke-v433.cjs
+          grep -q "start_minute:p.start" stock-hunter/replay-session-v433.js
+          grep -q "RESERVED_GUTTER" stock-hunter/replay-visual-v433.js
+          grep -q "ACTUAL_SESSION_TIME" stock-hunter/replay-visual-v433.js
+          grep -q "serviceWorker.register" stock-hunter/pwa-v433.js
+          grep -q "offline.html" stock-hunter/sw.js
+          grep -q '"display":"standalone"' stock-hunter/manifest.webmanifest
+          grep -q "font-size:13px" stock-hunter/ux-nav-v433.css
+          echo 'stock-hunter-ui-pwa-v433-contract: PASS'
+
+  public-browser-smoke:
+    if: github.event_name != 'pull_request'
+    needs: contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      BASE_URL: https://afzalpour.github.io/stock-hunter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Wait for published 4.3.3 bytes
+        run: |
+          set -euo pipefail
+          files=(replay/index.html market-replay-v416.html replay-session-v433.js replay-visual-v433.js replay-visual-v433.css ux-nav-v433.css pwa-v433.js pwa-v433.css manifest.webmanifest sw.js offline.html)
+          for n in $(seq 1 40); do
+            all_ok=1
+            for f in "${files[@]}"; do
+              tmp="$(mktemp)"
+              if ! curl -L --fail --silent --show-error --connect-timeout 10 --max-time 30 "$BASE_URL/$f?sha=${GITHUB_SHA}" -o "$tmp"; then rm -f "$tmp"; all_ok=0; break; fi
+              expected="$(sha256sum "stock-hunter/$f" | awk '{print $1}')"; actual="$(sha256sum "$tmp" | awk '{print $1}')"; rm -f "$tmp"
+              if [ "$actual" != "$expected" ]; then all_ok=0; break; fi
+            done
+            if [ "$all_ok" = "1" ]; then echo 'published_v433_bytes: MATCH'; exit 0; fi
+            sleep 8
+          done
+          echo '::error::Published 4.3.3 surface did not converge to merged repository bytes'; exit 1
+      - name: Install pinned Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Run public Chromium UI/PWA smoke
+        run: node stock-hunter-v4/ui-pwa-smoke-v433.cjs
