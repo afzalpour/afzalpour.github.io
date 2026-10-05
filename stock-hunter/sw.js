@@ -1,7 +1,7 @@
-// Stock Hunter public PWA 4.3.3 — installable shell, route caching and explicit offline fallback.
+// Stock Hunter public PWA 4.3.3-pwa2 — installable shell, route caching and explicit offline fallback.
 // Frozen Hunt 4.1.6 scoring/runtime semantics are untouched.
 const CACHE_PREFIX='shikar-sahm-public-';
-const CACHE=CACHE_PREFIX+'v4.3.3-pwa1';
+const CACHE=CACHE_PREFIX+'v4.3.3-pwa2';
 const CORE=[
   './','./index.html','./offline.html','./manifest.webmanifest','./icon.svg','./icon-192.png','./icon-512.png',
   './styles.css','./extra.css','./forecast-v415.css','./neutral-theme-v416.css','./ux-v421.css','./ux-nav-v433.css','./decision-shell-v428.css','./pwa-v433.css',

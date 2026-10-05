@@ -2,7 +2,7 @@
 /* Stock Hunter PWA v4.3.3 — install/update/offline shell. */
 (function(){
   if(window.STOCK_HUNTER_PWA_V433)return;
-  const VERSION='4.3.3-pwa1';
+  const VERSION='4.3.3-pwa2';
   const script=[...document.scripts].find(s=>/pwa-v433\.js/.test(s.src));
   const root=new URL('./',script?.src||document.baseURI);
   const state={version:VERSION,root:root.href,standalone:matchMedia('(display-mode: standalone)').matches||navigator.standalone===true,online:navigator.onLine,registration:null,installPrompt:null};
@@ -35,7 +35,14 @@
         const reg=await navigator.serviceWorker.register(new URL('sw.js',root).href,{scope:root.pathname,updateViaCache:'none'});state.registration=reg;reg.update().catch(()=>{});
         if(reg.waiting)showUpdate(reg);
         reg.addEventListener('updatefound',()=>{const w=reg.installing;if(!w)return;w.addEventListener('statechange',()=>{if(w.state==='installed'&&navigator.serviceWorker.controller)showUpdate(reg);});});
-        navigator.serviceWorker.addEventListener('controllerchange',()=>location.reload());
+        const reloadKey='stockHunterPwaControllerReloadV433';
+        navigator.serviceWorker.addEventListener('controllerchange',()=>{
+          try{
+            if(sessionStorage.getItem(reloadKey)===VERSION)return;
+            sessionStorage.setItem(reloadKey,VERSION);
+          }catch{}
+          location.reload();
+        });
       }catch(e){console.warn('[PWA 4.3.3] service worker registration failed:',e);}
       ensureUi();updateNetwork();
     });

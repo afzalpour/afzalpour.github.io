@@ -33,10 +33,13 @@ async function check(page,path,label){
     const seg=document.querySelector('#replayChart .chart-segment');
     const label=document.querySelector('#replayChart .chart-label');
     const chart=document.getElementById('replayChart');
+    const v433=window.STOCK_HUNTER_REPLAY_VISUAL_V433||null,v432=window.STOCK_HUNTER_REPLAY_VISUAL_V432||null;
     return {
-      version:window.STOCK_HUNTER_REPLAY_VISUAL_V432?.version||null,
-      page_scroll_lock:window.STOCK_HUNTER_REPLAY_VISUAL_V432?.page_scroll_lock||null,
-      chart_mode:window.STOCK_HUNTER_REPLAY_VISUAL_V432?.chart_mode||null,
+      version:v433?.version||v432?.version||null,
+      page_scroll_lock:v432?.page_scroll_lock||null,
+      chart_mode:v433?.chart_mode||v432?.chart_mode||null,
+      axis_mode:v433?.axis_mode||null,
+      time_scale:v433?.time_scale||null,
       scroll_y:window.scrollY,
       slider_value:Number(document.getElementById('replaySlider')?.value||0),
       segment_count:document.querySelectorAll('#replayChart .chart-segment').length,
@@ -47,8 +50,9 @@ async function check(page,path,label){
     };
   });
   if(await page.locator('#replayPlay').getAttribute('class').then(x=>String(x||'').includes('active')))await page.locator('#replayPlay').click();
-  if(visual.version!=='4.3.2')throw new Error(label+': visual layer missing '+JSON.stringify(visual));
+  if(!['4.3.2','4.3.3'].includes(visual.version))throw new Error(label+': visual layer missing '+JSON.stringify(visual));
   if(visual.page_scroll_lock!=='TABLE_INTERNAL_ONLY'||visual.chart_mode!=='PROGRESSIVE_SIGN_SEGMENTS')throw new Error(label+': visual contract mismatch '+JSON.stringify(visual));
+  if(visual.version==='4.3.3'&&(visual.axis_mode!=='RESERVED_GUTTER'||visual.time_scale!=='ACTUAL_SESSION_TIME'))throw new Error(label+': v4.3.3 axis/session contract mismatch '+JSON.stringify(visual));
   if(Math.abs(visual.scroll_y-startY)>4)throw new Error(label+': page moved during replay start='+startY+' end='+visual.scroll_y);
   if(visual.segment_count<1||visual.slider_value<1)throw new Error(label+': progressive chart did not advance '+JSON.stringify(visual));
   if(visual.stroke_width<3.5)throw new Error(label+': trend line too thin '+visual.stroke_width);
@@ -62,6 +66,6 @@ async function check(page,path,label){
    const page=await browser.newPage({locale:'fa-IR',viewport:{width:1366,height:900}});
    await check(page,'/replay/','clean-route');
    await check(page,'/market-replay-v416.html','legacy-route');
-   console.log('stock-hunter-replay-public-browser-v432: PASS');
+   console.log('stock-hunter-replay-public-browser-v433: PASS');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e&&e.stack||e);process.exit(1);});
