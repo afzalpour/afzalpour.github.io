@@ -1,4 +1,4 @@
-name: Stock Hunter Replay Public Browser 4.3.1
+name: Stock Hunter Replay Public Browser 4.3.2
 
 on:
   push:
@@ -8,15 +8,27 @@ on:
       - 'stock-hunter/market-replay-v416.html'
       - 'stock-hunter/market-replay-v416.js'
       - 'stock-hunter/replay-catalog-resilience-v431.js'
+      - 'stock-hunter/replay-visual-v432.js'
+      - 'stock-hunter/replay-visual-v432.css'
       - 'stock-hunter-v4/replay/**'
       - 'stock-hunter-v4/market-replay-v416.html'
       - 'stock-hunter-v4/market-replay-v416.js'
       - 'stock-hunter-v4/replay-catalog-resilience-v431.js'
+      - 'stock-hunter-v4/replay-visual-v432.js'
+      - 'stock-hunter-v4/replay-visual-v432.css'
       - 'stock-hunter-v4/replay-browser-smoke-v431.cjs'
       - '.github/workflows/stock-hunter-replay-public-browser-v431.yml'
   pull_request:
     branches: [main]
     paths:
+      - 'stock-hunter/replay/**'
+      - 'stock-hunter/market-replay-v416.html'
+      - 'stock-hunter/replay-visual-v432.js'
+      - 'stock-hunter/replay-visual-v432.css'
+      - 'stock-hunter-v4/replay/**'
+      - 'stock-hunter-v4/market-replay-v416.html'
+      - 'stock-hunter-v4/replay-visual-v432.js'
+      - 'stock-hunter-v4/replay-visual-v432.css'
       - 'stock-hunter-v4/replay-browser-smoke-v431.cjs'
       - '.github/workflows/stock-hunter-replay-public-browser-v431.yml'
   workflow_dispatch:
@@ -36,11 +48,15 @@ jobs:
         run: |
           set -euo pipefail
           node --check stock-hunter-v4/replay-browser-smoke-v431.cjs
+          node --check stock-hunter-v4/replay-visual-v432.js
           grep -q "'/replay/'" stock-hunter-v4/replay-browser-smoke-v431.cjs
           grep -q "'/market-replay-v416.html'" stock-hunter-v4/replay-browser-smoke-v431.cjs
           grep -q "count<minSymbols" stock-hunter-v4/replay-browser-smoke-v431.cjs
           grep -q "PAGINATED_REST" stock-hunter-v4/replay-browser-smoke-v431.cjs
-          echo 'stock-hunter-replay-browser-contract: PASS'
+          grep -q "TABLE_INTERNAL_ONLY" stock-hunter-v4/replay-browser-smoke-v431.cjs
+          grep -q "PROGRESSIVE_SIGN_SEGMENTS" stock-hunter-v4/replay-browser-smoke-v431.cjs
+          grep -q "scroll_y-startY" stock-hunter-v4/replay-browser-smoke-v431.cjs
+          echo 'stock-hunter-replay-browser-contract-v432: PASS'
 
   public-browser-smoke:
     if: github.event_name != 'pull_request'
@@ -58,7 +74,7 @@ jobs:
       - name: Wait for published replay bytes
         run: |
           set -euo pipefail
-          files=(replay/index.html market-replay-v416.html replay-catalog-resilience-v431.js market-replay-v416.js)
+          files=(replay/index.html market-replay-v416.html replay-catalog-resilience-v431.js market-replay-v416.js replay-visual-v432.js replay-visual-v432.css)
           for n in $(seq 1 35); do
             all_ok=1
             for f in "${files[@]}"; do
