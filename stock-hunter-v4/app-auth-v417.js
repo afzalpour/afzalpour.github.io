@@ -21,6 +21,23 @@ function safeNext(params){
   const raw=String(params.get('next')||'profile-v417.html').trim();
   return SAFE_NEXT.has(raw)?raw:'profile-v417.html';
 }
+const authReadSleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function retrySafeRead(fn,{attempts=4,retryNull=false}={}){
+  let lastError=null;
+  for(let i=0;i<attempts;i++){
+    try{
+      const value=await fn();
+      if(value!==null&&value!==undefined)return value;
+      if(!retryNull||i===attempts-1)return value;
+    }catch(err){
+      lastError=err;
+      if(i===attempts-1)throw err;
+    }
+    await authReadSleep([220,420,760,1100][Math.min(i,3)]);
+  }
+  if(lastError)throw lastError;
+  return null;
+}
 async function currentSession(){
   const {data,error}=await supabase.auth.getSession();
   if(error)throw error;
@@ -195,9 +212,10 @@ async function initAuthPage(){
 
 async function initProfilePage(){
   if(!$('profilePage'))return;
-  const session=await currentSession();
+  message('در حال بازیابی اطلاعات صفحه شخصی…');
+  const session=await retrySafeRead(currentSession,{attempts:4,retryNull:true});
   if(!session){location.replace('auth-v417.html?next=profile-v417.html');return;}
-  const user=await verifiedUser();
+  const user=await retrySafeRead(verifiedUser,{attempts:4,retryNull:true});
   if(!user){await supabase.auth.signOut();location.replace('auth-v417.html?next=profile-v417.html');return;}
 
   $('profileUserId').textContent=user.id;
@@ -205,7 +223,7 @@ async function initProfilePage(){
 
   let data;
   try{
-    data=await loadOwnData(user.id);
+    data=await retrySafeRead(()=>loadOwnData(user.id),{attempts:4});
     if(!data.profile)throw new Error('پروفایل این حساب هنوز ایجاد نشده است.');
     if(data.profile.account_status!=='active'){
       await supabase.auth.signOut();
@@ -222,9 +240,11 @@ async function initProfilePage(){
     renderWatchlists(data.watchlists);
     paintIdentity(data.profile,user,data.watchlists);
     if(['owner_admin','admin'].includes(data.role.role||'')){$('adminHint').hidden=false;$('adminConsoleLink').hidden=false;}
+    message('');
     await supabase.from('stock_hunter_profiles_v417').update({last_seen_at:new Date().toISOString()}).eq('user_id',user.id);
   }catch(err){
-    message(err?.message||'خواندن پروفایل ناموفق بود.','bad');
+    const detail=String(err?.message||'').trim();
+    message(detail?'خواندن پروفایل پس از چند تلاش ناموفق بود: '+detail:'خواندن پروفایل پس از چند تلاش ناموفق بود. صفحه را دوباره باز کنید.','bad');
     return;
   }
 
