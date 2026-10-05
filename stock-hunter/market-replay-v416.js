@@ -8,7 +8,11 @@ function resolutionFa(v){const n=Number(v);return n===30?'۳۰ ثانیه':n===3
 function milestone(label,at){return '<div class="timeline-step '+(at?'reached':'pending')+'"><span>'+R.esc(label)+'</span><b>'+(at?R.time(at):'نرسیده')+'</b></div>';}
 function renderMilestones(){
  if(!journey){$('replayMilestones').innerHTML='<div class="empty">برای این نماد در این تاریخ سفر شکار ثبت نشده است.</div>';return;}
- $('replayMilestones').innerHTML=milestone('کشف شکار',journey.detected_at)+'<div class="timeline-arrow">←</div>'+milestone('عبور از صفر',journey.crossed_zero_at)+'<div class="timeline-arrow">←</div>'+milestone('رسیدن به +۱٪',journey.crossed_plus1_at)+'<div class="timeline-arrow">←</div>'+milestone('رسیدن به +۲٪',journey.crossed_plus2_at)+'<div class="timeline-arrow">←</div>'+milestone('رسیدن به +۳٪',journey.crossed_plus3_at);
+ const endMs=replayRows.length?new Date(replayRows[replayRows.length-1].bucket_at).getTime():null;
+ const huntTimes=[journey.detected_at,journey.crossed_zero_at,journey.crossed_plus1_at,journey.crossed_plus2_at,journey.crossed_plus3_at].filter(Boolean);
+ const late=huntTimes.filter(t=>Number.isFinite(new Date(t).getTime())&&endMs!=null&&new Date(t).getTime()>endMs);
+ const gap=late.length?'<div class="empty">هشدار: بخشی از رخدادهای شکار پس از آخرین دادهٔ Market Tape ثبت شده‌اند؛ آن رخدادها در نمودار به آخرین نقطهٔ قدیمی منتقل نمی‌شوند و تا تکمیل دادهٔ واقعی خارج از پوشش بازپخش می‌مانند.</div>':'';
+ $('replayMilestones').innerHTML=milestone('کشف شکار',journey.detected_at)+'<div class="timeline-arrow">←</div>'+milestone('عبور از صفر',journey.crossed_zero_at)+'<div class="timeline-arrow">←</div>'+milestone('رسیدن به +۱٪',journey.crossed_plus1_at)+'<div class="timeline-arrow">←</div>'+milestone('رسیدن به +۲٪',journey.crossed_plus2_at)+'<div class="timeline-arrow">←</div>'+milestone('رسیدن به +۳٪',journey.crossed_plus3_at)+gap;
 }
 function chart(){
  if(!replayRows.length){$('replayChart').innerHTML='<div class="empty">برای نماد و تاریخ انتخاب‌شده داده بازپخش ثبت نشده است.</div>';return;}
@@ -94,7 +98,14 @@ async function loadReplay(){
    const jr=await R.api('stock_hunter_hunt_journey_v416','select=channel,trade_date,symbol_id,symbol,detected_at,crossed_zero_at,crossed_plus1_at,crossed_plus2_at,crossed_plus3_at,hunt_state,hunt_score&trade_date=eq.'+encodeURIComponent(d)+'&symbol_id=eq.'+encodeURIComponent(sid)+'&order=detected_at.asc&limit=4').catch(()=>[]);
    journey=jr.find(x=>x.channel==='ACTION_NOW')||jr[0]||null;index=0;$('replaySlider').max=String(Math.max(0,replayRows.length-1));renderTable();renderCurrent();renderMilestones();
    const res=[...new Set(replayRows.map(x=>Number(x.bucket_seconds)||30))].sort((a,b)=>a-b).map(resolutionFa).join(' / ');
-   if(replayRows.length)R.setStatus('بازپخش '+displayName+' در '+R.jalaliDate(d)+' — '+R.fa(replayRows.length)+' نما با تفکیک '+(res||'نامشخص'),'ok');
+   if(replayRows.length){
+     const replayEndMs=new Date(replayRows[replayRows.length-1].bucket_at).getTime();
+     const lateHunt=[journey?.detected_at,journey?.crossed_zero_at,journey?.crossed_plus1_at,journey?.crossed_plus2_at,journey?.crossed_plus3_at].filter(Boolean).find(t=>{
+       const z=new Date(t).getTime();return Number.isFinite(z)&&z>replayEndMs;
+     });
+     if(lateHunt)R.setStatus('بازپخش '+displayName+' در '+R.jalaliDate(d)+' — '+R.fa(replayRows.length)+' نما تا '+R.time(replayRows[replayRows.length-1].bucket_at)+'؛ رخداد شکار در '+R.time(lateHunt)+' خارج از پوشش فعلی Market Tape است.','warn');
+     else R.setStatus('بازپخش '+displayName+' در '+R.jalaliDate(d)+' — '+R.fa(replayRows.length)+' نما با تفکیک '+(res||'نامشخص'),'ok');
+   }
    else R.setStatus('برای '+displayName+' در '+R.jalaliDate(d)+' نمونه Market Tape ثبت نشده است؛ نماد یا تاریخ دیگری را انتخاب کنید.','warn');
  }catch(e){replayRows=[];journey=null;renderTable();renderCurrent();renderMilestones();R.setStatus('دریافت بازپخش ناموفق بود: '+e.message,'bad');}
 }
