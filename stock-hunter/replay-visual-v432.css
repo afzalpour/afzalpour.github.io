@@ -1,0 +1,36 @@
+/* Stock Hunter Market Replay visual layer v4.3.2 — presentation only */
+.replay-chart-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 8px}
+.replay-chart-head h2{margin:0!important}
+.replay-legend{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:11px;font-weight:700}
+.replay-legend span{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;border:1px solid #40464d;background:#1b1f23}
+.replay-legend span::before{content:"";width:16px;height:4px;border-radius:999px;display:inline-block}
+.replay-legend .positive{color:#8ee8a8}.replay-legend .positive::before{background:#22c55e}
+.replay-legend .cross{color:#f7d47a}.replay-legend .cross::before{background:#f5b82e}
+.replay-legend .negative{color:#ffaaa7}.replay-legend .negative::before{background:#ef4444}
+#replayChart.journey-chart{height:310px;background:#101316;border-color:#3a4149;padding:10px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.015)}
+#replayChart svg{overflow:visible}
+#replayChart .replay-zone-positive{fill:rgba(34,197,94,.075)}
+#replayChart .replay-zone-negative{fill:rgba(239,68,68,.07)}
+#replayChart .chart-segment{fill:none;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+#replayChart .chart-segment.positive{stroke:#22c55e}
+#replayChart .chart-segment.negative{stroke:#ef4444}
+#replayChart .chart-segment.cross{stroke:#f5b82e;stroke-width:4.8}
+#replayChart .chart-zero{stroke:#e4bd58;stroke-width:1.4;stroke-dasharray:6 5;vector-effect:non-scaling-stroke;opacity:.95}
+#replayChart .chart-label{font-size:12px;font-weight:700;fill:#edf1f4;paint-order:stroke;stroke:#101316;stroke-width:2.5px;stroke-linejoin:round}
+#replayChart .current-label{font-size:13px;font-weight:800}
+#replayChart .event-label{font-size:11px;fill:#f3d98c}
+#replayChart .axis-label,#replayChart .zero-label{font-size:11px;fill:#c9d0d6}
+#replayChart .replay-event-line{stroke:#c1c7cc;stroke-width:1.2;stroke-dasharray:4 4;vector-effect:non-scaling-stroke;opacity:.72}
+#replayChart .replay-current{stroke-width:2.2;vector-effect:non-scaling-stroke}
+#replayChart .replay-current.positive{fill:#22c55e;stroke:#d6ffe1}
+#replayChart .replay-current.negative{fill:#ef4444;stroke:#ffe0df}
+#replayChart .replay-current.cross{fill:#f5b82e;stroke:#fff0b9}
+.replay-slider{margin-top:7px;height:22px}
+.replay-active{box-shadow:inset 4px 0 0 #f5b82e}
+@media(max-width:720px){
+  #replayChart.journey-chart{height:265px;padding:7px}
+  #replayChart .chart-label{font-size:13px}
+  #replayChart .current-label{font-size:14px}
+  .replay-legend{font-size:10px;gap:5px}
+  .replay-legend span{padding:3px 6px}
+}
