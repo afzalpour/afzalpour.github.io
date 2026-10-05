@@ -2,13 +2,12 @@
 const {chromium}=require('playwright');
 const BASE=String(process.env.BASE_URL||'https://afzalpour.github.io/stock-hunter').replace(/\/$/,'');
 function fail(msg,data){throw new Error(msg+(data?' '+JSON.stringify(data):''));}
-function localSeconds(iso){const d=new Date(iso),p=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Tehran',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(d),g=t=>Number(p.find(x=>x.type===t)?.value||0);return g('hour')*3600+g('minute')*60+g('second');}
 (async()=>{
   const browser=await chromium.launch({headless:true});
   const context=await browser.newContext({locale:'fa-IR',viewport:{width:1440,height:960}});
   const page=await context.newPage();
   try{
-    await page.goto(BASE+'/index.html?smoke433='+Date.now(),{waitUntil:'domcontentloaded',timeout:60000});
+    await page.goto(BASE+'/index.html?smoke434='+Date.now(),{waitUntil:'domcontentloaded',timeout:60000});
     await page.waitForFunction(()=>window.STOCK_HUNTER_PWA_V433?.version==='4.3.3-pwa2',null,{timeout:30000});
     await page.waitForSelector('.ux-grouped-nav-v421 details',{state:'attached',timeout:30000});
     const nav=await page.evaluate(()=>{const details=document.querySelector('.ux-grouped-nav-v421 details');if(details)details.open=true;const summary=details?.querySelector('summary'),menu=details?.querySelector('.ux-grouped-nav-menu-v421')||document.querySelector('.ux-grouped-nav-menu-v421'),a=menu?.querySelector('a'),cs=x=>x?getComputedStyle(x):null,mc=cs(menu);return {summary_font:parseFloat(cs(summary)?.fontSize||0),link_font:parseFloat(cs(a)?.fontSize||0),menu_bg:mc?.backgroundColor||'',link_color:cs(a)?.color||'',menu_min_width:parseFloat(mc?.minWidth||mc?.width||0),menu_display:mc?.display||'',open:Boolean(details?.open)};});
@@ -21,21 +20,23 @@ function localSeconds(iso){const d=new Date(iso),p=new Intl.DateTimeFormat('en-G
     await page.reload({waitUntil:'domcontentloaded',timeout:60000});
     await page.waitForFunction(()=>navigator.serviceWorker.controller!==null&&window.STOCK_HUNTER_PWA_V433?.version==='4.3.3-pwa2',null,{timeout:30000});
 
-    await page.goto(BASE+'/replay/?smoke433='+Date.now(),{waitUntil:'domcontentloaded',timeout:60000});
+    await page.goto(BASE+'/replay/?smoke434='+Date.now(),{waitUntil:'domcontentloaded',timeout:60000});
     await page.waitForFunction(()=>document.getElementById('researchStatus')?.dataset.state!=='warn'&&document.querySelectorAll('#replaySymbol option').length>3000,null,{timeout:60000});
     const shafam=await page.locator('#replaySymbol option').evaluateAll(opts=>{const o=opts.find(x=>String(x.textContent||'').trim().startsWith('شفام'));return o?.value||null;});
     if(!shafam)fail('شفام not found in replay catalog');
     await page.selectOption('#replaySymbol',shafam);
-    await page.waitForFunction(()=>window.STOCK_HUNTER_REPLAY_SESSION_V433?.current?.symbol==='شفام'&&window.STOCK_HUNTER_REPLAY_SESSION_V433.current.kept_rows>1,null,{timeout:60000});
+    await page.waitForFunction(()=>window.STOCK_HUNTER_REPLAY_SESSION_V433?.current?.symbol==='شفام'&&window.STOCK_HUNTER_REPLAY_SESSION_V433.current.kept_rows>0,null,{timeout:60000});
     const replay=await page.evaluate(()=>{
-      const s=window.STOCK_HUNTER_REPLAY_SESSION_V433.current,v=window.STOCK_HUNTER_REPLAY_VISUAL_V433;
+      const s=window.STOCK_HUNTER_REPLAY_SESSION_V433.current,v=window.STOCK_HUNTER_REPLAY_VISUAL_V433,w=window.STOCK_HUNTER_REPLAY_SESSION_V433;
       const labels=[...document.querySelectorAll('#replayChart .axis-label')],axis=document.querySelector('#replayChart .chart-y-axis');
-      return {session:s,visual:v,axis_x:axis?Number(axis.getAttribute('x1')):0,label_x:labels.map(x=>Number(x.getAttribute('x'))),label_font:labels[0]?parseFloat(getComputedStyle(labels[0]).fontSize):0,label_count:labels.length,times:replayRows.map(x=>x.bucket_at)};
+      return {session:s,mode:w?.mode||null,visual:v,axis_x:axis?Number(axis.getAttribute('x1')):0,label_x:labels.map(x=>Number(x.getAttribute('x'))),label_font:labels[0]?parseFloat(getComputedStyle(labels[0]).fontSize):0,label_count:labels.length,times:replayRows.map(x=>x.bucket_at)};
     });
-    if(replay.session.profile!=='EQUITY'||replay.session.start_minute!==540||replay.session.end_minute!==750)fail('شفام session profile wrong',replay);
-    if(!(replay.session.removed_rows>0&&replay.session.raw_rows>replay.session.kept_rows))fail('pre/post market rows were not clipped',replay.session);
+    if(replay.mode!=='ACTUAL_SYMBOL_ACTIVITY_WINDOW'||replay.session.profile!=='ACTUAL_ACTIVITY'||replay.session.version!=='4.3.4')fail('actual activity window contract failed',replay);
+    if(!(replay.session.raw_rows>=replay.session.kept_rows&&replay.session.kept_rows>0&&replay.session.removed_rows===replay.session.raw_rows-replay.session.kept_rows))fail('activity row accounting failed',replay.session);
     if(replay.visual?.axis_mode!=='RESERVED_GUTTER'||replay.visual?.time_scale!=='ACTUAL_SESSION_TIME'||replay.axis_x!==96||replay.label_font<13||replay.label_count<2||replay.label_x.some(x=>x<60||x>=96))fail('Y axis readability contract failed',replay);
-    if(replay.times.some(t=>{const s=localSeconds(t);return s<9*3600||s>12*3600+30*60;}))fail('شفام contains samples outside 09:00-12:30',replay.times);
+    const ms=replay.times.map(x=>new Date(x).getTime());
+    if(!ms.length||Math.abs(ms[0]-replay.session.start_ms)>1000||Math.abs(ms[ms.length-1]-replay.session.end_ms)>1000)fail('chart endpoints do not match actual symbol activity',replay);
+    if(ms.some(t=>t<replay.session.start_ms||t>replay.session.end_ms))fail('replay contains rows outside actual activity window',replay);
 
     await page.goto(BASE+'/index.html?offline-prep='+Date.now(),{waitUntil:'domcontentloaded',timeout:60000});
     await page.waitForFunction(()=>window.STOCK_HUNTER_PWA_V433?.version==='4.3.3-pwa2'&&navigator.serviceWorker.controller!==null,null,{timeout:30000});
@@ -46,6 +47,6 @@ function localSeconds(iso){const d=new Date(iso),p=new Intl.DateTimeFormat('en-G
     if(!offlineText.includes('شکارچی سهم آفلاین است')||!offlineText.includes('هیچ داده ساختگی'))fail('offline fallback contract failed');
     await context.setOffline(false);
     console.log(JSON.stringify({nav,sw,manifest:{display:manifest.display,icons:manifest.icons.length,shortcuts:manifest.shortcuts.length},replay:{symbol:replay.session.symbol,profile:replay.session.profile,start:replay.session.start_label,end:replay.session.end_label,raw:replay.session.raw_rows,kept:replay.session.kept_rows,removed:replay.session.removed_rows,axis_x:replay.axis_x,label_font:replay.label_font,time_scale:replay.visual.time_scale},offline:'PASS'}));
-    console.log('stock-hunter-ui-pwa-v433-pwa2: PASS');
+    console.log('stock-hunter-ui-pwa-v434-actual-activity: PASS');
   }finally{await context.setOffline(false).catch(()=>{});await browser.close();}
 })().catch(e=>{console.error(e&&e.stack||e);process.exit(1);});
