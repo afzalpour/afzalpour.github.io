@@ -1,9 +1,6 @@
--- Stock Hunter 4.3.0 — complete market replay symbol catalog.
+-- Stock Hunter 4.3.1 — complete market replay symbol catalog compatibility RPC.
 -- UI/data-access only. Frozen engine 4.1.6-hunt-v2 remains unchanged.
--- Returns the complete active numeric universe in one JSON value so Data API row caps
--- cannot truncate the replay dropdown. SECURITY INVOKER preserves caller RLS/grants.
--- Availability is aggregated directly from the indexed Market Tape for one date only;
--- this avoids scanning the all-date replay symbols view.
+-- The UI now uses paginated reads first and this RPC only as a fallback.
 
 create or replace function public.stock_hunter_market_replay_symbol_catalog_v430(p_trade_date date default null)
 returns jsonb
@@ -11,6 +8,7 @@ language sql
 stable
 security invoker
 set search_path = public
+set statement_timeout = '12s'
 as $$
 with latest as (
   select max(observation_date) as latest_trade_date
@@ -69,5 +67,4 @@ $$;
 
 revoke all on function public.stock_hunter_market_replay_symbol_catalog_v430(date) from public;
 grant execute on function public.stock_hunter_market_replay_symbol_catalog_v430(date) to anon, authenticated, service_role;
-
 notify pgrst, 'reload schema';
