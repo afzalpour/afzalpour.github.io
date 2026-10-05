@@ -1,5 +1,5 @@
 'use strict';
-/* Stock Hunter Replay session window v4.3.3 — UI/data presentation only.
+/* Stock Hunter Replay activity window v4.3.4 — UI/data presentation only.
    Frozen Hunt engine 4.1.6-hunt-v2 is untouched. */
 (function(){
   if(window.STOCK_HUNTER_REPLAY_SESSION_V433)return;
@@ -16,47 +16,56 @@
     const g=t=>Number(parts.find(p=>p.type===t)?.value||0);
     return g('hour')*3600+g('minute')*60+g('second');
   };
-  const tehranMs=(date,minute)=>Date.parse(date+'T'+String(Math.floor(minute/60)).padStart(2,'0')+':'+String(minute%60).padStart(2,'0')+':00+03:30');
-  function changed(a,b){
+  function movementChanged(a,b){
     if(!a||!b)return false;
-    return ['close_price','last_volume','max_buy_queue','max_sell_queue'].some(k=>Number(a[k])!==Number(b[k]));
+    const av=Number(a.last_volume),bv=Number(b.last_volume);
+    if(Number.isFinite(av)&&Number.isFinite(bv)&&bv>0&&av!==bv)return true;
+    return ['close_price','high_price','low_price'].some(k=>{
+      const x=Number(a[k]),y=Number(b[k]);
+      return Number.isFinite(x)&&Number.isFinite(y)&&x!==y;
+    });
   }
-  function fundHasExtendedActivity(rows){
+  function profile(rows){
+    if(!rows.length)return {key:'ACTUAL_ACTIVITY',start:0,end:0,start_ms:null,end_ms:null,first_index:0,last_index:-1,label:'حرکت واقعی نماد'};
+    let first=Number(rows[0]?.last_volume)>0?0:-1,last=first;
     for(let i=1;i<rows.length;i++){
-      const s=localSeconds(rows[i]?.bucket_at);
-      if(s!=null&&s>12*3600+30*60&&changed(rows[i-1],rows[i]))return true;
+      if(movementChanged(rows[i-1],rows[i])){
+        if(first<0)first=i;
+        last=i;
+      }
     }
-    return false;
-  }
-  function profile(meta,rows,tradeDate){
-    const type=String(meta?.asset_type||'').trim();
-    if(type==='اوراق بدهی')return {key:'DEBT',start:9*60,end:15*60,label:'اوراق بدهی'};
-    if(type==='کالایی / گواهی سپرده')return {key:'COMMODITY',start:11*60+30,end:18*60,label:'گواهی/کالایی'};
-    if(type==='صندوق سرمایه‌گذاری'){
-      const extended=fundHasExtendedActivity(rows);
-      return extended?{key:'FUND_EXTENDED',start:9*60,end:15*60,label:'صندوق با جلسه ممتد'}:{key:'FUND_EQUITY',start:9*60,end:12*60+30,label:'صندوق با جلسه سهامی'};
-    }
-    if(type==='اختیار معامله')return {key:'OPTION',start:9*60,end:12*60+30,label:'اختیار معامله'};
-    return {key:'EQUITY',start:9*60,end:12*60+30,label:type||'سهام/نماد عادی'};
+    if(first<0){first=0;last=rows.length-1;}
+    if(last<first)last=first;
+    const startSec=localSeconds(rows[first]?.bucket_at),endSec=localSeconds(rows[last]?.bucket_at);
+    const startMs=new Date(rows[first]?.bucket_at||0).getTime(),endMs=new Date(rows[last]?.bucket_at||0).getTime();
+    return {
+      key:'ACTUAL_ACTIVITY',
+      start:Number.isFinite(startSec)?Math.floor(startSec/60):0,
+      end:Number.isFinite(endSec)?Math.floor(endSec/60):0,
+      start_ms:Number.isFinite(startMs)?startMs:null,
+      end_ms:Number.isFinite(endMs)?endMs:null,
+      first_index:first,last_index:last,
+      label:'حرکت واقعی نماد'
+    };
   }
   function applySessionWindow(){
     if(!Array.isArray(replayRows))return;
     const raw=[...replayRows],sid=document.getElementById('replaySymbol')?.value||'';
     const meta=(typeof symbolMeta!=='undefined'&&Array.isArray(symbolMeta))?symbolMeta.find(x=>String(x.symbol_id)===String(sid)):null;
     const tradeDate=R.readJalaliInput(document.getElementById('replayDate'),R.todayIso());
-    const p=profile(meta,raw,tradeDate),startSec=p.start*60,endSec=p.end*60;
-    replayRows=raw.filter(x=>{const s=localSeconds(x.bucket_at);return s!=null&&s>=startSec&&s<=endSec;});
+    const p=profile(raw);
+    replayRows=p.last_index>=p.first_index?raw.slice(p.first_index,p.last_index+1):[];
     index=Math.min(Math.max(0,index||0),Math.max(0,replayRows.length-1));
     const slider=document.getElementById('replaySlider');if(slider)slider.max=String(Math.max(0,replayRows.length-1));
-    const state={version:'4.3.3',profile:p.key,profile_label:p.label,trade_date:tradeDate,start_minute:p.start,end_minute:p.end,start_label:faTime(p.start),end_label:faTime(p.end),start_ms:tehranMs(tradeDate,p.start),end_ms:tehranMs(tradeDate,p.end),raw_rows:raw.length,kept_rows:replayRows.length,removed_rows:Math.max(0,raw.length-replayRows.length),asset_type:meta?.asset_type||'',symbol:meta?.symbol||''};
+    const state={version:'4.3.4',profile:p.key,profile_label:p.label,trade_date:tradeDate,start_minute:p.start,end_minute:p.end,start_label:faTime(p.start),end_label:faTime(p.end),start_ms:p.start_ms,end_ms:p.end_ms,raw_rows:raw.length,kept_rows:replayRows.length,removed_rows:Math.max(0,raw.length-replayRows.length),asset_type:meta?.asset_type||'',symbol:meta?.symbol||''};
     window.STOCK_HUNTER_REPLAY_SESSION_V433.current=state;
     renderTable();renderCurrent();renderMilestones();
     if(replayRows.length){
       const name=meta?.symbol||document.getElementById('replaySymbol')?.selectedOptions?.[0]?.textContent?.split(' — ')[0]||'نماد';
       const res=[...new Set(replayRows.map(x=>Number(x.bucket_seconds)||30))].sort((a,b)=>a-b).map(resolutionFa).join(' / ');
-      R.setStatus('بازپخش '+name+' — '+R.fa(replayRows.length)+' نما · بازه جلسه '+state.start_label+' تا '+state.end_label+' · '+(res||'تفکیک نامشخص'),'ok');
+      R.setStatus('بازپخش '+name+' — '+R.fa(replayRows.length)+' نما · بازه حرکت واقعی '+state.start_label+' تا '+state.end_label+' · '+(res||'تفکیک نامشخص'),'ok');
     }else if(raw.length){
-      R.setStatus('نمونه‌های خارج از بازه رسمی '+state.start_label+' تا '+state.end_label+' حذف شدند و نمونه معاملاتی معتبری در بازه باقی نماند.','warn');
+      R.setStatus('برای این نماد نمونه Market Tape وجود دارد، اما حرکت معاملاتی قابل تشخیص نیست.','warn');
     }
     return state;
   }
@@ -67,6 +76,6 @@
   }
   loadReplay=loadReplayV433;
   const sel=document.getElementById('replaySymbol');if(sel)sel.onchange=loadReplayV433;
-  window.STOCK_HUNTER_REPLAY_SESSION_V433={version:'4.3.3',mode:'INSTRUMENT_SESSION_WINDOW',timezone:TEHRAN,current:null,apply:applySessionWindow};
+  window.STOCK_HUNTER_REPLAY_SESSION_V433={version:'4.3.4',mode:'ACTUAL_SYMBOL_ACTIVITY_WINDOW',timezone:TEHRAN,current:null,apply:applySessionWindow};
   setTimeout(()=>{try{if(Array.isArray(replayRows)&&replayRows.length&&!window.STOCK_HUNTER_REPLAY_SESSION_V433.current)applySessionWindow();}catch{}},1200);
 })();
