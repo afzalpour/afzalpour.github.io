@@ -1,6 +1,6 @@
--- Stock Hunter 4.3.0 — complete market replay symbol catalog.
--- Public-path mirror of the source migration contract.
--- Frozen engine 4.1.6-hunt-v2 remains unchanged.
+-- Stock Hunter 4.3.1 — complete market replay symbol catalog compatibility RPC.
+-- Public-path mirror. Frozen engine 4.1.6-hunt-v2 remains unchanged.
+-- The UI now uses paginated reads first and this RPC only as a fallback.
 
 create or replace function public.stock_hunter_market_replay_symbol_catalog_v430(p_trade_date date default null)
 returns jsonb
@@ -8,6 +8,7 @@ language sql
 stable
 security invoker
 set search_path = public
+set statement_timeout = '12s'
 as $$
 with latest as (
   select max(observation_date) as latest_trade_date
