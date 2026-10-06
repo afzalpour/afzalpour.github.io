@@ -116,10 +116,46 @@
     if(badge?.classList.contains('bad')||badge?.classList.contains('warn'))return ['داده تازه برای اقدام فوری کافی نیست','سامانه بین «نبود فرصت» و «مشکل داده» تفاوت می‌گذارد. وضعیت دقیق مسیر دریافت داده در بالای صفحه نوشته شده است.'];
     return ['در این لحظه شکار واجد شرایط اقدام فوری وجود ندارد','سامانه فعال است؛ رادار نزدیک را بررسی کنید. نبود شکار فعال به معنی خرابی نرم‌افزار نیست.'];
   }
+  let actionDetectionTimesV421=Object.create(null),actionDetectionLoadingV421=false,actionDetectionLoadedV421=false;
+  function detectionDateTimeV421(v){
+    if(!v)return '—';
+    const d=new Date(v);if(!Number.isFinite(d.getTime()))return '—';
+    try{return new Intl.DateTimeFormat('fa-IR-u-ca-persian',{calendar:'persian',numberingSystem:'arabext',timeZone:'Asia/Tehran',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).format(d);}
+    catch{return new Intl.DateTimeFormat('fa-IR',{timeZone:'Asia/Tehran',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).format(d);}
+  }
+  async function loadActionDetectionTimesV421(){
+    if(actionDetectionLoadingV421)return;
+    const cfg=window.STOCK_HUNTER_CONFIG||{},base=String(cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,''),key=String(cfg.SUPABASE_PUBLISHABLE_KEY||cfg.publishableKey||'');
+    if(!base||!key)return;
+    actionDetectionLoadingV421=true;
+    try{
+      const headers={apikey:key,Authorization:'Bearer '+key,Accept:'application/json'};
+      const latest=await fetch(base+'/rest/v1/stock_hunter_hunt_journey_v416?select=trade_date&order=trade_date.desc&limit=1',{headers,cache:'no-store'});
+      if(!latest.ok)throw new Error('latest trade date '+latest.status);
+      const latestRows=await latest.json(),date=String(latestRows?.[0]?.trade_date||'');
+      if(!date)return;
+      const q='select=symbol_id,symbol,detected_at,trade_date&trade_date=eq.'+encodeURIComponent(date)+'&channel=eq.ACTION_NOW&order=detected_at.desc&limit=1000';
+      const r=await fetch(base+'/rest/v1/stock_hunter_hunt_journey_v416?'+q,{headers,cache:'no-store'});
+      if(!r.ok)throw new Error('action times '+r.status);
+      const data=await r.json();
+      const next=Object.create(null);
+      for(const row of (Array.isArray(data)?data:[])){
+        if(row?.detected_at){
+          if(row.symbol_id&&!next[String(row.symbol_id)])next[String(row.symbol_id)]=row.detected_at;
+          if(row.symbol&&!next['symbol:'+String(row.symbol)])next['symbol:'+String(row.symbol)]=row.detected_at;
+        }
+      }
+      actionDetectionTimesV421=next;actionDetectionLoadedV421=true;
+      try{scheduleTodayRenderV422(0);}catch{}
+    }catch(e){console.warn('Stock Hunter action detection times unavailable',e);}
+    finally{actionDetectionLoadingV421=false;}
+  }
   function card(x){
     const cls=x.hunt==='شکار ویژه'?'special':'urgent',personal=!!$u('personalWatchlistV417');
     const watch=personal?'<button type="button" class="ux-btn-v421 personal-star-v417" data-watch-id="'+escU(x.id)+'" data-watch-symbol="'+escU(x.symbol)+'">☆ دیده‌بان</button>':'<a class="ux-btn-v421" href="profile/">دیده‌بان</a>';
-    return '<article class="ux-hunt-card-v421 '+cls+'"><div class="ux-hunt-card-top-v421"><div><b>'+escU(x.symbol)+'</b><small>'+escU(x.company||'')+'</small></div><span class="ux-state-chip-v421">'+escU(x.hunt)+'</span></div>'+
+    const detectedAt=actionDetectionTimesV421[String(x.id)]||actionDetectionTimesV421['symbol:'+String(x.symbol||'')]||x.updated||'';
+    const detectedLabel=detectedAt?'شناسایی: '+detectionDateTimeV421(detectedAt):'زمان شناسایی در دفتر رخدادها در دسترس نیست';
+    return '<article class="ux-hunt-card-v421 '+cls+'"><div class="ux-hunt-card-top-v421"><div><b>'+escU(x.symbol)+'</b><small>'+escU(x.company||'')+'</small><small class="ux-hunt-detected-time-v421">'+escU(detectedLabel)+'</small></div><span class="ux-state-chip-v421">'+escU(x.hunt)+'</span></div>'+
       '<div class="ux-hunt-card-score-v421"><div><strong>'+faU(x.huntScoreV416,0)+'</strong><span>از ۱۰۰ · امتیاز، نه احتمال</span></div><em>'+escU(x.huntModeLabelV416||'—')+'</em></div>'+
       '<div class="ux-hunt-facts-v421"><div><span>تغییر</span><b>'+pctU(x.dayChangeV416,2)+'</b></div><div><span>فشار سفارش</span><b>'+strength(x.orderPressureV416)+'</b></div><div><span>ریسک</span><b>'+strength(x.risk,true)+'</b></div></div>'+
       '<div class="ux-hunt-actions-v421"><button type="button" class="ux-btn-v421 primary" data-why-id="'+escU(x.id)+'">چرا این سهم؟</button><button type="button" class="ux-btn-v421 detail-btn" data-id="'+escU(x.id)+'">نمایش</button>'+watch+'</div></article>';
@@ -223,6 +259,8 @@
   if(huntSelect)huntSelect.addEventListener('change',()=>body.classList.toggle('ux-filter-open-v421',!!huntSelect.value));
   setupGroupedNav();ensureToday();ensureWhyDialog();ensureMobileNav();wrapDetail();installRenderHook();
   const saved=localStorage.getItem('stockHunterUxModeV421')||'simple';setMode(saved);renderToday();
+  loadActionDetectionTimesV421();
+  setInterval(loadActionDetectionTimesV421,30000);
   const deferNonCritical=fn=>{if(typeof requestIdleCallback==='function')requestIdleCallback(()=>fn(),{timeout:2200});else setTimeout(fn,1600);};
   deferNonCritical(loadRecord);ensureOnboarding();
   const observer=new MutationObserver(()=>scheduleTodayRenderV422(80));const feed=$u('feedState');if(feed)observer.observe(feed,{subtree:true,childList:true,characterData:true});
