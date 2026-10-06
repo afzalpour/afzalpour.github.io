@@ -125,7 +125,7 @@
   }
   async function loadActionDetectionTimesV421(){
     if(actionDetectionLoadingV421)return;
-    const cfg=window.STOCK_HUNTER_CONFIG||{},base=String(cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\\/$/,''),key=String(cfg.SUPABASE_PUBLISHABLE_KEY||cfg.publishableKey||'');
+    const cfg=window.STOCK_HUNTER_CONFIG||{},base=String(cfg.SUPABASE_URL||cfg.supabaseUrl||'').replace(/\/$/,''),key=String(cfg.SUPABASE_PUBLISHABLE_KEY||cfg.publishableKey||'');
     if(!base||!key)return;
     actionDetectionLoadingV421=true;
     try{
